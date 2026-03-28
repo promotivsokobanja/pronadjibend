@@ -1,8 +1,10 @@
 'use client';
-import { Music, Search, Smartphone, Calendar, Zap, Mail, X, CheckCircle, Star } from 'lucide-react'
+import { Music, Calendar, Zap, Mail, X, CheckCircle, Star } from 'lucide-react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useState, useEffect } from 'react'
 import { resolveBandCoverImage } from '../../lib/bandImages'
+import { pickFeaturedBands } from '../../lib/featuredBands'
 import '../../styles/home.css'
 
 export default function HomeClient() {
@@ -18,7 +20,7 @@ export default function HomeClient() {
         const resp = await fetch('/api/bands', { cache: 'no-store' });
         const data = await resp.json();
         const list = Array.isArray(data) ? data : [];
-        setFeaturedBands(list.slice(0, 6));
+        setFeaturedBands(pickFeaturedBands(list, 6));
       } catch (err) {
         console.error(err);
       }
@@ -40,7 +42,7 @@ export default function HomeClient() {
   };
 
   return (
-    <div className="home-container perspective-container">
+    <div className="home-container perspective-container page-below-fixed-nav">
       <div className="blob" style={{ top: '-10%', left: '-10%', opacity: 0.1 }}></div>
       <div className="blob-2" style={{ top: '40%', right: '-10%', opacity: 0.08 }}></div>
       <div className="blob float-slow" style={{ bottom: '-10%', left: '20%', background: 'radial-gradient(circle, rgba(16, 185, 129, 0.05) 0%, transparent 75%)', animationDelay: '5s' }}></div>
@@ -68,7 +70,7 @@ export default function HomeClient() {
               </select>
 
             </div>
-            <Link href="/clients" className="btn btn-primary search-btn">Pretraži Muzičare</Link>
+            <Link href="/clients?pretraga=1" className="btn btn-primary search-btn">Pretraži Muzičare</Link>
           </div>
 
         </div>
@@ -95,7 +97,9 @@ export default function HomeClient() {
                 <p className="price-info">{band.priceRange || 'Dogovor'}</p>
                 <div className="card-actions">
                   <Link href={`/clients/band/${band.id}`} className="btn btn-secondary btn-sm">Profil</Link>
-                  <button className="btn btn-primary btn-sm">Zakaži</button>
+                  <button type="button" className="btn btn-primary btn-sm" onClick={() => handleBook(band)}>
+                    Zakaži
+                  </button>
                 </div>
               </div>
             </div>
@@ -110,9 +114,36 @@ export default function HomeClient() {
           <p>Atmosfera koja prodaje vaš prostor i privlači klijente.</p>
         </div>
         <div className="gallery-grid">
-          <div className="img-wrap reveal delay-1"><img src="https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&q=80&w=600" alt="Bend nastupa uživo na bini sa svetlima i publikom"/></div>
-          <div className="img-wrap reveal delay-2"><img src="https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&q=80&w=600" alt="Atmosfera na koncertu sa konfetama i rasveto"/></div>
-          <div className="img-wrap reveal delay-3"><img src="https://images.unsplash.com/photo-1524368535928-5b5e00ddc76b?auto=format&fit=crop&q=80&w=600" alt="Publika uživa u živom nastupu benda"/></div>
+          <div className="img-wrap reveal delay-1">
+            <Image
+              src="https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&q=80&w=800"
+              alt="Bend nastupa uživo na bini sa svetlima i publikom"
+              width={800}
+              height={600}
+              sizes="(max-width: 768px) 100vw, 33vw"
+              className="gallery-img"
+            />
+          </div>
+          <div className="img-wrap reveal delay-2">
+            <Image
+              src="https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&q=80&w=800"
+              alt="Atmosfera na koncertu sa konfetama i rasveto"
+              width={800}
+              height={600}
+              sizes="(max-width: 768px) 100vw, 33vw"
+              className="gallery-img"
+            />
+          </div>
+          <div className="img-wrap reveal delay-3">
+            <Image
+              src="https://images.unsplash.com/photo-1524368535928-5b5e00ddc76b?auto=format&fit=crop&q=80&w=800"
+              alt="Publika uživa u živom nastupu benda"
+              width={800}
+              height={600}
+              sizes="(max-width: 768px) 100vw, 33vw"
+              className="gallery-img"
+            />
+          </div>
         </div>
       </section>
 

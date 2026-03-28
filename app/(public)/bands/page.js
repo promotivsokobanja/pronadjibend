@@ -1,5 +1,5 @@
 'use client';
-import { Music, Play, Plus, Star, Bell, QrCode, Pencil, BookOpen, FileMusic } from 'lucide-react';
+import { Music, Play, Plus, Star, Bell, QrCode, Pencil, BookOpen, FileMusic, LayoutDashboard } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -19,6 +19,7 @@ export default function BandDashboard() {
     { label: 'Ocena', value: '0.0', icon: Star },
   ]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAdminUser, setIsAdminUser] = useState(false);
   const [busyDates, setBusyDates] = useState([]);
 
   useEffect(() => {
@@ -32,14 +33,27 @@ export default function BandDashboard() {
         }
         const meData = await meRes.json();
         const id = meData?.user?.bandId;
+        const isAdmin = meData?.user?.role === 'ADMIN';
         if (!id) {
+          if (isAdmin) {
+            if (!cancelled) {
+              setIsAdminUser(true);
+              setLoadError('');
+              setIsLoading(false);
+            }
+            return;
+          }
           if (!cancelled) {
+            setIsAdminUser(false);
             setLoadError('Nalog nije povezan sa bend profilom.');
             setIsLoading(false);
           }
           return;
         }
-        if (!cancelled) setBandId(id);
+        if (!cancelled) {
+          setIsAdminUser(false);
+          setBandId(id);
+        }
 
         const [bookingsRes, bandRes, calendarRes] = await Promise.all([
           fetch(`/api/bookings?bandId=${encodeURIComponent(id)}`),
@@ -110,6 +124,60 @@ export default function BandDashboard() {
         <Link href="/bands/profile" className="btn btn-primary" style={{ marginTop: '1rem', display: 'inline-block' }}>
           Podešavanje profila
         </Link>
+      </div>
+    );
+  }
+
+  if (isAdminUser && !bandId) {
+    return (
+      <div className="dashboard-container container" style={{ paddingTop: '8rem' }}>
+        <div className="blob" style={{ top: '10%', left: '10%' }}></div>
+        <header className="dash-header">
+          <div>
+            <h1>Portal za muzičare</h1>
+            <p className="text-muted">
+              Ulogovani ste kao administrator. Ovde možete koristiti alate bez bend naloga; kontrolna tabla benda zahteva povezan bend profil.
+            </p>
+          </div>
+        </header>
+        <div className="stats-grid" style={{ marginTop: '2rem' }}>
+          <Link href="/admin" className="glass-card stat-card" style={{ textDecoration: 'none', color: 'inherit' }}>
+            <div className="stat-icon-box">
+              <LayoutDashboard size={20} color="var(--accent-primary)" />
+            </div>
+            <div className="stat-info">
+              <span className="stat-value">Admin</span>
+              <span className="stat-label">Upravljanje sajtom</span>
+            </div>
+          </Link>
+          <Link href="/bands/midi" className="glass-card stat-card" style={{ textDecoration: 'none', color: 'inherit' }}>
+            <div className="stat-icon-box">
+              <FileMusic size={20} color="var(--accent-primary)" />
+            </div>
+            <div className="stat-info">
+              <span className="stat-value">MIDI</span>
+              <span className="stat-label">Biblioteka i upload</span>
+            </div>
+          </Link>
+          <Link href="/bands/pesmarica" className="glass-card stat-card" style={{ textDecoration: 'none', color: 'inherit' }}>
+            <div className="stat-icon-box">
+              <BookOpen size={20} color="var(--accent-primary)" />
+            </div>
+            <div className="stat-info">
+              <span className="stat-value">Pesmarica</span>
+              <span className="stat-label">Pregled pesama</span>
+            </div>
+          </Link>
+          <Link href="/clients" className="glass-card stat-card" style={{ textDecoration: 'none', color: 'inherit' }}>
+            <div className="stat-icon-box">
+              <Music size={20} color="var(--accent-primary)" />
+            </div>
+            <div className="stat-info">
+              <span className="stat-value">Bendovi</span>
+              <span className="stat-label">Javna pretraga</span>
+            </div>
+          </Link>
+        </div>
       </div>
     );
   }

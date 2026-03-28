@@ -51,7 +51,6 @@
 
 .perspective-container {
   position: relative;
-  overflow: hidden;
 }
 
 .modal-overlay {

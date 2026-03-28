@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import ClientSearchClient from './ClientSearchClient';
 
 export const metadata = {
@@ -14,5 +15,17 @@ export const metadata = {
 };
 
 export default function ClientSearchPage() {
-  return <ClientSearchClient />;
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-white pt-24">
+          <div className="container flex justify-center py-20">
+            <div className="h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-[#007AFF]" />
+          </div>
+        </div>
+      }
+    >
+      <ClientSearchClient />
+    </Suspense>
+  );
 }

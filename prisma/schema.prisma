@@ -130,3 +130,10 @@ model BillingEvent {
   status             String
   createdAt          DateTime @default(now())
 }
+
+/// Jedan zapis (id = 1): javna podešavanja (admin /sistem)
+model SiteConfig {
+  id            Int      @id @default(1)
+  showDemoBands Boolean  @default(true)
+  updatedAt     DateTime @updatedAt
+}

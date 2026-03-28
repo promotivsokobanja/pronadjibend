@@ -22,7 +22,11 @@ export default function LivePage() {
         const user = body?.user;
         if (!user?.bandId) {
           if (!cancelled) {
-            setError('Live režim je dostupan samo nalozima muzičara sa povezanim bendom.');
+            const msg =
+              user?.role === 'ADMIN'
+                ? 'Live režim zahteva bend profil. Kao administrator koristite Admin panel ili MIDI biblioteku, ili se ulogujte kao muzičar sa povezanim bendom.'
+                : 'Live režim je dostupan samo nalozima muzičara sa povezanim bendom.';
+            setError(msg);
             setLoading(false);
           }
           return;

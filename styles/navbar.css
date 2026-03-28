@@ -112,6 +112,9 @@
   background: #007aff !important;
   padding: 0.65rem 1rem;
   border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
 }
 
 .navbar .btn-prijava:hover {
@@ -162,6 +165,10 @@
   font-size: 1.6rem;
   text-decoration: none !important;
   text-transform: uppercase;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
 }
 
 .navbar .mobile-menu a.active-mobile {

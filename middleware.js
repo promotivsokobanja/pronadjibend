@@ -153,13 +153,21 @@ function applySecurityHeaders(response) {
   }
 }
 
+function hasAnyAuthCookie(request) {
+  const c = request.cookies;
+  return Boolean(
+    c.get('auth-token')?.value ||
+      c.get('next-auth.session-token')?.value ||
+      c.get('__Secure-next-auth.session-token')?.value
+  );
+}
+
 export function middleware(request) {
   try {
     const { pathname } = request.nextUrl;
 
     if (pathname.startsWith('/admin')) {
-      const token = request.cookies.get('auth-token')?.value;
-      if (!token) {
+      if (!hasAnyAuthCookie(request)) {
         const loginUrl = new URL('/login', request.url);
         loginUrl.searchParams.set('next', pathname);
         const redirect = NextResponse.redirect(loginUrl);

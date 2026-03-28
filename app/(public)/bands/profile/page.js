@@ -25,6 +25,7 @@ export default function BandProfilePage() {
   const [uploadingVideo, setUploadingVideo] = useState(false);
   const [imageProgress, setImageProgress] = useState(0);
   const [videoProgress, setVideoProgress] = useState(0);
+  const [adminNoBand, setAdminNoBand] = useState(false);
   const imageInputRef = useRef(null);
   const videoInputRef = useRef(null);
 
@@ -41,9 +42,15 @@ export default function BandProfilePage() {
         const meData = await meRes.json();
         const currentBandId = meData?.user?.bandId;
         if (!currentBandId) {
+          if (meData?.user?.role === 'ADMIN') {
+            setAdminNoBand(true);
+            return;
+          }
+          setAdminNoBand(false);
           setError('Nalog nije povezan sa bend profilom.');
           return;
         }
+        setAdminNoBand(false);
         setBandId(currentBandId);
 
         const res = await fetch(`/api/bands/${currentBandId}`);
@@ -228,6 +235,21 @@ export default function BandProfilePage() {
 
         {loading ? (
           <div className="state-box">Učitavanje profila...</div>
+        ) : adminNoBand ? (
+          <div className="profile-card state-box" style={{ maxWidth: 520 }}>
+            <p style={{ marginBottom: '1rem', color: 'var(--text-muted, #94a3b8)' }}>
+              Ulogovani ste kao administrator — ovaj ekran služi za uređivanje javnog profila benda. Bez povezanog
+              bend naloga nema šta da se menja ovde.
+            </p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
+              <Link href="/admin" className="btn btn-primary">
+                Admin panel
+              </Link>
+              <Link href="/bands" className="btn btn-secondary">
+                Portal za muzičare
+              </Link>
+            </div>
+          </div>
         ) : (
           <form onSubmit={handleSave} className="profile-card">
             {error && <div className="alert error">{error}</div>}

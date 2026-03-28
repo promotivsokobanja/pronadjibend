@@ -38,7 +38,7 @@ export default function FAQClient() {
             <a href="tel:+381643392339"><Phone size={18} /> +381 64 339 2339</a>
             <span><MapPin size={18} /> Sokobanja, Srbija</span>
           </div>
-          <Link href="/clients" className="btn btn-primary cta-btn">Pretraži Bendove</Link>
+          <Link href="/clients?pretraga=1" className="btn btn-primary cta-btn">Pretraži Bendove</Link>
         </div>
       </section>
 

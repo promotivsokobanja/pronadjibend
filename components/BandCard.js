@@ -11,7 +11,7 @@ export default function BandCard({ band }) {
   const handleMouseEnter = () => {
     setIsHovered(true);
     if (videoRef.current) {
-      videoRef.current.play().catch(err => console.log("Autoplay blocked", err));
+      videoRef.current.play().catch(() => {});
     }
   };
 

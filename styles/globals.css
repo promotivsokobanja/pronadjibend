@@ -8,6 +8,11 @@
 @import "./ui-shared.css";
 
 :root {
+  /* Visina fiksnog menija (panel pretrage koristi ovo za top) */
+  --navbar-height: 4.75rem;
+  /* Dodatni vazduh ispod menija — samo za sadržaj stranice, meni se ne širi */
+  --content-below-nav-gap: 2.5rem;
+
   /* Premium Colors */
   --accent-purple: #8b5cf6; 
   --accent-primary: var(--accent-purple);
@@ -47,11 +52,16 @@
   margin: 0;
 }
 
+html {
+  overflow-x: hidden;
+}
+
 body {
   background-color: var(--bg);
   color: var(--text);
   font-family: var(--font-main);
   line-height: 1.6;
+  overflow-x: hidden;
 }
 
 /* Navbar styling is owned by `components/Navbar.js` */
@@ -73,4 +83,9 @@ body {
   max-width: 1280px; 
   margin: 0 auto; 
   padding: 0 2rem; 
+}
+
+/* Stranice ispod fiksiranog .navbar — meni ostaje isti, slike/sadržaj niže */
+.page-below-fixed-nav {
+  padding-top: calc(var(--navbar-height) + var(--content-below-nav-gap));
 }

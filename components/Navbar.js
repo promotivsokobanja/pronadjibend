@@ -5,11 +5,25 @@ import { Menu, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { adminFetch } from '../lib/adminFetch';
+import { useClientSearch } from './clients/ClientSearchContext';
+import ClientsNavSearchPanel from './clients/ClientsNavSearchPanel';
+
+async function logoutAndRedirect() {
+  try {
+    await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' });
+  } catch {
+    /* ignore */
+  }
+  const home = encodeURIComponent('/');
+  window.location.href = `/api/auth/signout?callbackUrl=${home}`;
+}
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [sessionUser, setSessionUser] = useState(null);
   const pathname = usePathname();
+  const { isNavSearchOpen, setIsNavSearchOpen } = useClientSearch();
 
   const isActive = (href) => {
     if (href === '/') return pathname === '/';
@@ -24,14 +38,18 @@ export default function Navbar() {
   }, [isOpen]);
 
   useEffect(() => {
+    if (pathname !== '/clients') setIsNavSearchOpen(false);
+  }, [pathname, setIsNavSearchOpen]);
+
+  useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
         const r = await adminFetch('/api/auth/me');
         const data = await r.json().catch(() => ({}));
-        if (!cancelled && r.ok && data.user?.role === 'ADMIN') {
-          setIsAdmin(true);
-        }
+        if (cancelled || !r.ok) return;
+        setSessionUser(data.user || null);
+        setIsAdmin(data.user?.role === 'ADMIN');
       } catch {
         /* ignore */
       }
@@ -64,7 +82,18 @@ export default function Navbar() {
 
         {/* Desktop Menu */}
         <div className="nav-links desktop-only">
-          <Link href="/clients" className={`nav-link ${isActive('/clients') ? 'active' : ''}`}>Pretraži Bendove</Link>
+          <Link
+            href={pathname === '/clients' ? '/clients' : '/clients?pretraga=1'}
+            className={`nav-link ${isActive('/clients') ? 'active' : ''}`}
+            onClick={(e) => {
+              if (pathname === '/clients') {
+                e.preventDefault();
+                setIsNavSearchOpen(true);
+              }
+            }}
+          >
+            Pretraži Bendove
+          </Link>
           <Link href="/bands" className={`nav-link ${isActive('/bands') ? 'active' : ''}`}>Portal za Muzičare</Link>
           <Link href="/about" className={`nav-link ${isActive('/about') ? 'active' : ''}`}>O nama</Link>
           {isAdmin && (
@@ -72,10 +101,15 @@ export default function Navbar() {
               Admin
             </Link>
           )}
-          <Link href="/login" className="btn-prijava">PRIJAVA</Link>
+          {sessionUser ? (
+            <button type="button" className="btn-prijava" onClick={() => logoutAndRedirect()}>
+              Odjava
+            </button>
+          ) : (
+            <Link href="/login" className="btn-prijava">PRIJAVA</Link>
+          )}
         </div>
 
-        {/* Mobile toggle */}
         <button className="mobile-toggle" onClick={() => setIsOpen(!isOpen)}>
           {isOpen ? <X size={28} /> : <Menu size={28} />}
         </button>
@@ -84,7 +118,19 @@ export default function Navbar() {
       {/* Mobile Menu */}
       {isOpen && (
         <div className="mobile-menu">
-          <Link href="/clients" className={isActive('/clients') ? 'active-mobile' : ''} onClick={() => setIsOpen(false)}>Pretraži Bendove</Link>
+          <Link
+            href={pathname === '/clients' ? '/clients' : '/clients?pretraga=1'}
+            className={isActive('/clients') ? 'active-mobile' : ''}
+            onClick={(e) => {
+              setIsOpen(false);
+              if (pathname === '/clients') {
+                e.preventDefault();
+                setIsNavSearchOpen(true);
+              }
+            }}
+          >
+            Pretraži Bendove
+          </Link>
           <Link href="/bands" className={isActive('/bands') ? 'active-mobile' : ''} onClick={() => setIsOpen(false)}>Portal za Muzičare</Link>
           <Link href="/about" className={isActive('/about') ? 'active-mobile' : ''} onClick={() => setIsOpen(false)}>O nama</Link>
           {isAdmin && (
@@ -92,9 +138,24 @@ export default function Navbar() {
               Admin
             </Link>
           )}
-          <Link href="/login" className="btn-prijava-mobile" onClick={() => setIsOpen(false)}>Prijava</Link>
+          {sessionUser ? (
+            <button
+              type="button"
+              className="btn-prijava-mobile"
+              onClick={() => {
+                setIsOpen(false);
+                logoutAndRedirect();
+              }}
+            >
+              Odjava
+            </button>
+          ) : (
+            <Link href="/login" className="btn-prijava-mobile" onClick={() => setIsOpen(false)}>Prijava</Link>
+          )}
         </div>
       )}
+
+      {pathname === '/clients' && <ClientsNavSearchPanel />}
     </nav>
   );
 }

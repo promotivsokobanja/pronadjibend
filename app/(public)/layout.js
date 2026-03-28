@@ -1,6 +1,7 @@
 import ErrorBoundaryClient from '@/components/errors/ErrorBoundaryClient';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import { ClientSearchProvider } from '@/components/clients/ClientSearchContext';
 
 /**
  * Javni deo sajta — potpuno izolovan od admin segmenta.
@@ -9,9 +10,11 @@ import Footer from '@/components/Footer';
 export default function PublicLayout({ children }) {
   return (
     <ErrorBoundaryClient segment="public">
-      <Navbar />
-      {children}
-      <Footer />
+      <ClientSearchProvider>
+        <Navbar />
+        {children}
+        <Footer />
+      </ClientSearchProvider>
     </ErrorBoundaryClient>
   );
 }

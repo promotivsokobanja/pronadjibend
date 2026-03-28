@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '../../../lib/prisma';
 import { getDemoBands } from '../../../lib/demoBands';
+import { getShowDemoBands } from '../../../lib/siteConfig';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,6 +33,8 @@ export async function GET(request) {
   const location = searchParams.get('location');
   const search = searchParams.get('search');
 
+  const includeDemos = await getShowDemoBands();
+
   try {
     let dbBands = [];
     try {
@@ -53,13 +56,18 @@ export async function GET(request) {
       console.error('DB Error (falling back to demos only):', dbErr);
     }
 
-    const demos = filterDemoBands(getDemoBands(), { search, genre, location });
+    const demos = includeDemos
+      ? filterDemoBands(getDemoBands(), { search, genre, location })
+      : [];
     const combined = [...dbBands, ...demos];
 
     return NextResponse.json(combined);
   } catch (error) {
     console.error('API Error:', error);
     try {
+      if (!includeDemos) {
+        return NextResponse.json([]);
+      }
       const demos = filterDemoBands(getDemoBands(), { search, genre, location });
       return NextResponse.json(demos);
     } catch {

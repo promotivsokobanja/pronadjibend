@@ -1,5 +1,5 @@
 'use client';
-import { Search, Music, Download, Lock, X, ChevronLeft, ChevronRight, Play, Upload, Trash2, Headphones } from 'lucide-react';
+import { Search, Music, Download, Lock, X, ChevronLeft, ChevronRight, Play, Upload, Trash2, Headphones, Usb, Mic2, Volume2, MonitorSpeaker, FileAudio, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -71,10 +71,10 @@ export default function MidiLibraryPage() {
 
   const handlePlay = async (file) => {
     try {
-      const resp = await fetch(`/api/midi/download?id=${file.id}`);
+      const resp = await fetch(`/api/midi/preview?id=${file.id}`);
       const data = await resp.json();
       if (data.url) {
-        setPlayerFile(file);
+        setPlayerFile({ ...file, fileType: data.fileType });
         setPlayerUrl(data.url);
       } else {
         alert(data.error || 'Greška pri učitavanju.');
@@ -217,6 +217,56 @@ export default function MidiLibraryPage() {
           </div>
         )}
 
+        {/* ===== PLAYER FEATURE SHOWCASE ===== */}
+        <div className="player-showcase">
+          <div className="ps-hero">
+            <div className="ps-hero-icon"><Sparkles size={20} /></div>
+            <div className="ps-hero-text">
+              <h2>MIDI / Audio Player</h2>
+              <p>Profesionalni karaoke player sa GM SoundFont zvukovima i podrškom za eksterni MIDI</p>
+            </div>
+            <button className="ps-hero-btn" onClick={() => {
+              if (files.length > 0) handlePlay(files[0]);
+              else alert('Izaberite kategoriju da biste učitali fajlove, zatim kliknite ▶ na bilo koji fajl.');
+            }}>
+              <Play size={18} /> Pokreni Player
+            </button>
+          </div>
+
+          <div className="ps-cards">
+            <div className="ps-card">
+              <div className="ps-card-icon gm"><MonitorSpeaker size={16} /></div>
+              <h3>GM SoundFont</h3>
+              <p>128 GM instrumenata — klavir, gitara, bas, gudači, duvači i drugi.</p>
+            </div>
+            <div className="ps-card">
+              <div className="ps-card-icon karaoke"><Mic2 size={16} /></div>
+              <h3>Karaoke</h3>
+              <p>Tekst iz MIDI/KAR fajlova sa reč-po-reč highlightingom.</p>
+            </div>
+            <div className="ps-card">
+              <div className="ps-card-icon midi-out"><Usb size={16} /></div>
+              <h3>MIDI OUT</h3>
+              <p>Slanje nota na eksternu USB MIDI klavijaturu u realnom vremenu.</p>
+            </div>
+            <div className="ps-card">
+              <div className="ps-card-icon mp3"><FileAudio size={16} /></div>
+              <h3>MP3 / Audio</h3>
+              <p>Podrška za MP3, WAV, OGG i druge audio formate.</p>
+            </div>
+            <div className="ps-card">
+              <div className="ps-card-icon controls"><Volume2 size={16} /></div>
+              <h3>Kontrole</h3>
+              <p>Play, pauza, seek, volume i lista pesama u playeru.</p>
+            </div>
+            <div className="ps-card">
+              <div className="ps-card-icon drums"><Music size={16} /></div>
+              <h3>Bubnjevi</h3>
+              <p>Sintetizovani GM perkusioni kroz Web Audio API.</p>
+            </div>
+          </div>
+        </div>
+
         <div className="cat-tabs">
           {CATEGORIES.map(cat => (
             <button key={cat} className={`cat-tab ${category === cat ? 'active' : ''}`}
@@ -274,13 +324,9 @@ export default function MidiLibraryPage() {
               return (
                 <div key={file.id} className="file-row">
                   <div className="col-play">
-                    {canAccess ? (
-                      <button className="play-btn" onClick={() => handlePlay(file)} title="Pusti">
-                        <Play size={14} />
-                      </button>
-                    ) : (
-                      <span className="lock-icon-sm"><Lock size={12} /></span>
-                    )}
+                    <button className="play-btn" onClick={() => handlePlay(file)} title="Pusti">
+                      <Play size={14} />
+                    </button>
                   </div>
                   <div className="col-name">
                     <span className="midi-icon">{isAudio ? <Headphones size={14} /> : '♪'}</span>
@@ -333,6 +379,8 @@ export default function MidiLibraryPage() {
         <MidiKaraokePlayer
           fileUrl={playerUrl}
           fileName={`${playerFile.title} - ${playerFile.artist}`}
+          initialSongId={playerFile.id}
+          songList={files}
           onClose={() => { setPlayerUrl(null); setPlayerFile(null); }}
         />
       )}
@@ -401,6 +449,63 @@ export default function MidiLibraryPage() {
         }
         .upgrade-btn:hover { transform: scale(1.05); }
 
+        /* ===== PLAYER SHOWCASE ===== */
+        .player-showcase { margin-bottom: 1.5rem; }
+
+        .ps-hero {
+          display: flex; align-items: center; gap: 1rem; padding: 0.85rem 1.25rem;
+          background: linear-gradient(135deg, rgba(96,165,250,0.08) 0%, rgba(139,92,246,0.08) 50%, rgba(236,72,153,0.06) 100%);
+          border: 1px solid rgba(96,165,250,0.15); border-radius: 12px;
+          margin-bottom: 0.75rem; flex-wrap: wrap;
+        }
+        .ps-hero-icon {
+          width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center;
+          background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; flex-shrink: 0;
+          box-shadow: 0 3px 12px rgba(59,130,246,0.25);
+        }
+        .ps-hero-text { flex: 1; min-width: 160px; }
+        .ps-hero-text h2 { font-size: 1.05rem; font-weight: 800; letter-spacing: -0.3px; color: #e2e8f0; margin: 0 0 2px; }
+        .ps-hero-text p { font-size: 0.72rem; color: #94a3b8; margin: 0; line-height: 1.3; }
+        .ps-hero-btn {
+          display: flex; align-items: center; gap: 10px; padding: 12px 28px; border-radius: 100px;
+          background: linear-gradient(135deg, #3b82f6, #6366f1); border: none;
+          color: white; font-size: 0.95rem; font-weight: 800; cursor: pointer;
+          transition: all 0.3s; white-space: nowrap;
+          box-shadow: 0 4px 24px rgba(59,130,246,0.3);
+        }
+        .ps-hero-btn:hover { transform: scale(1.05); box-shadow: 0 6px 32px rgba(59,130,246,0.4); }
+
+        .ps-cards {
+          display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.5rem;
+        }
+        .ps-card {
+          padding: 0.65rem 0.7rem 0.75rem; border-radius: 10px;
+          background: rgba(255,255,255,0.02); border: 1px solid var(--border);
+          transition: all 0.3s;
+        }
+        .ps-card:hover { border-color: rgba(96,165,250,0.25); background: rgba(96,165,250,0.03); transform: translateY(-1px); }
+        .ps-card-icon {
+          width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
+          margin-bottom: 0.4rem;
+        }
+        .ps-card-icon.gm { background: rgba(96,165,250,0.12); color: #60a5fa; }
+        .ps-card-icon.karaoke { background: rgba(251,191,36,0.12); color: #fbbf24; }
+        .ps-card-icon.midi-out { background: rgba(16,185,129,0.12); color: #34d399; }
+        .ps-card-icon.mp3 { background: rgba(168,85,247,0.12); color: #c084fc; }
+        .ps-card-icon.controls { background: rgba(236,72,153,0.12); color: #f472b6; }
+        .ps-card-icon.drums { background: rgba(245,158,11,0.12); color: #f59e0b; }
+        .ps-card h3 { font-size: 0.7rem; font-weight: 800; color: #e2e8f0; margin: 0 0 0.2rem; }
+        .ps-card p { font-size: 0.62rem; color: #64748b; line-height: 1.4; margin: 0; }
+
+        @media (max-width: 1024px) {
+          .ps-cards { grid-template-columns: repeat(3, 1fr); }
+        }
+        @media (max-width: 640px) {
+          .ps-cards { grid-template-columns: repeat(2, 1fr); }
+          .ps-hero { flex-direction: column; text-align: center; padding: 0.85rem; }
+          .ps-hero-btn { width: 100%; justify-content: center; }
+        }
+
         .cat-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
         .cat-tab {
           padding: 8px 18px; border-radius: 100px; font-size: 0.8rem; font-weight: 700;
@@ -420,7 +525,7 @@ export default function MidiLibraryPage() {
         }
         .search-box:focus-within { border-color: #60a5fa; }
         .search-icon { color: #555; flex-shrink: 0; }
-        .search-box input { background: none; border: none; color: #e2e8f0; width: 100%; outline: none; font-size: 0.95rem; }
+        .search-box input { background: none; border: none; color: #1a1a1a; width: 100%; outline: none; font-size: 0.95rem; }
         .clear-btn { background: none; border: none; color: #555; cursor: pointer; display: flex; padding: 4px; border-radius: 50%; }
         .clear-btn:hover { color: #ef4444; }
 
