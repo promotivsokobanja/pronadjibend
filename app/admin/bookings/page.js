@@ -15,7 +15,7 @@ export default function AdminBookingsPage() {
     try {
       const params = new URLSearchParams({ page: String(page), limit: '25' });
       if (statusFilter) params.set('status', statusFilter);
-      const r = await fetch(`/api/admin/bookings?${params}`, { cache: 'no-store' });
+      const r = await adminFetch(`/api/admin/bookings?${params}`);
       const j = await r.json();
       if (!r.ok) throw new Error(j.error || 'Greška');
       setData(j);
@@ -86,6 +86,9 @@ export default function AdminBookingsPage() {
                   <th>Bend</th>
                   <th>Klijent</th>
                   <th>Email</th>
+                  <th>Telefon</th>
+                  <th>Lokacija</th>
+                  <th>Poruka</th>
                   <th>Status</th>
                 </tr>
               </thead>
@@ -96,8 +99,23 @@ export default function AdminBookingsPage() {
                       {new Date(b.date).toLocaleString('sr-RS')}
                     </td>
                     <td>{b.band?.name}</td>
-                    <td>{b.clientName}</td>
+                    <td>{b.clientName || '—'}</td>
                     <td style={{ fontSize: '0.8rem' }}>{b.clientEmail}</td>
+                    <td style={{ fontSize: '0.8rem', whiteSpace: 'nowrap' }}>{b.clientPhone || '—'}</td>
+                    <td style={{ fontSize: '0.8rem', maxWidth: 160 }}>{b.location || '—'}</td>
+                    <td
+                      style={{
+                        fontSize: '0.78rem',
+                        maxWidth: 320,
+                        whiteSpace: 'pre-wrap',
+                        wordBreak: 'break-word',
+                        color: '#cbd5e1',
+                        verticalAlign: 'top',
+                      }}
+                      title={b.message || undefined}
+                    >
+                      {b.message?.trim() ? b.message : '—'}
+                    </td>
                     <td>
                       <select
                         value={b.status}
