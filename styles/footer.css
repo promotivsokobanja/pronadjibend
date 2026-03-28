@@ -136,8 +136,28 @@
   }
   .footer {
     padding-top: 5rem;
+    padding-bottom: max(3rem, env(safe-area-inset-bottom, 0px));
   }
   .footer h4 {
     margin-bottom: 1.5rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .footer .footer-bottom p {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0 0.5rem;
+    line-height: 1.5;
+  }
+
+  .footer .legal {
+    margin-left: 0;
+    display: inline-flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.35rem;
   }
 }

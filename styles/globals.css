@@ -54,6 +54,8 @@
 
 html {
   overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
@@ -62,6 +64,8 @@ body {
   font-family: var(--font-main);
   line-height: 1.6;
   overflow-x: hidden;
+  /* Manji dodirni kašnjenje na starijim mobilnim */
+  touch-action: manipulation;
 }
 
 /* Navbar styling is owned by `components/Navbar.js` */
@@ -79,13 +83,28 @@ body {
   text-decoration: none;
 }
 
-.container { 
-  max-width: 1280px; 
-  margin: 0 auto; 
-  padding: 0 2rem; 
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 clamp(1rem, 4vw, 2rem);
+  width: 100%;
 }
 
 /* Stranice ispod fiksiranog .navbar — meni ostaje isti, slike/sadržaj niže */
 .page-below-fixed-nav {
   padding-top: calc(var(--navbar-height) + var(--content-below-nav-gap));
+}
+
+@media (max-width: 640px) {
+  :root {
+    /* Uskladi sa fiksnim menijem + safe-area (iPhone notch) */
+    --navbar-height: calc(env(safe-area-inset-top, 0px) + 4rem);
+    --content-below-nav-gap: 1.25rem;
+  }
+}
+
+@media (max-width: 480px) {
+  :root {
+    --content-below-nav-gap: 1rem;
+  }
 }

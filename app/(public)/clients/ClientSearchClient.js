@@ -105,7 +105,7 @@ export default function ClientSearchClient() {
             <button
               type="button"
               onClick={() => setIsNavSearchOpen(true)}
-              className="h-10 shrink-0 rounded-full bg-[#007AFF] px-5 text-sm font-semibold text-white shadow-md shadow-[#007AFF]/25 transition hover:bg-[#0066d6] hover:shadow-lg hover:shadow-[#007AFF]/30"
+              className="min-h-11 shrink-0 rounded-full bg-[#007AFF] px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-[#007AFF]/25 transition hover:bg-[#0066d6] hover:shadow-lg hover:shadow-[#007AFF]/30 sm:h-10 sm:min-h-0 sm:py-0"
             >
               Pretraga i filteri
             </button>
@@ -117,7 +117,7 @@ export default function ClientSearchClient() {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="h-10 w-full min-w-[11rem] rounded-full border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 shadow-sm outline-none ring-[#007AFF]/0 transition focus:border-[#007AFF] focus:ring-4 focus:ring-[#007AFF]/12 sm:w-auto"
+              className="min-h-11 w-full min-w-0 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 shadow-sm outline-none ring-[#007AFF]/0 transition focus:border-[#007AFF] focus:ring-4 focus:ring-[#007AFF]/12 sm:h-10 sm:min-h-0 sm:min-w-[11rem] sm:w-auto sm:py-0"
             >
               <option value="recommended">Preporučeno</option>
               <option value="genre">Aktivni žanr</option>
@@ -138,23 +138,23 @@ export default function ClientSearchClient() {
                 <BandCard key={band.id} band={band} />
               ))}
             </div>
-            <div className="mt-10 flex items-center justify-center gap-3">
+            <div className="mt-10 flex flex-wrap items-center justify-center gap-3 px-1">
               <button
                 type="button"
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm disabled:cursor-not-allowed disabled:opacity-40"
+                className="min-h-11 rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-700 shadow-sm disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Prethodna
               </button>
-              <span className="text-sm font-semibold text-slate-500">
+              <span className="order-first w-full text-center text-sm font-semibold text-slate-500 sm:order-none sm:w-auto">
                 Strana {currentPage} / {totalPages}
               </span>
               <button
                 type="button"
                 disabled={currentPage === totalPages}
                 onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm disabled:cursor-not-allowed disabled:opacity-40"
+                className="min-h-11 rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-700 shadow-sm disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Sledeća
               </button>

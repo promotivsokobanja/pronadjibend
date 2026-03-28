@@ -81,7 +81,10 @@ export const metadata = {
 export const viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
+  /* Dozvoli pinch-zoom na mobilnom (pristupačnost); ranije maximumScale:1 je blokirao uvećanje */
+  maximumScale: 5,
+  userScalable: true,
+  viewportFit: 'cover',
   themeColor: '#0a0a0c',
 };
 

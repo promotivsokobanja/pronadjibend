@@ -3,7 +3,8 @@
 # Opciono: ALLOWED_AUTH_ORIGINS=https://pronadjibend.rs,https://www.pronadjibend.rs
 
 [build]
-  command = "npm run build"
+  # Migracije na produkcijsku bazu pre builda (isti DATABASE_URL kao u Netlify env)
+  command = "npx prisma migrate deploy && npm run build"
 
 [build.environment]
   NODE_VERSION = "20"

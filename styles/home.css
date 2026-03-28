@@ -357,4 +357,30 @@
   .img-wrap {
     height: 250px;
   }
+
+  .featured-bands,
+  .experience-gallery,
+  .testimonials,
+  .pricing {
+    padding: 4rem 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-title {
+    font-size: 2rem;
+    line-height: 1.1;
+    padding: 0 0.25rem;
+  }
+  .hero-subtitle {
+    font-size: 1.05rem;
+    padding: 0 0.5rem;
+  }
+  .hero {
+    padding-top: 6.5rem;
+    padding-bottom: 4rem;
+  }
+  .hotel-search {
+    margin: 0 0.5rem;
+  }
 }
