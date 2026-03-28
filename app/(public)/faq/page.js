@@ -1,6 +1,9 @@
 import FAQClient from './FAQClient';
 import { FAQSchema } from '@/components/JsonLd';
 import { faqData } from '@/lib/faqData';
+import { getSiteUrl } from '@/lib/siteUrl';
+
+const siteUrl = getSiteUrl();
 
 export const metadata = {
   title: 'Česta Pitanja (FAQ) — Kako Rezervisati Bend | Pronađi Bend',
@@ -10,7 +13,7 @@ export const metadata = {
   openGraph: {
     title: 'Česta Pitanja — Pronađi Bend',
     description: 'Saznajte sve o rezervaciji bendova, Live Request sistemu, cenama i registraciji na platformi.',
-    url: 'https://pronadjibend.rs/faq',
+    url: `${siteUrl}/faq`,
   },
 };
 

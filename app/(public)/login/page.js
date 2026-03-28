@@ -1,4 +1,7 @@
 import LoginClient from './LoginClient';
+import { getSiteUrl } from '@/lib/siteUrl';
+
+const siteUrl = getSiteUrl();
 
 export const metadata = {
   title: 'Prijava & Registracija — Pronađi Bend',
@@ -8,7 +11,7 @@ export const metadata = {
   openGraph: {
     title: 'Prijava na Pronađi Bend',
     description: 'Prijavite se i rezervišite bend za vaš event ili registrujte svoj bend na platformi.',
-    url: 'https://pronadjibend.rs/login',
+    url: `${siteUrl}/login`,
   },
   robots: {
     index: false,

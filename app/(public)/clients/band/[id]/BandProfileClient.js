@@ -1,8 +1,19 @@
 'use client';
-import { Mail, Phone, MapPin, Calendar, Star, Send, Shield, Music, Video, Info, User } from 'lucide-react';
+import { Mail, Phone, MapPin, Calendar, Star, Send, Shield, Music, Video, Info, User, MessageSquare } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import BookingCalendar from '../../../../../components/BookingCalendar';
+
+const BOOKING_MESSAGE_MAX = 500;
+const MAX_BOOKING_DATES = 14;
+const REVIEW_COMMENT_MAX = 250;
+
+function formatDateKeySr(ymd) {
+  const m = String(ymd).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!m) return String(ymd);
+  const [, y, mo, d] = m;
+  return `${parseInt(d, 10)}. ${parseInt(mo, 10)}. ${y}.`;
+}
 
 export default function BandProfileClient({ params }) {
   const [band, setBand] = useState(null);
@@ -11,14 +22,16 @@ export default function BandProfileClient({ params }) {
   const [isLoading, setIsLoading] = useState(true);
   
   const [bookingForm, setBookingForm] = useState({
-    date: '',
+    dates: [],
     location: '',
     message: '',
     clientName: '',
     clientEmail: '',
-    clientPhone: ''
+    clientPhone: '',
   });
   const [bookingStatus, setBookingStatus] = useState('');
+  const [reviewForm, setReviewForm] = useState({ author: '', rating: 5, comment: '' });
+  const [reviewStatus, setReviewStatus] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -47,18 +60,73 @@ export default function BandProfileClient({ params }) {
     fetchData();
   }, [params.id]);
 
+  const handleReviewSubmit = async (e) => {
+    e.preventDefault();
+    if (reviewForm.comment.length > REVIEW_COMMENT_MAX) {
+      alert(`Poruka može imati najviše ${REVIEW_COMMENT_MAX} karaktera.`);
+      return;
+    }
+    setReviewStatus('sending');
+    try {
+      const resp = await fetch('/api/bands/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          bandId: params.id,
+          author: reviewForm.author,
+          rating: reviewForm.rating,
+          comment: reviewForm.comment.trim() || null,
+        }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error || 'Greška');
+      setReviews((prev) => [data.review, ...prev]);
+      setBand((prev) => (prev && typeof data.rating === 'number' ? { ...prev, rating: data.rating } : prev));
+      setReviewForm({ author: '', rating: 5, comment: '' });
+      setReviewStatus('success');
+      setTimeout(() => setReviewStatus(''), 5000);
+    } catch (err) {
+      alert(err.message || 'Slanje recenzije nije uspelo.');
+      setReviewStatus('');
+    }
+  };
+
   const handleBooking = async (e) => {
     e.preventDefault();
+    if (!bookingForm.dates?.length) {
+      alert('Molimo izaberite bar jedan datum u kalendaru.');
+      return;
+    }
+    if (bookingForm.message.length > BOOKING_MESSAGE_MAX) {
+      alert(`Poruka može imati najviše ${BOOKING_MESSAGE_MAX} karaktera.`);
+      return;
+    }
     setBookingStatus('sending');
     try {
       const resp = await fetch('/api/bookings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...bookingForm, bandId: params.id })
+        body: JSON.stringify({
+          bandId: params.id,
+          dates: bookingForm.dates,
+          location: bookingForm.location,
+          message: bookingForm.message,
+          clientName: bookingForm.clientName,
+          clientEmail: bookingForm.clientEmail,
+          clientPhone: bookingForm.clientPhone,
+        }),
       });
       const data = await resp.json();
       if (data.error) throw new Error(data.error);
       setBookingStatus('success');
+      setBookingForm({
+        dates: [],
+        location: '',
+        message: '',
+        clientName: '',
+        clientEmail: '',
+        clientPhone: '',
+      });
       alert('Upit je uspešno poslat! Bend će Vas kontaktirati.');
     } catch (err) {
       setBookingStatus('error');
@@ -111,24 +179,59 @@ export default function BandProfileClient({ params }) {
             </div>
             
             <div className="booking-card glass-card">
-              <h2>Rezerviši Datum</h2>
+              <h2>Rezerviši termine</h2>
               <form onSubmit={handleBooking}>
                 <div className="calendar-section">
-                  <BookingCalendar 
-                    bandId={params.id} 
-                    busyDates={busyDates} 
-                    selectedDate={bookingForm.date}
-                    onDateSelect={(date) => setBookingForm({...bookingForm, date})}
+                  <BookingCalendar
+                    bandId={params.id}
+                    busyDates={busyDates}
+                    multiSelect
+                    selectedDates={bookingForm.dates}
+                    onDatesChange={(dates) => setBookingForm((prev) => ({ ...prev, dates }))}
                   />
-                  {bookingForm.date && (
+                  <p className="calendar-hint">
+                    <strong>Zauzeti</strong> dani su sivi i precrtani — <strong>ne mogu</strong> se izabrati (bend ih je
+                    blokirao ili su već potvrđena druga rezervacija). Izaberite jedan ili više <strong>slobodnih</strong>{' '}
+                    dana (do {MAX_BOOKING_DATES}); klik na već izabrani dan ga uklanja.
+                  </p>
+                  {bookingForm.dates.length > 0 && (
                     <div className="selected-date-display reveal">
-                      <Calendar size={14} /> Izabran datum: <strong>{new Date(bookingForm.date).toLocaleDateString('sr-RS')}</strong>
+                      <Calendar size={14} style={{ flexShrink: 0, marginTop: 2 }} />
+                      <div className="selected-dates-body">
+                        <span className="selected-dates-label">
+                          Izabrani datumi ({bookingForm.dates.length}):
+                        </span>
+                        <ul className="selected-dates-ul">
+                          {[...bookingForm.dates].sort().map((d) => (
+                            <li key={d}>{formatDateKeySr(d)}</li>
+                          ))}
+                        </ul>
+                      </div>
                     </div>
                   )}
                 </div>
                 <div className="input-group">
                   <MapPin size={18} />
                   <input type="text" placeholder="Lokacija proslave" required value={bookingForm.location} onChange={e => setBookingForm({...bookingForm, location: e.target.value})} />
+                </div>
+                <div className="input-group input-group-textarea">
+                  <MessageSquare size={18} className="textarea-icon" />
+                  <div className="textarea-wrap">
+                    <textarea
+                      id="booking-message"
+                      rows={3}
+                      maxLength={BOOKING_MESSAGE_MAX}
+                      placeholder="Kratka poruka bendu (opciono, npr. vrsta proslave, broj gostiju…)"
+                      value={bookingForm.message}
+                      aria-label="Poruka za bend"
+                      onChange={(e) =>
+                        setBookingForm((prev) => ({ ...prev, message: e.target.value }))
+                      }
+                    />
+                    <span className="char-count">
+                      {bookingForm.message.length} / {BOOKING_MESSAGE_MAX}
+                    </span>
+                  </div>
                 </div>
                 <div className="input-group">
                   <User size={18} />
@@ -175,20 +278,104 @@ export default function BandProfileClient({ params }) {
         <div className="section-header">
           <h2><Star size={24} /> Iskustva Klijenata</h2>
         </div>
-        <div className="reviews-grid">
-          {reviews.length > 0 ? reviews.map(rev => (
-            <div key={rev.id} className="review-card glass-card">
-              <div className="rev-header">
-                <strong>{rev.author}</strong>
-                <div className="rev-rating">
-                  {[...Array(rev.rating)].map((_, i) => <Star key={i} size={14} fill="var(--accent-primary)" />)}
-                </div>
-              </div>
-              <p>{rev.comment}</p>
-              <small>{new Date(rev.createdAt).toLocaleDateString('sr-RS')}</small>
+
+        {!isDemo && (
+          <form className="review-compose glass-card" onSubmit={handleReviewSubmit}>
+            <h3 className="review-compose-title">Ostavite recenziju</h3>
+            <p className="review-compose-intro">
+              Vaša ocena i kratka poruka (do {REVIEW_COMMENT_MAX} karaktera) pomažu drugim klijentima da izaberu bend.
+            </p>
+            <div className="review-field">
+              <label htmlFor="review-author">Vaše ime ili inicijali</label>
+              <input
+                id="review-author"
+                type="text"
+                required
+                minLength={2}
+                maxLength={80}
+                autoComplete="name"
+                placeholder="npr. Marko P."
+                value={reviewForm.author}
+                onChange={(e) => setReviewForm((p) => ({ ...p, author: e.target.value }))}
+              />
             </div>
-          )) : (
-            <div className="no-media glass-card">Još uvek nema recenzija. Budite prvi!</div>
+            <div className="review-field">
+              <span className="review-label" id="review-rating-label">
+                Ocena
+              </span>
+              <div className="star-picker" role="group" aria-labelledby="review-rating-label">
+                {[1, 2, 3, 4, 5].map((n) => {
+                  const on = n <= reviewForm.rating;
+                  return (
+                    <button
+                      key={n}
+                      type="button"
+                      className="star-picker-btn"
+                      aria-label={`${n} od 5 zvezdica`}
+                      aria-pressed={on}
+                      onClick={() => setReviewForm((p) => ({ ...p, rating: n }))}
+                    >
+                      <Star
+                        size={26}
+                        fill={on ? 'var(--accent-primary, #8b5cf6)' : 'none'}
+                        color={on ? 'var(--accent-primary, #8b5cf6)' : '#cbd5e1'}
+                      />
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="review-field">
+              <label htmlFor="review-comment">Poruka (opciono)</label>
+              <textarea
+                id="review-comment"
+                rows={3}
+                maxLength={REVIEW_COMMENT_MAX}
+                placeholder="Kratko iskustvo sa bendom…"
+                value={reviewForm.comment}
+                onChange={(e) => setReviewForm((p) => ({ ...p, comment: e.target.value }))}
+              />
+              <span className="review-char-count">
+                {reviewForm.comment.length} / {REVIEW_COMMENT_MAX}
+              </span>
+            </div>
+            <button
+              type="submit"
+              className="btn btn-primary review-submit"
+              disabled={reviewStatus === 'sending'}
+            >
+              {reviewStatus === 'sending' ? 'Slanje…' : 'Pošalji recenziju'}
+            </button>
+            {reviewStatus === 'success' && (
+              <p className="review-feedback review-feedback-success" role="status">
+                Hvala — vaša recenzija je sačuvana.
+              </p>
+            )}
+          </form>
+        )}
+
+        <div className="reviews-grid">
+          {reviews.length > 0 ? (
+            reviews.map((rev) => (
+              <div key={rev.id} className="review-card glass-card">
+                <div className="rev-header">
+                  <strong>{rev.author}</strong>
+                  <div className="rev-rating">
+                    {[...Array(rev.rating)].map((_, i) => (
+                      <Star key={i} size={14} fill="var(--accent-primary)" />
+                    ))}
+                  </div>
+                </div>
+                {rev.comment ? <p>{rev.comment}</p> : null}
+                <small>{new Date(rev.createdAt).toLocaleDateString('sr-RS')}</small>
+              </div>
+            ))
+          ) : (
+            <div className="no-media glass-card reviews-empty">
+              {isDemo
+                ? 'Na demo profilu recenzije nisu dostupne.'
+                : 'Još uvek nema recenzija. Budite prvi ispod u formi.'}
+            </div>
           )}
         </div>
       </section>
@@ -291,17 +478,34 @@ export default function BandProfileClient({ params }) {
         
         .calendar-section { margin-bottom: 1.5rem; }
         
+        .calendar-hint {
+          margin: 0.65rem 0 0;
+          font-size: 0.78rem;
+          color: #94a3b8;
+          line-height: 1.4;
+          font-weight: 500;
+        }
+        
         .selected-date-display { 
           margin-top: 1rem; 
           font-size: 0.85rem; 
           color: #8b5cf6; 
           display: flex; 
-          align-items: center; 
-          gap: 8px; 
+          align-items: flex-start; 
+          gap: 10px; 
           font-weight: 600; 
           background: rgba(139, 92, 246, 0.05); 
           padding: 10px 14px; 
           border-radius: 12px; 
+        }
+        .selected-dates-body { flex: 1; min-width: 0; }
+        .selected-dates-label { display: block; margin-bottom: 0.35rem; font-size: 0.8rem; }
+        .selected-dates-ul {
+          margin: 0;
+          padding-left: 1.1rem;
+          color: #5b21b6;
+          font-weight: 700;
+          line-height: 1.45;
         }
         
         .input-group { 
@@ -336,6 +540,44 @@ export default function BandProfileClient({ params }) {
         
         .input-group input::placeholder { color: #94a3b8; }
 
+        .input-group-textarea {
+          align-items: flex-start;
+        }
+        .textarea-icon {
+          flex-shrink: 0;
+          margin-top: 0.35rem;
+          color: #94a3b8;
+        }
+        .textarea-wrap {
+          flex: 1;
+          min-width: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 0.35rem;
+        }
+        .input-group textarea {
+          background: none;
+          border: none;
+          color: #0f172a;
+          width: 100%;
+          outline: none;
+          font-size: 0.95rem;
+          font-weight: 500;
+          font-family: inherit;
+          resize: vertical;
+          min-height: 4.25rem;
+          line-height: 1.45;
+        }
+        .input-group textarea::placeholder {
+          color: #94a3b8;
+        }
+        .char-count {
+          font-size: 0.72rem;
+          color: #94a3b8;
+          text-align: right;
+          font-weight: 600;
+        }
+
         .secure-badge { 
           text-align: center; 
           color: #94a3b8; 
@@ -359,6 +601,102 @@ export default function BandProfileClient({ params }) {
           font-weight: 800; 
           color: #0f172a;
           letter-spacing: -0.02em;
+        }
+
+        .review-compose {
+          padding: 1.75rem 2rem;
+          margin-bottom: 2rem;
+          border-radius: 20px;
+          border: 1px solid #f1f5f9;
+          background: #fff;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+        }
+        .review-compose-title {
+          margin: 0 0 0.5rem;
+          font-size: 1.1rem;
+          font-weight: 800;
+          color: #0f172a;
+        }
+        .review-compose-intro {
+          margin: 0 0 1.25rem;
+          font-size: 0.85rem;
+          color: #64748b;
+          line-height: 1.45;
+        }
+        .review-field {
+          margin-bottom: 1.1rem;
+        }
+        .review-field label,
+        .review-label {
+          display: block;
+          font-size: 0.72rem;
+          font-weight: 800;
+          text-transform: uppercase;
+          letter-spacing: 0.06em;
+          color: #64748b;
+          margin-bottom: 0.45rem;
+        }
+        .review-field input,
+        .review-field textarea {
+          width: 100%;
+          border: 1px solid #e2e8f0;
+          border-radius: 12px;
+          padding: 0.75rem 0.9rem;
+          font-size: 0.95rem;
+          color: #0f172a;
+          outline: none;
+          font-family: inherit;
+          box-sizing: border-box;
+        }
+        .review-field textarea {
+          resize: vertical;
+          min-height: 5rem;
+          line-height: 1.45;
+        }
+        .review-field input:focus,
+        .review-field textarea:focus {
+          border-color: #8b5cf6;
+          box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.12);
+        }
+        .star-picker {
+          display: flex;
+          gap: 0.2rem;
+          flex-wrap: wrap;
+          align-items: center;
+        }
+        .star-picker-btn {
+          background: none;
+          border: none;
+          padding: 0.15rem;
+          cursor: pointer;
+          line-height: 0;
+          border-radius: 8px;
+        }
+        .star-picker-btn:focus-visible {
+          outline: 2px solid #8b5cf6;
+          outline-offset: 2px;
+        }
+        .review-char-count {
+          display: block;
+          text-align: right;
+          font-size: 0.72rem;
+          color: #94a3b8;
+          font-weight: 600;
+          margin-top: 0.35rem;
+        }
+        .review-submit {
+          margin-top: 0.35rem;
+        }
+        .review-feedback {
+          margin: 0.85rem 0 0;
+          font-size: 0.88rem;
+          font-weight: 600;
+        }
+        .review-feedback-success {
+          color: #047857;
+        }
+        .reviews-empty {
+          grid-column: 1 / -1;
         }
         
         .video-grid { 

@@ -1,10 +1,14 @@
 'use client';
-import { Music, Play, Plus, Star, Bell, QrCode, Pencil, BookOpen, FileMusic, LayoutDashboard } from 'lucide-react';
+import { Music, Play, Plus, Star, Bell, QrCode, Pencil, BookOpen, FileMusic, LayoutDashboard, Mail, Phone, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import QrModal from '../../../components/QrModal';
 import BookingCalendar from '../../../components/BookingCalendar';
+import { dateToCalendarKeyUTC } from '../../../lib/calendarDate';
+
+/** Postavite na `false` da sakrijete kratke opise ispod dugmadi (brz „undo“ izgleda). */
+const SHOW_HEADER_ACTION_HINTS = true;
 
 export default function BandDashboard() {
   const router = useRouter();
@@ -21,6 +25,11 @@ export default function BandDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [isAdminUser, setIsAdminUser] = useState(false);
   const [busyDates, setBusyDates] = useState([]);
+  /** Datumi ručno označeni kao zauzeti (BusyDate) — njih bend može ponovo osloboditi klikom */
+  const [manualBusyKeys, setManualBusyKeys] = useState([]);
+  /** `{ id, op: 'patch' | 'delete' }` dok traje API poziv */
+  const [bookingMutation, setBookingMutation] = useState(null);
+  const [bookingActionError, setBookingActionError] = useState('');
 
   useEffect(() => {
     let cancelled = false;
@@ -69,6 +78,7 @@ export default function BandDashboard() {
         if (cancelled) return;
         setBookings(bookingsList);
         setBusyDates(calendarData.allBusy || []);
+        setManualBusyKeys((calendarData.busyDates || []).map((b) => dateToCalendarKeyUTC(b.date)));
         setStats([
           { label: 'Digitalni Repertoar', value: String(bandData._count?.songs ?? 0), icon: Music },
           { label: 'Novi Upiti', value: bookingsList.filter(b => b.status === 'PENDING').length, icon: Bell },
@@ -87,20 +97,85 @@ export default function BandDashboard() {
     };
   }, [router]);
 
+  const refreshDashboardBookings = async (id) => {
+    if (!id) return;
+    const [bookingsRes, calendarRes] = await Promise.all([
+      fetch(`/api/bookings?bandId=${encodeURIComponent(id)}`, { cache: 'no-store' }),
+      fetch(`/api/bands/calendar?bandId=${encodeURIComponent(id)}`, { cache: 'no-store' }),
+    ]);
+    const bookingsData = await bookingsRes.json();
+    const calendarData = await calendarRes.json();
+    const list = Array.isArray(bookingsData) ? bookingsData : [];
+    setBookings(list);
+    setBusyDates(calendarData.allBusy || []);
+    setManualBusyKeys((calendarData.busyDates || []).map((b) => dateToCalendarKeyUTC(b.date)));
+    setStats((prev) =>
+      prev.map((stat) =>
+        stat.label === 'Novi Upiti'
+          ? { ...stat, value: String(list.filter((b) => b.status === 'PENDING').length) }
+          : stat
+      )
+    );
+  };
+
+  const patchBooking = async (bookingId, action) => {
+    if (!bandId || !bookingId) return;
+    setBookingActionError('');
+    setBookingMutation({ id: bookingId, op: 'patch' });
+    try {
+      const res = await fetch(`/api/bookings/${encodeURIComponent(bookingId)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || 'Akcija nije uspela.');
+      await refreshDashboardBookings(bandId);
+    } catch (e) {
+      setBookingActionError(e.message || 'Greška.');
+    } finally {
+      setBookingMutation(null);
+    }
+  };
+
+  const deleteBooking = async (bookingId) => {
+    if (!bandId || !bookingId) return;
+    if (!window.confirm('Da li ste sigurni da želite da obrišete ovu rezervaciju? Ova radnja se ne može poništiti.')) {
+      return;
+    }
+    setBookingActionError('');
+    setBookingMutation({ id: bookingId, op: 'delete' });
+    try {
+      const res = await fetch(`/api/bookings/${encodeURIComponent(bookingId)}`, { method: 'DELETE' });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || 'Brisanje nije uspelo.');
+      await refreshDashboardBookings(bandId);
+    } catch (e) {
+      setBookingActionError(e.message || 'Greška pri brisanju.');
+    } finally {
+      setBookingMutation(null);
+    }
+  };
+
   const handleToggleBusy = async (date) => {
     if (!bandId) return;
     try {
       const resp = await fetch('/api/bands/calendar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ bandId, date, action: 'TOGGLE' })
+        body: JSON.stringify({ bandId, date, action: 'TOGGLE' }),
       });
       const data = await resp.json();
-      if (data.isBusy) {
-        setBusyDates((prev) => [...prev, date]);
-      } else {
-        setBusyDates((prev) => prev.filter((d) => d !== date));
+      if (!resp.ok) {
+        console.error(data?.error || 'Kalendar');
+        return;
       }
+      const calRes = await fetch(`/api/bands/calendar?bandId=${encodeURIComponent(bandId)}`, {
+        cache: 'no-store',
+      });
+      const calData = await calRes.json();
+      setBusyDates(calData.allBusy || []);
+      setManualBusyKeys((calData.busyDates || []).map((b) => dateToCalendarKeyUTC(b.date)));
     } catch (err) {
       console.error(err);
     }
@@ -196,29 +271,54 @@ export default function BandDashboard() {
           <p className="text-muted">Dobrodošli nazad. Imate {(Array.isArray(bookings) ? bookings : []).filter(b => b.status === 'PENDING').length} novih upita.</p>
         </div>
         <div className="header-actions">
-          <Link href="/bands/profile">
-            <button className="btn btn-secondary">
-              <Pencil size={18} style={{ marginRight: '8px' }} /> Moj Profil
+          <div className="header-action-item">
+            <Link href="/bands/profile">
+              <button type="button" className="btn btn-secondary">
+                <Pencil size={18} style={{ marginRight: '8px' }} /> Moj Profil
+              </button>
+            </Link>
+            {SHOW_HEADER_ACTION_HINTS && (
+              <span className="action-caption">Javni profil, slike, video i opis</span>
+            )}
+          </div>
+          <div className="header-action-item">
+            <button type="button" className="btn btn-secondary" onClick={() => setShowQr(true)}>
+              <QrCode size={18} style={{ marginRight: '8px' }} /> Vaš QR Kod
             </button>
-          </Link>
-          <button className="btn btn-secondary" onClick={() => setShowQr(true)}>
-            <QrCode size={18} style={{ marginRight: '8px' }} /> Vaš QR Kod
-          </button>
-          <Link href="/bands/pesmarica">
-            <button className="btn btn-secondary">
-              <BookOpen size={18} style={{ marginRight: '8px' }} /> Pesmarica
-            </button>
-          </Link>
-          <Link href="/bands/midi">
-            <button className="btn btn-secondary">
-              <FileMusic size={18} style={{ marginRight: '8px' }} /> MIDI Fajlovi
-            </button>
-          </Link>
-          <Link href="/bands/live">
-            <button className="btn btn-primary">
-              <Play size={18} style={{ marginRight: '8px' }} /> Pokreni Nastup
-            </button>
-          </Link>
+            {SHOW_HEADER_ACTION_HINTS && (
+              <span className="action-caption">QR za goste — brz pristup linku</span>
+            )}
+          </div>
+          <div className="header-action-item">
+            <Link href="/bands/pesmarica">
+              <button type="button" className="btn btn-secondary">
+                <BookOpen size={18} style={{ marginRight: '8px' }} /> Pesmarica
+              </button>
+            </Link>
+            {SHOW_HEADER_ACTION_HINTS && (
+              <span className="action-caption">Tekstovi i akordi za setlistu</span>
+            )}
+          </div>
+          <div className="header-action-item">
+            <Link href="/bands/midi">
+              <button type="button" className="btn btn-secondary">
+                <FileMusic size={18} style={{ marginRight: '8px' }} /> MIDI Fajlovi
+              </button>
+            </Link>
+            {SHOW_HEADER_ACTION_HINTS && (
+              <span className="action-caption">Biblioteka i upload MIDI fajlova</span>
+            )}
+          </div>
+          <div className="header-action-item">
+            <Link href="/bands/live">
+              <button type="button" className="btn btn-primary">
+                <Play size={18} style={{ marginRight: '8px' }} /> Pokreni Nastup
+              </button>
+            </Link>
+            {SHOW_HEADER_ACTION_HINTS && (
+              <span className="action-caption action-caption-primary">Live zahtevi pesama</span>
+            )}
+          </div>
         </div>
       </header>
 
@@ -288,27 +388,120 @@ export default function BandDashboard() {
 
         <section className="upcoming-bookings glass-card">
           <h3>Predstojeći Upiti & Rezervacije</h3>
+          {bookingActionError ? (
+            <p className="booking-action-error" role="alert">
+              {bookingActionError}
+            </p>
+          ) : null}
           <div className="booking-list">
             {bookings.length > 0 ? bookings.map(booking => {
               const bDate = new Date(booking.date);
               const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAJ', 'JUN', 'JUL', 'AVG', 'SEP', 'OKT', 'NOV', 'DEC'];
+              const isConfirmed = booking.status === 'CONFIRMED';
+              const busy = bookingMutation?.id === booking.id;
+              const busyPatch = busy && bookingMutation?.op === 'patch';
+              const busyDelete = busy && bookingMutation?.op === 'delete';
+              const canPrihvati =
+                booking.status === 'PENDING' || booking.status === 'CONFIRMED';
+              const canOdbij = ['PENDING', 'BAND_ACCEPTED', 'CONFIRMED'].includes(booking.status);
               return (
                 <div key={booking.id} className="booking-item">
-                  <div className="date-box">
-                    <span className="month">{months[bDate.getMonth()]}</span>
-                    <span className="day">{bDate.getDate()}</span>
+                  <div className="booking-item-row">
+                    <div className="date-box">
+                      <span className="month">{months[bDate.getMonth()]}</span>
+                      <span className="day">{bDate.getDate()}</span>
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p className="venue">{booking.location || 'Privatna proslava'}</p>
+                      <p className="status text-muted">
+                        {booking.status === 'PENDING'
+                          ? 'Novo • '
+                          : booking.status === 'BAND_ACCEPTED'
+                            ? 'Prihvaćeno od benda • čeka administraciju • '
+                            : booking.status === 'CONFIRMED'
+                              ? 'Potvrđeno od administracije • '
+                              : booking.status === 'COMPLETED'
+                                ? 'Završeno • '
+                                : booking.status === 'CANCELLED'
+                                  ? 'Otkazano • '
+                                  : `${booking.status} • `}
+                        {booking.clientName}
+                      </p>
+                      {booking.status === 'PENDING' && (
+                        <p className="booking-hint text-muted">
+                          Poruka i kontakt klijenta vide se ovde nakon admin potvrde.
+                        </p>
+                      )}
+                      {booking.status === 'BAND_ACCEPTED' && (
+                        <p className="booking-hint text-muted">
+                          Poruka i kontakt klijenta biće vidljivi kada administrator potvrdi rezervaciju.
+                        </p>
+                      )}
+                    </div>
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <p className="venue">{booking.location || 'Privatna proslava'}</p>
-                    <p className="status text-muted">
-                      {booking.status === 'PENDING' ? 'Novo • ' : 'Potvrđeno • '}
-                      {booking.clientName}
-                    </p>
-                  </div>
-                  <div className="booking-actions">
-                    {booking.status === 'PENDING' && (
-                      <button className="btn btn-sm btn-primary">Prihvati</button>
-                    )}
+                  {isConfirmed && (
+                    <div className="booking-confirmed-block">
+                      <p className="booking-confirmed-label">
+                        <MessageSquare size={14} /> Poruka klijenta
+                      </p>
+                      {booking.message ? (
+                        <p className="booking-message">{booking.message}</p>
+                      ) : (
+                        <p className="booking-message muted">Bez dodatne poruke.</p>
+                      )}
+                      <div className="booking-contact-row">
+                        {booking.clientEmail ? (
+                          <a href={`mailto:${booking.clientEmail}`} className="booking-contact-link">
+                            <Mail size={14} /> {booking.clientEmail}
+                          </a>
+                        ) : null}
+                        {booking.clientPhone ? (
+                          <a href={`tel:${String(booking.clientPhone).replace(/\s/g, '')}`} className="booking-contact-link">
+                            <Phone size={14} /> {booking.clientPhone}
+                          </a>
+                        ) : null}
+                      </div>
+                    </div>
+                  )}
+                  <div className="booking-item-actions">
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-primary"
+                      disabled={!canPrihvati || busy}
+                      title={
+                        booking.status === 'BAND_ACCEPTED'
+                          ? 'Već ste prihvatili upit — čeka se potvrda administratora.'
+                          : booking.status === 'COMPLETED' || booking.status === 'CANCELLED'
+                            ? 'Nije dostupno u ovom statusu.'
+                            : booking.status === 'CONFIRMED'
+                              ? 'Označava rezervaciju kao završenu (održan nastup).'
+                              : 'Prihvata novi upit.'
+                      }
+                      onClick={() => {
+                        if (booking.status === 'PENDING') patchBooking(booking.id, 'accept');
+                        else if (booking.status === 'CONFIRMED') patchBooking(booking.id, 'complete');
+                      }}
+                    >
+                      {busyPatch ? 'Čuvanje...' : 'Prihvati'}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-secondary"
+                      disabled={!canOdbij || busy}
+                      title="Otkazuje rezervaciju (status: otkazano)."
+                      onClick={() => patchBooking(booking.id, 'reject')}
+                    >
+                      {busyPatch ? 'Čuvanje...' : 'Odbij'}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-secondary booking-btn-danger"
+                      disabled={busy}
+                      title="Trajno briše rezervaciju sa liste."
+                      onClick={() => deleteBooking(booking.id)}
+                    >
+                      {busyDelete ? 'Brisanje...' : 'Obriši'}
+                    </button>
                   </div>
                 </div>
               );
@@ -324,6 +517,7 @@ export default function BandDashboard() {
           <BookingCalendar 
             bandId={bandId}
             busyDates={busyDates}
+            manualBusyDateKeys={manualBusyKeys}
             onDateSelect={handleToggleBusy}
           />
         </section>
@@ -360,10 +554,16 @@ export default function BandDashboard() {
         .repertoire-preview, .upcoming-bookings, .calendar-management { padding: 2rem; border: 1px solid var(--border); }
         .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
         .section-header h3 { font-size: 1.35rem; }
+        .booking-action-error {
+          color: #f87171;
+          font-size: 0.88rem;
+          font-weight: 600;
+          margin: 0 0 1rem;
+        }
         
         .song-list, .booking-list { display: flex; flex-direction: column; gap: 1.25rem; }
         
-        .song-item, .booking-item { 
+        .song-item { 
           display: flex; 
           align-items: center; 
           justify-content: space-between; 
@@ -371,6 +571,85 @@ export default function BandDashboard() {
           background: rgba(255,255,255,0.01);
           border: 1px solid var(--border);
           border-radius: var(--radius-md);
+        }
+        .booking-item {
+          display: flex;
+          flex-direction: column;
+          align-items: stretch;
+          gap: 1rem;
+          padding: 1.5rem;
+          background: rgba(255,255,255,0.01);
+          border: 1px solid var(--border);
+          border-radius: var(--radius-md);
+        }
+        .booking-item-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 1rem;
+        }
+        .booking-hint {
+          font-size: 0.78rem;
+          margin-top: 0.45rem;
+          margin-bottom: 0;
+          line-height: 1.35;
+        }
+        .booking-confirmed-block {
+          padding-top: 1rem;
+          border-top: 1px solid var(--border);
+        }
+        .booking-confirmed-label {
+          display: flex;
+          align-items: center;
+          gap: 0.4rem;
+          font-size: 0.68rem;
+          font-weight: 800;
+          text-transform: uppercase;
+          letter-spacing: 0.06em;
+          color: var(--accent-primary);
+          margin: 0 0 0.5rem;
+        }
+        .booking-message {
+          margin: 0 0 0.75rem;
+          white-space: pre-wrap;
+          font-size: 0.92rem;
+          line-height: 1.45;
+          color: var(--text, #e2e8f0);
+        }
+        .booking-message.muted {
+          color: var(--text-muted);
+          font-style: italic;
+        }
+        .booking-contact-row {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.65rem 1rem;
+        }
+        .booking-contact-link {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.35rem;
+          font-size: 0.82rem;
+          font-weight: 700;
+          color: var(--accent-primary);
+          text-decoration: none;
+        }
+        .booking-contact-link:hover { text-decoration: underline; }
+        .booking-item-actions {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.6rem;
+          padding-top: 1rem;
+          margin-top: 0.25rem;
+          border-top: 1px solid var(--border);
+        }
+        .booking-item-actions :global(.btn) { min-height: 40px; }
+        .booking-btn-danger {
+          border-color: rgba(248, 113, 113, 0.45) !important;
+          color: #f87171 !important;
+        }
+        .booking-btn-danger:hover:not(:disabled) {
+          background: rgba(248, 113, 113, 0.12) !important;
         }
         .song-title { font-weight: 700; font-size: 1.1rem; }
         .tonality-badge { 
@@ -413,30 +692,58 @@ export default function BandDashboard() {
         .header-actions {
           display: flex;
           flex-wrap: wrap;
-          gap: 0.75rem;
-          align-items: stretch;
+          gap: 0.85rem 1rem;
+          align-items: flex-start;
           justify-content: flex-end;
           max-width: 100%;
+        }
+        .header-action-item {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 0.4rem;
+          min-width: 0;
+          flex: 0 1 auto;
+        }
+        .header-action-item :global(a) {
+          display: block;
+          width: 100%;
+          text-decoration: none;
+        }
+        .header-action-item :global(.btn) {
+          width: 100%;
+          justify-content: center;
+          white-space: nowrap;
+        }
+        .action-caption {
+          font-size: 0.68rem;
+          line-height: 1.3;
+          color: var(--text-muted, #64748b);
+          text-align: center;
+          max-width: 10.5rem;
+          font-weight: 500;
+          letter-spacing: 0.02em;
+        }
+        .action-caption-primary {
+          color: var(--text-muted, #64748b);
+          opacity: 0.95;
         }
         @media (max-width: 968px) {
           .header-actions {
             justify-content: stretch;
             width: 100%;
           }
-          .header-actions :global(a) {
-            flex: 1 1 calc(50% - 0.375rem);
+          .header-action-item {
+            flex: 1 1 calc(50% - 0.5rem);
             min-width: 0;
-            display: flex;
           }
-          .header-actions :global(button) {
-            width: 100%;
+          .header-action-item :global(.btn) {
             min-height: 48px;
-            justify-content: center;
           }
         }
         @media (max-width: 520px) {
           .dashboard-container { padding-top: 7.5rem; }
-          .header-actions :global(a) {
+          .header-action-item {
             flex: 1 1 100%;
           }
         }

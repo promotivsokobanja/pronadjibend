@@ -1,6 +1,10 @@
 import '../styles/globals.css';
 import { Inter, Montserrat } from 'next/font/google';
 import StrictModeProvider from '@/components/providers/StrictModeProvider';
+import { getSiteUrl } from '@/lib/siteUrl';
+
+const siteUrl = getSiteUrl();
+const siteOrigin = new URL(siteUrl);
 
 const inter = Inter({
   subsets: ['latin'],
@@ -14,8 +18,10 @@ const montserrat = Montserrat({
   display: 'swap',
 });
 
+const googleVerify = process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION;
+
 export const metadata = {
-  metadataBase: new URL('https://pronadjibend.rs'),
+  metadataBase: siteOrigin,
   title: {
     default: 'Pronađi Bend – Najbolja Živa Muzika za Svadbe, Hotele i Proslave | Srbija',
     template: '%s | Pronađi Bend',
@@ -45,7 +51,7 @@ export const metadata = {
   openGraph: {
     type: 'website',
     locale: 'sr_RS',
-    url: 'https://pronadjibend.rs',
+    url: siteUrl,
     siteName: 'Pronađi Bend',
     title: 'Pronađi Bend – Najbolja Živa Muzika za Svadbe, Hotele i Proslave',
     description:
@@ -70,12 +76,12 @@ export const metadata = {
     icon: '/favicon.ico',
     apple: '/favicon.ico',
   },
-  verification: {
-    google: 'GOOGLE_SITE_VERIFICATION_TOKEN',
-  },
-  other: {
-    'google-site-verification': 'GOOGLE_SITE_VERIFICATION_TOKEN',
-  },
+  ...(googleVerify
+    ? {
+        verification: { google: googleVerify },
+        other: { 'google-site-verification': googleVerify },
+      }
+    : {}),
 };
 
 export const viewport = {

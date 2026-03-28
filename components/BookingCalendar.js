@@ -1,17 +1,52 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Info } from 'lucide-react';
+import { cellCalendarKey, dateToCalendarKeyUTC } from '../lib/calendarDate';
 
-export default function BookingCalendar({ bandId, onDateSelect, selectedDate, busyDates = [], basePrice = 500 }) {
+/** Maks. dana u jednom upitu (isti limit kao na API-ju) */
+const MAX_CLIENT_SELECTABLE_DATES = 14;
+
+function normalizeBusyKey(d) {
+  if (d == null || d === '') return '';
+  if (typeof d === 'string') {
+    const s = d.split('T')[0];
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+    return dateToCalendarKeyUTC(d);
+  }
+  if (d && d.date) return dateToCalendarKeyUTC(d.date);
+  if (d instanceof Date) return dateToCalendarKeyUTC(d);
+  return '';
+}
+
+/**
+ * Kada je prosleđeno (bend panel): svi `busyDates` su vizuelno zauzeti, ali se klik na zauzeti
+ * datum dozvoljava samo ako je u `manualBusyDateKeys` (ručni BusyDate) — da bi se mogao skloniti.
+ * Javna strana za rezervaciju: ne prosleđuj `manualBusyDateKeys` — zauzeti datumi nisu klikabilni.
+ */
+export default function BookingCalendar({
+  bandId,
+  onDateSelect,
+  selectedDate,
+  /** Više dana (javna rezervacija): niz YYYY-MM-DD */
+  multiSelect = false,
+  selectedDates,
+  onDatesChange,
+  busyDates = [],
+  manualBusyDateKeys,
+  basePrice = 500,
+}) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [days, setDays] = useState([]);
 
   const generateDays = useCallback(() => {
-    const normalizedBusy = (Array.isArray(busyDates) ? busyDates : []).map((d) => {
-      if (typeof d === 'string') return d.split('T')[0];
-      if (d.date) return new Date(d.date).toISOString().split('T')[0];
-      return d.toISOString().split('T')[0];
-    });
+    const bandMode = manualBusyDateKeys !== undefined;
+    const normalizedManual = bandMode
+      ? (Array.isArray(manualBusyDateKeys) ? manualBusyDateKeys : []).map((k) => normalizeBusyKey(k))
+      : [];
+
+    const normalizedBusy = (Array.isArray(busyDates) ? busyDates : [])
+      .map((d) => normalizeBusyKey(d))
+      .filter(Boolean);
 
     const startOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
     const endOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
@@ -26,23 +61,37 @@ export default function BookingCalendar({ bandId, onDateSelect, selectedDate, bu
       daysArr.push({ day: null });
     }
 
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    const y = currentMonth.getFullYear();
+    const mo = currentMonth.getMonth();
+
     for (let i = 1; i <= totalDays; i++) {
-      const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), i);
-      const dateStr = date.toISOString().split('T')[0];
+      const date = new Date(y, mo, i);
+      const dateStr = cellCalendarKey(y, mo, i);
       const isBusy = normalizedBusy.includes(dateStr);
-      const isPast = date < new Date().setHours(0, 0, 0, 0);
+      const isPast = date < todayStart;
+      const isManualBusy = bandMode && isBusy && normalizedManual.includes(dateStr);
+      const isLockedBusy = bandMode && isBusy && !isManualBusy;
+
+      const isSelected = multiSelect
+        ? Array.isArray(selectedDates) && selectedDates.includes(dateStr)
+        : selectedDate === dateStr;
 
       daysArr.push({
         day: i,
         date: dateStr,
         isBusy,
         isPast,
-        isSelected: selectedDate === dateStr,
+        isManualBusy,
+        isLockedBusy,
+        isSelected,
       });
     }
 
     setDays(daysArr);
-  }, [currentMonth, busyDates, selectedDate]);
+  }, [currentMonth, busyDates, selectedDate, selectedDates, multiSelect, manualBusyDateKeys]);
 
   useEffect(() => {
     generateDays();
@@ -52,8 +101,28 @@ export default function BookingCalendar({ bandId, onDateSelect, selectedDate, bu
   const prevMonth = () => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1));
 
   const handleSelect = (dayObj) => {
-    if (dayObj.isBusy || dayObj.isPast || !dayObj.day) return;
-    onDateSelect(dayObj.date);
+    if (!dayObj.day || dayObj.isPast) return;
+    if (dayObj.isLockedBusy) return;
+    /* Zauzeti dani (bend ih je označio ili postoji potvrđena rezervacija) — nisu klikabilni */
+    if (dayObj.isBusy && manualBusyDateKeys === undefined) return;
+
+    if (multiSelect && onDatesChange) {
+      const cur = Array.isArray(selectedDates) ? selectedDates : [];
+      const key = dayObj.date;
+      if (cur.includes(key)) {
+        onDatesChange(cur.filter((k) => k !== key));
+        return;
+      }
+      if (cur.length >= MAX_CLIENT_SELECTABLE_DATES) return;
+      onDatesChange([...cur, key].sort());
+      return;
+    }
+
+    if (manualBusyDateKeys === undefined && dayObj.isSelected) {
+      onDateSelect?.(null);
+      return;
+    }
+    onDateSelect?.(dayObj.date);
   };
 
   const monthsSR = [
@@ -62,7 +131,7 @@ export default function BookingCalendar({ bandId, onDateSelect, selectedDate, bu
   ];
 
   return (
-    <div className="calendar-card">
+    <div className={`calendar-card${manualBusyDateKeys !== undefined ? ' band-toggle-mode' : ''}`}>
       <div className="calendar-header">
         <h3>{monthsSR[currentMonth.getMonth()]} {currentMonth.getFullYear()}</h3>
         <div className="calendar-nav">
@@ -81,8 +150,18 @@ export default function BookingCalendar({ bandId, onDateSelect, selectedDate, bu
             className={`calendar-day 
                 ${!d.day ? 'empty' : ''} 
                 ${d.isBusy ? 'busy' : ''} 
+                ${d.isLockedBusy ? 'busy-locked' : ''} 
                 ${d.isPast ? 'past' : ''} 
                 ${d.isSelected ? 'selected' : ''}`}
+            title={
+              d.day && d.isBusy && manualBusyDateKeys === undefined
+                ? 'Zauzeto — nije moguće rezervisati'
+                : d.day && manualBusyDateKeys === undefined && d.isSelected
+                  ? multiSelect
+                    ? 'Kliknite da uklonite ovaj dan iz izbora'
+                    : 'Kliknite ponovo da uklonite izbor datuma'
+                  : undefined
+            }
             onClick={() => handleSelect(d)}
           >
             {d.day}
@@ -90,23 +169,36 @@ export default function BookingCalendar({ bandId, onDateSelect, selectedDate, bu
         ))}
       </div>
 
-      {selectedDate && (
-        <div className="booking-summary">
-          <div className="summary-row">
-            <span>Osnovna cena</span>
-            <span>{basePrice}€</span>
+      {(() => {
+        const n = multiSelect
+          ? Array.isArray(selectedDates)
+            ? selectedDates.length
+            : 0
+          : selectedDate
+            ? 1
+            : 0;
+        if (n === 0) return null;
+        const line = (label, totalEur) => (
+          <div className="summary-row" key={label}>
+            <span>
+              {label}
+              {n > 1 ? ` × ${n}` : ''}
+            </span>
+            <span>{totalEur}€</span>
           </div>
-          <div className="summary-row">
-            <span>Rezervacija (Instant)</span>
-            <span>50€</span>
+        );
+        return (
+          <div className="booking-summary">
+            {line('Osnovna cena', basePrice * n)}
+            {line('Rezervacija (Instant)', 50 * n)}
+            <div className="summary-total">
+              <span>Ukupno ({n} {n === 1 ? 'dan' : 'dana'})</span>
+              <span>{(basePrice + 50) * n}€</span>
+            </div>
+            <p className="summary-note"><Info size={12}/> Cena može varirati zavisno od lokacije.</p>
           </div>
-          <div className="summary-total">
-            <span>Ukupno</span>
-            <span>{basePrice + 50}€</span>
-          </div>
-          <p className="summary-note"><Info size={12}/> Cena može varirati zavisno od lokacije.</p>
-        </div>
-      )}
+        );
+      })()}
 
       <style jsx>{`
         .calendar-card { 
@@ -178,12 +270,34 @@ export default function BookingCalendar({ bandId, onDateSelect, selectedDate, bu
         .calendar-day:hover:not(.empty):not(.past):not(.busy) { 
           background: #f1f5f9; 
         }
+        .band-toggle-mode .calendar-day.busy:not(.busy-locked):hover:not(.empty):not(.past) {
+          background: #eef2ff;
+        }
         
         .past { color: #cbd5e1; cursor: not-allowed; }
-        .busy { 
-          text-decoration: line-through; 
-          color: #cbd5e1; 
-          cursor: not-allowed; 
+        .calendar-day.busy {
+          background: linear-gradient(160deg, #e2e8f0 0%, #cbd5e1 100%);
+          color: #475569;
+          font-weight: 800;
+          border: 1px solid #94a3b8;
+          text-decoration: line-through;
+          text-decoration-thickness: 2px;
+          text-decoration-color: #64748b;
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+        }
+        .band-toggle-mode .calendar-day.busy:not(.busy-locked) {
+          cursor: pointer;
+          background: linear-gradient(160deg, #e0e7ff 0%, #c7d2fe 100%);
+          color: #312e81;
+          border-color: #818cf8;
+          text-decoration-color: #4f46e5;
+        }
+        .busy-locked {
+          cursor: not-allowed !important;
+          background: linear-gradient(160deg, #f1f5f9 0%, #e2e8f0 100%) !important;
+          color: #64748b !important;
+          border-color: #cbd5e1 !important;
+          text-decoration-color: #94a3b8 !important;
         }
         
         .selected { 
@@ -191,6 +305,12 @@ export default function BookingCalendar({ bandId, onDateSelect, selectedDate, bu
           color: white !important; 
           font-weight: 700;
           box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+        }
+        .calendar-card:not(.band-toggle-mode) .calendar-day.selected {
+          cursor: pointer;
+        }
+        .calendar-card:not(.band-toggle-mode) .calendar-day.selected:hover {
+          filter: brightness(1.08);
         }
 
         .booking-summary {

@@ -1,3 +1,5 @@
+import { getSiteUrl } from '@/lib/siteUrl';
+
 export default function JsonLd({ data }) {
   return (
     <script
@@ -8,13 +10,14 @@ export default function JsonLd({ data }) {
 }
 
 export function OrganizationSchema() {
+  const site = getSiteUrl();
   const data = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
     name: 'Pronađi Bend',
     alternateName: 'PronadjiBend',
-    url: 'https://pronadjibend.rs',
-    logo: 'https://pronadjibend.rs/images/logo.png',
+    url: site,
+    logo: `${site}/images/logo.png`,
     description:
       'Vodeća digitalna platforma za iznajmljivanje bendova i muzičara u Srbiji. Pronađite savršen bend za svadbu, restoran, hotel ili proslavu.',
     foundingDate: '2025',
@@ -40,6 +43,7 @@ export function OrganizationSchema() {
 }
 
 export function ServiceSchema() {
+  const site = getSiteUrl();
   const data = {
     '@context': 'https://schema.org',
     '@type': 'Service',
@@ -47,7 +51,7 @@ export function ServiceSchema() {
     provider: {
       '@type': 'Organization',
       name: 'Pronađi Bend',
-      url: 'https://pronadjibend.rs',
+      url: site,
     },
     serviceType: 'Entertainment',
     description:
@@ -91,17 +95,18 @@ export function ServiceSchema() {
 }
 
 export function WebSiteSchema() {
+  const site = getSiteUrl();
   const data = {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     name: 'Pronađi Bend',
-    url: 'https://pronadjibend.rs',
+    url: site,
     description: 'Platforma za iznajmljivanje bendova i muzičara u Srbiji',
     potentialAction: {
       '@type': 'SearchAction',
       target: {
         '@type': 'EntryPoint',
-        urlTemplate: 'https://pronadjibend.rs/clients?search={search_term_string}',
+        urlTemplate: `${site}/clients?search={search_term_string}`,
       },
       'query-input': 'required name=search_term_string',
     },
@@ -126,13 +131,20 @@ export function FAQSchema({ faqs }) {
 }
 
 export function BandSchema({ band }) {
+  const site = getSiteUrl();
+  const rawImg = band.img && String(band.img).trim();
+  const imageUrl = rawImg
+    ? rawImg.startsWith('http')
+      ? rawImg
+      : `${site}${rawImg.startsWith('/') ? '' : '/'}${rawImg}`
+    : `${site}/images/logo.png`;
   const data = {
     '@context': 'https://schema.org',
     '@type': 'MusicGroup',
     name: band.name,
     genre: band.genre,
     description: band.bio || `${band.name} — ${band.genre} bend iz grada ${band.location}`,
-    image: band.img || 'https://pronadjibend.rs/images/logo.png',
+    image: imageUrl,
     location: {
       '@type': 'Place',
       address: {
@@ -141,7 +153,7 @@ export function BandSchema({ band }) {
         addressCountry: 'RS',
       },
     },
-    url: `https://pronadjibend.rs/clients/band/${band.id}`,
+    url: `${site}/clients/band/${band.id}`,
     ...(band.rating > 0 && {
       aggregateRating: {
         '@type': 'AggregateRating',

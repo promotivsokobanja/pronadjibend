@@ -3,7 +3,9 @@
 import { Music } from 'lucide-react';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
 import BandCard from '../../../components/BandCard';
+import BandCardSkeleton from '../../../components/BandCardSkeleton';
 import { useClientSearch } from '../../../components/clients/ClientSearchContext';
 
 export default function ClientSearchClient() {
@@ -128,35 +130,49 @@ export default function ClientSearchClient() {
         </div>
 
         {isLoading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="h-12 w-12 animate-spin rounded-full border-4 border-slate-200 border-t-[#007AFF]" />
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 sm:gap-7 lg:grid-cols-3 lg:gap-8">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <BandCardSkeleton key={i} />
+            ))}
           </div>
         ) : bands.length > 0 ? (
           <>
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 sm:gap-7 lg:grid-cols-3 lg:gap-8">
-              {visibleBands.map((band) => (
-                <BandCard key={band.id} band={band} />
+              {visibleBands.map((band, i) => (
+                <motion.div
+                  key={`${currentPage}-${band.id}`}
+                  initial={{ opacity: 0, y: 14 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: '-32px' }}
+                  transition={{
+                    duration: 0.4,
+                    delay: Math.min(i * 0.05, 0.2),
+                    ease: [0.16, 1, 0.3, 1],
+                  }}
+                >
+                  <BandCard band={band} priority={currentPage === 1 && i === 0} />
+                </motion.div>
               ))}
             </div>
-            <div className="mt-10 flex flex-wrap items-center justify-center gap-3 px-1">
+            <div className="mt-10 flex flex-col items-stretch gap-4 px-1 sm:flex-row sm:flex-wrap sm:items-center sm:justify-center sm:gap-4">
               <button
                 type="button"
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                className="min-h-11 rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-700 shadow-sm disabled:cursor-not-allowed disabled:opacity-40"
+                className="min-h-12 rounded-full border border-slate-200 bg-white px-6 py-3 text-sm font-bold text-slate-700 shadow-sm disabled:cursor-not-allowed disabled:opacity-40 sm:min-h-11 sm:px-5 sm:py-2.5"
               >
-                Prethodna
+                Prethodna strana
               </button>
-              <span className="order-first w-full text-center text-sm font-semibold text-slate-500 sm:order-none sm:w-auto">
-                Strana {currentPage} / {totalPages}
+              <span className="order-first text-center text-sm font-semibold text-slate-500 sm:order-none">
+                Strana {currentPage} od {totalPages}
               </span>
               <button
                 type="button"
                 disabled={currentPage === totalPages}
                 onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                className="min-h-11 rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-700 shadow-sm disabled:cursor-not-allowed disabled:opacity-40"
+                className="min-h-12 rounded-full border border-slate-200 bg-white px-6 py-3 text-sm font-bold text-slate-700 shadow-sm disabled:cursor-not-allowed disabled:opacity-40 sm:min-h-11 sm:px-5 sm:py-2.5"
               >
-                Sledeća
+                Sledeća strana
               </button>
             </div>
           </>

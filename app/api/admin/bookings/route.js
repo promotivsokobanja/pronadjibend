@@ -23,7 +23,8 @@ export async function GET(request) {
 
   try {
     const where =
-      status && ['PENDING', 'CONFIRMED', 'CANCELLED', 'COMPLETED'].includes(status)
+      status &&
+      ['PENDING', 'BAND_ACCEPTED', 'CONFIRMED', 'CANCELLED', 'COMPLETED'].includes(status)
         ? { status }
         : {};
 
@@ -65,7 +66,7 @@ export async function GET(request) {
   }
 }
 
-const STATUSES = new Set(['PENDING', 'CONFIRMED', 'CANCELLED', 'COMPLETED']);
+const STATUSES = new Set(['PENDING', 'BAND_ACCEPTED', 'CONFIRMED', 'CANCELLED', 'COMPLETED']);
 
 export async function PATCH(request) {
   const gate = await requireAdmin(request);

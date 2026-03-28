@@ -1,6 +1,7 @@
 import BandProfileClient from './BandProfileClient';
 import { BandSchema } from '@/components/JsonLd';
 import { getDemoBands } from '@/lib/demoBands';
+import { getSiteUrl } from '@/lib/siteUrl';
 
 function findDemoBand(id) {
   try {
@@ -13,7 +14,8 @@ function findDemoBand(id) {
 
 async function fetchBandFromAPI(id) {
   try {
-    const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://pronadjibend.rs';
+    const baseUrl =
+      process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_BASE_URL || getSiteUrl();
     const res = await fetch(`${baseUrl}/api/bands/show/${id}`, { next: { revalidate: 3600 } });
     if (!res.ok) return null;
     return await res.json();
@@ -36,6 +38,7 @@ export async function generateMetadata({ params }) {
     };
   }
 
+  const site = getSiteUrl();
   const title = `${band.name} — ${band.genre} Bend za Svadbe i Proslave | ${band.location}`;
   const description = band.bio
     || `${band.name} je ${band.genre} bend iz grada ${band.location}. Rezervišite nastup za svadbu, proslavu ili korporativni event. Ocena: ${band.rating}/5.`;
@@ -47,7 +50,7 @@ export async function generateMetadata({ params }) {
     openGraph: {
       title: `${band.name} — ${band.genre} | Pronađi Bend`,
       description,
-      url: `https://pronadjibend.rs/clients/band/${id}`,
+      url: `${site}/clients/band/${id}`,
       images: band.img
         ? [{ url: band.img, width: 1200, height: 630, alt: `${band.name} — ${band.genre} bend` }]
         : [{ url: '/images/og-cover.png', width: 1200, height: 630, alt: 'Pronađi Bend' }],

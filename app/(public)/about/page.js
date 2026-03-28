@@ -1,4 +1,7 @@
 import AboutClient from './AboutClient';
+import { getSiteUrl } from '@/lib/siteUrl';
+
+const siteUrl = getSiteUrl();
 
 export const metadata = {
   title: 'O Nama — Pronađi Bend | Platforma za Iznajmljivanje Bendova u Srbiji',
@@ -8,7 +11,7 @@ export const metadata = {
   openGraph: {
     title: 'O Nama — Pronađi Bend',
     description: 'Digitalni most između muzičara i najboljih lokala u Srbiji. 500+ bendova, 1500+ nastupa.',
-    url: 'https://pronadjibend.rs/about',
+    url: `${siteUrl}/about`,
   },
 };
 

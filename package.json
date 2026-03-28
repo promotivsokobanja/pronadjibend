@@ -4,8 +4,9 @@
   "private": true,
   "scripts": {
     "postinstall": "prisma generate",
+    "clean": "node -e \"const fs=require('fs');['.next','node_modules/.cache'].forEach(p=>{try{fs.rmSync(p,{recursive:true,force:true})}catch(e){}})\"",
     "dev": "next dev",
-    "dev:clean": "node -e \"const fs=require('fs');['.next','node_modules/.cache'].forEach(p=>{try{fs.rmSync(p,{recursive:true,force:true})}catch(e){}})\" && next dev",
+    "dev:clean": "npm run clean && next dev",
     "build": "prisma generate && cross-env NEXT_PRIVATE_BUILD_WORKER_COUNT=1 next build",
     "build:next": "next build",
     "db:migrate": "prisma migrate deploy",

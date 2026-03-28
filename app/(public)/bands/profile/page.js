@@ -1,6 +1,6 @@
 'use client';
 
-import { Save, ArrowLeft, Image as ImageIcon, Video } from 'lucide-react';
+import { Save, ArrowLeft, Image as ImageIcon, Video, Mail, Phone, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -26,6 +26,7 @@ export default function BandProfilePage() {
   const [imageProgress, setImageProgress] = useState(0);
   const [videoProgress, setVideoProgress] = useState(0);
   const [adminNoBand, setAdminNoBand] = useState(false);
+  const [confirmedBookings, setConfirmedBookings] = useState([]);
   const imageInputRef = useRef(null);
   const videoInputRef = useRef(null);
 
@@ -53,7 +54,25 @@ export default function BandProfilePage() {
         setAdminNoBand(false);
         setBandId(currentBandId);
 
-        const res = await fetch(`/api/bands/${currentBandId}`);
+        const [res, bookRes] = await Promise.all([
+          fetch(`/api/bands/${currentBandId}`),
+          fetch(`/api/bookings?bandId=${encodeURIComponent(currentBandId)}`),
+        ]);
+
+        if (bookRes.ok) {
+          const books = await bookRes.json();
+          if (Array.isArray(books)) {
+            const confirmed = books
+              .filter((b) => b.status === 'CONFIRMED')
+              .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            setConfirmedBookings(confirmed);
+          } else {
+            setConfirmedBookings([]);
+          }
+        } else {
+          setConfirmedBookings([]);
+        }
+
         if (!res.ok) return;
         const band = await res.json();
         setFormData({
@@ -251,7 +270,58 @@ export default function BandProfilePage() {
             </div>
           </div>
         ) : (
-          <form onSubmit={handleSave} className="profile-card">
+          <>
+            {confirmedBookings.length > 0 && (
+              <section className="profile-card confirmed-msgs">
+                <div className="confirmed-msgs-head">
+                  <MessageSquare size={22} className="confirmed-msgs-icon" />
+                  <div>
+                    <h2>Potvrđeni upiti — poruke klijenata</h2>
+                    <p className="confirmed-msgs-sub">
+                      Pojavljuju se čim administrator potvrdi rezervaciju.
+                    </p>
+                  </div>
+                </div>
+                <ul className="confirmed-list">
+                  {confirmedBookings.map((b) => {
+                    const bDate = new Date(b.date);
+                    const dateStr = bDate.toLocaleDateString('sr-Latn-RS', {
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric',
+                    });
+                    return (
+                      <li key={b.id} className="client-msg-card">
+                        <div className="client-msg-meta">
+                          <strong>{b.clientName || 'Klijent'}</strong>
+                          <span className="client-msg-date">{dateStr}</span>
+                          {b.location ? <span className="client-msg-loc">{b.location}</span> : null}
+                        </div>
+                        {b.message ? (
+                          <p className="client-msg-body">{b.message}</p>
+                        ) : (
+                          <p className="client-msg-body muted">Bez dodatne poruke.</p>
+                        )}
+                        <div className="client-msg-contact">
+                          {b.clientEmail ? (
+                            <a href={`mailto:${b.clientEmail}`} className="contact-chip">
+                              <Mail size={14} /> {b.clientEmail}
+                            </a>
+                          ) : null}
+                          {b.clientPhone ? (
+                            <a href={`tel:${b.clientPhone.replace(/\s/g, '')}`} className="contact-chip">
+                              <Phone size={14} /> {b.clientPhone}
+                            </a>
+                          ) : null}
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
+            )}
+
+            <form onSubmit={handleSave} className="profile-card">
             {error && <div className="alert error">{error}</div>}
             {success && <div className="alert success">{success}</div>}
 
@@ -407,6 +477,7 @@ export default function BandProfilePage() {
               <Save size={16} /> {saving ? 'Čuvanje...' : 'Sačuvaj izmene'}
             </button>
           </form>
+          </>
         )}
       </div>
 
@@ -550,6 +621,81 @@ export default function BandProfilePage() {
         @media (max-width: 860px) {
           .grid, .media-grid { grid-template-columns: 1fr; }
         }
+        .confirmed-msgs {
+          margin-bottom: 1.5rem;
+          border-color: rgba(0, 122, 255, 0.28);
+          background: linear-gradient(180deg, #f0f7ff 0%, #fff 48%);
+        }
+        .confirmed-msgs-head {
+          display: flex;
+          gap: 1rem;
+          align-items: flex-start;
+        }
+        .confirmed-msgs-icon { color: #007aff; flex-shrink: 0; margin-top: 0.15rem; }
+        .confirmed-msgs-head h2 {
+          font-size: 1.12rem;
+          font-weight: 900;
+          color: #0f172a;
+          margin: 0 0 0.25rem;
+        }
+        .confirmed-msgs-sub {
+          margin: 0;
+          color: #64748b;
+          font-size: 0.84rem;
+          font-weight: 600;
+        }
+        .confirmed-list {
+          list-style: none;
+          margin: 0;
+          padding: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 1rem;
+        }
+        .client-msg-card {
+          border: 1px solid #e2e8f0;
+          border-radius: 14px;
+          padding: 1rem 1.1rem;
+          background: #fff;
+        }
+        .client-msg-meta {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.35rem 0.75rem;
+          align-items: baseline;
+          margin-bottom: 0.65rem;
+          font-size: 0.88rem;
+        }
+        .client-msg-meta strong { color: #0f172a; }
+        .client-msg-date { color: #64748b; font-weight: 700; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; }
+        .client-msg-loc { color: #475569; font-weight: 600; }
+        .client-msg-body {
+          margin: 0 0 0.75rem;
+          white-space: pre-wrap;
+          color: #1e293b;
+          font-size: 0.93rem;
+          line-height: 1.5;
+        }
+        .client-msg-body.muted { color: #94a3b8; font-style: italic; }
+        .client-msg-contact {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.5rem 0.75rem;
+        }
+        .contact-chip {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.35rem;
+          font-size: 0.8rem;
+          font-weight: 700;
+          color: #1d4ed8;
+          text-decoration: none;
+          padding: 0.35rem 0.65rem;
+          background: #eff6ff;
+          border-radius: 999px;
+          border: 1px solid #bfdbfe;
+        }
+        .contact-chip:hover { background: #dbeafe; }
       `}</style>
     </div>
   );

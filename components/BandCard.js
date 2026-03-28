@@ -1,12 +1,20 @@
 'use client';
+import Image from 'next/image';
 import { Star, Zap, MapPin, Play } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { DEFAULT_BAND_COVER, resolveBandCoverImage } from '../lib/bandImages';
+import { nextImageShouldUnoptimize } from '../lib/remoteImage';
 
-export default function BandCard({ band }) {
+export default function BandCard({ band, priority = false }) {
   const videoRef = useRef(null);
   const [isHovered, setIsHovered] = useState(false);
+  const resolved = resolveBandCoverImage(band);
+  const [imgSrc, setImgSrc] = useState(resolved);
+
+  useEffect(() => {
+    setImgSrc(resolveBandCoverImage(band));
+  }, [band?.id, band?.img, band?.name]);
 
   const handleMouseEnter = () => {
     setIsHovered(true);
@@ -19,33 +27,34 @@ export default function BandCard({ band }) {
     setIsHovered(false);
     if (videoRef.current) {
       videoRef.current.pause();
-      // Reset video to start maybe?
       videoRef.current.currentTime = 0;
     }
   };
 
+  const coverAlt = `${band.name} — bend za svadbe, restorane i proslave, ${band.genre}, ${band.location || 'Srbija'}`;
+  const linkLabel = `${band.name}: profil benda i rezervacija — uživo muzika, ${band.location || 'Srbija'}`;
+
   return (
-    <div 
+    <div
       className="card-airbnb-container h-full"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      <Link href={`/clients/band/${band.id}`} className="card-outer-link">
-        {/* Media Section (Airbnb Style) */}
+      <Link href={`/clients/band/${band.id}`} className="card-outer-link" aria-label={linkLabel}>
         <div className="card-media">
-          {/* Main Hero Image */}
-          <img 
-            src={resolveBandCoverImage(band)}
-            alt={band.name}
-            className={`hero-media-img ${isHovered && band.videoUrl ? 'hidden' : ''}`}
-            loading="lazy"
-            onError={(e) => {
-              e.currentTarget.onerror = null;
-              e.currentTarget.src = DEFAULT_BAND_COVER;
+          <Image
+            src={imgSrc}
+            alt={coverAlt}
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            className={`hero-media-img object-cover ${isHovered && band.videoUrl ? 'hidden' : ''}`}
+            priority={priority}
+            unoptimized={nextImageShouldUnoptimize(imgSrc)}
+            onError={() => {
+              setImgSrc(DEFAULT_BAND_COVER);
             }}
           />
-          
-          {/* Autoplay Video Overlay (Muted) */}
+
           {band.videoUrl && (
             <video
               ref={videoRef}
@@ -57,11 +66,8 @@ export default function BandCard({ band }) {
             />
           )}
 
-          {/* Top Left: Demo / Equipment */}
           {(band.demo || (band.id && String(band.id).startsWith('demo-'))) && (
-            <div className="media-badge demo-badge">
-              Demo
-            </div>
+            <div className="media-badge demo-badge">Demo</div>
           )}
           {band.hasEquipment && (
             <div
@@ -69,33 +75,27 @@ export default function BandCard({ band }) {
                 band.demo || (band.id && String(band.id).startsWith('demo-')) ? 'offset-below-demo' : ''
               }`}
             >
-              <Zap size={10}/> Rider OK
+              <Zap size={10} /> Rider OK
             </div>
           )}
 
-          {/* Top Right: Star Rating */}
           <div className="media-badge rating-badge">
             <Star size={10} fill="currentColor" /> {band.rating?.toFixed(1) || '5.0'}
           </div>
 
-          {/* Bottom Left: Price Overlay */}
-          <div className="price-overlay">
-            {band.priceRange || 'Dogovor'}
-          </div>
+          <div className="price-overlay">{band.priceRange || 'Dogovor'}</div>
         </div>
 
-        {/* Info Section */}
         <div className="card-content">
           <div className="card-header">
             <h3>{band.name}</h3>
-            {/* Action Icon on Hover */}
             <div className={`action-indicator ${isHovered ? 'visible' : ''}`}>
-               <Play size={14} fill="currentColor"/>
+              <Play size={14} fill="currentColor" />
             </div>
           </div>
-          
+
           <p className="card-sub-info">
-            <MapPin size={12}/> {band.location} • {band.genre}
+            <MapPin size={12} /> {band.location} • {band.genre}
           </p>
 
           <div className="card-tags">
@@ -120,32 +120,39 @@ export default function BandCard({ band }) {
           border-radius: 16px;
         }
 
-        /* 16px Radius - Airbnb Standard */
         .card-media {
           position: relative;
           aspect-ratio: 1 / 1.1;
           border-radius: 16px;
           overflow: hidden;
           background: #121214;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
           margin-bottom: 12px;
         }
 
-        .hero-media-img, .hero-media-video {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
+        .hero-media-img,
+        .hero-media-video {
           transition: opacity 0.5s ease;
         }
 
-        .hero-media-img.hidden { opacity: 0; }
-        .hero-media-video { 
-          position: absolute; top: 0; left: 0; 
-          opacity: 0; pointer-events: none; 
+        .hero-media-img.hidden {
+          opacity: 0;
         }
-        .hero-media-video.visible { opacity: 1; pointer-events: auto; }
+        .hero-media-video {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          opacity: 0;
+          pointer-events: none;
+        }
+        .hero-media-video.visible {
+          opacity: 1;
+          pointer-events: auto;
+        }
 
-        /* Badges Styling */
         .media-badge {
           position: absolute;
           top: 12px;
@@ -184,7 +191,7 @@ export default function BandCard({ band }) {
           right: 12px;
           background: white;
           color: black;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
 
         .price-overlay {
@@ -201,7 +208,6 @@ export default function BandCard({ band }) {
           border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        /* Content Section */
         .card-content {
           padding-left: 4px;
         }
@@ -257,12 +263,21 @@ export default function BandCard({ band }) {
           transition: 0.2s;
         }
 
-        .card-airbnb-container:hover .chip-tag { opacity: 1; color: var(--accent-primary); }
-        .card-airbnb-container:hover { transform: translateY(-2px); }
+        .card-airbnb-container:hover .chip-tag {
+          opacity: 1;
+          color: var(--accent-primary);
+        }
+        .card-airbnb-container:hover {
+          transform: translateY(-2px);
+        }
 
         @media (max-width: 768px) {
-          .card-media { aspect-ratio: 1; }
-          h3 { font-size: 1rem; }
+          .card-media {
+            aspect-ratio: 1;
+          }
+          h3 {
+            font-size: 1rem;
+          }
         }
       `}</style>
     </div>

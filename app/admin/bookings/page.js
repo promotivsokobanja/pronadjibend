@@ -65,6 +65,7 @@ export default function AdminBookingsPage() {
           >
             <option value="">Svi</option>
             <option value="PENDING">PENDING</option>
+            <option value="BAND_ACCEPTED">BAND_ACCEPTED</option>
             <option value="CONFIRMED">CONFIRMED</option>
             <option value="CANCELLED">CANCELLED</option>
             <option value="COMPLETED">COMPLETED</option>
@@ -123,6 +124,7 @@ export default function AdminBookingsPage() {
                         onChange={(e) => updateStatus(b.id, e.target.value)}
                       >
                         <option value="PENDING">PENDING</option>
+                        <option value="BAND_ACCEPTED">BAND_ACCEPTED</option>
                         <option value="CONFIRMED">CONFIRMED</option>
                         <option value="CANCELLED">CANCELLED</option>
                         <option value="COMPLETED">COMPLETED</option>

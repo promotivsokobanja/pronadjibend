@@ -83,7 +83,7 @@ model Booking {
   clientEmail String
   clientPhone String?
   date        DateTime
-  status      String   @default("PENDING") // "PENDING", "CONFIRMED", "CANCELLED", "COMPLETED"
+  status      String   @default("PENDING") // "PENDING", "BAND_ACCEPTED", "CONFIRMED", "CANCELLED", "COMPLETED"
   message     String?
   location    String?
   price       String?

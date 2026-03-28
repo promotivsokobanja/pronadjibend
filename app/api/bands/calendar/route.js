@@ -1,5 +1,6 @@
 import prisma from '../../../../lib/prisma';
 import { NextResponse } from 'next/server';
+import { dateToCalendarKeyUTC, parseCalendarDateParam } from '../../../../lib/calendarDate';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,8 +23,8 @@ export async function GET(request) {
     });
 
     const allBusy = [
-      ...busyManual.map((b) => b.date.toISOString().split('T')[0]),
-      ...confirmedBookings.map((b) => b.date.toISOString().split('T')[0]),
+      ...busyManual.map((b) => dateToCalendarKeyUTC(b.date)),
+      ...confirmedBookings.map((b) => dateToCalendarKeyUTC(b.date)),
     ];
 
     return NextResponse.json({ busyDates: busyManual, confirmedBookings, allBusy });
@@ -41,23 +42,28 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Missing core data' }, { status: 400 });
     }
 
-    const targetDate = new Date(date);
-    targetDate.setHours(0, 0, 0, 0);
+    const targetDate = parseCalendarDateParam(date);
+    if (!targetDate) {
+      return NextResponse.json({ error: 'Neispravan datum.' }, { status: 400 });
+    }
 
     if (action === 'TOGGLE') {
+      const dayEnd = new Date(targetDate.getTime() + 86400000);
       const existing = await prisma.busyDate.findFirst({
-        where: { bandId, date: targetDate },
+        where: {
+          bandId,
+          date: { gte: targetDate, lt: dayEnd },
+        },
       });
 
       if (existing) {
         await prisma.busyDate.delete({ where: { id: existing.id } });
         return NextResponse.json({ message: 'Date unmarked', isBusy: false });
-      } else {
-        await prisma.busyDate.create({
-          data: { bandId, date: targetDate, reason: reason || 'Privatno' },
-        });
-        return NextResponse.json({ message: 'Date marked busy', isBusy: true });
       }
+      await prisma.busyDate.create({
+        data: { bandId, date: targetDate, reason: reason || 'Privatno' },
+      });
+      return NextResponse.json({ message: 'Date marked busy', isBusy: true });
     }
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });

@@ -1,8 +1,9 @@
 import prisma from '@/lib/prisma';
 import { getDemoBands } from '@/lib/demoBands';
+import { getSiteUrl } from '@/lib/siteUrl';
 
 export default async function sitemap() {
-  const baseUrl = 'https://pronadjibend.rs';
+  const baseUrl = getSiteUrl();
   const now = new Date();
 
   const staticRoutes = [

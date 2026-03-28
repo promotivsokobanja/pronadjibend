@@ -1,4 +1,7 @@
+import { getSiteUrl } from '@/lib/siteUrl';
+
 export default function robots() {
+  const site = getSiteUrl();
   return {
     rules: [
       {
@@ -12,7 +15,7 @@ export default function robots() {
         disallow: ['/admin', '/admin/', '/api/'],
       },
     ],
-    sitemap: 'https://pronadjibend.rs/sitemap.xml',
-    host: 'https://pronadjibend.rs',
+    sitemap: `${site}/sitemap.xml`,
+    host: site,
   };
 }
