@@ -119,11 +119,7 @@ export default function LiveDashboard({ bandId }) {
 
   const songsList = Array.isArray(allSongs) ? allSongs : [];
 
-  const songsWithLyrics = songsList.filter(
-    (s) => s.lyrics && String(s.lyrics).trim().length > 0
-  );
-
-  const filteredSongs = songsWithLyrics.filter((s) => {
+  const filteredSongs = songsList.filter((s) => {
     const q = songSearch.toLowerCase();
     return (
       (s.title || '').toLowerCase().includes(q) ||
