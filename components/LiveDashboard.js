@@ -7,10 +7,7 @@ export default function LiveDashboard({ bandId }) {
   const router = useRouter();
   const [isNightMode, setIsNightMode] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
-  const [requests, setRequests] = useState([
-    { id: 1, song: 'Đurđevdan', client: 'Milan', tip: '20€', status: 'pending', time: '2m ago' },
-    { id: 2, song: 'Plava Ciganka', client: 'Jelena', tip: '50€', status: 'accepted', time: '5m ago' },
-  ]);
+  const [requests, setRequests] = useState([]);
   const [activeTab, setActiveTab] = useState('requests');
   const [requestView, setRequestView] = useState('active');
 
@@ -45,6 +42,27 @@ export default function LiveDashboard({ bandId }) {
 
   const fontScale = settings.fontSize / 100;
   const prevPendingCountRef = useRef(0);
+
+  // Poll live requests from database
+  const fetchRequests = useCallback(async () => {
+    if (!bandId) return;
+    try {
+      const resp = await fetch(`/api/live-requests?bandId=${encodeURIComponent(bandId)}`, { cache: 'no-store' });
+      if (!resp.ok) return;
+      const data = await resp.json();
+      if (Array.isArray(data)) {
+        setRequests(data);
+      }
+    } catch (err) {
+      console.error('Error fetching live requests:', err);
+    }
+  }, [bandId]);
+
+  useEffect(() => {
+    fetchRequests();
+    const interval = setInterval(fetchRequests, 4000);
+    return () => clearInterval(interval);
+  }, [fetchRequests]);
 
   // Fetch songs for this band (Live mode mora znati bandId iz prijave)
   useEffect(() => {
@@ -171,10 +189,23 @@ export default function LiveDashboard({ bandId }) {
     ));
   };
 
+  const updateRequestStatus = async (id, status) => {
+    try {
+      await fetch('/api/live-requests', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, status }),
+      });
+    } catch (err) {
+      console.error('Error updating request status:', err);
+    }
+  };
+
   const handleAcceptRequest = async (req) => {
     setRequests((prev) =>
       prev.map((r) => (r.id === req.id ? { ...r, status: 'accepted' } : r))
     );
+    updateRequestStatus(req.id, 'ACCEPTED');
     setActiveTab('cheatsheet');
 
     const requestedTitle = (req.song || '').trim().toLowerCase();
@@ -189,7 +220,6 @@ export default function LiveDashboard({ bandId }) {
       return;
     }
 
-    // Fallback: if no exact title match, try loose matching.
     const looseMatched = songsList.find((s) =>
       (s.title || '').toLowerCase().includes(requestedTitle)
     );
@@ -200,14 +230,16 @@ export default function LiveDashboard({ bandId }) {
 
   const handleSkipRequest = (req) => {
     setRequests((prev) =>
-      prev.map((r) => (r.id === req.id ? { ...r, status: 'skipped' } : r))
+      prev.map((r) => (r.id === req.id ? { ...r, status: 'rejected' } : r))
     );
+    updateRequestStatus(req.id, 'REJECTED');
   };
 
   const handleMarkPlayed = (req) => {
     setRequests((prev) =>
       prev.map((r) => (r.id === req.id ? { ...r, status: 'played' } : r))
     );
+    updateRequestStatus(req.id, 'PLAYED');
   };
 
   const playNotification = () => {
@@ -342,7 +374,7 @@ export default function LiveDashboard({ bandId }) {
                     .filter((r) =>
                       requestView === 'active'
                         ? r.status === 'pending' || r.status === 'accepted'
-                        : r.status === 'skipped' || r.status === 'played'
+                        : r.status === 'rejected' || r.status === 'played'
                     )
                     .map(req => (
                     <div key={req.id} className={`request-card ${req.status}`} style={{ fontSize: `${fontScale}em` }}>
@@ -371,7 +403,7 @@ export default function LiveDashboard({ bandId }) {
                             Svirano
                           </button>
                         )}
-                        {(req.status === 'skipped' || req.status === 'played') && (
+                        {(req.status === 'rejected' || req.status === 'played') && (
                           <span className="status-chip">{req.status === 'played' ? 'Svirano' : 'Preskočeno'}</span>
                         )}
                       </div>
