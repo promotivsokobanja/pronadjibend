@@ -33,6 +33,8 @@ export default function BookingCalendar({
   onDatesChange,
   busyDates = [],
   manualBusyDateKeys,
+  /** YYYY-MM-DD → tekst napomene (samo bend panel) */
+  busyReasonByKey = {},
   basePrice = 500,
 }) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -156,11 +158,15 @@ export default function BookingCalendar({
             title={
               d.day && d.isBusy && manualBusyDateKeys === undefined
                 ? 'Zauzeto — nije moguće rezervisati'
-                : d.day && manualBusyDateKeys === undefined && d.isSelected
-                  ? multiSelect
-                    ? 'Kliknite da uklonite ovaj dan iz izbora'
-                    : 'Kliknite ponovo da uklonite izbor datuma'
-                  : undefined
+                : d.day && manualBusyDateKeys !== undefined && d.isManualBusy
+                  ? busyReasonByKey[d.date]?.trim()
+                    ? `Podsetnik: ${busyReasonByKey[d.date].trim()}`
+                    : 'Ručno zauzeto — klik za podsetnik / uklanjanje'
+                  : d.day && manualBusyDateKeys === undefined && d.isSelected
+                    ? multiSelect
+                      ? 'Kliknite da uklonite ovaj dan iz izbora'
+                      : 'Kliknite ponovo da uklonite izbor datuma'
+                    : undefined
             }
             onClick={() => handleSelect(d)}
           >

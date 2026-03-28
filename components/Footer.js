@@ -37,7 +37,7 @@ export default function Footer() {
           <div className="footer-links">
             <h4>Platforma</h4>
             <ul>
-              <li><Link href="/clients?pretraga=1">Pretraži Bendove</Link></li>
+              <li><Link href="/clients">Pretraži Bendove</Link></li>
               <li><Link href="/bands">Za Muzičare</Link></li>
               <li><Link href="/about">O Nama</Link></li>
               <li><Link href="/faq">Česta Pitanja</Link></li>

@@ -13,7 +13,7 @@ export default function ClientFilterForm() {
         </p>
         <div
           className={[
-            'grid grid-cols-2 gap-2 sm:grid-cols-3',
+            'grid grid-cols-2 gap-1.5 sm:gap-2 sm:grid-cols-3',
             'lg:flex lg:flex-nowrap lg:gap-2 lg:items-stretch',
           ].join(' ')}
         >
@@ -25,7 +25,7 @@ export default function ClientFilterForm() {
                 type="button"
                 onClick={() => handleCategorySelect(cat)}
                 className={[
-                  'inline-flex min-h-[44px] w-full items-center justify-center rounded-full border px-2.5 py-2 text-center text-xs font-semibold leading-tight transition-all duration-200 sm:px-3 sm:text-sm',
+                  'inline-flex min-h-[40px] w-full items-center justify-center rounded-full border px-2 py-1.5 text-center text-[0.6875rem] font-semibold leading-tight transition-all duration-200 sm:min-h-[44px] sm:px-3 sm:py-2 sm:text-xs md:text-sm',
                   'lg:min-h-[42px] lg:flex-1 lg:basis-0 lg:min-w-0 lg:px-3 lg:py-2.5',
                   active
                     ? 'border-[#007AFF] bg-[#007AFF] text-white shadow-sm'

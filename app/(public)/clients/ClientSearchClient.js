@@ -1,8 +1,7 @@
 'use client';
 
 import { Music } from 'lucide-react';
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import BandCard from '../../../components/BandCard';
 import BandCardSkeleton from '../../../components/BandCardSkeleton';
@@ -18,18 +17,6 @@ export default function ClientSearchClient() {
     setSortBy,
     setIsNavSearchOpen,
   } = useClientSearch();
-
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const pretragaHandled = useRef(false);
-
-  useEffect(() => {
-    if (pretragaHandled.current) return;
-    if (searchParams.get('pretraga') !== '1') return;
-    pretragaHandled.current = true;
-    setIsNavSearchOpen(true);
-    router.replace('/clients', { scroll: false });
-  }, [searchParams, router, setIsNavSearchOpen]);
 
   const [bands, setBands] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -107,9 +94,9 @@ export default function ClientSearchClient() {
             <button
               type="button"
               onClick={() => setIsNavSearchOpen(true)}
-              className="min-h-11 shrink-0 rounded-full bg-[#007AFF] px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-[#007AFF]/25 transition hover:bg-[#0066d6] hover:shadow-lg hover:shadow-[#007AFF]/30 sm:h-10 sm:min-h-0 sm:py-0"
+              className="inline-flex max-w-full min-h-11 min-w-[13.5rem] shrink-0 items-center justify-center rounded-full border border-slate-400 bg-[#007AFF] px-5 py-2.5 text-center text-xs font-semibold leading-snug text-white shadow-md shadow-[#007AFF]/25 transition hover:border-slate-500 hover:bg-[#0066d6] hover:shadow-lg hover:shadow-[#007AFF]/30 sm:h-10 sm:min-h-0 sm:min-w-[15rem] sm:px-5 sm:text-sm sm:leading-tight sm:py-0"
             >
-              Pretraga i filteri
+              Pretraga
             </button>
           </div>
           <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:gap-3">

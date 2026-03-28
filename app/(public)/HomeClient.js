@@ -115,7 +115,7 @@ export default function HomeClient() {
               </select>
             </div>
             <Link
-              href="/clients?pretraga=1"
+              href="/clients"
               className="btn btn-primary search-btn"
               title="Otvori pretragu bendova za svadbe, hotele i restorane"
             >

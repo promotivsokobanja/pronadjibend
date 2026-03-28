@@ -1,14 +1,18 @@
 'use client';
 import { Music, Play, Plus, Star, Bell, QrCode, Pencil, BookOpen, FileMusic, LayoutDashboard, Mail, Phone, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import QrModal from '../../../components/QrModal';
 import BookingCalendar from '../../../components/BookingCalendar';
+import BusyDateNoteModal from '../../../components/bands/BusyDateNoteModal';
 import { dateToCalendarKeyUTC } from '../../../lib/calendarDate';
 
 /** Postavite na `false` da sakrijete kratke opise ispod dugmadi (brz „undo“ izgleda). */
 const SHOW_HEADER_ACTION_HINTS = true;
+
+/** `1` ili prazno = jedan klik kao ranije; `0` = prozor za napomenu. */
+const LS_CALENDAR_QUICK_BUSY = 'pronadjibend_calendar_quick_busy';
 
 export default function BandDashboard() {
   const router = useRouter();
@@ -27,9 +31,30 @@ export default function BandDashboard() {
   const [busyDates, setBusyDates] = useState([]);
   /** Datumi ručno označeni kao zauzeti (BusyDate) — njih bend može ponovo osloboditi klikom */
   const [manualBusyKeys, setManualBusyKeys] = useState([]);
+  /** Puni zapisi BusyDate (za napomene u tooltip-u i modalu) */
+  const [busyDateRecords, setBusyDateRecords] = useState([]);
+  /** true = staro ponašanje, jedan klik bez modala (čuva se u localStorage) */
+  const [calendarQuickBusy, setCalendarQuickBusy] = useState(true);
+  const [busyModal, setBusyModal] = useState({ open: false, mode: 'add', dateKey: null, loading: false });
   /** `{ id, op: 'patch' | 'delete' }` dok traje API poziv */
   const [bookingMutation, setBookingMutation] = useState(null);
   const [bookingActionError, setBookingActionError] = useState('');
+
+  useEffect(() => {
+    try {
+      if (typeof window !== 'undefined' && localStorage.getItem(LS_CALENDAR_QUICK_BUSY) === '0') {
+        setCalendarQuickBusy(false);
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  const applyCalendarData = useCallback((calData) => {
+    setBusyDates(calData?.allBusy || []);
+    setManualBusyKeys((calData?.busyDates || []).map((b) => dateToCalendarKeyUTC(b.date)));
+    setBusyDateRecords(Array.isArray(calData?.busyDates) ? calData.busyDates : []);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -77,8 +102,7 @@ export default function BandDashboard() {
 
         if (cancelled) return;
         setBookings(bookingsList);
-        setBusyDates(calendarData.allBusy || []);
-        setManualBusyKeys((calendarData.busyDates || []).map((b) => dateToCalendarKeyUTC(b.date)));
+        applyCalendarData(calendarData);
         setStats([
           { label: 'Digitalni Repertoar', value: String(bandData._count?.songs ?? 0), icon: Music },
           { label: 'Novi Upiti', value: bookingsList.filter(b => b.status === 'PENDING').length, icon: Bell },
@@ -95,7 +119,7 @@ export default function BandDashboard() {
     return () => {
       cancelled = true;
     };
-  }, [router]);
+  }, [router, applyCalendarData]);
 
   const refreshDashboardBookings = async (id) => {
     if (!id) return;
@@ -107,8 +131,7 @@ export default function BandDashboard() {
     const calendarData = await calendarRes.json();
     const list = Array.isArray(bookingsData) ? bookingsData : [];
     setBookings(list);
-    setBusyDates(calendarData.allBusy || []);
-    setManualBusyKeys((calendarData.busyDates || []).map((b) => dateToCalendarKeyUTC(b.date)));
+    applyCalendarData(calendarData);
     setStats((prev) =>
       prev.map((stat) =>
         stat.label === 'Novi Upiti'
@@ -157,27 +180,138 @@ export default function BandDashboard() {
     }
   };
 
-  const handleToggleBusy = async (date) => {
+  const refreshCalendarOnly = useCallback(async () => {
     if (!bandId) return;
-    try {
+    const calRes = await fetch(`/api/bands/calendar?bandId=${encodeURIComponent(bandId)}`, {
+      cache: 'no-store',
+    });
+    const calData = await calRes.json();
+    applyCalendarData(calData);
+  }, [bandId, applyCalendarData]);
+
+  /** TOGGLE: bez reason pri brzom režimu; sa reason pri kreiranju iz modala */
+  const calendarToggleRequest = useCallback(
+    async (date, reason) => {
+      if (!bandId) return { ok: false };
+      const payload = { bandId, date, action: 'TOGGLE' };
+      if (reason !== undefined) payload.reason = reason;
       const resp = await fetch('/api/bands/calendar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ bandId, date, action: 'TOGGLE' }),
+        body: JSON.stringify(payload),
       });
       const data = await resp.json();
       if (!resp.ok) {
         console.error(data?.error || 'Kalendar');
-        return;
+        return { ok: false, error: data?.error };
       }
-      const calRes = await fetch(`/api/bands/calendar?bandId=${encodeURIComponent(bandId)}`, {
-        cache: 'no-store',
+      await refreshCalendarOnly();
+      return { ok: true };
+    },
+    [bandId, refreshCalendarOnly],
+  );
+
+  const calendarUpdateNoteRequest = useCallback(
+    async (date, reason) => {
+      if (!bandId) return { ok: false };
+      const resp = await fetch('/api/bands/calendar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bandId, date, action: 'UPDATE_NOTE', reason }),
       });
-      const calData = await calRes.json();
-      setBusyDates(calData.allBusy || []);
-      setManualBusyKeys((calData.busyDates || []).map((b) => dateToCalendarKeyUTC(b.date)));
-    } catch (err) {
-      console.error(err);
+      const data = await resp.json();
+      if (!resp.ok) {
+        console.error(data?.error || 'Kalendar');
+        return { ok: false, error: data?.error };
+      }
+      await refreshCalendarOnly();
+      return { ok: true };
+    },
+    [bandId, refreshCalendarOnly],
+  );
+
+  const handleToggleBusy = async (date) => {
+    await calendarToggleRequest(date, undefined);
+  };
+
+  const busyReasonByKey = useMemo(() => {
+    const m = {};
+    for (const b of busyDateRecords) {
+      m[dateToCalendarKeyUTC(b.date)] = b.reason || '';
+    }
+    return m;
+  }, [busyDateRecords]);
+
+  const handleCalendarDayClick = (date) => {
+    if (!bandId || !date) return;
+    if (calendarQuickBusy) {
+      handleToggleBusy(date);
+      return;
+    }
+    const isManual = manualBusyKeys.includes(date);
+    setBusyModal({ open: true, mode: isManual ? 'edit' : 'add', dateKey: date, loading: false });
+  };
+
+  const setCalendarQuickBusyPersist = (value) => {
+    setCalendarQuickBusy(value);
+    try {
+      localStorage.setItem(LS_CALENDAR_QUICK_BUSY, value ? '1' : '0');
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const formatBusyModalDate = (key) => {
+    if (!key || !/^\d{4}-\d{2}-\d{2}$/.test(key)) return key || '';
+    const [y, mo, d] = key.split('-').map(Number);
+    const dt = new Date(y, mo - 1, d);
+    try {
+      return dt.toLocaleDateString('sr-Latn-RS', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      });
+    } catch {
+      return key;
+    }
+  };
+
+  const closeBusyModal = () => {
+    if (busyModal.loading) return;
+    setBusyModal({ open: false, mode: 'add', dateKey: null, loading: false });
+  };
+
+  const handleBusyModalSave = async (note) => {
+    const { dateKey, mode } = busyModal;
+    if (!dateKey) return;
+    setBusyModal((s) => ({ ...s, loading: true }));
+    try {
+      let ok = true;
+      if (mode === 'add') {
+        const r = await calendarToggleRequest(dateKey, note);
+        ok = r.ok;
+      } else {
+        const r = await calendarUpdateNoteRequest(dateKey, note);
+        ok = r.ok;
+      }
+      if (ok) setBusyModal({ open: false, mode: 'add', dateKey: null, loading: false });
+      else setBusyModal((s) => ({ ...s, loading: false }));
+    } catch {
+      setBusyModal((s) => ({ ...s, loading: false }));
+    }
+  };
+
+  const handleBusyModalRemove = async () => {
+    const { dateKey } = busyModal;
+    if (!dateKey) return;
+    setBusyModal((s) => ({ ...s, loading: true }));
+    try {
+      const r = await calendarToggleRequest(dateKey, undefined);
+      if (r.ok) setBusyModal({ open: false, mode: 'add', dateKey: null, loading: false });
+      else setBusyModal((s) => ({ ...s, loading: false }));
+    } catch {
+      setBusyModal((s) => ({ ...s, loading: false }));
     }
   };
 
@@ -513,12 +647,36 @@ export default function BandDashboard() {
 
         <section className="calendar-management glass-card">
           <h3>Kalendar Zauzetosti</h3>
-          <p className="text-muted" style={{ marginBottom: '1.5rem', fontSize: '0.85rem' }}>Kliknite na datum da ga označite kao zauzet ili slobodan.</p>
-          <BookingCalendar 
+          <p className="text-muted calendar-hint-p">
+            {calendarQuickBusy
+              ? 'Kliknite na datum da ga označite kao zauzet ili slobodan (jedan klik).'
+              : 'Kliknite na datum da dodate zauzeće i napomenu.'}
+          </p>
+          <label className="calendar-quick-row" htmlFor="calendar-quick-busy-cb">
+            <input
+              id="calendar-quick-busy-cb"
+              type="checkbox"
+              checked={calendarQuickBusy}
+              onChange={(e) => setCalendarQuickBusyPersist(e.target.checked)}
+            />
+            <span>Označi bez dodatnog komentara</span>
+          </label>
+          <BookingCalendar
             bandId={bandId}
             busyDates={busyDates}
             manualBusyDateKeys={manualBusyKeys}
-            onDateSelect={handleToggleBusy}
+            busyReasonByKey={busyReasonByKey}
+            onDateSelect={handleCalendarDayClick}
+          />
+          <BusyDateNoteModal
+            open={busyModal.open}
+            mode={busyModal.mode}
+            dateLabel={busyModal.dateKey ? formatBusyModalDate(busyModal.dateKey) : ''}
+            initialNote={busyModal.dateKey ? busyReasonByKey[busyModal.dateKey] || '' : ''}
+            loading={busyModal.loading}
+            onClose={closeBusyModal}
+            onSave={handleBusyModalSave}
+            onRemove={busyModal.mode === 'edit' ? handleBusyModalRemove : undefined}
           />
         </section>
       </div>
@@ -552,6 +710,25 @@ export default function BandDashboard() {
           gap: 3rem; 
         }
         .repertoire-preview, .upcoming-bookings, .calendar-management { padding: 2rem; border: 1px solid var(--border); }
+        .calendar-hint-p { margin-bottom: 0.75rem; font-size: 0.85rem; line-height: 1.45; }
+        .calendar-quick-row {
+          display: flex;
+          align-items: flex-start;
+          gap: 0.6rem;
+          margin-bottom: 1.25rem;
+          font-size: 0.8rem;
+          font-weight: 600;
+          color: #475569;
+          cursor: pointer;
+          user-select: none;
+        }
+        .calendar-quick-row input {
+          margin-top: 0.2rem;
+          width: 1rem;
+          height: 1rem;
+          accent-color: var(--accent-primary, #007aff);
+          flex-shrink: 0;
+        }
         .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
         .section-header h3 { font-size: 1.35rem; }
         .booking-action-error {

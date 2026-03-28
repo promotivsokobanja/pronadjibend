@@ -23,7 +23,7 @@ export default function Navbar() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [sessionUser, setSessionUser] = useState(null);
   const pathname = usePathname();
-  const { isNavSearchOpen, setIsNavSearchOpen } = useClientSearch();
+  const { setIsNavSearchOpen } = useClientSearch();
 
   const isActive = (href) => {
     if (href === '/') return pathname === '/';
@@ -82,16 +82,7 @@ export default function Navbar() {
 
         {/* Desktop Menu */}
         <div className="nav-links desktop-only">
-          <Link
-            href={pathname === '/clients' ? '/clients' : '/clients?pretraga=1'}
-            className={`nav-link ${isActive('/clients') ? 'active' : ''}`}
-            onClick={(e) => {
-              if (pathname === '/clients') {
-                e.preventDefault();
-                setIsNavSearchOpen(true);
-              }
-            }}
-          >
+          <Link href="/clients" className={`nav-link ${isActive('/clients') ? 'active' : ''}`}>
             Pretraži Bendove
           </Link>
           <Link href="/bands" className={`nav-link ${isActive('/bands') ? 'active' : ''}`}>Portal za Muzičare</Link>
@@ -119,15 +110,9 @@ export default function Navbar() {
       {isOpen && (
         <div className="mobile-menu">
           <Link
-            href={pathname === '/clients' ? '/clients' : '/clients?pretraga=1'}
+            href="/clients"
             className={isActive('/clients') ? 'active-mobile' : ''}
-            onClick={(e) => {
-              setIsOpen(false);
-              if (pathname === '/clients') {
-                e.preventDefault();
-                setIsNavSearchOpen(true);
-              }
-            }}
+            onClick={() => setIsOpen(false)}
           >
             Pretraži Bendove
           </Link>

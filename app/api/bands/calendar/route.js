@@ -4,6 +4,15 @@ import { dateToCalendarKeyUTC, parseCalendarDateParam } from '../../../../lib/ca
 
 export const dynamic = 'force-dynamic';
 
+const MAX_REASON_LEN = 200;
+
+function normalizeReason(reason) {
+  if (reason == null) return null;
+  const s = String(reason).trim();
+  if (!s) return null;
+  return s.slice(0, MAX_REASON_LEN);
+}
+
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const bandId = searchParams.get('bandId');
@@ -60,10 +69,29 @@ export async function POST(request) {
         await prisma.busyDate.delete({ where: { id: existing.id } });
         return NextResponse.json({ message: 'Date unmarked', isBusy: false });
       }
+      const note = normalizeReason(reason);
       await prisma.busyDate.create({
-        data: { bandId, date: targetDate, reason: reason || 'Privatno' },
+        data: { bandId, date: targetDate, reason: note },
       });
       return NextResponse.json({ message: 'Date marked busy', isBusy: true });
+    }
+
+    if (action === 'UPDATE_NOTE') {
+      const dayEnd = new Date(targetDate.getTime() + 86400000);
+      const existing = await prisma.busyDate.findFirst({
+        where: {
+          bandId,
+          date: { gte: targetDate, lt: dayEnd },
+        },
+      });
+      if (!existing) {
+        return NextResponse.json({ error: 'Nema ručnog zauzeća za taj datum.' }, { status: 404 });
+      }
+      await prisma.busyDate.update({
+        where: { id: existing.id },
+        data: { reason: normalizeReason(reason) },
+      });
+      return NextResponse.json({ message: 'Napomena ažurirana', isBusy: true });
     }
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
