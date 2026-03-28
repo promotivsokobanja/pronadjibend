@@ -1,8 +1,9 @@
 'use client';
-import { Search, Music, Download, Lock, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Music, Download, Lock, X, ChevronLeft, ChevronRight, Play } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import MidiKaraokePlayer from '../../../../components/MidiKaraokePlayer';
 
 const CATEGORIES = ['Sve', 'Zabavna', 'Narodna', 'Kola', 'Mixevi', 'Decije'];
 const ALPHABET = 'ABCČĆDĐEFGHIJKLMNOPRSTUVZŽ'.split('');
@@ -21,6 +22,23 @@ export default function MidiLibraryPage() {
   const [isPremium, setIsPremium] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [downloading, setDownloading] = useState(null);
+  const [playerFile, setPlayerFile] = useState(null);
+  const [playerUrl, setPlayerUrl] = useState(null);
+
+  const handlePlay = async (file) => {
+    try {
+      const resp = await fetch(`/api/midi/download?id=${file.id}`);
+      const data = await resp.json();
+      if (data.url) {
+        setPlayerFile(file);
+        setPlayerUrl(data.url);
+      } else {
+        alert(data.error || 'Greška pri učitavanju.');
+      }
+    } catch {
+      alert('Greška pri učitavanju.');
+    }
+  };
 
   useEffect(() => {
     (async () => {
@@ -167,6 +185,7 @@ export default function MidiLibraryPage() {
             </div>
 
             <div className="list-header">
+              <span className="col-play"></span>
               <span className="col-name">NAZIV</span>
               <span className="col-artist">IZVOĐAČ</span>
               <span className="col-cat">KATEGORIJA</span>
@@ -176,6 +195,15 @@ export default function MidiLibraryPage() {
 
             {files.map((file) => (
               <div key={file.id} className="file-row">
+                <div className="col-play">
+                  {isPremium ? (
+                    <button className="play-btn" onClick={() => handlePlay(file)} title="Pusti">
+                      <Play size={14} />
+                    </button>
+                  ) : (
+                    <span className="lock-icon-sm"><Lock size={12} /></span>
+                  )}
+                </div>
                 <div className="col-name">
                   <span className="midi-icon">♪</span>
                   <span className="file-title">{file.title}</span>
@@ -216,6 +244,14 @@ export default function MidiLibraryPage() {
           </>
         )}
       </main>
+
+      {playerUrl && playerFile && (
+        <MidiKaraokePlayer
+          fileUrl={playerUrl}
+          fileName={`${playerFile.title} - ${playerFile.artist}`}
+          onClose={() => { setPlayerUrl(null); setPlayerFile(null); }}
+        />
+      )}
 
       <style jsx>{`
         .midi-container { padding-top: 8rem; padding-bottom: 6rem; min-height: 100vh; }
@@ -279,18 +315,27 @@ export default function MidiLibraryPage() {
         .results-info strong { color: #aaa; }
 
         .list-header {
-          display: grid; grid-template-columns: 2fr 1.5fr 0.8fr 0.6fr 0.7fr;
+          display: grid; grid-template-columns: 40px 2fr 1.5fr 0.8fr 0.6fr 0.7fr;
           padding: 0.75rem 1.25rem; font-size: 0.65rem; font-weight: 800; color: #555;
           letter-spacing: 1.5px; border-bottom: 1px solid var(--border);
           background: rgba(255,255,255,0.02);
         }
 
         .file-row {
-          display: grid; grid-template-columns: 2fr 1.5fr 0.8fr 0.6fr 0.7fr;
+          display: grid; grid-template-columns: 40px 2fr 1.5fr 0.8fr 0.6fr 0.7fr;
           padding: 0.75rem 1.25rem; align-items: center;
           border-bottom: 1px solid var(--border); transition: background 0.15s;
         }
         .file-row:hover { background: rgba(255,255,255,0.02); }
+
+        .play-btn {
+          display: flex; align-items: center; justify-content: center;
+          width: 30px; height: 30px; border-radius: 50%;
+          background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.25);
+          color: #34d399; cursor: pointer; transition: all 0.2s;
+        }
+        .play-btn:hover { background: #34d399; color: black; border-color: #34d399; transform: scale(1.1); }
+        .lock-icon-sm { color: #333; display: flex; align-items: center; justify-content: center; }
 
         .midi-icon { color: #60a5fa; margin-right: 8px; font-size: 1rem; }
         .file-title { font-weight: 600; font-size: 0.95rem; }
@@ -334,7 +379,7 @@ export default function MidiLibraryPage() {
           .title-row h1 { font-size: 2rem; }
           .alpha-btn { width: 28px; height: 28px; font-size: 0.65rem; }
           .list-header { display: none; }
-          .file-row { grid-template-columns: 1fr auto; gap: 0.5rem; }
+          .file-row { grid-template-columns: 36px 1fr auto; gap: 0.5rem; }
           .col-artist, .col-cat, .col-size { display: none; }
           .premium-banner { flex-direction: column; text-align: center; }
         }
