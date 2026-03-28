@@ -1,6 +1,10 @@
 # Set secrets in Netlify UI: Site configuration → Environment variables
 # Required for build: DATABASE_URL (Neon Postgres). Also add NEXTAUTH_URL, NEXTAUTH_SECRET for auth.
 # Opciono: ALLOWED_AUTH_ORIGINS=https://pronadjibend.rs,https://www.pronadjibend.rs
+#
+# Automatski deploy: Netlify → Site configuration → Build & deploy → Continuous deployment
+# → poveži GitHub repo (promotivsokobanja/pronadjibend), production branch = main.
+# Svaki git push na main pokreće build (migrate + next build) i objavu.
 
 [build]
   # Migracije na produkcijsku bazu pre builda (isti DATABASE_URL kao u Netlify env)

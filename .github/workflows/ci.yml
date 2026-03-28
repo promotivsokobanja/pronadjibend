@@ -1,0 +1,32 @@
+# Automatska provera na svakom pushu i pull requestu (pre Netlify deploya).
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Prisma (šema i klijent)
+        run: npx prisma validate && npx prisma generate
+
+      - name: ESLint
+        run: npm run lint

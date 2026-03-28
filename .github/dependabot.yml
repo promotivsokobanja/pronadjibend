@@ -1,0 +1,11 @@
+# Automatski PR-ovi za npm zavisnosti (nedeljno).
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 8
+    labels:
+      - dependencies
