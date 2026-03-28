@@ -27,9 +27,9 @@ export async function GET(request) {
       return NextResponse.json({ error: 'Morate biti prijavljeni.' }, { status: 401 });
     }
 
-    if (user.plan !== 'PREMIUM') {
+    if (user.plan !== 'PREMIUM' && user.role !== 'ADMIN') {
       return NextResponse.json(
-        { error: 'MIDI biblioteka je dostupna samo PREMIUM članovima.' },
+        { error: 'Biblioteka je dostupna samo PREMIUM članovima.' },
         { status: 403 }
       );
     }
@@ -48,9 +48,10 @@ export async function GET(request) {
     }
 
     const supabase = getSupabaseAdmin();
+    const bucket = midiFile.fileType === 'audio' ? 'audio' : 'midi';
 
     const { data, error } = await supabase.storage
-      .from('midi')
+      .from(bucket)
       .createSignedUrl(midiFile.filePath, 60);
 
     if (error) {

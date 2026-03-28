@@ -41,6 +41,7 @@ export async function GET(request) {
           category: true,
           fileName: true,
           fileSize: true,
+          fileType: true,
         },
         orderBy: { title: 'asc' },
         skip,

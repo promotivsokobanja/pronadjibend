@@ -1,7 +1,7 @@
 'use client';
-import { Search, Music, Download, Lock, X, ChevronLeft, ChevronRight, Play } from 'lucide-react';
+import { Search, Music, Download, Lock, X, ChevronLeft, ChevronRight, Play, Upload, Trash2, Headphones } from 'lucide-react';
 import Link from 'next/link';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import MidiKaraokePlayer from '../../../../components/MidiKaraokePlayer';
 
@@ -20,25 +20,18 @@ export default function MidiLibraryPage() {
   const [counts, setCounts] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [isPremium, setIsPremium] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [downloading, setDownloading] = useState(null);
   const [playerFile, setPlayerFile] = useState(null);
   const [playerUrl, setPlayerUrl] = useState(null);
 
-  const handlePlay = async (file) => {
-    try {
-      const resp = await fetch(`/api/midi/download?id=${file.id}`);
-      const data = await resp.json();
-      if (data.url) {
-        setPlayerFile(file);
-        setPlayerUrl(data.url);
-      } else {
-        alert(data.error || 'Greška pri učitavanju.');
-      }
-    } catch {
-      alert('Greška pri učitavanju.');
-    }
-  };
+  const [showUpload, setShowUpload] = useState(false);
+  const [uploadFile, setUploadFile] = useState(null);
+  const [uploadTitle, setUploadTitle] = useState('');
+  const [uploadArtist, setUploadArtist] = useState('');
+  const [uploadCategory, setUploadCategory] = useState('Zabavna');
+  const [uploading, setUploading] = useState(false);
+  const [deleting, setDeleting] = useState(null);
 
   useEffect(() => {
     (async () => {
@@ -46,9 +39,9 @@ export default function MidiLibraryPage() {
         const r = await fetch('/api/auth/me', { cache: 'no-store' });
         if (!r.ok) { router.replace('/login'); return; }
         const { user } = await r.json();
-        setIsLoggedIn(true);
-        setIsPremium(user?.plan === 'PREMIUM');
-      } catch { /* ignore */ }
+        setIsPremium(user?.plan === 'PREMIUM' || user?.role === 'ADMIN');
+        setIsAdmin(user?.role === 'ADMIN');
+      } catch {}
     })();
   }, [router]);
 
@@ -76,8 +69,21 @@ export default function MidiLibraryPage() {
 
   useEffect(() => { fetchFiles(); }, [page]);
 
+  const handlePlay = async (file) => {
+    try {
+      const resp = await fetch(`/api/midi/download?id=${file.id}`);
+      const data = await resp.json();
+      if (data.url) {
+        setPlayerFile(file);
+        setPlayerUrl(data.url);
+      } else {
+        alert(data.error || 'Greška pri učitavanju.');
+      }
+    } catch { alert('Greška pri učitavanju.'); }
+  };
+
   const handleDownload = async (file) => {
-    if (!isPremium) return;
+    if (!isPremium && !isAdmin) return;
     setDownloading(file.id);
     try {
       const resp = await fetch(`/api/midi/download?id=${file.id}`);
@@ -92,10 +98,55 @@ export default function MidiLibraryPage() {
       } else {
         alert(data.error || 'Greška pri preuzimanju.');
       }
-    } catch {
-      alert('Greška pri preuzimanju.');
-    } finally {
-      setDownloading(null);
+    } catch { alert('Greška pri preuzimanju.'); }
+    finally { setDownloading(null); }
+  };
+
+  const handleUpload = async (e) => {
+    e.preventDefault();
+    if (!uploadFile || uploading) return;
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', uploadFile);
+      fd.append('title', uploadTitle);
+      fd.append('artist', uploadArtist);
+      fd.append('category', uploadCategory);
+
+      const resp = await fetch('/api/midi/upload', { method: 'POST', body: fd });
+      const data = await resp.json();
+
+      if (data.success) {
+        setShowUpload(false);
+        setUploadFile(null);
+        setUploadTitle('');
+        setUploadArtist('');
+        fetchFiles();
+      } else {
+        alert(data.error || 'Greška pri uploadu.');
+      }
+    } catch { alert('Greška pri uploadu.'); }
+    finally { setUploading(false); }
+  };
+
+  const handleDelete = async (file) => {
+    if (!confirm(`Obrisati "${file.title}"?`)) return;
+    setDeleting(file.id);
+    try {
+      const resp = await fetch(`/api/midi/upload?id=${file.id}`, { method: 'DELETE' });
+      const data = await resp.json();
+      if (data.success) fetchFiles();
+      else alert(data.error || 'Greška.');
+    } catch { alert('Greška pri brisanju.'); }
+    finally { setDeleting(null); }
+  };
+
+  const onFileSelect = (e) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    setUploadFile(f);
+    if (!uploadTitle) {
+      setUploadTitle(f.name.replace(/\.(mid|kar|mp3|wav|ogg|aac|flac|m4a)$/i, ''));
     }
   };
 
@@ -105,6 +156,8 @@ export default function MidiLibraryPage() {
     return (bytes / 1048576).toFixed(1) + ' MB';
   };
 
+  const canAccess = isPremium || isAdmin;
+
   return (
     <div className="midi-container container">
       <div className="blob" style={{ top: '10%', right: '-10%' }}></div>
@@ -112,20 +165,53 @@ export default function MidiLibraryPage() {
       <header className="page-header">
         <Link href="/bands" className="back-link"><Music size={14} /> Dashboard</Link>
         <div className="title-row">
-          <h1>MIDI Biblioteka</h1>
+          <h1>MIDI / Audio Biblioteka</h1>
           <span className="total-badge">{(counts['Sve'] || 0).toLocaleString()} fajlova</span>
-          {isPremium ? (
-            <span className="premium-badge">PREMIUM</span>
-          ) : (
-            <span className="locked-badge"><Lock size={12} /> Potreban PREMIUM</span>
-          )}
+          {isAdmin && <span className="admin-badge">ADMIN</span>}
+          {isPremium && !isAdmin && <span className="premium-badge">PREMIUM</span>}
+          {!canAccess && <span className="locked-badge"><Lock size={12} /> Potreban PREMIUM</span>}
         </div>
-        {!isPremium && (
+
+        {isAdmin && (
+          <div className="admin-bar">
+            <button className="upload-toggle-btn" onClick={() => setShowUpload(!showUpload)}>
+              <Upload size={16} /> {showUpload ? 'Zatvori upload' : 'Dodaj MIDI / MP3'}
+            </button>
+          </div>
+        )}
+
+        {showUpload && isAdmin && (
+          <form className="upload-form" onSubmit={handleUpload}>
+            <div className="uf-row">
+              <label className="file-input-label">
+                <input type="file" accept=".mid,.kar,.mp3,.wav,.ogg,.aac,.flac,.m4a" onChange={onFileSelect} />
+                <Upload size={16} />
+                {uploadFile ? uploadFile.name : 'Izaberi fajl (.mid, .kar, .mp3, .wav...)'}
+              </label>
+            </div>
+            <div className="uf-row uf-fields">
+              <input type="text" placeholder="Naziv pesme" value={uploadTitle} onChange={e => setUploadTitle(e.target.value)} className="uf-input" />
+              <input type="text" placeholder="Izvođač" value={uploadArtist} onChange={e => setUploadArtist(e.target.value)} className="uf-input" />
+              <select value={uploadCategory} onChange={e => setUploadCategory(e.target.value)} className="uf-select">
+                <option value="Zabavna">Zabavna</option>
+                <option value="Narodna">Narodna</option>
+                <option value="Kola">Kola</option>
+                <option value="Mixevi">Mixevi</option>
+                <option value="Decije">Dečije</option>
+              </select>
+              <button type="submit" className="uf-submit" disabled={!uploadFile || uploading}>
+                {uploading ? 'Upload...' : 'Dodaj'}
+              </button>
+            </div>
+          </form>
+        )}
+
+        {!canAccess && (
           <div className="premium-banner">
             <Lock size={18} />
             <div>
-              <strong>MIDI fajlovi su dostupni samo PREMIUM članovima.</strong>
-              <p>Nadogradite na PREMIUM plan da biste preuzimali MIDI fajlove za vaše nastupe.</p>
+              <strong>Biblioteka je dostupna samo PREMIUM članovima.</strong>
+              <p>Nadogradite na PREMIUM plan da biste koristili MIDI i audio fajlove.</p>
             </div>
             <Link href="/premium/checkout" className="upgrade-btn">Nadogradi</Link>
           </div>
@@ -133,11 +219,8 @@ export default function MidiLibraryPage() {
 
         <div className="cat-tabs">
           {CATEGORIES.map(cat => (
-            <button
-              key={cat}
-              className={`cat-tab ${category === cat ? 'active' : ''}`}
-              onClick={() => { setCategory(cat); setActiveLetter(''); setPage(1); }}
-            >
+            <button key={cat} className={`cat-tab ${category === cat ? 'active' : ''}`}
+              onClick={() => { setCategory(cat); setActiveLetter(''); setPage(1); }}>
               {cat}
               {counts[cat] != null && <span className="cat-count">{counts[cat].toLocaleString()}</span>}
             </button>
@@ -146,22 +229,15 @@ export default function MidiLibraryPage() {
 
         <div className="search-box">
           <Search size={18} className="search-icon" />
-          <input
-            type="text"
-            placeholder="Pretraži po nazivu ili izvođaču..."
-            value={searchTerm}
-            onChange={(e) => { setSearchTerm(e.target.value); setActiveLetter(''); }}
-          />
+          <input type="text" placeholder="Pretraži po nazivu ili izvođaču..."
+            value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setActiveLetter(''); }} />
           {searchTerm && <button className="clear-btn" onClick={() => setSearchTerm('')}><X size={16} /></button>}
         </div>
 
         <div className="alpha-bar">
           {ALPHABET.map(l => (
-            <button
-              key={l}
-              className={`alpha-btn ${activeLetter === l ? 'active' : ''}`}
-              onClick={() => { setActiveLetter(activeLetter === l ? '' : l); setSearchTerm(''); setPage(1); }}
-            >
+            <button key={l} className={`alpha-btn ${activeLetter === l ? 'active' : ''}`}
+              onClick={() => { setActiveLetter(activeLetter === l ? '' : l); setSearchTerm(''); setPage(1); }}>
               {l}
             </button>
           ))}
@@ -188,47 +264,55 @@ export default function MidiLibraryPage() {
               <span className="col-play"></span>
               <span className="col-name">NAZIV</span>
               <span className="col-artist">IZVOĐAČ</span>
-              <span className="col-cat">KATEGORIJA</span>
+              <span className="col-cat">TIP</span>
               <span className="col-size">VELIČINA</span>
-              <span className="col-dl">DOWNLOAD</span>
+              <span className="col-dl">AKCIJE</span>
             </div>
 
-            {files.map((file) => (
-              <div key={file.id} className="file-row">
-                <div className="col-play">
-                  {isPremium ? (
-                    <button className="play-btn" onClick={() => handlePlay(file)} title="Pusti">
-                      <Play size={14} />
-                    </button>
-                  ) : (
-                    <span className="lock-icon-sm"><Lock size={12} /></span>
-                  )}
+            {files.map((file) => {
+              const isAudio = file.fileType === 'audio' || /\.(mp3|wav|ogg|aac|flac|m4a)$/i.test(file.fileName);
+              return (
+                <div key={file.id} className="file-row">
+                  <div className="col-play">
+                    {canAccess ? (
+                      <button className="play-btn" onClick={() => handlePlay(file)} title="Pusti">
+                        <Play size={14} />
+                      </button>
+                    ) : (
+                      <span className="lock-icon-sm"><Lock size={12} /></span>
+                    )}
+                  </div>
+                  <div className="col-name">
+                    <span className="midi-icon">{isAudio ? <Headphones size={14} /> : '♪'}</span>
+                    <span className="file-title">{file.title}</span>
+                  </div>
+                  <div className="col-artist">{file.artist}</div>
+                  <div className="col-cat">
+                    <span className={`cat-badge ${file.category.toLowerCase()}`}>{file.category}</span>
+                    {isAudio && <span className="type-tag mp3">MP3</span>}
+                    {!isAudio && <span className="type-tag mid">MIDI</span>}
+                  </div>
+                  <div className="col-size">{formatSize(file.fileSize)}</div>
+                  <div className="col-dl">
+                    {canAccess ? (
+                      <div className="action-btns">
+                        <button className="dl-btn" onClick={() => handleDownload(file)} disabled={downloading === file.id}>
+                          <Download size={14} />
+                          {downloading === file.id ? '...' : isAudio ? '.mp3' : '.mid'}
+                        </button>
+                        {isAdmin && (
+                          <button className="del-btn" onClick={() => handleDelete(file)} disabled={deleting === file.id} title="Obriši">
+                            <Trash2 size={14} />
+                          </button>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="lock-icon"><Lock size={14} /></span>
+                    )}
+                  </div>
                 </div>
-                <div className="col-name">
-                  <span className="midi-icon">♪</span>
-                  <span className="file-title">{file.title}</span>
-                </div>
-                <div className="col-artist">{file.artist}</div>
-                <div className="col-cat">
-                  <span className={`cat-badge ${file.category.toLowerCase()}`}>{file.category}</span>
-                </div>
-                <div className="col-size">{formatSize(file.fileSize)}</div>
-                <div className="col-dl">
-                  {isPremium ? (
-                    <button
-                      className="dl-btn"
-                      onClick={() => handleDownload(file)}
-                      disabled={downloading === file.id}
-                    >
-                      <Download size={14} />
-                      {downloading === file.id ? '...' : '.mid'}
-                    </button>
-                  ) : (
-                    <span className="lock-icon"><Lock size={14} /></span>
-                  )}
-                </div>
-              </div>
-            ))}
+              );
+            })}
 
             {pages > 1 && (
               <div className="pagination">
@@ -263,7 +347,45 @@ export default function MidiLibraryPage() {
         .title-row h1 { font-size: 2.8rem; font-weight: 800; letter-spacing: -2px; }
         .total-badge { background: rgba(59,130,246,0.1); color: #60a5fa; padding: 4px 14px; border-radius: 100px; font-size: 0.8rem; font-weight: 800; }
         .premium-badge { background: linear-gradient(135deg, #f59e0b, #f97316); color: black; padding: 4px 14px; border-radius: 100px; font-size: 0.75rem; font-weight: 900; letter-spacing: 1px; }
+        .admin-badge { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 4px 14px; border-radius: 100px; font-size: 0.75rem; font-weight: 900; letter-spacing: 1px; }
         .locked-badge { display: flex; align-items: center; gap: 4px; background: rgba(239,68,68,0.1); color: #f87171; padding: 4px 14px; border-radius: 100px; font-size: 0.75rem; font-weight: 800; }
+
+        .admin-bar { margin-bottom: 1.5rem; }
+        .upload-toggle-btn {
+          display: flex; align-items: center; gap: 8px; padding: 10px 24px; border-radius: 100px;
+          background: linear-gradient(135deg, #ef4444, #dc2626); border: none;
+          color: white; font-size: 0.85rem; font-weight: 800; cursor: pointer; transition: 0.3s;
+        }
+        .upload-toggle-btn:hover { transform: scale(1.03); }
+
+        .upload-form {
+          background: rgba(239,68,68,0.05); border: 1px solid rgba(239,68,68,0.2);
+          border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 1.5rem;
+        }
+        .uf-row { margin-bottom: 0.75rem; }
+        .uf-fields { display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; }
+        .file-input-label {
+          display: flex; align-items: center; gap: 8px; padding: 10px 20px; border-radius: 100px;
+          border: 2px dashed rgba(239,68,68,0.3); color: #f87171; font-size: 0.85rem; font-weight: 600;
+          cursor: pointer; transition: 0.2s; background: rgba(239,68,68,0.03);
+        }
+        .file-input-label:hover { border-color: #ef4444; background: rgba(239,68,68,0.08); }
+        .file-input-label input { display: none; }
+        .uf-input {
+          padding: 8px 14px; border-radius: 100px; border: 1px solid var(--border);
+          background: rgba(255,255,255,0.03); color: #e2e8f0; font-size: 0.85rem; flex: 1; min-width: 150px;
+        }
+        .uf-select {
+          padding: 8px 14px; border-radius: 100px; border: 1px solid var(--border);
+          background: rgba(255,255,255,0.03); color: #e2e8f0; font-size: 0.85rem;
+        }
+        .uf-submit {
+          padding: 8px 24px; border-radius: 100px; border: none;
+          background: linear-gradient(135deg, #ef4444, #dc2626); color: white;
+          font-size: 0.85rem; font-weight: 800; cursor: pointer; transition: 0.3s;
+        }
+        .uf-submit:hover:not(:disabled) { transform: scale(1.05); }
+        .uf-submit:disabled { opacity: 0.5; cursor: not-allowed; }
 
         .premium-banner {
           display: flex; align-items: center; gap: 1.25rem; padding: 1.25rem 1.5rem;
@@ -298,7 +420,7 @@ export default function MidiLibraryPage() {
         }
         .search-box:focus-within { border-color: #60a5fa; }
         .search-icon { color: #555; flex-shrink: 0; }
-        .search-box input { background: none; border: none; color: #1a1a1a; width: 100%; outline: none; font-size: 0.95rem; }
+        .search-box input { background: none; border: none; color: #e2e8f0; width: 100%; outline: none; font-size: 0.95rem; }
         .clear-btn { background: none; border: none; color: #555; cursor: pointer; display: flex; padding: 4px; border-radius: 50%; }
         .clear-btn:hover { color: #ef4444; }
 
@@ -315,14 +437,13 @@ export default function MidiLibraryPage() {
         .results-info strong { color: #aaa; }
 
         .list-header {
-          display: grid; grid-template-columns: 40px 2fr 1.5fr 0.8fr 0.6fr 0.7fr;
+          display: grid; grid-template-columns: 40px 2fr 1.2fr 1fr 0.6fr 1fr;
           padding: 0.75rem 1.25rem; font-size: 0.65rem; font-weight: 800; color: #555;
-          letter-spacing: 1.5px; border-bottom: 1px solid var(--border);
-          background: rgba(255,255,255,0.02);
+          letter-spacing: 1.5px; border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.02);
         }
 
         .file-row {
-          display: grid; grid-template-columns: 40px 2fr 1.5fr 0.8fr 0.6fr 0.7fr;
+          display: grid; grid-template-columns: 40px 2fr 1.2fr 1fr 0.6fr 1fr;
           padding: 0.75rem 1.25rem; align-items: center;
           border-bottom: 1px solid var(--border); transition: background 0.15s;
         }
@@ -337,21 +458,25 @@ export default function MidiLibraryPage() {
         .play-btn:hover { background: #34d399; color: black; border-color: #34d399; transform: scale(1.1); }
         .lock-icon-sm { color: #333; display: flex; align-items: center; justify-content: center; }
 
-        .midi-icon { color: #60a5fa; margin-right: 8px; font-size: 1rem; }
+        .col-name { display: flex; align-items: center; }
+        .midi-icon { color: #60a5fa; margin-right: 8px; font-size: 1rem; display: flex; align-items: center; }
         .file-title { font-weight: 600; font-size: 0.95rem; }
         .col-artist { color: #888; font-size: 0.85rem; }
+        .col-cat { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
         .col-size { color: #666; font-size: 0.8rem; }
 
-        .cat-badge {
-          font-size: 0.6rem; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;
-          padding: 3px 10px; border-radius: 100px;
-        }
+        .cat-badge { font-size: 0.6rem; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase; padding: 3px 10px; border-radius: 100px; }
         .cat-badge.zabavna { background: rgba(59,130,246,0.1); color: #60a5fa; }
         .cat-badge.narodna { background: rgba(234,179,8,0.1); color: #facc15; }
         .cat-badge.kola { background: rgba(16,185,129,0.1); color: #34d399; }
         .cat-badge.mixevi { background: rgba(168,85,247,0.1); color: #c084fc; }
         .cat-badge.decije { background: rgba(236,72,153,0.1); color: #f472b6; }
 
+        .type-tag { font-size: 0.55rem; font-weight: 900; letter-spacing: 0.5px; padding: 2px 8px; border-radius: 100px; }
+        .type-tag.mid { background: rgba(96,165,250,0.08); color: #60a5fa; }
+        .type-tag.mp3 { background: rgba(52,211,153,0.08); color: #34d399; }
+
+        .action-btns { display: flex; align-items: center; gap: 6px; }
         .dl-btn {
           display: flex; align-items: center; gap: 4px; padding: 5px 12px; border-radius: 100px;
           background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.25);
@@ -360,12 +485,20 @@ export default function MidiLibraryPage() {
         .dl-btn:hover:not(:disabled) { background: #60a5fa; color: black; border-color: #60a5fa; }
         .dl-btn:disabled { opacity: 0.5; cursor: wait; }
 
+        .del-btn {
+          display: flex; align-items: center; justify-content: center;
+          width: 28px; height: 28px; border-radius: 50%;
+          background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2);
+          color: #f87171; cursor: pointer; transition: all 0.2s;
+        }
+        .del-btn:hover:not(:disabled) { background: #ef4444; color: white; border-color: #ef4444; }
+        .del-btn:disabled { opacity: 0.4; cursor: wait; }
+
         .lock-icon { color: #444; display: flex; align-items: center; }
 
         .pagination { display: flex; justify-content: center; align-items: center; gap: 1.5rem; margin-top: 2rem; padding: 1rem 0; }
         .page-btn {
-          display: flex; align-items: center; gap: 4px;
-          padding: 8px 20px; border-radius: 100px;
+          display: flex; align-items: center; gap: 4px; padding: 8px 20px; border-radius: 100px;
           background: rgba(255,255,255,0.03); border: 1px solid var(--border);
           color: #aaa; font-size: 0.8rem; font-weight: 700; cursor: pointer; transition: 0.3s;
         }
@@ -382,6 +515,8 @@ export default function MidiLibraryPage() {
           .file-row { grid-template-columns: 36px 1fr auto; gap: 0.5rem; }
           .col-artist, .col-cat, .col-size { display: none; }
           .premium-banner { flex-direction: column; text-align: center; }
+          .uf-fields { flex-direction: column; }
+          .uf-input, .uf-select { width: 100%; }
         }
       `}</style>
     </div>

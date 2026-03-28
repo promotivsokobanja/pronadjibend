@@ -110,11 +110,14 @@ model MidiFile {
   fileName  String
   filePath  String   // Path in Supabase storage
   fileSize  Int      @default(0)
+  fileType  String   @default("midi") // "midi" | "audio"
+  uploadedBy String? // userId of uploader (for user MP3 uploads)
   createdAt DateTime @default(now())
 
   @@index([category])
   @@index([title])
   @@index([artist])
+  @@index([fileType])
 }
 
 model BillingEvent {
