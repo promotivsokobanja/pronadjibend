@@ -1,0 +1,24 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="brandBlue" x1="62" y1="40" x2="198" y2="214" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#007AFF"/>
+      <stop offset="1" stop-color="#38BDF8"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Clean global-brand badge -->
+  <rect x="20" y="20" width="216" height="216" rx="56" fill="#0F172A"/>
+  <rect x="24" y="24" width="208" height="208" rx="52" stroke="#1E293B" stroke-width="4"/>
+
+  <!-- Stylized P -->
+  <path d="M76 64H126C150 64 166 80 166 102C166 124 150 140 126 140H102V192H76V64ZM123 118C137 118 143 111 143 102C143 93 137 86 123 86H102V118H123Z" fill="#FFFFFF"/>
+
+  <!-- B/Note hybrid accent -->
+  <path d="M146 78V169" stroke="url(#brandBlue)" stroke-width="12" stroke-linecap="round"/>
+  <circle cx="169" cy="178" r="20" fill="url(#brandBlue)"/>
+  <path d="M146 106C152 100 159 98 166 98C177 98 185 106 185 116C185 126 177 134 166 134C159 134 152 132 146 126" stroke="url(#brandBlue)" stroke-width="8" stroke-linecap="round"/>
+
+  <!-- Subtle search cue -->
+  <circle cx="184" cy="74" r="9" stroke="#38BDF8" stroke-width="4"/>
+  <path d="M190 80L199 89" stroke="#38BDF8" stroke-width="4" stroke-linecap="round"/>
+</svg>

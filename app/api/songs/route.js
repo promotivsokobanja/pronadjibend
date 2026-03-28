@@ -1,0 +1,48 @@
+import prisma from '../../../lib/prisma';
+import { NextResponse } from 'next/server';
+
+export const dynamic = 'force-dynamic';
+
+export async function GET(request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const category = searchParams.get('category');
+    const search = searchParams.get('search');
+    const bandId = searchParams.get('bandId');
+
+    let where = {};
+    if (bandId) where.bandId = bandId;
+    if (category && category !== 'Sve') where.category = category;
+    if (search) {
+      where.OR = [
+        { title: { contains: search, mode: 'insensitive' } },
+        { artist: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
+    const songs = await prisma.song.findMany({ where, orderBy: { title: 'asc' } });
+    return NextResponse.json(songs);
+  } catch (error) {
+    console.error('API Error:', error);
+    return NextResponse.json({ error: 'Failed to fetch songs' }, { status: 500 });
+  }
+}
+
+export async function POST(request) {
+  try {
+    const { title, artist, lyrics, chords, category, type, bandId } = await request.json();
+
+    if (!title || !artist) {
+      return NextResponse.json({ error: 'Naslov i izvođač su obavezni.' }, { status: 400 });
+    }
+
+    const song = await prisma.song.create({
+      data: { title, artist, lyrics, chords, category, type, bandId },
+    });
+
+    return NextResponse.json({ success: true, song });
+  } catch (error) {
+    console.error('API Error:', error);
+    return NextResponse.json({ error: 'Greška pri dodavanju pesme.' }, { status: 500 });
+  }
+}

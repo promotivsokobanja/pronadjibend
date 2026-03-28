@@ -1,0 +1,230 @@
+/* Admin pun ekran (bez javnog Navbar-a u root layout-u) */
+.admin-app {
+  display: flex;
+  min-height: 100vh;
+  margin-top: 0;
+  background: #0f172a;
+  color: #e2e8f0;
+}
+
+.admin-sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  background: #020617;
+  border-right: 1px solid rgba(148, 163, 184, 0.15);
+  padding: 1.25rem 0;
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+  max-height: 100vh;
+  overflow-y: auto;
+}
+
+.admin-sidebar a {
+  display: block;
+  padding: 0.65rem 1.25rem;
+  color: #94a3b8;
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-decoration: none;
+  border-left: 3px solid transparent;
+  transition: color 0.15s, background 0.15s;
+}
+
+.admin-sidebar a:hover {
+  color: #f8fafc;
+  background: rgba(59, 130, 246, 0.08);
+}
+
+.admin-sidebar a.active {
+  color: #60a5fa;
+  border-left-color: #3b82f6;
+  background: rgba(59, 130, 246, 0.12);
+}
+
+.admin-main {
+  flex: 1;
+  padding: 1.75rem 2rem 3rem;
+  max-width: 1200px;
+}
+
+.admin-main h1 {
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  margin-bottom: 0.35rem;
+  color: #f8fafc;
+}
+
+.admin-main .admin-sub {
+  color: #94a3b8;
+  font-size: 0.9rem;
+  margin-bottom: 1.75rem;
+}
+
+.admin-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.admin-stat-card {
+  background: #1e293b;
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  border-radius: 12px;
+  padding: 1rem 1.15rem;
+}
+
+.admin-stat-card span {
+  display: block;
+  font-size: 1.65rem;
+  font-weight: 800;
+  color: #f8fafc;
+}
+
+.admin-stat-card small {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #94a3b8;
+  font-weight: 700;
+}
+
+.admin-table-wrap {
+  overflow-x: auto;
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  border-radius: 12px;
+  background: #1e293b;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.admin-table th,
+.admin-table td {
+  padding: 0.65rem 0.85rem;
+  text-align: left;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.admin-table th {
+  background: #0f172a;
+  color: #94a3b8;
+  font-weight: 700;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.admin-table tr:last-child td {
+  border-bottom: none;
+}
+
+.admin-table select {
+  background: #0f172a;
+  color: #e2e8f0;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 6px;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.8rem;
+}
+
+.admin-btn {
+  background: #3b82f6;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.4rem 0.75rem;
+  font-weight: 700;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.admin-btn:hover {
+  background: #2563eb;
+}
+
+.admin-btn-danger {
+  background: #b91c1c;
+}
+
+.admin-btn-danger:hover {
+  background: #991b1b;
+}
+
+.admin-pagination {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  margin-top: 1rem;
+  font-size: 0.85rem;
+  color: #94a3b8;
+}
+
+.admin-input {
+  background: #0f172a;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  color: #e2e8f0;
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  min-width: 200px;
+}
+
+.admin-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.admin-badge {
+  display: inline-block;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.admin-badge-admin {
+  background: rgba(168, 85, 247, 0.2);
+  color: #c4b5fd;
+}
+.admin-badge-band {
+  background: rgba(59, 130, 246, 0.2);
+  color: #93c5fd;
+}
+.admin-badge-client {
+  background: rgba(16, 185, 129, 0.2);
+  color: #6ee7b7;
+}
+
+@media (max-width: 900px) {
+  .admin-app {
+    flex-direction: column;
+  }
+  .admin-sidebar {
+    width: 100%;
+    position: relative;
+    top: 0;
+    max-height: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    padding: 0.75rem;
+  }
+  .admin-sidebar a {
+    border-left: none;
+    border-radius: 8px;
+    padding: 0.5rem 0.75rem;
+  }
+  .admin-sidebar a.active {
+    border-left: none;
+  }
+}

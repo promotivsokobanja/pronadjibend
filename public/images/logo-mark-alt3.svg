@@ -1,0 +1,23 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="blueWave" x1="62" y1="46" x2="202" y2="214" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#007AFF"/>
+      <stop offset="1" stop-color="#38BDF8"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="20" y="20" width="216" height="216" rx="56" fill="#FFFFFF"/>
+  <rect x="24" y="24" width="208" height="208" rx="52" stroke="#E2E8F0" stroke-width="8"/>
+
+  <!-- Search lens -->
+  <circle cx="111" cy="111" r="48" stroke="#0F172A" stroke-width="14"/>
+  <path d="M145 145L187 187" stroke="#0F172A" stroke-width="14" stroke-linecap="round"/>
+
+  <!-- Note inside lens -->
+  <path d="M127 82V136" stroke="url(#blueWave)" stroke-width="10" stroke-linecap="round"/>
+  <circle cx="123" cy="149" r="14" fill="url(#blueWave)"/>
+
+  <!-- Wave baseline -->
+  <path d="M62 176C78 166 92 166 108 176C124 186 138 186 154 176C170 166 184 166 200 176"
+    stroke="url(#blueWave)" stroke-width="10" stroke-linecap="round"/>
+</svg>

@@ -1,0 +1,12 @@
+# Set secrets in Netlify UI: Site configuration → Environment variables
+# Required for build: DATABASE_URL (Neon Postgres). Also add NEXTAUTH_URL, NEXTAUTH_SECRET for auth.
+# Opciono: ALLOWED_AUTH_ORIGINS=https://pronadjibend.rs,https://www.pronadjibend.rs
+
+[build]
+  command = "npm run build"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"

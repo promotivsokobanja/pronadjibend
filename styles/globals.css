@@ -1,0 +1,76 @@
+/* Fontovi: next/font u app/layout.js (bez spoljnog @import — blokira ceo CSS ako fonts.googleapis.com ne odgovori) */
+@import "tailwindcss";
+@source "../app/**/*.{js,ts,jsx,tsx}";
+@source "../components/**/*.{js,ts,jsx,tsx}";
+
+@import "./navbar.css";
+@import "./footer.css";
+@import "./ui-shared.css";
+
+:root {
+  /* Premium Colors */
+  --accent-purple: #8b5cf6; 
+  --accent-primary: var(--accent-purple);
+  --accent-glow: rgba(139, 92, 246, 0.4);
+  
+  /* DEFAULT Theme: Clean Light */
+  --bg: #ffffff;
+  --bg-soft: #f8fafc;
+  --text: #0f172a;
+  --text-muted: #64748b;
+  --border: rgba(0, 0, 0, 0.08);
+  --glass: rgba(255, 255, 255, 0.9);
+  --glass-border: rgba(0, 0, 0, 0.05);
+
+  --radius-xl: 24px;
+  --radius-lg: 16px;
+  --radius-md: 14px;
+  --radius-sm: 10px;
+  --transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  --font-main: 'Inter', system-ui, sans-serif;
+  --font-heading: 'Montserrat', sans-serif;
+}
+
+.theme-dark {
+  --bg: #050505;
+  --bg-soft: #0a0a0b;
+  --text: #ffffff;
+  --text-muted: #94a3b8;
+  --border: rgba(255, 255, 255, 0.06);
+  --glass: rgba(10, 10, 11, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: var(--font-main);
+  line-height: 1.6;
+}
+
+/* Navbar styling is owned by `components/Navbar.js` */
+
+/* Global Button Styles */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.5rem;
+  border-radius: 100px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--transition);
+  text-decoration: none;
+}
+
+.container { 
+  max-width: 1280px; 
+  margin: 0 auto; 
+  padding: 0 2rem; 
+}

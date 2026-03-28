@@ -1,0 +1,113 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  role      String   // "ADMIN", "BAND", "CLIENT"
+  plan      String   @default("BASIC")
+  planUntil DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  band      Band?    @relation(fields: [bandId], references: [id])
+  bandId    String?  @unique
+}
+
+model Band {
+  id            String         @id @default(cuid())
+  name          String
+  genre         String
+  location      String
+  priceRange    String?
+  bio           String?
+  videoUrl      String?
+  audioUrl      String?
+  hasEquipment  Boolean        @default(false)
+  rider         String?        // Technical requirements
+  qrToken       String?        @unique // For active session
+  rating        Float          @default(0)
+  img           String?
+  songs         Song[]         // Repertoire
+  bookings      Booking[]
+  liveRequests  LiveRequest[]
+  reviews       Review[]
+  busyDates     BusyDate[]
+  user          User?
+}
+
+model Song {
+  id           String        @id @default(cuid())
+  title        String
+  artist       String
+  lyrics       String?
+  chords       String?       // Chords with transposition marks
+  key          String?       // Original key
+  category     String?       // e.g., "Muške Zabavne"
+  type         String?       // e.g., "Zabavna", "Narodna"
+  band         Band?         @relation(fields: [bandId], references: [id])
+  bandId       String?
+  liveRequests LiveRequest[]
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  rating    Int
+  comment   String?
+  author    String
+  createdAt DateTime @default(now())
+  band      Band     @relation(fields: [bandId], references: [id])
+  bandId    String
+}
+
+model BusyDate {
+  id        String   @id @default(cuid())
+  date      DateTime
+  reason    String?
+  band      Band     @relation(fields: [bandId], references: [id])
+  bandId    String
+}
+
+model Booking {
+  id          String   @id @default(cuid())
+  clientName  String
+  clientEmail String
+  clientPhone String?
+  date        DateTime
+  status      String   @default("PENDING") // "PENDING", "CONFIRMED", "CANCELLED", "COMPLETED"
+  message     String?
+  location    String?
+  price       String?
+  band        Band     @relation(fields: [bandId], references: [id])
+  bandId      String
+  createdAt   DateTime @default(now())
+}
+
+model LiveRequest {
+  id        String   @id @default(cuid())
+  tableNum  String
+  status    String   @default("PENDING") // "PENDING", "PLAYED", "REJECTED"
+  createdAt DateTime @default(now())
+  song      Song     @relation(fields: [songId], references: [id])
+  songId    String
+  band      Band     @relation(fields: [bandId], references: [id])
+  bandId    String
+}
+
+model BillingEvent {
+  id                 String   @id @default(cuid())
+  stripeSessionId    String?  @unique
+  stripeCustomerId   String?
+  stripeSubscription String?
+  customerEmail      String?
+  status             String
+  createdAt          DateTime @default(now())
+}

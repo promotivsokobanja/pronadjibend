@@ -1,0 +1,16 @@
+# Lokalni Postgres za razvoj: docker compose up -d
+# Zatim: npx prisma migrate deploy && npm run dev
+services:
+  db:
+    image: postgres:16-alpine
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: pronadjibend
+    volumes:
+      - pronadjibend_pg:/var/lib/postgresql/data
+
+volumes:
+  pronadjibend_pg:
