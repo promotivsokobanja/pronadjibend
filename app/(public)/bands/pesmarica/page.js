@@ -312,10 +312,11 @@ export default function PesmaricaPage() {
         .expand-icon { color: #444; display: flex; }
 
         .lyrics-panel {
-          border-top: 1px solid var(--border); padding: 1.25rem 1.5rem;
-          background: rgba(0,0,0,0.35); max-height: 450px; overflow-y: auto;
+          border-top: 1px solid #d0d0d0; padding: 1.25rem 1.5rem;
+          background: #e8e8e8; max-height: 450px; overflow-y: auto;
+          border-radius: 0 0 var(--radius-md) var(--radius-md);
         }
-        .lyrics-text { font-family: 'Inter', sans-serif; font-size: 0.92rem; line-height: 1.8; color: #ccc; white-space: pre-wrap; word-break: break-word; margin: 0; }
+        .lyrics-text { font-family: 'Inter', sans-serif; font-size: 0.92rem; line-height: 1.8; color: #1a1a1a; white-space: pre-wrap; word-break: break-word; margin: 0; }
 
         .pagination { display: flex; justify-content: center; align-items: center; gap: 1.5rem; margin-top: 2rem; padding: 1rem 0; }
         .page-btn {
