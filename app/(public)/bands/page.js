@@ -334,10 +334,10 @@ export default function BandDashboard() {
         .dash-header { 
           display: flex; 
           justify-content: space-between; 
-          align-items: center; 
+          align-items: flex-start; 
           margin-bottom: 5rem;
           flex-wrap: wrap;
-          gap: 2rem;
+          gap: 1.5rem;
         }
         .dash-header h1 { font-size: 3rem; font-weight: 800; letter-spacing: -2px; }
 
@@ -403,12 +403,49 @@ export default function BandDashboard() {
         @media (max-width: 968px) {
           .dash-content { grid-template-columns: 1fr; }
           .dash-header h1 { font-size: 2.5rem; }
+          .dash-header {
+            flex-direction: column;
+            align-items: stretch;
+            margin-bottom: 3rem;
+          }
         }
 
-        .header-actions { display: flex; gap: 1rem; }
+        .header-actions {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.75rem;
+          align-items: stretch;
+          justify-content: flex-end;
+          max-width: 100%;
+        }
+        @media (max-width: 968px) {
+          .header-actions {
+            justify-content: stretch;
+            width: 100%;
+          }
+          .header-actions :global(a) {
+            flex: 1 1 calc(50% - 0.375rem);
+            min-width: 0;
+            display: flex;
+          }
+          .header-actions :global(button) {
+            width: 100%;
+            min-height: 48px;
+            justify-content: center;
+          }
+        }
+        @media (max-width: 520px) {
+          .dashboard-container { padding-top: 7.5rem; }
+          .header-actions :global(a) {
+            flex: 1 1 100%;
+          }
+        }
         .live-notification { 
-          position: fixed; top: 100px; right: 2rem; width: 340px; 
+          position: fixed; top: 100px; right: 2rem; width: 340px; max-width: calc(100vw - 2rem);
           z-index: 1500; padding: 2rem; border-top: 2px solid var(--accent-primary);
+        }
+        @media (max-width: 480px) {
+          .live-notification { right: 1rem; left: 1rem; width: auto; }
         }
         .notif-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; }
         .pulse-dot { width: 8px; height: 8px; background: #ef4444; border-radius: 50%; animation: pulse 1s infinite; }
