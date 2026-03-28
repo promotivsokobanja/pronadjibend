@@ -4,6 +4,12 @@ export default function robots() {
       {
         userAgent: '*',
         allow: '/',
+        disallow: ['/admin', '/admin/', '/api/', '/bands/live', '/bands/repertoire', '/bands/profile'],
+      },
+      {
+        userAgent: 'Googlebot',
+        allow: '/',
+        disallow: ['/admin', '/admin/', '/api/'],
       },
     ],
     sitemap: 'https://pronadjibend.rs/sitemap.xml',

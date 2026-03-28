@@ -1,5 +1,11 @@
-'use client';
 import Link from 'next/link';
+
+export const metadata = {
+  title: 'Politika Privatnosti — Pronađi Bend',
+  description:
+    'Saznajte kako platforma Pronađi Bend obrađuje vaše podatke o ličnosti u skladu sa zakonima Republike Srbije.',
+  alternates: { canonical: '/privatnost' },
+};
 
 export default function PrivatnostPage() {
   return (

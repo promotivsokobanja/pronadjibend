@@ -1,5 +1,11 @@
-'use client';
 import Link from 'next/link';
+
+export const metadata = {
+  title: 'Uslovi Korišćenja — Pronađi Bend',
+  description:
+    'Uslovi korišćenja platforme Pronađi Bend. Pravila za korisnike, muzičare i klijente u skladu sa zakonima Republike Srbije.',
+  alternates: { canonical: '/uslovi-koriscenja' },
+};
 
 export default function UsloviKoriscenjaPage() {
   return (
