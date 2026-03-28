@@ -33,29 +33,30 @@ export async function GET(request) {
   const search = searchParams.get('search');
 
   try {
-    const bandCount = await prisma.band.count();
-
-    if (bandCount === 0) {
-      const demos = filterDemoBands(getDemoBands(), { search, genre, location });
-      return NextResponse.json(demos);
+    let dbBands = [];
+    try {
+      dbBands = await prisma.band.findMany({
+        where: {
+          AND: [
+            search ? { name: { contains: search, mode: 'insensitive' } } : {},
+            genre && genre !== 'Svi žanrovi'
+              ? { genre: { contains: genre, mode: 'insensitive' } }
+              : {},
+            location ? { location: { contains: location, mode: 'insensitive' } } : {},
+          ]
+        },
+        include: {
+          reviews: true
+        }
+      });
+    } catch (dbErr) {
+      console.error('DB Error (falling back to demos only):', dbErr);
     }
 
-    const bands = await prisma.band.findMany({
-      where: {
-        AND: [
-          search ? { name: { contains: search, mode: 'insensitive' } } : {},
-          genre && genre !== 'Svi žanrovi'
-            ? { genre: { contains: genre, mode: 'insensitive' } }
-            : {},
-          location ? { location: { contains: location, mode: 'insensitive' } } : {},
-        ]
-      },
-      include: {
-        reviews: true
-      }
-    });
+    const demos = filterDemoBands(getDemoBands(), { search, genre, location });
+    const combined = [...dbBands, ...demos];
 
-    return NextResponse.json(bands);
+    return NextResponse.json(combined);
   } catch (error) {
     console.error('API Error:', error);
     try {
