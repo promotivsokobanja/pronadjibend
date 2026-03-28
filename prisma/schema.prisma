@@ -102,6 +102,21 @@ model LiveRequest {
   bandId    String
 }
 
+model MidiFile {
+  id        String   @id @default(cuid())
+  title     String
+  artist    String
+  category  String   // "Zabavna", "Narodna", "Kola", "Mixevi", "Decije"
+  fileName  String
+  filePath  String   // Path in Supabase storage
+  fileSize  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([category])
+  @@index([title])
+  @@index([artist])
+}
+
 model BillingEvent {
   id                 String   @id @default(cuid())
   stripeSessionId    String?  @unique

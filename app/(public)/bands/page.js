@@ -1,5 +1,5 @@
 'use client';
-import { Music, Play, Plus, Star, Bell, QrCode, Pencil, BookOpen } from 'lucide-react';
+import { Music, Play, Plus, Star, Bell, QrCode, Pencil, BookOpen, FileMusic } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -139,6 +139,11 @@ export default function BandDashboard() {
           <Link href="/bands/pesmarica">
             <button className="btn btn-secondary">
               <BookOpen size={18} style={{ marginRight: '8px' }} /> Pesmarica
+            </button>
+          </Link>
+          <Link href="/bands/midi">
+            <button className="btn btn-secondary">
+              <FileMusic size={18} style={{ marginRight: '8px' }} /> MIDI Fajlovi
             </button>
           </Link>
           <Link href="/bands/live">
