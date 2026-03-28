@@ -36,8 +36,26 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Naslov i izvođač su obavezni.' }, { status: 400 });
     }
 
+    let finalLyrics = lyrics || null;
+
+    if (!finalLyrics) {
+      try {
+        const existing = await prisma.song.findFirst({
+          where: {
+            title: { equals: title, mode: 'insensitive' },
+            artist: { contains: artist.split(/[,#&]/)[0].trim(), mode: 'insensitive' },
+            lyrics: { not: null },
+          },
+          select: { lyrics: true },
+        });
+        if (existing?.lyrics) finalLyrics = existing.lyrics;
+      } catch {
+        // Fallback: proceed without lyrics
+      }
+    }
+
     const song = await prisma.song.create({
-      data: { title, artist, lyrics, chords, category, type, bandId },
+      data: { title, artist, lyrics: finalLyrics, chords, category, type, bandId },
     });
 
     return NextResponse.json({ success: true, song });

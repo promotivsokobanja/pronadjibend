@@ -1,5 +1,5 @@
 'use client';
-import { Music, Play, Plus, Star, Bell, QrCode, Pencil } from 'lucide-react';
+import { Music, Play, Plus, Star, Bell, QrCode, Pencil, BookOpen } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -136,6 +136,11 @@ export default function BandDashboard() {
           <button className="btn btn-secondary" onClick={() => setShowQr(true)}>
             <QrCode size={18} style={{ marginRight: '8px' }} /> Vaš QR Kod
           </button>
+          <Link href="/bands/pesmarica">
+            <button className="btn btn-secondary">
+              <BookOpen size={18} style={{ marginRight: '8px' }} /> Pesmarica
+            </button>
+          </Link>
           <Link href="/bands/live">
             <button className="btn btn-primary">
               <Play size={18} style={{ marginRight: '8px' }} /> Pokreni Nastup
