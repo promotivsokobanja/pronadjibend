@@ -57,10 +57,6 @@ export async function POST(request) {
       );
     }
 
-    if (!hasDatabaseUrl()) {
-      return databaseUrlMissingResponse();
-    }
-
     const user = await prisma.user.findUnique({
       where: { email: normalizedEmail },
       select: {

@@ -16,10 +16,6 @@ export async function GET(request) {
       return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
     }
 
-    if (!hasDatabaseUrl()) {
-      return databaseUrlMissingResponse();
-    }
-
     const user = await prisma.user.findUnique({
       where: { id: authUser.userId },
       select: {

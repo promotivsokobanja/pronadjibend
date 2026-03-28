@@ -62,10 +62,6 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Ime/naziv je predugačak.' }, { status: 400 });
     }
 
-    if (!hasDatabaseUrl()) {
-      return databaseUrlMissingResponse();
-    }
-
     const existingUser = await prisma.user.findUnique({
       where: { email: normalizedEmail }
     });

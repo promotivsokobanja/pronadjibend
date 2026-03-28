@@ -26,7 +26,7 @@ const handler = NextAuth({
   callbacks: {
     async signIn({ account, profile }) {
       if (account?.provider !== 'google') return true;
-      if (!hasDatabaseUrl()) return false;
+      if (!process.env.DATABASE_URL) return false;
       const email = String(profile?.email || '')
         .trim()
         .toLowerCase();
