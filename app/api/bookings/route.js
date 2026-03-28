@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '../../../lib/prisma';
 import { isDemoBandId } from '../../../lib/demoBands';
+import { sendBookingNotificationToBand } from '../../../lib/sendBookingNotificationEmail';
 
 export async function POST(request) {
   try {
@@ -44,6 +45,21 @@ export async function POST(request) {
         status: 'PENDING',
       },
     });
+
+    const band = await prisma.band.findUnique({
+      where: { id: bandId },
+      select: { name: true, user: { select: { email: true } } },
+    });
+
+    try {
+      await sendBookingNotificationToBand({
+        bandEmail: band?.user?.email,
+        bandName: band?.name || 'Bend',
+        booking,
+      });
+    } catch (mailErr) {
+      console.error('[booking-email] Slanje mejla nije uspelo:', mailErr);
+    }
 
     return NextResponse.json({ success: true, booking });
   } catch (error) {

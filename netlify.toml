@@ -2,6 +2,11 @@
 # Required for build: DATABASE_URL (Neon Postgres). Also add NEXTAUTH_URL, NEXTAUTH_SECRET for auth.
 # Opciono: ALLOWED_AUTH_ORIGINS=https://pronadjibend.rs,https://www.pronadjibend.rs
 #
+# Email obaveštenja bendu o novom upitu (runtime, ne build):
+#   SMTP_HOST, SMTP_PORT (587), SMTP_USER, SMTP_PASS, SMTP_SECURE (true samo za 465)
+#   SMTP_FROM ili BOOKING_EMAIL_FROM npr. "Pronađi Bend <office@pronadjibend.rs>"
+# Bend prima mejl na User.email naloga vezanog za bend; Reply-To = email klijenta iz forme.
+#
 # Automatski deploy: Netlify → Site configuration → Build & deploy → Continuous deployment
 # → poveži GitHub repo (promotivsokobanja/pronadjibend), production branch = main.
 # Svaki git push na main pokreće build (migrate + next build) i objavu.
