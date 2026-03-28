@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '../../../../lib/prisma';
 import { requireAdmin } from '../../../../lib/adminAuth';
 import { responseFromDatabaseError } from '../../../../lib/dbClientErrors';
+import { sendBookingConfirmedEmails } from '../../../../lib/sendBookingNotificationEmail';
 
 export const dynamic = 'force-dynamic';
 
@@ -87,6 +88,24 @@ export async function PATCH(request) {
   }
 
   try {
+    const existing = await prisma.booking.findUnique({
+      where: { id },
+      select: {
+        status: true,
+        clientName: true,
+        clientEmail: true,
+        clientPhone: true,
+        date: true,
+        message: true,
+        location: true,
+        band: { select: { name: true, user: { select: { email: true } } } },
+      },
+    });
+
+    if (!existing) {
+      return NextResponse.json({ error: 'Rezervacija nije pronađena.' }, { status: 404 });
+    }
+
     const booking = await prisma.booking.update({
       where: { id },
       data: { status },
@@ -94,10 +113,39 @@ export async function PATCH(request) {
         id: true,
         status: true,
         clientName: true,
-        band: { select: { name: true } },
+        clientEmail: true,
+        clientPhone: true,
+        date: true,
+        message: true,
+        location: true,
+        band: { select: { name: true, user: { select: { email: true } } } },
       },
     });
-    return NextResponse.json({ booking });
+
+    if (
+      status === 'CONFIRMED' &&
+      existing.status !== 'CONFIRMED' &&
+      booking.band
+    ) {
+      try {
+        await sendBookingConfirmedEmails({
+          bandEmail: booking.band.user?.email,
+          bandName: booking.band.name,
+          booking,
+        });
+      } catch (mailErr) {
+        console.error('[booking-email] Potvrda (CONFIRMED):', mailErr);
+      }
+    }
+
+    return NextResponse.json({
+      booking: {
+        id: booking.id,
+        status: booking.status,
+        clientName: booking.clientName,
+        band: { name: booking.band?.name },
+      },
+    });
   } catch (error) {
     if (error?.code === 'P2025') {
       return NextResponse.json({ error: 'Rezervacija nije pronađena.' }, { status: 404 });
