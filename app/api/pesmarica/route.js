@@ -7,22 +7,34 @@ export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search') || '';
+    const category = searchParams.get('category') || '';
+    const letter = searchParams.get('letter') || '';
     const page = parseInt(searchParams.get('page') || '1', 10);
-    const limit = 40;
+    const limit = 50;
     const skip = (page - 1) * limit;
 
     const where = {
       lyrics: { not: null },
+      bandId: null,
     };
+
+    if (category && category !== 'Sve') {
+      where.category = category;
+    }
+
+    if (letter) {
+      where.title = { startsWith: letter, mode: 'insensitive' };
+    }
 
     if (search.length >= 2) {
       where.OR = [
         { title: { contains: search, mode: 'insensitive' } },
         { artist: { contains: search, mode: 'insensitive' } },
       ];
+      delete where.title;
     }
 
-    const [songs, total] = await Promise.all([
+    const [songs, total, catCounts] = await Promise.all([
       prisma.song.findMany({
         where,
         select: {
@@ -31,21 +43,33 @@ export async function GET(request) {
           artist: true,
           lyrics: true,
           category: true,
-          type: true,
         },
         orderBy: { title: 'asc' },
-        distinct: ['title', 'artist'],
         skip,
         take: limit,
       }),
       prisma.song.count({ where }),
+      prisma.song.groupBy({
+        by: ['category'],
+        where: { lyrics: { not: null }, bandId: null },
+        _count: true,
+      }),
     ]);
+
+    const counts = {};
+    let totalAll = 0;
+    for (const c of catCounts) {
+      counts[c.category] = c._count;
+      totalAll += c._count;
+    }
+    counts['Sve'] = totalAll;
 
     return NextResponse.json({
       songs,
       total,
       page,
       pages: Math.ceil(total / limit),
+      counts,
     });
   } catch (error) {
     console.error('Pesmarica API Error:', error);
