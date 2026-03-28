@@ -128,7 +128,7 @@ export default function HomeClient() {
       <motion.section className="featured-bands container" {...scrollFade}>
         <div className="section-title reveal delay-3">
           <h2>
-            Preporučeni <span className="gradient-text">Muzičari</span>
+            Preporučujemo <span className="gradient-text">Muzičare</span>
           </h2>
           <p>Baza sertifikovanih bendova spremnih za vaš event.</p>
         </div>

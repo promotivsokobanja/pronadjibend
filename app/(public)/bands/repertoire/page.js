@@ -123,7 +123,7 @@ export default function RepertoirePage() {
         </div>
         <div className="header-actions">
           <div className="search-box">
-            <Search size={18} className="text-muted" />
+            <Search size={18} aria-hidden />
             <input 
               type="text" 
               placeholder="Pretraži globalnu bazu..." 
@@ -223,8 +223,10 @@ export default function RepertoirePage() {
         .back-link { display: flex; align-items: center; gap: 0.5rem; color: #555; font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2rem; }
         .title-section h1 { font-size: 3.5rem; font-weight: 800; margin-bottom: 1.5rem; letter-spacing: -2px; }
         .header-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 3rem; gap: 2rem; flex-wrap: wrap; }
-        .search-box { flex: 1; min-width: 300px; max-width: 500px; display: flex; align-items: center; gap: 1rem; padding: 0.75rem 1.5rem; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 100px; }
-        .search-box input { background: none; border: none; color: white; width: 100%; outline: none; font-size: 0.95rem; }
+        .search-box { flex: 1; min-width: 300px; max-width: 500px; display: flex; align-items: center; gap: 1rem; padding: 0.75rem 1.5rem; background: #fff; border: 1px solid #e2e8f0; border-radius: 100px; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04); }
+        .search-box input { background: none; border: none; color: #0f172a; width: 100%; outline: none; font-size: 0.95rem; font-weight: 600; }
+        .search-box input::placeholder { color: #64748b; font-weight: 500; }
+        .search-box svg { color: #64748b; flex-shrink: 0; }
         
         .gender-tabs-container { overflow-x: auto; margin-top: 2.5rem; padding-bottom: 1rem; -webkit-overflow-scrolling: touch; }
         .gender-tabs { display: flex; gap: 0.6rem; min-width: max-content; }
