@@ -11,8 +11,9 @@ import '../../styles/home.css';
 import HomeBlogGuideSection from '../../components/home/HomeBlogGuideSection';
 import VodicSekcija from '../../components/VodicSekcija';
 
+/* SSR: bez opacity 0 u initial (sadržaj ostaje vidljiv pre nego što FM animira). */
 const scrollFade = {
-  initial: { opacity: 0, y: 18 },
+  initial: { opacity: 1, y: 18 },
   whileInView: { opacity: 1, y: 0 },
   viewport: { once: true, margin: '-48px' },
   transition: { duration: 0.48, ease: [0.16, 1, 0.3, 1] },
@@ -145,7 +146,7 @@ export default function HomeClient() {
             <motion.div
               key={band.id}
               className="glass-card band-card group reveal delay-1"
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 1, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: '-40px' }}
               transition={{
@@ -201,7 +202,7 @@ export default function HomeClient() {
         <div className="gallery-grid">
           <motion.div
             className="img-wrap reveal delay-1"
-            initial={{ opacity: 0, y: 16 }}
+            initial={{ opacity: 1, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-32px' }}
             transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
@@ -218,7 +219,7 @@ export default function HomeClient() {
           </motion.div>
           <motion.div
             className="img-wrap reveal delay-2"
-            initial={{ opacity: 0, y: 16 }}
+            initial={{ opacity: 1, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-32px' }}
             transition={{ duration: 0.5, delay: 0.06, ease: [0.16, 1, 0.3, 1] }}
@@ -234,7 +235,7 @@ export default function HomeClient() {
           </motion.div>
           <motion.div
             className="img-wrap reveal delay-3"
-            initial={{ opacity: 0, y: 16 }}
+            initial={{ opacity: 1, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-32px' }}
             transition={{ duration: 0.5, delay: 0.12, ease: [0.16, 1, 0.3, 1] }}
@@ -261,7 +262,7 @@ export default function HomeClient() {
         <div className="testimonial-grid">
           <motion.div
             className="glass-card reveal delay-1"
-            initial={{ opacity: 0, y: 14 }}
+            initial={{ opacity: 1, y: 14 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-32px' }}
             transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
@@ -275,7 +276,7 @@ export default function HomeClient() {
           </motion.div>
           <motion.div
             className="glass-card reveal delay-2"
-            initial={{ opacity: 0, y: 14 }}
+            initial={{ opacity: 1, y: 14 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-32px' }}
             transition={{ duration: 0.45, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
@@ -302,7 +303,7 @@ export default function HomeClient() {
         <div className="pricing-grid">
           <motion.div
             className="glass-card pricing-card reveal delay-1 card-3d-wrap"
-            initial={{ opacity: 0, y: 14 }}
+            initial={{ opacity: 1, y: 14 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-32px' }}
             transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
@@ -325,7 +326,7 @@ export default function HomeClient() {
           </motion.div>
           <motion.div
             className="glass-card pricing-card featured-price reveal delay-2"
-            initial={{ opacity: 0, y: 14 }}
+            initial={{ opacity: 1, y: 14 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-32px' }}
             transition={{ duration: 0.45, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}

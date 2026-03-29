@@ -26,9 +26,9 @@ const nextConfig = {
     const h = securityHeaders();
     return [
       {
-        // Isto kao raniji middleware: bez headere na _next (CSS/JS), public assetima
+        // Bez _next (CSS/JS), /api/* (JSON), javnih fajlova
         source:
-          '/((?!_next/|images/|marketing/|favicon\\.ico$).*)',
+          '/((?!_next/|api/|images/|marketing/|favicon\\.ico$).*)',
         headers: h,
       },
     ];

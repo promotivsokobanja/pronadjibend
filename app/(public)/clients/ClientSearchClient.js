@@ -128,7 +128,7 @@ export default function ClientSearchClient() {
               {visibleBands.map((band, i) => (
                 <motion.div
                   key={`${currentPage}-${band.id}`}
-                  initial={{ opacity: 0, y: 14 }}
+                  initial={{ opacity: 1, y: 14 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, margin: '-32px' }}
                   transition={{
