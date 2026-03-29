@@ -12,6 +12,9 @@ const JWT_SECRET =
   process.env.JWT_SECRET ||
   process.env.NEXTAUTH_SECRET ||
   'dev-only-change-me';
+/** Fiksni bcrypt hash za usporedbu kad korisnik ne postoji — sprečava timing/user enumeration. */
+const BCRYPT_DUMMY_HASH =
+  '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy';
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export async function GET() {
@@ -68,13 +71,13 @@ export async function POST(request) {
       },
     });
 
-    if (!user) {
-      return NextResponse.json({ error: 'Korisnik ne postoji.' }, { status: 401 });
-    }
-
-    const passwordMatch = await bcrypt.compare(normalizedPassword, user.password);
-    if (!passwordMatch) {
-      return NextResponse.json({ error: 'Pogrešna lozinka.' }, { status: 401 });
+    const hashToVerify = user?.password ?? BCRYPT_DUMMY_HASH;
+    const passwordMatch = await bcrypt.compare(normalizedPassword, hashToVerify);
+    if (!user || !passwordMatch) {
+      return NextResponse.json(
+        { error: 'Neispravan email ili lozinka.' },
+        { status: 401 }
+      );
     }
 
     const token = jwt.sign(

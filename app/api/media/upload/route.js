@@ -6,6 +6,18 @@ import { getAuthUserFromRequest } from '../../../../lib/auth';
 const IMAGE_MAX_BYTES = 10 * 1024 * 1024;
 const VIDEO_MAX_BYTES = 100 * 1024 * 1024;
 
+const ALLOWED_IMAGE_MIME = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/gif',
+]);
+const ALLOWED_VIDEO_MIME = new Set([
+  'video/mp4',
+  'video/webm',
+  'video/quicktime',
+]);
+
 function isConfigured() {
   return (
     !!process.env.CLOUDINARY_CLOUD_NAME &&
@@ -50,8 +62,11 @@ export async function POST(request) {
     const mimeType = String(file.type || '');
 
     if (kind === 'image') {
-      if (!mimeType.startsWith('image/')) {
-        return NextResponse.json({ error: 'Dozvoljene su samo slike.' }, { status: 400 });
+      if (!ALLOWED_IMAGE_MIME.has(mimeType)) {
+        return NextResponse.json(
+          { error: 'Dozvoljene su samo JPEG, PNG, WebP ili GIF slike.' },
+          { status: 400 }
+        );
       }
       if (fileBuffer.byteLength > IMAGE_MAX_BYTES) {
         return NextResponse.json(
@@ -80,9 +95,9 @@ export async function POST(request) {
     }
 
     if (kind === 'video') {
-      if (!mimeType.startsWith('video/')) {
+      if (!ALLOWED_VIDEO_MIME.has(mimeType)) {
         return NextResponse.json(
-          { error: 'Dozvoljeni su samo video fajlovi.' },
+          { error: 'Dozvoljeni su samo MP4, WebM ili QuickTime video fajlovi.' },
           { status: 400 }
         );
       }

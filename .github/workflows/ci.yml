@@ -32,6 +32,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: npm audit (production, critical)
+        run: npm audit --omit=dev --audit-level=critical
+
       - name: Prisma (šema + klijent)
         run: npx prisma validate && npx prisma generate
 

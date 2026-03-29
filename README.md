@@ -19,4 +19,8 @@ npm run dev
 
 ## CI
 
-Na `main`: GitHub Actions (`.github/workflows/ci.yml`) — `npm ci`, Prisma, ESLint, `next build`.
+Na `main`: GitHub Actions (`.github/workflows/ci.yml`) — `npm ci`, `npm audit` (critical, prod), Prisma, ESLint, `next build`.
+
+## Bezbednost
+
+Vidi [SECURITY.md](./SECURITY.md). Lokalno: `npm run security:audit`.

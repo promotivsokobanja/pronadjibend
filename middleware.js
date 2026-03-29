@@ -1,9 +1,13 @@
 import { NextResponse } from 'next/server';
 
 const authRateStore = new Map();
+const bookingPostStore = new Map();
 
 const AUTH_WINDOW_MS = 60 * 1000;
 const AUTH_MAX_REQUESTS = 12;
+
+const BOOKING_WINDOW_MS = 60 * 1000;
+const BOOKING_MAX_PER_WINDOW = 25;
 
 function getClientIp(request) {
   try {
@@ -23,6 +27,10 @@ function isAuthPath(pathname) {
 
 function shouldRateLimitAuth(request, pathname) {
   return request.method === 'POST' && isAuthPath(pathname);
+}
+
+function shouldRateLimitBookingPost(request, pathname) {
+  return request.method === 'POST' && pathname === '/api/bookings';
 }
 
 function normalizeHostname(hostname) {
@@ -137,6 +145,33 @@ function enforceAuthRateLimit(request, pathname) {
   return null;
 }
 
+function enforceBookingPostRateLimit(request, pathname) {
+  if (!shouldRateLimitBookingPost(request, pathname)) {
+    return null;
+  }
+
+  const ip = getClientIp(request);
+  const key = `booking:${ip}`;
+  const now = Date.now();
+  const current = bookingPostStore.get(key);
+
+  if (!current || now - current.windowStart > BOOKING_WINDOW_MS) {
+    bookingPostStore.set(key, { count: 1, windowStart: now });
+    return null;
+  }
+
+  if (current.count >= BOOKING_MAX_PER_WINDOW) {
+    return NextResponse.json(
+      { error: 'Previše upita u kratkom roku. Pokušajte ponovo za minut.' },
+      { status: 429 }
+    );
+  }
+
+  current.count += 1;
+  bookingPostStore.set(key, current);
+  return null;
+}
+
 function hasAnyAuthCookie(request) {
   const c = request.cookies;
   return Boolean(
@@ -156,6 +191,7 @@ function applySecurityHeaders(response) {
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
   response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
   response.headers.set('X-DNS-Prefetch-Control', 'off');
+  response.headers.set('X-Permitted-Cross-Domain-Policies', 'none');
   if (process.env.NODE_ENV === 'production') {
     response.headers.set(
       'Strict-Transport-Security',
@@ -201,6 +237,12 @@ export function middleware(request) {
     if (rateLimitError) {
       applySecurityHeaders(rateLimitError);
       return rateLimitError;
+    }
+
+    const bookingLimitError = enforceBookingPostRateLimit(request, pathname);
+    if (bookingLimitError) {
+      applySecurityHeaders(bookingLimitError);
+      return bookingLimitError;
     }
 
     const response = NextResponse.next();

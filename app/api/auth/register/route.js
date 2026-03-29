@@ -67,7 +67,13 @@ export async function POST(request) {
     });
 
     if (existingUser) {
-      return NextResponse.json({ error: 'Email već postoji.' }, { status: 400 });
+      return NextResponse.json(
+        {
+          error:
+            'Registracija sa unetim podacima nije moguća. Ako već imate nalog, prijavite se.',
+        },
+        { status: 400 }
+      );
     }
 
     const hashedPassword = await bcrypt.hash(normalizedPassword, 10);
