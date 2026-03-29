@@ -23,6 +23,11 @@ function securityHeaders() {
 const nextConfig = {
   poweredByHeader: false,
   async headers() {
+    // U `next dev` ne dodajemo ove headere — na Windowsu + Next 14 ponekad kvare učitavanje statike (gol HTML).
+    // Na Netlifyju je NODE_ENV=production, headere i dalje dobijaš.
+    if (process.env.NODE_ENV !== 'production') {
+      return [];
+    }
     const h = securityHeaders();
     return [
       {
@@ -32,6 +37,15 @@ const nextConfig = {
         headers: h,
       },
     ];
+  },
+  webpack: (config, { dev }) => {
+    if (dev && process.env.WEBPACK_POLL === '1') {
+      config.watchOptions = {
+        poll: 1000,
+        aggregateTimeout: 300,
+      };
+    }
+    return config;
   },
   compiler: {
     removeConsole:

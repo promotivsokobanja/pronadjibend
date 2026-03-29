@@ -14,12 +14,27 @@ concurrency:
 jobs:
   check:
     runs-on: ubuntu-latest
-    # Isti tip varijabli kao na buildu — postinstall (prisma generate) i next build ne pucaju na P1012 / NextAuth.
+    # Prava Postgres instanca — `next build` generiše sitemap (Prisma) i mora moći da se poveže.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ci -d ci"
+          --health-interval 4s
+          --health-timeout 5s
+          --health-retries 12
     env:
       DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/ci?schema=public
       NEXTAUTH_SECRET: ci-placeholder-secret-at-least-32-characters-long
       NEXTAUTH_URL: http://localhost:3000
       NEXT_PRIVATE_BUILD_WORKER_COUNT: '1'
+      NEXT_TELEMETRY_DISABLED: '1'
 
     steps:
       - uses: actions/checkout@v4
@@ -38,9 +53,12 @@ jobs:
       - name: Prisma (šema + klijent)
         run: npx prisma validate && npx prisma generate
 
+      - name: Prisma migrate (prazna CI baza)
+        run: npx prisma migrate deploy
+
       - name: ESLint
         run: npm run lint
 
-      # Uhvati greške kompajliranja pre Netlify (CI ne radi migrate kao Netlify build).
+      # Uhvati greške kompajliranja pre Netlify.
       - name: Next.js build
         run: npm run build:next
