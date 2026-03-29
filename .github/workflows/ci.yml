@@ -22,15 +22,16 @@ jobs:
           POSTGRES_USER: ci
           POSTGRES_PASSWORD: ci
           POSTGRES_DB: ci
+        # 5432 na runneru ponekad je zauzet (lokalni servisi) → beli pad konekcije / migrate
         ports:
-          - 5432:5432
+          - 5433:5432
         options: >-
           --health-cmd "pg_isready -U ci -d ci"
           --health-interval 4s
           --health-timeout 5s
           --health-retries 12
     env:
-      DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/ci?schema=public
+      DATABASE_URL: postgresql://ci:ci@127.0.0.1:5433/ci?schema=public&connect_timeout=60
       NEXTAUTH_SECRET: ci-placeholder-secret-at-least-32-characters-long
       NEXTAUTH_URL: http://localhost:3000
       NEXT_PRIVATE_BUILD_WORKER_COUNT: '1'
