@@ -56,11 +56,11 @@ export default function VodicSekcija() {
           </div>
         </div>
 
-        <ul className="mt-14 grid w-full min-w-0 max-w-full grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="mt-14 grid w-full min-w-0 max-w-full grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 lg:gap-6">
           {cards.map(({ icon: Icon, title, text }) => (
             <li
               key={title}
-              className="flex min-w-0 max-w-full flex-col rounded-2xl border border-slate-200/90 bg-white p-6 shadow-sm transition-shadow duration-300 hover:shadow-md [.theme-dark_&]:border-white/10 [.theme-dark_&]:bg-zinc-900/80"
+              className="flex w-full min-w-0 max-w-full flex-col rounded-2xl border border-slate-200/90 bg-white p-5 shadow-sm transition-shadow duration-300 hover:shadow-md sm:p-6 [.theme-dark_&]:border-white/10 [.theme-dark_&]:bg-zinc-900/80"
             >
               <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-[#007AFF]/10 text-[#007AFF] [.theme-dark_&]:bg-[#007AFF]/20">
                 <Icon className="h-6 w-6" strokeWidth={2} aria-hidden />
@@ -73,7 +73,7 @@ export default function VodicSekcija() {
           ))}
         </ul>
 
-        <div className="mt-14 flex w-full min-w-0 max-w-full flex-col items-center gap-4 px-0 text-center">
+        <div className="mt-14 flex w-full min-w-0 max-w-full flex-col items-center gap-3 px-0 text-center sm:gap-4">
           <Link
             href="/bands/profile"
             className="inline-flex min-h-[3.25rem] w-full max-w-full min-w-0 items-center justify-center rounded-full bg-[#007AFF] px-6 text-base font-bold text-white shadow-lg shadow-blue-500/25 transition hover:bg-[#0066dd] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#007AFF] sm:max-w-md sm:px-8 sm:text-lg"

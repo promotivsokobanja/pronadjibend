@@ -47,7 +47,7 @@ export default function BandCard({ band, priority = false }) {
             alt={coverAlt}
             fill
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            className={`hero-media-img object-cover ${isHovered && band.videoUrl ? 'hidden' : ''}`}
+            className={`hero-media-img max-w-full object-cover ${isHovered && band.videoUrl ? 'hidden' : ''}`}
             priority={priority}
             unoptimized={nextImageShouldUnoptimize(imgSrc)}
             onError={() => {
@@ -134,6 +134,9 @@ export default function BandCard({ band, priority = false }) {
 
         .card-media {
           position: relative;
+          width: 100%;
+          max-width: 100%;
+          min-width: 0;
           aspect-ratio: 1 / 1.1;
           border-radius: 16px;
           overflow: hidden;
@@ -144,6 +147,7 @@ export default function BandCard({ band, priority = false }) {
 
         .hero-media-img,
         .hero-media-video {
+          max-width: 100%;
           transition: opacity 0.5s ease;
         }
 
@@ -155,6 +159,7 @@ export default function BandCard({ band, priority = false }) {
           top: 0;
           left: 0;
           width: 100%;
+          max-width: 100%;
           height: 100%;
           object-fit: cover;
           opacity: 0;
