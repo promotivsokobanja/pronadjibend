@@ -1,6 +1,12 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 
+/** Ukloni zastareli interni prefiks iz prikaza (stariji zapisi u bazi). */
+function displayWaiterNote(note) {
+  if (!note || typeof note !== 'string') return '';
+  return note.replace(/^STRELO:\s*/i, '').trim();
+}
+
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -28,7 +34,7 @@ export async function GET(request) {
       return {
         id: r.id,
         song: isWaiterTip
-          ? (r.guestNote || 'Bakšiš preko konobara')
+          ? displayWaiterNote(r.guestNote) || 'Bakšiš preko konobara'
           : (r.song?.title || 'Nepoznata pesma'),
         songId: r.song?.id || null,
         artist: isWaiterTip ? '' : (r.song?.artist || ''),
@@ -38,7 +44,7 @@ export async function GET(request) {
         time: formatTimeAgo(r.createdAt),
         createdAt: r.createdAt,
         requestType: apiType,
-        guestNote: r.guestNote || null,
+        guestNote: r.guestNote ? displayWaiterNote(r.guestNote) : null,
         tipAmountRsd: tipAmt > 0 ? tipAmt : null,
         tip: isWaiterTip || isSongWithTip ? 'BAKŠIŠ' : undefined,
       };
@@ -68,9 +74,9 @@ export async function POST(request) {
         );
       }
 
-      if (!message || !message.startsWith('STRELO:')) {
+      if (!message || message.length < 8) {
         return NextResponse.json(
-          { error: 'Poruka mora početi sa STRELO: (ispravan format bakšiša).' },
+          { error: 'Poruka za bakšiš je obavezna (prekratka ili prazna).' },
           { status: 400 }
         );
       }
@@ -141,7 +147,7 @@ export async function POST(request) {
     const tNum = String(tableNum).trim();
     let guestNote = null;
     if (waiterTipRsd > 0) {
-      guestNote = `STRELO: Sto ${tNum} časti muziku (${waiterTipRsd} RSD) uz pesmu «${song.title}»`;
+      guestNote = `Sto ${tNum} časti muziku (${waiterTipRsd} RSD) uz pesmu «${song.title}»`;
     }
 
     const liveRequest = await prisma.liveRequest.create({

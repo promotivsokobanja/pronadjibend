@@ -76,9 +76,22 @@ export default function LivePage() {
           display: none !important;
         }
 
+        html,
         body {
           overflow: hidden;
           background: #000;
+          height: 100%;
+          height: 100dvh;
+          margin: 0;
+          /* Manje „ukočenosti” na mobilnom: brži tap, bez 300ms kašnjenja */
+          touch-action: manipulation;
+          -webkit-tap-highlight-color: transparent;
+        }
+
+        .live-page-wrapper {
+          min-height: 100dvh;
+          height: 100dvh;
+          max-height: 100dvh;
         }
       `}</style>
     </div>

@@ -202,11 +202,21 @@ export default function LiveDashboard({ bandId }) {
     }
   }, [bandId, playNotification, playTipNotification]);
 
+  const [pollIntervalMs, setPollIntervalMs] = useState(4000);
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    const mq = window.matchMedia('(max-width: 720px)');
+    const apply = () => setPollIntervalMs(mq.matches ? 6000 : 4000);
+    apply();
+    mq.addEventListener('change', apply);
+    return () => mq.removeEventListener('change', apply);
+  }, []);
+
   useEffect(() => {
     fetchRequests();
-    const interval = setInterval(fetchRequests, 4000);
+    const interval = setInterval(fetchRequests, pollIntervalMs);
     return () => clearInterval(interval);
-  }, [fetchRequests]);
+  }, [fetchRequests, pollIntervalMs]);
 
   // Fetch songs for this band (Live mode mora znati bandId iz prijave)
   useEffect(() => {
@@ -870,11 +880,18 @@ export default function LiveDashboard({ bandId }) {
           left: 0;
           right: 0;
           bottom: 0;
+          width: 100%;
+          max-width: 100vw;
+          height: 100%;
+          max-height: 100dvh;
           background: #000;
           color: #eee;
           display: flex;
           flex-direction: column;
           font-family: 'JetBrains Mono', monospace;
+          overflow: hidden;
+          touch-action: manipulation;
+          -webkit-tap-highlight-color: transparent;
         }
 
         .night-vision {
@@ -883,16 +900,19 @@ export default function LiveDashboard({ bandId }) {
         }
 
         .hud-header {
-          height: 60px;
+          min-height: 52px;
+          height: auto;
+          flex-shrink: 0;
           border-bottom: 1px solid #222;
           display: flex;
           justify-content: space-between;
           align-items: center;
-          gap: 1rem;
-          padding: 0 2rem;
+          gap: 0.75rem;
+          padding: 0.35rem 1rem;
           background: #0a0a0a;
           z-index: 10;
           position: relative;
+          flex-wrap: nowrap;
         }
 
         .hud-pending-orbit {
@@ -1039,6 +1059,8 @@ export default function LiveDashboard({ bandId }) {
           flex: 1;
           display: grid;
           grid-template-columns: 80px 1fr 240px;
+          min-height: 0;
+          min-width: 0;
         }
 
         .hud-side-nav {
@@ -1048,6 +1070,7 @@ export default function LiveDashboard({ bandId }) {
           align-items: center;
           padding-top: 2rem;
           gap: 1.5rem;
+          flex-shrink: 0;
         }
 
         .nav-item {
@@ -1056,7 +1079,14 @@ export default function LiveDashboard({ bandId }) {
           color: #444;
           cursor: pointer;
           position: relative;
-          transition: 0.2s;
+          transition: color 0.15s ease, transform 0.12s ease;
+          padding: 8px;
+          border-radius: 10px;
+          min-width: 44px;
+          min-height: 44px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
         }
 
         .nav-item.active { color: #00ff00; }
@@ -1109,6 +1139,10 @@ export default function LiveDashboard({ bandId }) {
         .hud-content {
           padding: 2rem;
           overflow-y: auto;
+          overflow-x: hidden;
+          min-width: 0;
+          -webkit-overflow-scrolling: touch;
+          overscroll-behavior-y: contain;
         }
 
         .hud-content h2 {
@@ -1236,8 +1270,9 @@ export default function LiveDashboard({ bandId }) {
           flex: 1;
           background: #111;
           border: 1px solid #222;
-          padding: 8px;
-          border-radius: 6px;
+          padding: 10px 8px;
+          min-height: 44px;
+          border-radius: 8px;
           color: #eee;
           font-size: 0.7rem;
           font-weight: 700;
@@ -1315,7 +1350,7 @@ export default function LiveDashboard({ bandId }) {
         .settings-overlay {
           position: fixed;
           inset: 0;
-          background: rgba(0, 0, 0, 0.6);
+          background: rgba(0, 0, 0, 0.75);
           backdrop-filter: blur(4px);
           z-index: 100;
           animation: fadeIn 0.2s ease;
@@ -1941,32 +1976,158 @@ export default function LiveDashboard({ bandId }) {
         }
 
         @media (max-width: 1024px) {
-          .feed-grid { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+          .feed-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
         }
 
-        @media (max-width: 768px) {
-          .hud-header { padding: 0 0.75rem; gap: 0.5rem; }
-          .hud-pending-orbit {
+        /* Tablet: uži sidebar, bez metrika */
+        @media (max-width: 900px) {
+          .hud-main {
+            grid-template-columns: 64px 1fr;
+          }
+          .hud-metrics {
+            display: none;
+          }
+          .hud-side-nav {
+            padding-top: 1rem;
+            gap: 1rem;
+          }
+        }
+
+        /* Telefon: sadržaj punu širinu, tabovi DOLE palcu */
+        @media (max-width: 720px) {
+          .hud-header {
+            padding: 0.4rem 0.65rem;
+            gap: 0.4rem;
+            flex-wrap: wrap;
+          }
+          .hud-left {
+            gap: 0.5rem;
+            flex: 1;
+            min-width: 0;
+          }
+          .hud-controls {
+            gap: 0.35rem;
+            flex-shrink: 0;
+          }
+          .hud-btn {
+            padding: 8px 10px;
+            min-height: 44px;
             min-width: 44px;
-            height: 44px;
+            font-size: 0.62rem;
+          }
+          .hud-btn span {
+            display: none;
+          }
+          .status-indicator {
+            font-size: 0.62rem;
+            min-width: 0;
+          }
+          .status-indicator span {
+            max-width: min(42vw, 9rem);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
+          .hud-pending-orbit {
+            min-width: 42px;
+            height: 42px;
             border-width: 2px;
           }
           .hud-pending-orbit-num {
-            font-size: 1.1rem;
+            font-size: 1rem;
           }
-          .hud-main { grid-template-columns: 60px 1fr; }
-          .hud-metrics { display: none; }
-          .settings-panel { width: 100vw; }
-          .nav-item .nav-tooltip { display: none; }
-          .hud-content { padding: 1rem; }
-          .feed-grid { grid-template-columns: 1fr; }
-          .request-card { padding: 1rem; }
-          .req-actions { gap: 0.5rem; }
+          .hud-main {
+            display: flex;
+            flex-direction: column;
+            grid-template-columns: unset;
+            min-height: 0;
+          }
+          .hud-content {
+            order: 1;
+            flex: 1;
+            min-height: 0;
+            padding: 0.65rem 0.75rem 0.5rem;
+          }
+          .hud-side-nav {
+            order: 2;
+            flex-direction: row;
+            justify-content: space-around;
+            align-items: center;
+            width: 100%;
+            padding: 0.35rem 0.25rem calc(0.35rem + env(safe-area-inset-bottom, 0px));
+            border-right: none;
+            border-top: 1px solid #222;
+            gap: 0;
+            flex-shrink: 0;
+          }
+          .nav-item {
+            flex: 1;
+            max-width: 120px;
+          }
+          .nav-item .nav-tooltip {
+            display: none;
+          }
+          .settings-overlay {
+            backdrop-filter: none;
+            background: rgba(0, 0, 0, 0.88);
+          }
+          .settings-panel {
+            width: 100vw;
+            max-width: 100vw;
+            animation: none;
+          }
+          .feed-grid {
+            grid-template-columns: 1fr;
+            gap: 0.65rem;
+          }
+          .request-card {
+            padding: 0.85rem;
+          }
+          .request-card.waiter-tip {
+            box-shadow: none;
+          }
+          .song-title {
+            font-size: 1.15rem;
+          }
+          .hud-content h2 {
+            margin-bottom: 0.85rem;
+            letter-spacing: 0.12em;
+          }
+          .song-picker-list {
+            max-height: calc(100dvh - 220px);
+          }
+          .lyrics-display {
+            font-size: 0.95rem;
+            line-height: 1.75;
+            max-height: calc(100dvh - 200px);
+          }
+          .detail-title {
+            font-size: 1.2rem !important;
+          }
+          .night-vision {
+            text-shadow: 0 0 3px rgba(0, 255, 0, 0.35);
+          }
+          .chord-inline {
+            text-shadow: none;
+          }
           .song-picker-combo,
           .song-select,
-          .song-search-box-compact { max-width: 100%; }
-          .detail-title { font-size: 1.35rem !important; }
-          .lyrics-display { font-size: 1rem; max-height: calc(100vh - 230px); }
+          .song-search-box-compact {
+            max-width: 100%;
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .pulse-dot,
+          .hud-pending-orbit.has-pending {
+            animation: none !important;
+          }
+          .settings-overlay {
+            animation: none;
+          }
+          .settings-panel {
+            animation: none;
+          }
         }
       `}</style>
     </div>

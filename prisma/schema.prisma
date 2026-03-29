@@ -103,7 +103,7 @@ model LiveRequest {
   createdAt   DateTime @default(now())
   /// SONG = zahtev za pesmu; WAITER_TIP = bakšiš preko konobara (songId opciono)
   requestType String   @default("SONG")
-  /// Za WAITER_TIP: puna poruka za bend, npr. STRELO: Sto 3 ...
+  /// Za WAITER_TIP: tekst za bend, npr. „Sto 3 šalje bakšiš preko konobara (500 RSD)”
   guestNote   String?
   /// Bakšiš preko konobara uz pesmu (RSD); null = bez bakšiša
   tipAmountRsd Int?

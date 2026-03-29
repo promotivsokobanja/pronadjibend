@@ -219,7 +219,7 @@ export default function GuestLivePage({ params }) {
       return;
     }
 
-    const message = `STRELO: Sto ${t} šalje bakšiš preko konobara (${amount} RSD)`;
+    const message = `Sto ${t} šalje bakšiš preko konobara (${amount} RSD)`;
 
     setTipSending(true);
     try {
