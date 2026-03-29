@@ -19,18 +19,28 @@ export default function LoginClient() {
   const router = useRouter();
   const [selectedPlan, setSelectedPlan] = useState('');
   const [authMode, setAuthMode] = useState('');
+  const [nextPath, setNextPath] = useState('');
   const isPlanSelected = selectedPlan === 'basic' || selectedPlan === 'premium';
   const googleAuthEnabled = process.env.NEXT_PUBLIC_GOOGLE_AUTH_ENABLED === 'true';
-  const googleSignInHref =
-    '/api/auth/signin/google?callbackUrl=' +
-    encodeURIComponent('/api/auth/sync-session');
+  const googleSignInHref = (() => {
+    const sync =
+      '/api/auth/sync-session' +
+      (nextPath && nextPath.startsWith('/') && !nextPath.startsWith('//')
+        ? `?next=${encodeURIComponent(nextPath)}`
+        : '');
+    return (
+      '/api/auth/signin/google?callbackUrl=' + encodeURIComponent(sync)
+    );
+  })();
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const plan = params.get('plan') || '';
     const mode = params.get('mode') || '';
+    const next = params.get('next') || '';
     setSelectedPlan(plan);
     setAuthMode(mode);
+    if (next && next.startsWith('/') && !next.startsWith('//')) setNextPath(next);
   }, []);
 
   useEffect(() => {
