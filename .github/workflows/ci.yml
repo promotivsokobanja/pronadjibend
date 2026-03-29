@@ -25,7 +25,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Dummy URL — validate/generate ne otvaraju konekciju; bez ovoga P1012 ako nema DATABASE_URL u repo secrets
       - name: Prisma (šema i klijent)
+        env:
+          DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/ci?schema=public
         run: npx prisma validate && npx prisma generate
 
       - name: ESLint
