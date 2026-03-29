@@ -19,17 +19,27 @@ export async function GET(request) {
       take: 50,
     });
 
-    const mapped = requests.map((r) => ({
-      id: r.id,
-      song: r.song?.title || 'Nepoznata pesma',
-      songId: r.song?.id || null,
-      artist: r.song?.artist || '',
-      client: `Sto ${r.tableNum}`,
-      tableNum: r.tableNum,
-      status: r.status.toLowerCase(),
-      time: formatTimeAgo(r.createdAt),
-      createdAt: r.createdAt,
-    }));
+    const mapped = requests.map((r) => {
+      const type = (r.requestType || 'SONG').toUpperCase();
+      const isWaiterTip = type === 'WAITER_TIP';
+      const apiType = isWaiterTip ? 'waiter_tip' : 'song';
+      return {
+        id: r.id,
+        song: isWaiterTip
+          ? (r.guestNote || 'Bakšiš preko konobara')
+          : (r.song?.title || 'Nepoznata pesma'),
+        songId: r.song?.id || null,
+        artist: isWaiterTip ? '' : (r.song?.artist || ''),
+        client: `Sto ${r.tableNum}`,
+        tableNum: r.tableNum,
+        status: r.status.toLowerCase(),
+        time: formatTimeAgo(r.createdAt),
+        createdAt: r.createdAt,
+        requestType: apiType,
+        guestNote: r.guestNote || null,
+        tip: isWaiterTip ? 'BAKŠIŠ' : undefined,
+      };
+    });
 
     return NextResponse.json(mapped);
   } catch (err) {
@@ -41,6 +51,54 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     const body = await request.json();
+    const requestType = String(body?.requestType || 'SONG').toUpperCase();
+
+    if (requestType === 'WAITER_TIP') {
+      const bandId = body?.bandId;
+      const tableNum = body?.tableNum != null ? String(body.tableNum).trim() : '';
+      const message = String(body?.message || '').trim();
+
+      if (!bandId || !tableNum) {
+        return NextResponse.json(
+          { error: 'bandId i tableNum su obavezni za bakšiš preko konobara.' },
+          { status: 400 }
+        );
+      }
+
+      if (!message || !message.startsWith('STRELO:')) {
+        return NextResponse.json(
+          { error: 'Poruka mora početi sa STRELO: (ispravan format bakšiša).' },
+          { status: 400 }
+        );
+      }
+
+      const band = await prisma.band.findUnique({ where: { id: bandId }, select: { id: true } });
+      if (!band) {
+        return NextResponse.json({ error: 'Bend nije pronađen' }, { status: 404 });
+      }
+
+      const liveRequest = await prisma.liveRequest.create({
+        data: {
+          bandId,
+          tableNum,
+          status: 'PENDING',
+          requestType: 'WAITER_TIP',
+          guestNote: message,
+          songId: null,
+        },
+        include: {
+          song: { select: { title: true, artist: true } },
+        },
+      });
+
+      return NextResponse.json({
+        id: liveRequest.id,
+        tableNum: liveRequest.tableNum,
+        status: 'pending',
+        requestType: 'waiter_tip',
+      });
+    }
+
     const { songId, bandId, tableNum } = body;
 
     if (!songId || !bandId || !tableNum) {
@@ -61,6 +119,7 @@ export async function POST(request) {
         bandId,
         tableNum: String(tableNum),
         status: 'PENDING',
+        requestType: 'SONG',
       },
       include: {
         song: { select: { title: true, artist: true } },
@@ -73,6 +132,7 @@ export async function POST(request) {
       artist: liveRequest.song?.artist,
       tableNum: liveRequest.tableNum,
       status: 'pending',
+      requestType: 'song',
     });
   } catch (err) {
     console.error('LiveRequest POST error:', err);

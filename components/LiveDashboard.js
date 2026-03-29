@@ -100,6 +100,34 @@ export default function LiveDashboard({ bandId }) {
     }
   }, []);
 
+  /** Zvuk „kasa / novčići“ za bakšiš preko konobara */
+  const playTipNotification = useCallback(() => {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const now = ctx.currentTime;
+      const freqs = [784, 988, 1318];
+      freqs.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.value = freq;
+        gain.gain.value = 0.0001;
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        const t0 = now + i * 0.07;
+        gain.gain.exponentialRampToValueAtTime(0.07, t0 + 0.012);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.14);
+        osc.start(t0);
+        osc.stop(t0 + 0.15);
+      });
+      setTimeout(() => ctx.close(), 450);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
   // Poll live requests from database
   const fetchRequests = useCallback(async () => {
     if (!bandId) return;
@@ -124,14 +152,15 @@ export default function LiveDashboard({ bandId }) {
       knownPendingIdsRef.current = new Set(pendingNow.map((r) => r.id));
 
       const prevCount = prevPendingCountAfterFetchRef.current;
+      const hasTipNew = newPendingItems.some((r) => r.requestType === 'waiter_tip');
       if (settingsRef.current.soundEnabled && pendingCount > prevCount) {
-        playNotification();
+        if (hasTipNew) playTipNotification();
+        else playNotification();
       }
       prevPendingCountAfterFetchRef.current = pendingCount;
 
       if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
         for (const r of newPendingItems) {
-          const songTitle = (r.song || 'Nepoznata pesma').toString();
           const sto =
             r.tableNum != null && r.tableNum !== ''
               ? String(r.tableNum)
@@ -139,10 +168,19 @@ export default function LiveDashboard({ bandId }) {
                   .replace(/^Sto\s*/i, '')
                   .trim() || '?';
           try {
-            new Notification(`Nova pesma: ${songTitle} - Sto ${sto}`, {
-              tag: r.id,
-              silent: true,
-            });
+            if (r.requestType === 'waiter_tip') {
+              new Notification('Bakšiš preko konobara', {
+                body: `Sto ${sto} — ${(r.guestNote || r.song || '').slice(0, 120)}`,
+                tag: r.id,
+                silent: true,
+              });
+            } else {
+              const songTitle = (r.song || 'Nepoznata pesma').toString();
+              new Notification(`Nova pesma: ${songTitle} - Sto ${sto}`, {
+                tag: r.id,
+                silent: true,
+              });
+            }
           } catch {
             /* ignore */
           }
@@ -153,7 +191,7 @@ export default function LiveDashboard({ bandId }) {
     } catch (err) {
       console.error('Error fetching live requests:', err);
     }
-  }, [bandId, playNotification]);
+  }, [bandId, playNotification, playTipNotification]);
 
   useEffect(() => {
     fetchRequests();
@@ -303,6 +341,11 @@ export default function LiveDashboard({ bandId }) {
       prev.map((r) => (r.id === req.id ? { ...r, status: 'accepted' } : r))
     );
     updateRequestStatus(req.id, 'ACCEPTED');
+
+    if (req.requestType === 'waiter_tip') {
+      return;
+    }
+
     setActiveTab('cheatsheet');
 
     const requestedTitle = (req.song || '').trim().toLowerCase();
@@ -456,7 +499,11 @@ export default function LiveDashboard({ bandId }) {
                         : r.status === 'rejected' || r.status === 'played'
                     )
                     .map(req => (
-                    <div key={req.id} className={`request-card ${req.status}`} style={{ fontSize: `${fontScale}em` }}>
+                    <div
+                      key={req.id}
+                      className={`request-card ${req.status} ${req.requestType === 'waiter_tip' ? 'waiter-tip' : ''}`}
+                      style={{ fontSize: `${fontScale}em` }}
+                    >
                       <div className="req-header">
                         <span className="time">{req.time}</span>
                         {settings.showTips && <span className="tip">{req.tip}</span>}
@@ -1090,6 +1137,20 @@ export default function LiveDashboard({ bandId }) {
           border: 1px solid #1a1a1a;
           padding: 1.5rem;
           border-radius: 12px;
+        }
+
+        .request-card.waiter-tip {
+          border-color: #22c55e;
+          background: linear-gradient(145deg, rgba(34, 197, 94, 0.18), rgba(16, 185, 129, 0.08));
+          box-shadow: 0 0 28px rgba(34, 197, 94, 0.2);
+        }
+
+        .request-card.waiter-tip .song-title {
+          color: #86efac;
+        }
+
+        .request-card.waiter-tip .tip {
+          color: #fef08a;
         }
 
         .request-card.accepted {

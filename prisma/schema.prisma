@@ -95,14 +95,18 @@ model Booking {
 }
 
 model LiveRequest {
-  id        String   @id @default(cuid())
-  tableNum  String
-  status    String   @default("PENDING") // "PENDING", "PLAYED", "REJECTED"
-  createdAt DateTime @default(now())
-  song      Song     @relation(fields: [songId], references: [id])
-  songId    String
-  band      Band     @relation(fields: [bandId], references: [id])
-  bandId    String
+  id          String   @id @default(cuid())
+  tableNum    String
+  status      String   @default("PENDING") // "PENDING", "PLAYED", "REJECTED", "ACCEPTED"
+  createdAt   DateTime @default(now())
+  /// SONG = zahtev za pesmu; WAITER_TIP = bakšiš preko konobara (songId opciono)
+  requestType String   @default("SONG")
+  /// Za WAITER_TIP: puna poruka za bend, npr. STRELO: Sto 3 ...
+  guestNote   String?
+  song        Song?    @relation(fields: [songId], references: [id])
+  songId      String?
+  band        Band     @relation(fields: [bandId], references: [id])
+  bandId      String
 }
 
 model MidiFile {
