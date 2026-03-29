@@ -45,6 +45,8 @@ export async function GET(request) {
           location: true,
           rating: true,
           img: true,
+          isPaid: true,
+          plan: true,
           user: { select: { email: true, id: true } },
           _count: { select: { songs: true, bookings: true, reviews: true } },
         },

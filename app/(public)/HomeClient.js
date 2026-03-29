@@ -8,6 +8,8 @@ import { DEFAULT_BAND_COVER, resolveBandCoverImage } from '../../lib/bandImages'
 import { nextImageShouldUnoptimize } from '../../lib/remoteImage';
 import { pickFeaturedBands } from '../../lib/featuredBands';
 import '../../styles/home.css';
+import HomeBlogGuideSection from '../../components/home/HomeBlogGuideSection';
+import VodicSekcija from '../../components/VodicSekcija';
 
 const scrollFade = {
   initial: { opacity: 0, y: 18 },
@@ -283,6 +285,8 @@ export default function HomeClient() {
         </div>
       </motion.section>
 
+      <HomeBlogGuideSection />
+
       <motion.section className="pricing container" {...scrollFade}>
         <div className="section-title reveal">
           <h2>
@@ -343,6 +347,8 @@ export default function HomeClient() {
           </motion.div>
         </div>
       </motion.section>
+
+      <VodicSekcija />
 
       {showBooking && (
         <div className="modal-overlay">

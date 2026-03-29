@@ -52,19 +52,34 @@
   margin: 0;
 }
 
+/*
+ * Jedan vertikalni skrol: samo <html>.
+ * Ako body ima overflow-x: hidden/clip, spec kaže da se overflow-y: visible tretira kao auto
+ * → drugi skrol bar na body. Zato body ostaje overflow: visible; horizontalno seče <html>.
+ */
 html {
-  overflow-x: hidden;
+  overflow-x: clip;
+  overflow-y: auto;
+  width: 100%;
+  position: relative;
+  max-width: 100%;
+  min-height: 100%;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+  scroll-behavior: smooth;
 }
 
 body {
+  overflow: visible;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  position: relative;
+  min-height: 100dvh;
   background-color: var(--bg);
   color: var(--text);
   font-family: var(--font-main);
   line-height: 1.6;
-  overflow-x: hidden;
-  /* Manji dodirni kašnjenje na starijim mobilnim */
   touch-action: manipulation;
 }
 
@@ -88,6 +103,8 @@ body {
   margin: 0 auto;
   padding: 0 clamp(1rem, 4vw, 2rem);
   width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 /* Stranice ispod fiksiranog .navbar — meni ostaje isti, slike/sadržaj niže */

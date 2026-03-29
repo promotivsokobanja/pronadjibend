@@ -12,7 +12,9 @@ export default function PublicLayout({ children }) {
     <ErrorBoundaryClient segment="public">
       <ClientSearchProvider>
         <Navbar />
-        {children}
+        <main id="public-main" className="block w-full min-w-0 max-w-full">
+          {children}
+        </main>
         <Footer />
       </ClientSearchProvider>
     </ErrorBoundaryClient>

@@ -181,3 +181,45 @@ export function BandSchema({ band }) {
   };
   return <JsonLd data={data} />;
 }
+
+/** Vodič na početnoj — SEO Article */
+export function HomeGuideArticleSchema() {
+  const site = getSiteUrl();
+  const url = `${site}/#vodic`;
+  const data = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: 'Kako odabrati pravi bend za svadbu u Srbiji 2026. godine',
+    description:
+      'Vodič za izbor benda za svadbu: budžet, žanr, rezervacija, živa muzika i saveti za mladence u Srbiji 2026.',
+    author: {
+      '@type': 'Organization',
+      name: 'Pronađi Bend',
+      url: site,
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'Pronađi Bend',
+      url: site,
+      logo: {
+        '@type': 'ImageObject',
+        url: `${site}/images/logo.png`,
+      },
+    },
+    datePublished: '2026-03-28',
+    dateModified: '2026-03-28',
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': url,
+    },
+    inLanguage: 'sr-RS',
+    keywords: [
+      'bend za svadbu',
+      'muzika za svadbu Srbija',
+      'živa muzika za venčanje',
+      'iznajmljivanje benda',
+      'svadba 2026',
+    ],
+  };
+  return <JsonLd data={data} />;
+}

@@ -1,5 +1,10 @@
 import HomeClient from './HomeClient';
-import { OrganizationSchema, ServiceSchema, WebSiteSchema } from '@/components/JsonLd';
+import {
+  OrganizationSchema,
+  ServiceSchema,
+  WebSiteSchema,
+  HomeGuideArticleSchema,
+} from '@/components/JsonLd';
 import { getSiteUrl } from '@/lib/siteUrl';
 
 const siteUrl = getSiteUrl();
@@ -24,6 +29,7 @@ export default function HomePage() {
       <OrganizationSchema />
       <ServiceSchema />
       <WebSiteSchema />
+      <HomeGuideArticleSchema />
       <HomeClient />
     </>
   );

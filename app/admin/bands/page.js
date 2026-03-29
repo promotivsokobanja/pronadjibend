@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { adminFetch } from '../../../lib/adminFetch';
+import AdminPaidToggle from '@/components/admin/AdminPaidToggle';
 
 export default function AdminBandsPage() {
   const [data, setData] = useState(null);
@@ -75,7 +76,10 @@ export default function AdminBandsPage() {
               <tbody>
                 {data.bands.map((b) => (
                   <tr key={b.id}>
-                    <td>{b.name}</td>
+                    <td>
+                      {b.name}
+                      <AdminPaidToggle bandId={b.id} isPaid={b.isPaid} onUpdated={() => load()} />
+                    </td>
                     <td>{b.location}</td>
                     <td>{b.genre}</td>
                     <td>{b.rating?.toFixed(1) ?? '—'}</td>

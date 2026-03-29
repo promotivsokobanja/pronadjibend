@@ -87,6 +87,9 @@ export default function Navbar() {
           </Link>
           <Link href="/bands" className={`nav-link ${isActive('/bands') ? 'active' : ''}`}>Portal za Muzičare</Link>
           <Link href="/about" className={`nav-link ${isActive('/about') ? 'active' : ''}`}>O nama</Link>
+          <Link href="/#vodic" className="nav-link">
+            Vodič
+          </Link>
           {isAdmin && (
             <Link href="/admin" className={`nav-link ${isActive('/admin') ? 'active' : ''}`}>
               Admin
@@ -118,6 +121,9 @@ export default function Navbar() {
           </Link>
           <Link href="/bands" className={isActive('/bands') ? 'active-mobile' : ''} onClick={() => setIsOpen(false)}>Portal za Muzičare</Link>
           <Link href="/about" className={isActive('/about') ? 'active-mobile' : ''} onClick={() => setIsOpen(false)}>O nama</Link>
+          <Link href="/#vodic" onClick={() => setIsOpen(false)}>
+            Vodič
+          </Link>
           {isAdmin && (
             <Link href="/admin" className={isActive('/admin') ? 'active-mobile' : ''} onClick={() => setIsOpen(false)}>
               Admin

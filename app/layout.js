@@ -99,7 +99,6 @@ export default function RootLayout({ children }) {
     <html lang="sr" className={`${inter.variable} ${montserrat.variable}`}>
       <body
         style={{
-          minHeight: '100vh',
           margin: 0,
           backgroundColor: '#f8fafc',
           color: '#0f172a',

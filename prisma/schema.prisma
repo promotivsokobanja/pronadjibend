@@ -37,6 +37,8 @@ model Band {
   qrToken       String?        @unique // For active session
   rating        Float          @default(0)
   img           String?
+  isPaid        Boolean        @default(false)
+  plan          String         @default("FREE")
   songs         Song[]         // Repertoire
   bookings      Booking[]
   liveRequests  LiveRequest[]

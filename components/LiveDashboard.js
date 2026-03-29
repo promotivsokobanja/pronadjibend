@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Radio, ListMusic, Eye, EyeOff, MessageSquare, Music, Clock, Settings, ArrowLeft, X, Volume2, VolumeX, Zap, ZapOff, Type, RotateCcw, ChevronDown } from 'lucide-react';
+import { Radio, ListMusic, Eye, EyeOff, MessageSquare, Music, Clock, Settings, ArrowLeft, X, Volume2, VolumeX, Zap, ZapOff, Type, RotateCcw, ChevronDown, Bell } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 export default function LiveDashboard({ bandId }) {
@@ -41,7 +41,64 @@ export default function LiveDashboard({ bandId }) {
   };
 
   const fontScale = settings.fontSize / 100;
-  const prevPendingCountRef = useRef(0);
+  const settingsRef = useRef(settings);
+  useEffect(() => {
+    settingsRef.current = settings;
+  }, [settings]);
+
+  /** Poslednji skup ID-jeva koji su bili PENDING na prethodnom uspešnom fetch-u (za nove redove + notifikacije). */
+  const knownPendingIdsRef = useRef(new Set());
+  /** Broj PENDING posle prethodnog fetch-a — za zvuk kad novi ciklus donese više pending nego prethodni. */
+  const prevPendingCountAfterFetchRef = useRef(0);
+  const liveFetchBaselineDoneRef = useRef(false);
+
+  const [notifPermission, setNotifPermission] = useState(
+    typeof window !== 'undefined' && 'Notification' in window ? Notification.permission : 'unsupported'
+  );
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('Notification' in window)) return;
+    if (Notification.permission === 'default') {
+      Notification.requestPermission()
+        .then((p) => setNotifPermission(p))
+        .catch(() => {});
+    } else {
+      setNotifPermission(Notification.permission);
+    }
+  }, []);
+
+  useEffect(() => {
+    const sync = () => {
+      if (typeof window !== 'undefined' && 'Notification' in window) {
+        setNotifPermission(Notification.permission);
+      }
+    };
+    window.addEventListener('focus', sync);
+    return () => window.removeEventListener('focus', sync);
+  }, []);
+
+  const playNotification = useCallback(() => {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = 1046;
+      gain.gain.value = 0.0001;
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      const now = ctx.currentTime;
+      gain.gain.exponentialRampToValueAtTime(0.045, now + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
+      osc.start(now);
+      osc.stop(now + 0.14);
+      setTimeout(() => ctx.close(), 200);
+    } catch {
+      // Ignore sound errors.
+    }
+  }, []);
 
   // Poll live requests from database
   const fetchRequests = useCallback(async () => {
@@ -50,13 +107,53 @@ export default function LiveDashboard({ bandId }) {
       const resp = await fetch(`/api/live-requests?bandId=${encodeURIComponent(bandId)}`, { cache: 'no-store' });
       if (!resp.ok) return;
       const data = await resp.json();
-      if (Array.isArray(data)) {
+      if (!Array.isArray(data)) return;
+
+      const pendingNow = data.filter((r) => r.status === 'pending');
+      const pendingCount = pendingNow.length;
+
+      if (!liveFetchBaselineDoneRef.current) {
+        liveFetchBaselineDoneRef.current = true;
+        knownPendingIdsRef.current = new Set(pendingNow.map((r) => r.id));
+        prevPendingCountAfterFetchRef.current = pendingCount;
         setRequests(data);
+        return;
       }
+
+      const newPendingItems = pendingNow.filter((r) => !knownPendingIdsRef.current.has(r.id));
+      knownPendingIdsRef.current = new Set(pendingNow.map((r) => r.id));
+
+      const prevCount = prevPendingCountAfterFetchRef.current;
+      if (settingsRef.current.soundEnabled && pendingCount > prevCount) {
+        playNotification();
+      }
+      prevPendingCountAfterFetchRef.current = pendingCount;
+
+      if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+        for (const r of newPendingItems) {
+          const songTitle = (r.song || 'Nepoznata pesma').toString();
+          const sto =
+            r.tableNum != null && r.tableNum !== ''
+              ? String(r.tableNum)
+              : String(r.client || '')
+                  .replace(/^Sto\s*/i, '')
+                  .trim() || '?';
+          try {
+            new Notification(`Nova pesma: ${songTitle} - Sto ${sto}`, {
+              tag: r.id,
+              silent: true,
+            });
+          } catch {
+            /* ignore */
+          }
+        }
+      }
+
+      setRequests(data);
     } catch (err) {
       console.error('Error fetching live requests:', err);
     }
-  }, [bandId]);
+  }, [bandId, playNotification]);
 
   useEffect(() => {
     fetchRequests();
@@ -242,40 +339,15 @@ export default function LiveDashboard({ bandId }) {
     updateRequestStatus(req.id, 'PLAYED');
   };
 
-  const playNotification = () => {
+  const requestDesktopNotifications = useCallback(async () => {
+    if (typeof window === 'undefined' || !('Notification' in window)) return;
     try {
-      const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      if (!AudioCtx) return;
-      const ctx = new AudioCtx();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.value = 880;
-      gain.gain.value = 0.0001;
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      const now = ctx.currentTime;
-      gain.gain.exponentialRampToValueAtTime(0.07, now + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
-      osc.start(now);
-      osc.stop(now + 0.2);
-      setTimeout(() => ctx.close(), 300);
+      const p = await Notification.requestPermission();
+      setNotifPermission(p);
     } catch {
-      // Ignore sound errors.
+      /* ignore */
     }
-  };
-
-  useEffect(() => {
-    const pendingCount = requests.filter((r) => r.status === 'pending').length;
-    if (
-      settings.soundEnabled &&
-      pendingCount > prevPendingCountRef.current &&
-      prevPendingCountRef.current !== 0
-    ) {
-      playNotification();
-    }
-    prevPendingCountRef.current = pendingCount;
-  }, [requests, settings.soundEnabled]);
+  }, []);
 
   const pendingCount = requests.filter((r) => r.status === 'pending').length;
   const activeCount = requests.filter(
@@ -308,6 +380,13 @@ export default function LiveDashboard({ bandId }) {
             <div className="pulse-dot"></div>
             <span>LIVE: {settings.venueName}</span>
           </div>
+        </div>
+        <div
+          className={`hud-pending-orbit ${pendingCount > 0 ? 'has-pending' : ''}`}
+          aria-live="polite"
+          aria-label={`${pendingCount} zahteva na čekanju`}
+        >
+          <span className="hud-pending-orbit-num">{pendingCount}</span>
         </div>
         <div className="hud-controls">
           <button 
@@ -661,6 +740,29 @@ export default function LiveDashboard({ bandId }) {
                 </div>
               </div>
 
+              {/* Desktop notifications */}
+              <div className="setting-group">
+                <label className="setting-label">
+                  <Bell size={14} /> DESKTOP NOTIFIKACIJE
+                </label>
+                <p className="setting-hint">
+                  Iskačuće obaveštenje za svaku novu narudžbinu (drugi tab, telefon u džepu). Pregledač mora da dozvoli
+                  notifikacije za ovaj sajt.
+                </p>
+                <button
+                  type="button"
+                  className="notif-permission-btn"
+                  onClick={requestDesktopNotifications}
+                  disabled={notifPermission === 'unsupported'}
+                >
+                  {notifPermission === 'granted'
+                    ? 'Dozvoljeno ✓'
+                    : notifPermission === 'denied'
+                      ? 'Odbijeno — proveri podešavanja sajta'
+                      : 'Dozvoli notifikacije'}
+                </button>
+              </div>
+
               {/* Toggle: Auto-Accept */}
               <div className="setting-group">
                 <div className="setting-toggle-row">
@@ -718,9 +820,92 @@ export default function LiveDashboard({ bandId }) {
           display: flex;
           justify-content: space-between;
           align-items: center;
+          gap: 1rem;
           padding: 0 2rem;
           background: #0a0a0a;
           z-index: 10;
+          position: relative;
+        }
+
+        .hud-pending-orbit {
+          flex-shrink: 0;
+          min-width: 52px;
+          height: 52px;
+          border-radius: 50%;
+          background: #3f1d1d;
+          border: 3px solid #7f1d1d;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.35), 0 4px 14px rgba(220, 38, 38, 0.25);
+        }
+
+        .hud-pending-orbit.has-pending {
+          background: #dc2626;
+          border-color: #fecaca;
+          animation: pending-orbit-pulse 1.4s ease-in-out infinite;
+        }
+
+        @keyframes pending-orbit-pulse {
+          0%,
+          100% {
+            box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.35), 0 4px 14px rgba(220, 38, 38, 0.35);
+          }
+          50% {
+            box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.35), 0 4px 22px rgba(220, 38, 38, 0.55);
+          }
+        }
+
+        .hud-pending-orbit-num {
+          font-size: 1.35rem;
+          font-weight: 900;
+          color: #fff;
+          line-height: 1;
+          font-variant-numeric: tabular-nums;
+        }
+
+        .night-vision .hud-pending-orbit.has-pending {
+          color: #0a0a0a;
+          background: #ff3333;
+          border-color: #00ff00;
+          box-shadow: 0 0 12px rgba(255, 51, 51, 0.6);
+        }
+
+        .night-vision .hud-pending-orbit.has-pending .hud-pending-orbit-num {
+          color: #000;
+        }
+
+        .night-vision .hud-pending-orbit:not(.has-pending) {
+          border-color: #333;
+        }
+
+        .notif-permission-btn {
+          margin-top: 0.75rem;
+          width: 100%;
+          padding: 10px 14px;
+          border-radius: 8px;
+          border: 1px solid #333;
+          background: #111;
+          color: #e5e7eb;
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 0.75rem;
+          font-weight: 700;
+          cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          transition: border-color 0.2s, background 0.2s;
+        }
+
+        .notif-permission-btn:hover:not(:disabled) {
+          border-color: #00ff00;
+          background: #0f1a0f;
+        }
+
+        .notif-permission-btn:disabled {
+          opacity: 0.45;
+          cursor: not-allowed;
         }
 
         .status-indicator {
@@ -1656,6 +1841,15 @@ export default function LiveDashboard({ bandId }) {
         }
 
         @media (max-width: 768px) {
+          .hud-header { padding: 0 0.75rem; gap: 0.5rem; }
+          .hud-pending-orbit {
+            min-width: 44px;
+            height: 44px;
+            border-width: 2px;
+          }
+          .hud-pending-orbit-num {
+            font-size: 1.1rem;
+          }
           .hud-main { grid-template-columns: 60px 1fr; }
           .hud-metrics { display: none; }
           .settings-panel { width: 100vw; }

@@ -36,7 +36,7 @@ export default function BandCard({ band, priority = false }) {
 
   return (
     <div
-      className="card-airbnb-container h-full"
+      className="card-airbnb-container h-full min-w-0 max-w-full"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
@@ -65,6 +65,12 @@ export default function BandCard({ band, priority = false }) {
               className={`hero-media-video ${isHovered ? 'visible' : ''}`}
             />
           )}
+
+          {band.isPaid ? (
+            <div className="pro-label" aria-label="PRO bend">
+              PRO
+            </div>
+          ) : null}
 
           {(band.demo || (band.id && String(band.id).startsWith('demo-'))) && (
             <div className="media-badge demo-badge">Demo</div>
@@ -111,11 +117,17 @@ export default function BandCard({ band, priority = false }) {
           background: transparent;
           cursor: pointer;
           transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+          width: 100%;
+          max-width: 100%;
+          min-width: 0;
         }
 
         .card-outer-link {
           display: block;
           height: 100%;
+          width: 100%;
+          max-width: 100%;
+          min-width: 0;
           overflow: hidden;
           border-radius: 16px;
         }
@@ -151,6 +163,24 @@ export default function BandCard({ band, priority = false }) {
         .hero-media-video.visible {
           opacity: 1;
           pointer-events: auto;
+        }
+
+        .pro-label {
+          position: absolute;
+          top: 12px;
+          left: 50%;
+          transform: translateX(-50%);
+          padding: 4px 10px;
+          border-radius: 100px;
+          font-size: 0.65rem;
+          font-weight: 800;
+          letter-spacing: 0.06em;
+          background: linear-gradient(135deg, #f59e0b, #d97706);
+          color: #0a0a0b;
+          border: 1px solid rgba(255, 255, 255, 0.35);
+          z-index: 11;
+          pointer-events: none;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
         }
 
         .media-badge {
