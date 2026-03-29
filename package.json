@@ -18,6 +18,7 @@
     "create-admin": "node scripts/create-admin.cjs",
     "poster": "node scripts/generate-marketing-poster.cjs",
     "check:release": "npm run lint && npm run build",
+    "backup:full": "node scripts/full-backup.cjs",
     "deploy:push": "powershell -ExecutionPolicy Bypass -File scripts/push-deploy.ps1",
     "security:audit": "npm audit --omit=dev --audit-level=high",
     "db:up": "docker compose up -d",

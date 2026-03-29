@@ -39,3 +39,6 @@ prisma/*.db-journal
 
 # Local Netlify folder
 .netlify
+
+# Lokalni puni backupi (baza + izvozi — ne commitovati)
+/backups/
