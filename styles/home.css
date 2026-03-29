@@ -1,7 +1,7 @@
 /* Početna stranica — izvučeno iz styled-jsx */
 .home-container {
   padding-bottom: 6rem;
-  background: #f8fafc;
+  background: #ffffff;
   position: relative;
   z-index: 0;
   width: 100%;
@@ -9,6 +9,88 @@
   min-width: 0;
   /* Seče eventualni preliv dekoracija; ne dira vertikalni skrol (html već clip) */
   overflow-x: clip;
+  perspective: 2000px;
+  transform-style: preserve-3d;
+}
+
+/* Animated gradient orbs */
+.home-container::before {
+  content: '';
+  position: absolute;
+  top: 10%;
+  left: -100px;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.2) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: orb-float-1 20s ease-in-out infinite;
+  z-index: 0;
+}
+
+@keyframes orb-float-1 {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.8;
+  }
+  33% {
+    transform: translate(50px, -30px) scale(1.1);
+    opacity: 1;
+  }
+  66% {
+    transform: translate(20px, 50px) scale(0.9);
+    opacity: 0.7;
+  }
+}
+
+/* Second floating orb - blue tint */
+.home-container .orb-2 {
+  position: absolute;
+  top: 40%;
+  right: -50px;
+  width: 350px;
+  height: 350px;
+  background: radial-gradient(circle, rgba(0, 122, 255, 0.18) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: orb-float-2 25s ease-in-out infinite;
+  z-index: 0;
+}
+
+@keyframes orb-float-2 {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.7;
+  }
+  50% {
+    transform: translate(-40px, 60px) scale(1.15);
+    opacity: 0.9;
+  }
+}
+
+/* Third floating orb - purple tint lower */
+.home-container .orb-3 {
+  position: absolute;
+  bottom: 20%;
+  left: 10%;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, transparent 65%);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: orb-float-3 18s ease-in-out infinite;
+  z-index: 0;
+}
+
+@keyframes orb-float-3 {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translate(30px, -40px) scale(1.2);
+    opacity: 0.8;
+  }
 }
 
 /* Dekorativni blobovi ostaju unutar stranice — negativni % ne šire dokument */
@@ -42,8 +124,36 @@
   padding-left: max(0px, env(safe-area-inset-left, 0px));
   padding-right: max(0px, env(safe-area-inset-right, 0px));
   text-align: center;
-  background: #ffffff;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  background: linear-gradient(135deg, #ffffff 0%, #f5f0ff 50%, #faf8ff 100%);
+  border-bottom: 1px solid rgba(139, 92, 246, 0.1);
+  transform-style: preserve-3d;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Decorative mesh gradient in hero */
+.hero::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: 
+    radial-gradient(ellipse at 20% 30%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 70%, rgba(0, 122, 255, 0.12) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(139, 92, 246, 0.08) 0%, transparent 70%);
+  animation: hero-mesh-rotate 20s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes hero-mesh-rotate {
+  0%, 100% {
+    transform: rotate(0deg) scale(1);
+  }
+  50% {
+    transform: rotate(5deg) scale(1.1);
+  }
 }
 
 .hero .container {
@@ -69,10 +179,31 @@
   color: #64748b;
   max-width: 36rem;
   width: 100%;
-  margin: 0 auto 4rem;
+  margin: 0 auto 1rem;
   line-height: 1.6;
   padding-inline: 0.5rem;
   box-sizing: border-box;
+}
+
+/* Animated tagline with changing font */
+.hero-tagline {
+  font-size: clamp(1.5rem, 4vw + 0.5rem, 2.5rem);
+  font-weight: 800;
+  margin: 0 auto 2.5rem;
+  text-align: center;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+}
+
+.hero-tagline span {
+  display: inline-block;
+}
+
+.hero-tagline .gradient-text {
+  background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 50%, #007aff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .hero-musician-links {
@@ -109,6 +240,24 @@
   border-radius: 100px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.04);
   box-sizing: border-box;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: search-float 6s ease-in-out infinite;
+}
+
+.hotel-search:hover {
+  box-shadow: 0 15px 50px rgba(139, 92, 246, 0.15),
+              0 8px 25px rgba(0, 0, 0, 0.05);
+  border-color: rgba(139, 92, 246, 0.3);
+  transform: translateY(-2px);
+}
+
+@keyframes search-float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
 }
 
 .search-field {
@@ -155,10 +304,41 @@
   flex-shrink: 0;
   max-width: 100%;
   box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.search-btn::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    45deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.3) 50%,
+    transparent 70%
+  );
+  transform: translateX(-100%);
+  transition: transform 0.6s ease;
+}
+
+.search-btn:hover::after {
+  transform: translateX(100%);
+}
+
+.search-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
 }
 
 .featured-bands {
   padding: 8rem 0;
+  background: #ffffff;
+  position: relative;
 }
 
 .home-container .section-title {
@@ -195,19 +375,76 @@
 }
 
 .band-card {
-  background: #fff;
+  background: linear-gradient(155deg, #ffffff 0%, #f8f9ff 45%, #eef2ff 100%);
   padding: 0;
   overflow: hidden;
   border-radius: 24px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 1px solid #f1f5f9;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
+  transform-style: preserve-3d;
+  perspective: 1000px;
+  position: relative;
+  isolation: isolate;
+}
+
+/* Animated gradient border on hover */
+.band-card::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 26px;
+  background: linear-gradient(135deg, #8b5cf6, #6366f1, #007aff, #8b5cf6);
+  background-size: 300% 300%;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  animation: gradient-rotate 3s ease infinite;
+}
+
+.band-card::after {
+  content: '';
+  position: absolute;
+  top: -40%;
+  left: -20%;
+  width: 75%;
+  height: 80%;
+  background: linear-gradient(120deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0));
+  border-radius: 40px;
+  pointer-events: none;
+  z-index: 1;
+  transform: rotate(-12deg);
+}
+
+@keyframes gradient-rotate {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.band-card:hover::before {
+  opacity: 1;
 }
 
 .band-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.06);
-  border-color: #8b5cf633;
+  transform: translateY(-12px) rotateX(2deg) rotateY(-2deg);
+  box-shadow: 0 26px 50px rgba(79, 70, 229, 0.18),
+              0 14px 26px rgba(15, 23, 42, 0.12);
+  border-color: transparent;
+}
+
+.band-card:hover .band-header-row h3,
+.band-card:hover .price-info,
+.band-card:hover .text-muted {
+  color: #0f172a;
+}
+
+.band-card .band-img {
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.band-card:hover .band-img {
+  transform: scale(1.05);
 }
 
 .band-img {
@@ -288,17 +525,32 @@
 .home-blog-guide,
 .pricing {
   padding: 8rem 0;
-  background: #ffffff;
+  position: relative;
 }
 
-/* Sekcija „Za bendove“ (VodicSekcija) — isti vertikalni ritam kao pricing / vodič */
-.home-container > .vodic-sekcija {
-  padding-top: 8rem;
-  padding-bottom: 8rem;
+/* Section separator gradient line */
+.experience-gallery::before,
+.testimonials::before,
+.pricing::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.3), transparent);
 }
 
 .experience-gallery {
-  background: #f8fafc;
+  background: #f8f6ff;
+}
+
+.testimonials {
+  background: #ffffff;
+}
+
+.pricing {
+  background: #f8f6ff;
 }
 
 /* ── Blog / Vodič (početna) ── */
@@ -306,6 +558,32 @@
   position: relative;
   z-index: 1;
   scroll-margin-top: calc(var(--navbar-height, 4.75rem) + 0.75rem);
+  background: #ffffff;
+}
+
+/* Decorative floating shapes */
+.home-container::after {
+  content: '';
+  position: absolute;
+  top: 20%;
+  right: 5%;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.08) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: float-shape 15s ease-in-out infinite;
+}
+
+@keyframes float-shape {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.5;
+  }
+  50% {
+    transform: translate(-30px, 50px) scale(1.1);
+    opacity: 0.8;
+  }
 }
 
 .home-blog-guide__intro {
@@ -525,6 +803,15 @@
   height: 350px;
   border: 1px solid #f1f5f9;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+  transform-style: preserve-3d;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.img-wrap:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 20px 40px rgba(139, 92, 246, 0.15),
+              0 10px 20px rgba(0, 0, 0, 0.05);
+  border-color: rgba(139, 92, 246, 0.3);
 }
 
 .img-wrap img,
@@ -548,9 +835,45 @@
 
 .testimonial-grid .glass-card {
   padding: 3rem;
-  background: #fff;
+  background: linear-gradient(160deg, #ffffff 0%, #f9faff 52%, #f2f5ff 100%);
   border-radius: 24px;
-  border: 1px solid #f1f5f9;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  transform-style: preserve-3d;
+  position: relative;
+  isolation: isolate;
+}
+
+.testimonial-grid .glass-card::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 26px;
+  background: linear-gradient(135deg, #8b5cf6, #6366f1, #007aff, #8b5cf6);
+  background-size: 300% 300%;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  animation: gradient-rotate 3s ease infinite;
+}
+
+.testimonial-grid .glass-card:hover::before {
+  opacity: 1;
+}
+
+.testimonial-grid .glass-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 44px rgba(79, 70, 229, 0.14),
+              0 12px 22px rgba(15, 23, 42, 0.09);
+  border-color: transparent;
+}
+
+.testimonial-grid .glass-card:hover .quote {
+  color: #1e293b;
+}
+
+.testimonial-grid .glass-card:hover .author {
+  color: #6366f1;
 }
 
 .quote {
@@ -583,23 +906,59 @@
 
 .pricing-card {
   padding: 3.5rem;
-  background: #fff;
+  background: linear-gradient(160deg, #ffffff 0%, #f8faff 55%, #eef2ff 100%);
   border-radius: 32px;
-  border: 1px solid #f1f5f9;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.09);
+  transform-style: preserve-3d;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  isolation: isolate;
+}
+
+/* Animated gradient border for pricing cards */
+.pricing-card::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 34px;
+  background: linear-gradient(135deg, #8b5cf6, #6366f1, #007aff, #8b5cf6);
+  background-size: 300% 300%;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  animation: gradient-rotate 3s ease infinite;
+}
+
+.pricing-card:hover::before {
+  opacity: 1;
+}
+
+.pricing-card:hover {
+  transform: translateY(-8px) rotateX(3deg);
+  box-shadow: 0 28px 52px rgba(79, 70, 229, 0.16),
+              0 12px 22px rgba(15, 23, 42, 0.1);
+  border-color: transparent;
+}
+
+.pricing-card:hover h3,
+.pricing-card:hover .price,
+.pricing-card:hover .period,
+.pricing-card:hover .price-features li {
+  color: #0f172a;
 }
 
 .pricing-card h3 {
   font-size: 1.5rem;
   font-weight: 800;
-  color: #0f172a;
+  color: #0b1324;
   margin-bottom: 1rem;
 }
 
 .price {
   font-size: clamp(2.25rem, 8vw + 1rem, 3.5rem);
   font-weight: 800;
-  color: #0f172a;
+  color: #0b1324;
   margin-bottom: 2rem;
   line-height: 1.05;
 }
@@ -607,7 +966,7 @@
 .period {
   font-size: 1.1rem;
   font-weight: 500;
-  color: #94a3b8;
+  color: #475569;
 }
 
 .price-features {
@@ -621,14 +980,61 @@
   align-items: center;
   gap: 12px;
   margin-bottom: 1.25rem;
-  color: #475569;
+  color: #1e293b;
   font-weight: 500;
 }
 
 .featured-price {
-  border: 2px solid #8b5cf6;
+  border: 2px solid transparent;
   position: relative;
-  box-shadow: 0 20px 40px rgba(139, 92, 246, 0.08);
+  box-shadow: 0 20px 40px rgba(139, 92, 246, 0.15);
+  animation: featured-pulse 3s ease-in-out infinite;
+  background: linear-gradient(160deg, #ffffff 0%, #f3f6ff 100%) padding-box,
+              linear-gradient(135deg, #8b5cf6, #6366f1, #007aff, #8b5cf6) border-box;
+  background-size: 300% 300%;
+  animation: featured-pulse 3s ease-in-out infinite, gradient-rotate 4s ease infinite;
+}
+
+/* Always-visible animated border for featured price */
+.featured-price::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 35px;
+  background: linear-gradient(135deg, #8b5cf6, #6366f1, #007aff, #8b5cf6);
+  background-size: 300% 300%;
+  z-index: -2;
+  animation: gradient-rotate 3s ease infinite;
+  opacity: 0.3;
+  filter: blur(6px);
+}
+
+.featured-price h3,
+.featured-price .price,
+.featured-price .period,
+.featured-price .price-features li {
+  color: #0b1324 !important;
+}
+
+.pricing-card:hover h3,
+.pricing-card:hover .price,
+.pricing-card:hover .period,
+.pricing-card:hover .price-features li,
+.featured-price:hover h3,
+.featured-price:hover .price,
+.featured-price:hover .period,
+.featured-price:hover .price-features li {
+  color: #0b1324 !important;
+}
+
+@keyframes featured-pulse {
+  0%, 100% {
+    box-shadow: 0 20px 40px rgba(139, 92, 246, 0.08);
+  }
+  50% {
+    box-shadow: 0 25px 50px rgba(139, 92, 246, 0.2),
+                0 0 30px rgba(139, 92, 246, 0.15);
+  }
 }
 
 .pricing-card .badge {
@@ -636,12 +1042,23 @@
   top: -16px;
   left: 50%;
   transform: translateX(-50%);
-  background: #8b5cf6;
+  background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
   color: white;
   padding: 6px 20px;
   border-radius: 100px;
   font-size: 0.75rem;
   font-weight: 800;
+  animation: badge-shimmer 3s ease-in-out infinite;
+  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+}
+
+@keyframes badge-shimmer {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
 }
 
 /* Hero pretraga u kolonu pre uskog ekrana — sprečava horizontalni preliv reda */
@@ -686,6 +1103,7 @@
   .pricing,
   .home-container > .vodic-sekcija {
     padding: 4rem 0;
+    background: #e0d8ff;
   }
 }
 

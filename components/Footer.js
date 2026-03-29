@@ -46,7 +46,6 @@ export default function Footer() {
               </li>
               <li><Link href="/about">O Nama</Link></li>
               <li><Link href="/faq">Česta Pitanja</Link></li>
-              <li><Link href="/resources/contract">Ugovor za bendove</Link></li>
             </ul>
           </div>
 

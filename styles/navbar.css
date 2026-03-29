@@ -67,7 +67,7 @@
 }
 
 .navbar .accent {
-  color: #007aff !important;
+  color: #8b5cf6 !important;
 }
 
 .navbar .nav-links {
@@ -87,12 +87,12 @@
 }
 
 .navbar .nav-link:hover {
-  color: #007aff !important;
+  color: #8b5cf6 !important;
   transform: translateY(-2px);
 }
 
 .navbar .nav-link.active {
-  color: #007aff !important;
+  color: #8b5cf6 !important;
   position: relative;
 }
 
@@ -105,7 +105,7 @@
   margin: 0 auto;
   width: 100%;
   height: 2px;
-  background: #007aff;
+  background: #8b5cf6;
   border-radius: 2px;
 }
 
@@ -117,7 +117,7 @@
   transition: all 0.2s;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  background: #007aff !important;
+  background: #8b5cf6 !important;
   padding: 0.65rem 1rem;
   border-radius: 999px;
   border: none;
@@ -182,7 +182,7 @@
 
 .navbar .btn-prijava-mobile {
   font-weight: 900;
-  color: #007aff !important;
+  color: #8b5cf6 !important;
   font-size: 1.6rem;
   text-decoration: none !important;
   text-transform: uppercase;
@@ -193,7 +193,7 @@
 }
 
 .navbar .mobile-menu a.active-mobile {
-  color: #007aff !important;
+  color: #8b5cf6 !important;
 }
 
 @media (max-width: 768px) {

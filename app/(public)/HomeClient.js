@@ -4,6 +4,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
+
+// Component removed - using static text instead
 import { DEFAULT_BAND_COVER, resolveBandCoverImage } from '../../lib/bandImages';
 import { nextImageShouldUnoptimize } from '../../lib/remoteImage';
 import { pickFeaturedBands } from '../../lib/featuredBands';
@@ -76,6 +78,10 @@ export default function HomeClient() {
 
   return (
     <div className="home-container perspective-container page-below-fixed-nav">
+      {/* Floating decorative orbs */}
+      <div className="orb-2" aria-hidden />
+      <div className="orb-3" aria-hidden />
+      
       <div className="home-blob-layer" aria-hidden>
         <div className="blob" style={{ top: '-10%', left: '-10%', opacity: 0.1 }} />
         <div className="blob-2" style={{ top: '40%', right: '-10%', opacity: 0.08 }} />
@@ -97,6 +103,11 @@ export default function HomeClient() {
           </h1>
           <p className="hero-subtitle reveal delay-1">
             Digitalni ekosistem za hotele, restorane i muzičare koji žele vrhunske nastupe.
+          </p>
+          
+          {/* Tagline with emphasis */}
+          <p className="hero-tagline reveal delay-2">
+            <span className="gradient-text">Muzika za svaku priliku</span>
           </p>
 
           <div className="hotel-search reveal delay-2">
@@ -195,9 +206,9 @@ export default function HomeClient() {
       <motion.section className="experience-gallery container" {...scrollFade}>
         <div className="section-title reveal">
           <h2>
-            Experience the <span className="gradient-text">Session</span>
+            Doživi <span className="gradient-text">Atmosferu</span>
           </h2>
-          <p>Atmosfera koja prodaje vaš prostor i privlači klijente.</p>
+          <p>Ambijent koji prodaje vaš prostor i privlači klijente.</p>
         </div>
         <div className="gallery-grid">
           <motion.div

@@ -105,9 +105,13 @@ export default function BandCard({ band, priority = false }) {
           </p>
 
           <div className="card-tags">
-            <span className="chip-tag">#Pop</span>
-            <span className="chip-tag">#Rock</span>
-            <span className="chip-tag">#PremiumSound</span>
+            {band.genre && (
+              <span className="chip-tag">#{band.genre}</span>
+            )}
+            {band.location && (
+              <span className="chip-tag">#{band.location}</span>
+            )}
+            <span className="chip-tag chip-tag-premium">#Premium</span>
           </div>
         </div>
       </Link>
@@ -295,12 +299,27 @@ export default function BandCard({ band, priority = false }) {
           font-weight: 700;
           color: var(--text-muted);
           opacity: 0.6;
-          transition: 0.2s;
+          transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+          padding: 4px 10px;
+          border-radius: 100px;
+          background: rgba(148, 163, 184, 0.1);
+        }
+
+        .chip-tag-premium {
+          background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(0, 122, 255, 0.15) 100%);
+          color: #8b5cf6;
+          font-weight: 700;
         }
 
         .card-airbnb-container:hover .chip-tag {
           opacity: 1;
           color: var(--accent-primary);
+          transform: translateY(-2px);
+        }
+
+        .card-airbnb-container:hover .chip-tag-premium {
+          background: linear-gradient(135deg, rgba(139, 92, 246, 0.25) 0%, rgba(0, 122, 255, 0.25) 100%);
+          box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2);
         }
         .card-airbnb-container:hover {
           transform: translateY(-2px);
