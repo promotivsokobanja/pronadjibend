@@ -75,17 +75,19 @@ export default function HomeClient() {
 
   return (
     <div className="home-container perspective-container page-below-fixed-nav">
-      <div className="blob" style={{ top: '-10%', left: '-10%', opacity: 0.1 }} />
-      <div className="blob-2" style={{ top: '40%', right: '-10%', opacity: 0.08 }} />
-      <div
-        className="blob float-slow"
-        style={{
-          bottom: '-10%',
-          left: '20%',
-          background: 'radial-gradient(circle, rgba(16, 185, 129, 0.05) 0%, transparent 75%)',
-          animationDelay: '5s',
-        }}
-      />
+      <div className="home-blob-layer" aria-hidden>
+        <div className="blob" style={{ top: '-10%', left: '-10%', opacity: 0.1 }} />
+        <div className="blob-2" style={{ top: '40%', right: '-10%', opacity: 0.08 }} />
+        <div
+          className="blob float-slow"
+          style={{
+            bottom: '-10%',
+            left: '20%',
+            background: 'radial-gradient(circle, rgba(16, 185, 129, 0.05) 0%, transparent 75%)',
+            animationDelay: '5s',
+          }}
+        />
+      </div>
 
       <header className="hero">
         <div className="container">

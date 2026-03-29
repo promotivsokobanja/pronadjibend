@@ -101,8 +101,7 @@ body {
 .container {
   max-width: 1280px;
   margin: 0 auto;
-  /* 4.5vw malo glađe od 4vw na uskim ekranima; min-width:0 sprečava flex/grid overflow */
-  padding: 0 clamp(1rem, 4.5vw, 2rem);
+  padding: 0 clamp(0.75rem, 4.5vw, 2rem);
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
