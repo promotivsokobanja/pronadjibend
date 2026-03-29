@@ -16,6 +16,7 @@ export default async function sitemap() {
     { url: `${baseUrl}/bands/profile`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
     { url: `${baseUrl}/privatnost`, lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
     { url: `${baseUrl}/uslovi-koriscenja`, lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
+    { url: `${baseUrl}/resources/contract`, lastModified: now, changeFrequency: 'monthly', priority: 0.45 },
   ];
 
   let dbBandRoutes = [];

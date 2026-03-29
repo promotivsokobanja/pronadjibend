@@ -2,9 +2,10 @@
   "name": "pronadjibend-web",
   "version": "0.1.0",
   "private": true,
+  "homepage": "https://pronadjibend.rs",
   "scripts": {
     "postinstall": "prisma generate",
-    "clean": "node -e \"const fs=require('fs');['.next','node_modules/.cache'].forEach(p=>{try{fs.rmSync(p,{recursive:true,force:true})}catch(e){}})\"",
+    "clean": "node -e \"const fs=require('fs');['.next','node_modules/.cache','node_modules/.next','.turbo'].forEach(p=>{try{fs.rmSync(p,{recursive:true,force:true})}catch(e){}})\"",
     "dev": "next dev",
     "dev:clean": "npm run clean && next dev",
     "build": "prisma generate && cross-env NEXT_PRIVATE_BUILD_WORKER_COUNT=1 next build",
@@ -16,6 +17,7 @@
     "create-admin": "node scripts/create-admin.cjs",
     "poster": "node scripts/generate-marketing-poster.cjs",
     "check:release": "npm run lint && npm run build",
+    "deploy:push": "powershell -ExecutionPolicy Bypass -File scripts/push-deploy.ps1",
     "db:up": "docker compose up -d",
     "db:down": "docker compose down"
   },

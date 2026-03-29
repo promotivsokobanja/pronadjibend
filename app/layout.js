@@ -1,10 +1,10 @@
 import '../styles/globals.css';
 import { Inter, Montserrat } from 'next/font/google';
 import StrictModeProvider from '@/components/providers/StrictModeProvider';
-import { getSiteUrl } from '@/lib/siteUrl';
+import { getSiteUrl, getSiteMetadataBaseUrl } from '@/lib/siteUrl';
 
 const siteUrl = getSiteUrl();
-const siteOrigin = new URL(siteUrl);
+const siteOrigin = getSiteMetadataBaseUrl();
 
 const inter = Inter({
   subsets: ['latin'],

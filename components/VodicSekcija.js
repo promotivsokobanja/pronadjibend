@@ -73,6 +73,15 @@ export default function VodicSekcija() {
           <p className="vodic-sekcija__cta-note">
             Podesite profil benda i iskoristite alate platforme za nastupe uživo.
           </p>
+          <p className="vodic-sekcija__legal-resource">
+            <Link
+              href="/resources/contract"
+              className="vodic-sekcija__legal-link"
+              title="Generator ugovora o angažovanju muzičara"
+            >
+              Besplatan pravni resurs
+            </Link>
+          </p>
         </div>
       </div>
 
@@ -219,6 +228,23 @@ export default function VodicSekcija() {
         }
         :global(.theme-dark) .vodic-sekcija__cta-note {
           color: #94a3b8;
+        }
+        .vodic-sekcija__legal-resource {
+          margin: 0.25rem 0 0;
+        }
+        .vodic-sekcija__legal-link {
+          font-size: 0.88rem;
+          font-weight: 700;
+          color: #007aff;
+          text-decoration: none;
+          border-bottom: 1px solid transparent;
+          transition: border-color 0.2s ease;
+        }
+        .vodic-sekcija__legal-link:hover {
+          border-bottom-color: rgba(0, 122, 255, 0.45);
+        }
+        :global(.theme-dark) .vodic-sekcija__legal-link {
+          color: #60a5fa;
         }
       `}</style>
     </section>

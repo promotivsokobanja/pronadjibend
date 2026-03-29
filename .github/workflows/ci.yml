@@ -1,4 +1,4 @@
-# Automatska provera na svakom pushu i pull requestu (pre Netlify deploya).
+# Provera na svakom push/PR na main. Zeleni X = CI prošao (lakše debug od „Deployments“ u sidebaru).
 name: CI
 
 on:
@@ -14,6 +14,13 @@ concurrency:
 jobs:
   check:
     runs-on: ubuntu-latest
+    # Isti tip varijabli kao na buildu — postinstall (prisma generate) i next build ne pucaju na P1012 / NextAuth.
+    env:
+      DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/ci?schema=public
+      NEXTAUTH_SECRET: ci-placeholder-secret-at-least-32-characters-long
+      NEXTAUTH_URL: http://localhost:3000
+      NEXT_PRIVATE_BUILD_WORKER_COUNT: '1'
+
     steps:
       - uses: actions/checkout@v4
 
@@ -25,11 +32,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # Dummy URL — validate/generate ne otvaraju konekciju; bez ovoga P1012 ako nema DATABASE_URL u repo secrets
-      - name: Prisma (šema i klijent)
-        env:
-          DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/ci?schema=public
+      - name: Prisma (šema + klijent)
         run: npx prisma validate && npx prisma generate
 
       - name: ESLint
         run: npm run lint
+
+      # Uhvati greške kompajliranja pre Netlify (CI ne radi migrate kao Netlify build).
+      - name: Next.js build
+        run: npm run build:next

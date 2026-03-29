@@ -168,6 +168,19 @@ export function middleware(request) {
   try {
     const { pathname } = request.nextUrl;
 
+    /**
+     * Next statika (CSS/JS/fontovi) i fajlovi iz `public/` — bez naših headera.
+     * Tako CSS/JS uvek ostaju „čisti“ (izbegnut gol HTML bez stilova na Netlify/dev).
+     */
+    if (
+      pathname.startsWith('/_next/') ||
+      pathname === '/favicon.ico' ||
+      pathname.startsWith('/images/') ||
+      pathname.startsWith('/marketing/')
+    ) {
+      return NextResponse.next();
+    }
+
     if (pathname.startsWith('/admin')) {
       if (!hasAnyAuthCookie(request)) {
         const loginUrl = new URL('/login', request.url);
@@ -195,18 +208,15 @@ export function middleware(request) {
     return response;
   } catch (e) {
     console.error('middleware error:', e);
-    const response = NextResponse.next();
-    applySecurityHeaders(response);
-    return response;
+    return NextResponse.next();
   }
 }
 
 /**
- * Preskače ceo `/_next/` (chunks, CSS, HMR), favicon i uobičajene statičke ekstenzije
- * da middleware nikad ne dira Webpack statiku — zvanični Next obrazac.
+ * Pokreni middleware na svim rutama; u telu odmah `next()` za `/_next/*` i javne assete.
+ * Regex `(?!_next)` u matcheru je na Windowsu znao da pokvari statiku — ovde ga nema.
+ * `'/'` eksplicitno: neke verzije `/:path*` ne poklope samo korensku rutu.
  */
 export const config = {
-  matcher: [
-    '/((?!_next/|favicon\\.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|avif|ico|woff2?|css|js|map|txt|xml)$).*)',
-  ],
+  matcher: ['/', '/:path*'],
 };

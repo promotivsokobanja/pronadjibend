@@ -1,3 +1,7 @@
+# Produkcija je na Netlifyju (ne Vercel). Status deploya gledaj u Netlify → Deploys.
+# Ako GitHub prikazuje lažne crvene „Deployments“: repo → Settings → GitHub Apps — isključi stari Vercel;
+# About → Website: https://pronadjibend.rs
+#
 # Set secrets in Netlify UI: Site configuration → Environment variables
 # Required for build: DATABASE_URL (Neon Postgres). Also add NEXTAUTH_URL, NEXTAUTH_SECRET for auth.
 # Opciono: ALLOWED_AUTH_ORIGINS=https://pronadjibend.rs,https://www.pronadjibend.rs

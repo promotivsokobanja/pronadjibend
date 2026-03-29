@@ -3,8 +3,6 @@ import prisma from '../../../lib/prisma';
 import { getDemoBands } from '../../../lib/demoBands';
 import { getShowDemoBands } from '../../../lib/siteConfig';
 
-export const dynamic = 'force-dynamic';
-
 function filterDemoBands(demos, { search, genre, location }) {
   let out = demos;
   if (search) {
@@ -33,6 +31,11 @@ export async function GET(request) {
   const location = searchParams.get('location');
   const search = searchParams.get('search');
 
+  const hasFilters =
+    Boolean(search?.trim()) ||
+    Boolean(location?.trim()) ||
+    Boolean(genre && genre !== 'Svi žanrovi');
+
   const includeDemos = await getShowDemoBands();
 
   try {
@@ -48,9 +51,6 @@ export async function GET(request) {
             location ? { location: { contains: location, mode: 'insensitive' } } : {},
           ]
         },
-        include: {
-          reviews: true
-        }
       });
     } catch (dbErr) {
       console.error('DB Error (falling back to demos only):', dbErr);
@@ -61,7 +61,15 @@ export async function GET(request) {
       : [];
     const combined = [...dbBands, ...demos];
 
-    return NextResponse.json(combined);
+    const headers = new Headers();
+    if (!hasFilters) {
+      headers.set(
+        'Cache-Control',
+        'public, s-maxage=60, stale-while-revalidate=300'
+      );
+    }
+
+    return NextResponse.json(combined, { headers });
   } catch (error) {
     console.error('API Error:', error);
     try {

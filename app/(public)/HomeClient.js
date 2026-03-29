@@ -50,7 +50,7 @@ export default function HomeClient() {
   useEffect(() => {
     const fetchFeatured = async () => {
       try {
-        const resp = await fetch('/api/bands', { cache: 'no-store' });
+        const resp = await fetch('/api/bands');
         const data = await resp.json();
         const list = Array.isArray(data) ? data : [];
         setFeaturedBands(pickFeaturedBands(list, 6));

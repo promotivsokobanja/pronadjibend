@@ -1,8 +1,15 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   poweredByHeader: false,
+  compiler: {
+    removeConsole:
+      process.env.NODE_ENV === 'production'
+        ? { exclude: ['error', 'warn'] }
+        : false,
+  },
   experimental: {
     serverComponentsExternalPackages: ['@prisma/client'],
+    optimizePackageImports: ['lucide-react'],
   },
   images: {
     formats: ['image/avif', 'image/webp'],
