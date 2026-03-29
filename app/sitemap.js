@@ -12,6 +12,8 @@ export default async function sitemap() {
     { url: `${baseUrl}/about`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${baseUrl}/faq`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${baseUrl}/login`, lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
+    { url: `${baseUrl}/bands`, lastModified: now, changeFrequency: 'weekly', priority: 0.75 },
+    { url: `${baseUrl}/bands/profile`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
     { url: `${baseUrl}/privatnost`, lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
     { url: `${baseUrl}/uslovi-koriscenja`, lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
   ];

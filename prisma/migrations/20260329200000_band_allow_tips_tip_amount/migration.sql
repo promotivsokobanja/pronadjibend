@@ -1,0 +1,2 @@
+ALTER TABLE "Band" ADD COLUMN "allowTips" BOOLEAN NOT NULL DEFAULT true;
+ALTER TABLE "LiveRequest" ADD COLUMN "tipAmountRsd" INTEGER;

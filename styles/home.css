@@ -75,6 +75,26 @@
   box-sizing: border-box;
 }
 
+.hero-musician-links {
+  margin: 1.75rem auto 0;
+  max-width: min(800px, 100%);
+  font-size: clamp(0.8rem, 2vw + 0.45rem, 0.95rem);
+  font-weight: 600;
+  color: #64748b;
+  line-height: 1.5;
+  padding-inline: 0.75rem;
+}
+
+.hero-musician-links a {
+  color: #0f766e;
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+}
+
+.hero-musician-links a:hover {
+  border-bottom-color: rgba(15, 118, 110, 0.45);
+}
+
 .hotel-search {
   max-width: min(800px, 100%);
   width: 100%;

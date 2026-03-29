@@ -126,6 +126,9 @@ export default function HomeClient() {
               Pretraži muzičare i bendove
             </Link>
           </div>
+          <p className="hero-musician-links reveal delay-3">
+            <Link href="/bands/profile">Registruj bend besplatno</Link>
+          </p>
         </div>
       </header>
 

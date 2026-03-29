@@ -1,5 +1,5 @@
 'use client';
-import { Mail, Lock, User, ArrowRight, Music, Users } from 'lucide-react';
+import { Mail, Lock, User, ArrowRight, Music, Users, Download } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
@@ -214,6 +214,20 @@ export default function LoginClient() {
             {isLoading ? 'Učitavanje...' : (isLogin ? 'Prijavi se' : 'Registruj se')} <ArrowRight size={18} style={{marginLeft: '8px'}} />
           </button>
 
+          <p className="public-poster-hint">
+            <a
+              href="/marketing/poster-A4.png"
+              download="PronadjiBend-poster-A4.png"
+              className="public-poster-link"
+            >
+              <Download size={15} aria-hidden />
+              Promotivni poster (A4, 300 DPI)
+            </a>
+            <span className="public-poster-desc">
+              Za štampu u lokalu — QR vodi kolege bendove na registraciju.
+            </span>
+          </p>
+
           {selectedPlan === 'premium' && (
             <a href="/premium/checkout" className="btn btn-secondary btn-full premium-link-btn">
               Nastavi na Premium plaćanje
@@ -255,6 +269,33 @@ export default function LoginClient() {
           border-radius: 24px;
           background: rgba(255, 255, 255, 0.95);
           box-shadow: 0 24px 60px rgba(15, 23, 42, 0.1);
+        }
+
+        .public-poster-hint {
+          margin: 1rem 0 0;
+          text-align: center;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 0.35rem;
+        }
+        .public-poster-link {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.4rem;
+          font-size: 0.84rem;
+          font-weight: 700;
+          color: #0d9488;
+          text-decoration: none;
+        }
+        .public-poster-link:hover {
+          text-decoration: underline;
+        }
+        .public-poster-desc {
+          font-size: 0.75rem;
+          color: #64748b;
+          line-height: 1.4;
+          max-width: 22rem;
         }
         
         .login-logo-container { display: flex; justify-content: center; margin-bottom: 2rem; }

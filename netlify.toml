@@ -12,8 +12,8 @@
 # Svaki git push na main pokreće build (migrate + next build) i objavu.
 
 [build]
-  # Migracije na produkcijsku bazu pre builda (isti DATABASE_URL kao u Netlify env)
-  command = "npx prisma migrate deploy && npm run build"
+  # Migracije → čist .next (izbegava „Cannot find module ./NNNN.js” i zaglavljene statike) → build
+  command = "npx prisma migrate deploy && npm run build:clean"
 
 [build.environment]
   NODE_VERSION = "20"

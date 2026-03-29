@@ -4,20 +4,28 @@ import { useState, useEffect, useCallback } from 'react';
 
 const TIP_PRESETS = [500, 1000, 2000];
 
+/**
+ * orderFlow: null | table | tip_choice | tip_amount | song_voucher | song_success_brief
+ * castiModal: null | menu | voucher | success (samo bakšiš bez pesme, ako allowTips)
+ */
 export default function GuestLivePage({ params }) {
   const bandId = params.id;
   const [songs, setSongs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [tableNum, setTableNum] = useState('');
+  const [allowTips, setAllowTips] = useState(true);
+
   const [selectedSong, setSelectedSong] = useState(null);
-  const [requestSent, setRequestSent] = useState(false);
-  const [sending, setSending] = useState(false);
-  const [error, setError] = useState('');
+  const [tableNum, setTableNum] = useState('');
+  const [orderFlow, setOrderFlow] = useState(null);
+  const [orderSending, setOrderSending] = useState(false);
+  const [orderError, setOrderError] = useState('');
+  const [orderTipAmount, setOrderTipAmount] = useState(null);
+  const [orderTipCustom, setOrderTipCustom] = useState('');
+  const [songVoucherAmount, setSongVoucherAmount] = useState(null);
 
   const [bandName, setBandName] = useState('');
-  /** null | 'menu' | 'voucher' | 'success' */
   const [castiModal, setCastiModal] = useState(null);
   const [tipTableNum, setTipTableNum] = useState('');
   const [tipAmount, setTipAmount] = useState(null);
@@ -34,9 +42,19 @@ export default function GuestLivePage({ params }) {
     setTipSending(false);
   }, []);
 
-  const openCastiMenu = () => {
+  const resetOrderFlow = useCallback(() => {
+    setOrderFlow(null);
     setSelectedSong(null);
-    setError('');
+    setTableNum('');
+    setOrderError('');
+    setOrderTipAmount(null);
+    setOrderTipCustom('');
+    setSongVoucherAmount(null);
+    setOrderSending(false);
+  }, []);
+
+  const openCastiMenu = () => {
+    resetOrderFlow();
     setCastiModal('menu');
   };
 
@@ -67,6 +85,7 @@ export default function GuestLivePage({ params }) {
         if (!r.ok) return;
         const b = await r.json();
         if (b?.name) setBandName(String(b.name));
+        setAllowTips(b?.allowTips !== false);
       } catch {
         /* ignore */
       }
@@ -85,38 +104,84 @@ export default function GuestLivePage({ params }) {
     return matchCat && matchSearch;
   });
 
-  const confirmRequest = async () => {
-    if (!tableNum) return alert('Molimo unesite broj stola.');
+  const submitSongRequest = async (waiterTipRsd) => {
     if (!selectedSong?.id) return;
+    if (!String(tableNum || '').trim()) {
+      setOrderError('Unesite broj stola.');
+      return;
+    }
 
-    setSending(true);
-    setError('');
-
+    setOrderSending(true);
+    setOrderError('');
     try {
+      const body = {
+        songId: selectedSong.id,
+        bandId,
+        tableNum: String(tableNum).trim(),
+      };
+      if (waiterTipRsd > 0) body.waiterTipRsd = waiterTipRsd;
+
       const resp = await fetch('/api/live-requests', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          songId: selectedSong.id,
-          bandId,
-          tableNum,
-        }),
+        body: JSON.stringify(body),
       });
-
       const data = await resp.json();
       if (!resp.ok) throw new Error(data.error || 'Greška pri slanju zahteva');
 
-      setRequestSent(true);
-      setTimeout(() => {
-        setRequestSent(false);
-        setSelectedSong(null);
-        setTableNum('');
-      }, 3000);
+      if (waiterTipRsd > 0) {
+        setSongVoucherAmount(waiterTipRsd);
+        setOrderFlow('song_voucher');
+      } else {
+        setOrderFlow('song_success_brief');
+        setTimeout(() => resetOrderFlow(), 2600);
+      }
     } catch (err) {
-      setError(err.message);
+      setOrderError(err.message || 'Greška.');
     } finally {
-      setSending(false);
+      setOrderSending(false);
     }
+  };
+
+  const goTableNext = () => {
+    if (!String(tableNum || '').trim()) {
+      alert('Molimo unesite broj stola.');
+      return;
+    }
+    setOrderError('');
+    if (allowTips) setOrderFlow('tip_choice');
+    else submitSongRequest(0);
+  };
+
+  const orderSelectPreset = (n) => {
+    setOrderTipAmount(n);
+    setOrderTipCustom(String(n));
+    setOrderError('');
+  };
+
+  const orderOnTipCustomChange = (raw) => {
+    setOrderTipCustom(raw);
+    const digits = raw.replace(/\D/g, '');
+    if (!digits) {
+      setOrderTipAmount(null);
+      return;
+    }
+    const n = parseInt(digits, 10);
+    if (!Number.isNaN(n) && n > 0) {
+      setOrderTipAmount(n);
+      setOrderError('');
+    } else {
+      setOrderTipAmount(null);
+    }
+  };
+
+  const confirmOrderTipAndSend = () => {
+    const amount = orderTipAmount;
+    if (!amount || amount < 1) {
+      setOrderError('Izaberite ili unesite iznos u RSD.');
+      return;
+    }
+    submitSongRequest(amount);
   };
 
   const selectPreset = (n) => {
@@ -182,6 +247,12 @@ export default function GuestLivePage({ params }) {
   };
 
   const displayBand = bandName || 'Bend';
+  const showSongModal = selectedSong && orderFlow !== null;
+  const tableStep = orderFlow === 'table';
+  const tipChoiceStep = orderFlow === 'tip_choice';
+  const tipAmountStep = orderFlow === 'tip_amount';
+  const songVoucherStep = orderFlow === 'song_voucher';
+  const songSuccessBrief = orderFlow === 'song_success_brief';
 
   return (
     <div className="guest-container container">
@@ -218,10 +289,12 @@ export default function GuestLivePage({ params }) {
           </div>
         )}
 
-        <button type="button" className="casti-bend-btn" onClick={openCastiMenu}>
-          <Wallet size={20} aria-hidden />
-          Časti bend
-        </button>
+        {allowTips && (
+          <button type="button" className="casti-bend-btn" onClick={openCastiMenu}>
+            <Wallet size={20} aria-hidden />
+            Časti bend
+          </button>
+        )}
       </header>
 
       <main className="song-list">
@@ -238,6 +311,11 @@ export default function GuestLivePage({ params }) {
               onClick={() => {
                 closeCasti();
                 setSelectedSong(song);
+                setTableNum('');
+                setOrderError('');
+                setOrderTipAmount(null);
+                setOrderTipCustom('');
+                setOrderFlow('table');
               }}
             >
               <div className="song-info">
@@ -257,20 +335,20 @@ export default function GuestLivePage({ params }) {
         )}
       </main>
 
-      {selectedSong && !requestSent && (
+      {showSongModal && tableStep && (
         <div className="modal-overlay">
           <div className="modal glass-card">
-            <h3>Naruči Pesmu</h3>
+            <h3>Naruči pesmu</h3>
             <p className="selected-song">
               {selectedSong.title} {selectedSong.artist ? `— ${selectedSong.artist}` : ''}
             </p>
-            {error && (
+            {orderError && (
               <div className="error-msg">
-                <AlertCircle size={16} /> {error}
+                <AlertCircle size={16} /> {orderError}
               </div>
             )}
             <div className="form-group">
-              <label>Vaš broj stola:</label>
+              <label>Vaš broj stola</label>
               <input
                 type="number"
                 placeholder="npr. 12"
@@ -282,33 +360,160 @@ export default function GuestLivePage({ params }) {
             <div className="modal-actions">
               <button
                 className="btn btn-secondary"
-                onClick={() => {
-                  setSelectedSong(null);
-                  setError('');
-                }}
+                onClick={resetOrderFlow}
                 type="button"
+                disabled={orderSending}
               >
                 Odustani
               </button>
-              <button className="btn btn-primary" onClick={confirmRequest} disabled={sending} type="button">
-                {sending ? 'Šaljem...' : 'Pošalji Bendu'}
+              <button
+                className="btn btn-primary"
+                onClick={goTableNext}
+                disabled={orderSending}
+                type="button"
+              >
+                {allowTips ? 'Nastavi' : orderSending ? 'Šaljem…' : 'Pošalji bendu'}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {requestSent && (
+      {showSongModal && tipChoiceStep && (
         <div className="modal-overlay">
-          <div className="success-card glass-card">
-            <CheckCircle2 size={48} color="var(--accent-primary)" />
-            <h2>Zahtev Poslat</h2>
-            <p>Hvala! Vaša narudžbina je stigla do benda.</p>
+          <div className="modal glass-card tip-choice-modal">
+            <h3>Želiš li da častiš bend uz ovu pesmu?</h3>
+            <p className="tip-choice-lede">
+              {selectedSong.title}
+              {selectedSong.artist ? ` — ${selectedSong.artist}` : ''}
+            </p>
+            <p className="tip-choice-table">Sto {String(tableNum || '').trim() || '—'}</p>
+            {orderError && (
+              <div className="error-msg">
+                <AlertCircle size={16} /> {orderError}
+              </div>
+            )}
+            <button
+              type="button"
+              className="btn-gold-tip"
+              onClick={() => {
+                setOrderError('');
+                setOrderFlow('tip_amount');
+              }}
+            >
+              Častim preko konobara
+            </button>
+            <button
+              type="button"
+              className="btn-skip-tip"
+              onClick={() => submitSongRequest(0)}
+              disabled={orderSending}
+            >
+              Samo pošalji pesmu (bez bakšiša)
+            </button>
+            <button type="button" className="btn-text-muted" onClick={() => setOrderFlow('table')}>
+              Nazad
+            </button>
           </div>
         </div>
       )}
 
-      {castiModal === 'menu' && (
+      {showSongModal && tipAmountStep && (
+        <div className="modal-overlay">
+          <div className="modal glass-card voucher-modal" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              className="voucher-back"
+              onClick={() => setOrderFlow('tip_choice')}
+              aria-label="Nazad"
+            >
+              <ArrowLeft size={22} />
+            </button>
+
+            <div className="voucher-hero">
+              <div className="voucher-music-icon" aria-hidden>
+                <Music size={40} strokeWidth={2.2} />
+              </div>
+              <h3 className="voucher-band-name">{displayBand}</h3>
+            </div>
+
+            <p className="voucher-label-amount">Iznos (RSD)</p>
+            <div className="amount-presets">
+              {TIP_PRESETS.map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  className={`preset-chip ${
+                    orderTipAmount === n && orderTipCustom === String(n) ? 'active' : ''
+                  }`}
+                  onClick={() => orderSelectPreset(n)}
+                >
+                  {n} RSD
+                </button>
+              ))}
+            </div>
+            <div className="form-group voucher-form-group">
+              <label>Ili unesite iznos</label>
+              <input
+                type="text"
+                inputMode="numeric"
+                placeholder="npr. 1500"
+                value={orderTipCustom}
+                onChange={(e) => orderOnTipCustomChange(e.target.value)}
+                autoComplete="off"
+              />
+            </div>
+
+            <p className="voucher-note voucher-note-tight">
+              Konobar će iznos dodati na račun ili uzeti keš i proslediti bendu.
+            </p>
+
+            {orderError && (
+              <div className="error-msg">
+                <AlertCircle size={16} /> {orderError}
+              </div>
+            )}
+
+            <button
+              type="button"
+              className="btn btn-primary btn-full voucher-confirm"
+              onClick={confirmOrderTipAndSend}
+              disabled={orderSending}
+            >
+              {orderSending ? 'Šaljem…' : 'Pošalji zahtev bendu'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showSongModal && songVoucherStep && songVoucherAmount != null && (
+        <div className="modal-overlay">
+          <div className="success-card glass-card song-voucher-card">
+            <CheckCircle2 size={48} color="#16a34a" />
+            <p className="song-voucher-shout">
+              POKAŽITE KONOBARU: Sto {String(tableNum).trim()} časti muziku {songVoucherAmount} RSD
+            </p>
+            <p className="song-voucher-sub">
+              Zahtev za pesmu je poslat bendu. Ovaj ekran pokažite osoblju radi naplate bakšiša.
+            </p>
+            <button type="button" className="btn btn-primary btn-full" onClick={resetOrderFlow}>
+              Zatvori
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showSongModal && songSuccessBrief && (
+        <div className="modal-overlay">
+          <div className="success-card glass-card">
+            <CheckCircle2 size={48} color="var(--accent-primary)" />
+            <h2>Zahtev poslat</h2>
+            <p>Hvala! Bend je obavešten.</p>
+          </div>
+        </div>
+      )}
+
+      {castiModal === 'menu' && allowTips && (
         <div className="modal-overlay" onClick={closeCasti} role="presentation">
           <div className="modal glass-card casti-menu-modal" onClick={(e) => e.stopPropagation()}>
             <h3>Časti bend</h3>
@@ -323,7 +528,7 @@ export default function GuestLivePage({ params }) {
         </div>
       )}
 
-      {castiModal === 'voucher' && (
+      {castiModal === 'voucher' && allowTips && (
         <div className="modal-overlay" onClick={closeCasti} role="presentation">
           <div className="modal glass-card voucher-modal" onClick={(e) => e.stopPropagation()}>
             <button type="button" className="voucher-back" onClick={() => setCastiModal('menu')} aria-label="Nazad">
@@ -606,6 +811,72 @@ export default function GuestLivePage({ params }) {
           border: 1px solid #e2e8f0;
           position: relative;
         }
+        .tip-choice-modal {
+          max-width: 420px;
+        }
+        .tip-choice-lede {
+          font-weight: 700;
+          color: #007aff;
+          margin: 0.5rem 0 0.25rem;
+          font-size: 1rem;
+        }
+        .tip-choice-table {
+          font-size: 0.85rem;
+          color: #64748b;
+          margin: 0 0 1.5rem;
+        }
+        .btn-gold-tip {
+          width: 100%;
+          padding: 1.1rem 1.25rem;
+          border-radius: 16px;
+          border: 2px solid #ca8a04;
+          background: linear-gradient(180deg, #fde047 0%, #eab308 55%, #ca8a04 100%);
+          color: #422006;
+          font-weight: 900;
+          font-size: 1.05rem;
+          cursor: pointer;
+          margin-bottom: 1rem;
+          box-shadow: 0 10px 28px rgba(234, 179, 8, 0.35);
+          line-height: 1.25;
+        }
+        .btn-gold-tip:hover {
+          filter: brightness(1.03);
+        }
+        .btn-skip-tip {
+          width: 100%;
+          background: transparent;
+          border: none;
+          color: #64748b;
+          font-size: 0.88rem;
+          font-weight: 600;
+          text-decoration: underline;
+          text-underline-offset: 4px;
+          cursor: pointer;
+          padding: 0.65rem 0.5rem;
+          margin-bottom: 0.5rem;
+        }
+        .song-voucher-card {
+          max-width: 440px;
+        }
+        .song-voucher-shout {
+          margin: 1.25rem 0 1rem;
+          font-size: clamp(1rem, 4.2vw, 1.2rem);
+          font-weight: 900;
+          letter-spacing: 0.04em;
+          line-height: 1.35;
+          color: #0f172a;
+          text-transform: uppercase;
+        }
+        .song-voucher-sub {
+          font-size: 0.9rem;
+          color: #64748b;
+          line-height: 1.5;
+          margin: 0 0 1.5rem;
+        }
+        .voucher-note-tight {
+          margin-top: 0.5rem;
+        }
+
         .voucher-modal {
           max-width: 420px;
           text-align: left;

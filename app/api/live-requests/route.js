@@ -22,7 +22,9 @@ export async function GET(request) {
     const mapped = requests.map((r) => {
       const type = (r.requestType || 'SONG').toUpperCase();
       const isWaiterTip = type === 'WAITER_TIP';
-      const apiType = isWaiterTip ? 'waiter_tip' : 'song';
+      const tipAmt = r.tipAmountRsd != null ? Number(r.tipAmountRsd) : 0;
+      const isSongWithTip = type === 'SONG' && tipAmt > 0;
+      const apiType = isWaiterTip ? 'waiter_tip' : isSongWithTip ? 'song_with_tip' : 'song';
       return {
         id: r.id,
         song: isWaiterTip
@@ -37,7 +39,8 @@ export async function GET(request) {
         createdAt: r.createdAt,
         requestType: apiType,
         guestNote: r.guestNote || null,
-        tip: isWaiterTip ? 'BAKŠIŠ' : undefined,
+        tipAmountRsd: tipAmt > 0 ? tipAmt : null,
+        tip: isWaiterTip || isSongWithTip ? 'BAKŠIŠ' : undefined,
       };
     });
 
@@ -100,6 +103,13 @@ export async function POST(request) {
     }
 
     const { songId, bandId, tableNum } = body;
+    const waiterTipRsdRaw = body?.waiterTipRsd;
+    const waiterTipParsed =
+      waiterTipRsdRaw === null || waiterTipRsdRaw === undefined || waiterTipRsdRaw === ''
+        ? 0
+        : Number(waiterTipRsdRaw);
+    const waiterTipRsd =
+      Number.isFinite(waiterTipParsed) && waiterTipParsed > 0 ? Math.floor(waiterTipParsed) : 0;
 
     if (!songId || !bandId || !tableNum) {
       return NextResponse.json(
@@ -108,18 +118,41 @@ export async function POST(request) {
       );
     }
 
+    const band = await prisma.band.findUnique({
+      where: { id: bandId },
+      select: { id: true, allowTips: true },
+    });
+    if (!band) {
+      return NextResponse.json({ error: 'Bend nije pronađen' }, { status: 404 });
+    }
+
+    if (waiterTipRsd > 0 && !band.allowTips) {
+      return NextResponse.json(
+        { error: 'Bend je isključio opciju bakšiša za goste.' },
+        { status: 403 }
+      );
+    }
+
     const song = await prisma.song.findUnique({ where: { id: songId } });
     if (!song) {
       return NextResponse.json({ error: 'Pesma nije pronađena' }, { status: 404 });
+    }
+
+    const tNum = String(tableNum).trim();
+    let guestNote = null;
+    if (waiterTipRsd > 0) {
+      guestNote = `STRELO: Sto ${tNum} časti muziku (${waiterTipRsd} RSD) uz pesmu «${song.title}»`;
     }
 
     const liveRequest = await prisma.liveRequest.create({
       data: {
         songId,
         bandId,
-        tableNum: String(tableNum),
+        tableNum: tNum,
         status: 'PENDING',
         requestType: 'SONG',
+        tipAmountRsd: waiterTipRsd > 0 ? waiterTipRsd : null,
+        guestNote,
       },
       include: {
         song: { select: { title: true, artist: true } },
@@ -132,7 +165,8 @@ export async function POST(request) {
       artist: liveRequest.song?.artist,
       tableNum: liveRequest.tableNum,
       status: 'pending',
-      requestType: 'song',
+      requestType: waiterTipRsd > 0 ? 'song_with_tip' : 'song',
+      waiterTipRsd: waiterTipRsd > 0 ? waiterTipRsd : null,
     });
   } catch (err) {
     console.error('LiveRequest POST error:', err);

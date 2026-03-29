@@ -15,7 +15,7 @@ export default function PrivatnostPage() {
           Politika privatnosti
         </h1>
         <p className="mt-3 text-sm text-slate-500">
-          Poslednje ažuriranje: 27.03.2026.
+          Poslednje ažuriranje: 28.03.2026.
         </p>
 
         <section className="mt-8 space-y-4 text-slate-700">
@@ -48,7 +48,15 @@ export default function PrivatnostPage() {
             <li>identifikacione i kontakt podatke (npr. ime, email, telefon),</li>
             <li>podatke o profilu benda/klijenta i upitima za nastupe,</li>
             <li>tehničke podatke (IP adresa, tip uređaja, log podaci),</li>
-            <li>podatke potrebne za realizaciju rezervacija i komunikacije.</li>
+            <li>podatke potrebne za realizaciju rezervacija i komunikacije,</li>
+            <li>
+              podatke u okviru live nastupa (npr. broj stola ili oznaka mesta, izbor pesme iz repertoara) kada gost
+              koristi digitalnu pesmaricu,
+            </li>
+            <li>
+              podatke u vezi sa predlogom ili isplatama bakšiša kada je ta funkcija uključena, u skladu sa podešavanjima
+              benda i učestnika događaja.
+            </li>
           </ul>
         </section>
 

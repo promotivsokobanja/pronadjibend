@@ -39,6 +39,8 @@ model Band {
   img           String?
   isPaid        Boolean        @default(false)
   plan          String         @default("FREE")
+  /// Gost na live stranici vidi korak bakšiša uz narudžbinu pesme + „Časti bend”
+  allowTips     Boolean        @default(true)
   songs         Song[]         // Repertoire
   bookings      Booking[]
   liveRequests  LiveRequest[]
@@ -103,6 +105,8 @@ model LiveRequest {
   requestType String   @default("SONG")
   /// Za WAITER_TIP: puna poruka za bend, npr. STRELO: Sto 3 ...
   guestNote   String?
+  /// Bakšiš preko konobara uz pesmu (RSD); null = bez bakšiša
+  tipAmountRsd Int?
   song        Song?    @relation(fields: [songId], references: [id])
   songId      String?
   band        Band     @relation(fields: [bandId], references: [id])

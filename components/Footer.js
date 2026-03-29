@@ -39,6 +39,11 @@ export default function Footer() {
             <ul>
               <li><Link href="/clients">Pretraži Bendove</Link></li>
               <li><Link href="/bands">Za Muzičare</Link></li>
+              <li>
+                <a href="/marketing/poster-A4.png" download="PronadjiBend-poster-A4.png">
+                  Poster za štampu (A4)
+                </a>
+              </li>
               <li><Link href="/about">O Nama</Link></li>
               <li><Link href="/faq">Česta Pitanja</Link></li>
             </ul>

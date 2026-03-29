@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Radio, ListMusic, Eye, EyeOff, MessageSquare, Music, Clock, Settings, ArrowLeft, X, Volume2, VolumeX, Zap, ZapOff, Type, RotateCcw, ChevronDown, Bell } from 'lucide-react';
+import { Radio, ListMusic, Eye, EyeOff, MessageSquare, Music, Clock, Settings, ArrowLeft, X, Volume2, VolumeX, Zap, ZapOff, Type, RotateCcw, ChevronDown, Bell, Banknote } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 export default function LiveDashboard({ bandId }) {
@@ -152,7 +152,9 @@ export default function LiveDashboard({ bandId }) {
       knownPendingIdsRef.current = new Set(pendingNow.map((r) => r.id));
 
       const prevCount = prevPendingCountAfterFetchRef.current;
-      const hasTipNew = newPendingItems.some((r) => r.requestType === 'waiter_tip');
+      const hasTipNew = newPendingItems.some(
+        (r) => r.requestType === 'waiter_tip' || r.requestType === 'song_with_tip'
+      );
       if (settingsRef.current.soundEnabled && pendingCount > prevCount) {
         if (hasTipNew) playTipNotification();
         else playNotification();
@@ -168,12 +170,19 @@ export default function LiveDashboard({ bandId }) {
                   .replace(/^Sto\s*/i, '')
                   .trim() || '?';
           try {
-            if (r.requestType === 'waiter_tip') {
-              new Notification('Bakšiš preko konobara', {
-                body: `Sto ${sto} — ${(r.guestNote || r.song || '').slice(0, 120)}`,
-                tag: r.id,
-                silent: true,
-              });
+            if (r.requestType === 'waiter_tip' || r.requestType === 'song_with_tip') {
+              const amt = r.tipAmountRsd != null ? `${r.tipAmountRsd} RSD` : '';
+              new Notification(
+                r.requestType === 'song_with_tip' ? 'Pesma + bakšiš (konobar)' : 'Bakšiš preko konobara',
+                {
+                  body:
+                    r.requestType === 'song_with_tip'
+                      ? `Sto ${sto} — ${r.song || 'Pesma'}${amt ? ` · ${amt}` : ''}`
+                      : `Sto ${sto} — ${(r.guestNote || r.song || '').slice(0, 120)}`,
+                  tag: r.id,
+                  silent: true,
+                }
+              );
             } else {
               const songTitle = (r.song || 'Nepoznata pesma').toString();
               new Notification(`Nova pesma: ${songTitle} - Sto ${sto}`, {
@@ -501,12 +510,24 @@ export default function LiveDashboard({ bandId }) {
                     .map(req => (
                     <div
                       key={req.id}
-                      className={`request-card ${req.status} ${req.requestType === 'waiter_tip' ? 'waiter-tip' : ''}`}
+                      className={`request-card ${req.status} ${
+                        req.requestType === 'waiter_tip' || req.requestType === 'song_with_tip'
+                          ? 'waiter-tip'
+                          : ''
+                      }`}
                       style={{ fontSize: `${fontScale}em` }}
                     >
                       <div className="req-header">
                         <span className="time">{req.time}</span>
-                        {settings.showTips && <span className="tip">{req.tip}</span>}
+                        <span className="req-header-right">
+                          {(req.requestType === 'waiter_tip' || req.requestType === 'song_with_tip') && (
+                            <Banknote size={18} className="tip-money-icon" aria-hidden />
+                          )}
+                          {settings.showTips && req.tip && <span className="tip">{req.tip}</span>}
+                          {req.tipAmountRsd != null && req.tipAmountRsd > 0 && (
+                            <span className="tip-amount">{req.tipAmountRsd} RSD</span>
+                          )}
+                        </span>
                       </div>
                       <h3 className="song-title">{req.song}</h3>
                       <p className="client-name">od: {req.client}</p>
@@ -1169,8 +1190,30 @@ export default function LiveDashboard({ bandId }) {
         .req-header {
           display: flex;
           justify-content: space-between;
+          align-items: center;
+          gap: 0.5rem;
           font-size: 0.7rem;
           margin-bottom: 1rem;
+        }
+
+        .req-header-right {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.45rem;
+          flex-wrap: wrap;
+          justify-content: flex-end;
+        }
+
+        .tip-money-icon {
+          color: #fef08a;
+          flex-shrink: 0;
+        }
+
+        .tip-amount {
+          font-weight: 900;
+          color: #86efac;
+          font-size: 0.72rem;
+          letter-spacing: 0.03em;
         }
 
         .tip { color: #ffd700; font-weight: 900; }

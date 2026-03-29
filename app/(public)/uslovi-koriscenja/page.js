@@ -15,7 +15,7 @@ export default function UsloviKoriscenjaPage() {
           Uslovi korišćenja
         </h1>
         <p className="mt-3 text-sm text-slate-500">
-          Poslednje ažuriranje: 27.03.2026.
+          Poslednje ažuriranje: 28.03.2026.
         </p>
 
         <section className="mt-8 space-y-4 text-slate-700">
@@ -95,6 +95,17 @@ export default function UsloviKoriscenjaPage() {
             Na ove uslove primenjuje se pravo Republike Srbije. Za sporove je nadležan
             stvarno nadležni sud u Republici Srbiji, osim ako obavezni propisi ne određuju
             drugačije.
+          </p>
+        </section>
+
+        <section className="mt-8">
+          <h2 className="text-xl font-bold text-slate-900">9. Live nastup, digitalna pesmarica i bakšiš</h2>
+          <p className="mt-3 text-slate-700">
+            Funkcije uživo (zahtevi pesama, obaveštenja bendu, opcioni predlozi bakšiša) služe kao tehnička podrška
+            događaju. Bend i ustanova dogovoravaju pravila ponašanja gostiju i osoblja. Isplate bakšiša u gotovom,
+            preko konobara ili na drugi dogovoreni način, regulišu ugovorne strane izvan okvira platforme, osim ako
+            posebnim produktom nije drugačije uređeno. Zabranjeno je zloupotrebljavanje ovih funkcija radi prevare ili
+            pritiska na goste.
           </p>
         </section>
 

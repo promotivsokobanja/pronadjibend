@@ -1,6 +1,6 @@
 'use client';
 
-import { Save, ArrowLeft, Image as ImageIcon, Video, Mail, Phone, MessageSquare } from 'lucide-react';
+import { Save, ArrowLeft, Image as ImageIcon, Video, Mail, Phone, MessageSquare, Download } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -20,6 +20,7 @@ export default function BandProfilePage() {
     bio: '',
     img: '',
     videoUrl: '',
+    allowTips: true,
   });
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadingVideo, setUploadingVideo] = useState(false);
@@ -83,6 +84,7 @@ export default function BandProfilePage() {
           bio: band.bio || '',
           img: band.img || '',
           videoUrl: band.videoUrl || '',
+          allowTips: band.allowTips !== false,
         });
       } catch (err) {
         setError('Ne mogu da učitam profil benda.');
@@ -249,6 +251,17 @@ export default function BandProfilePage() {
             </Link>
             <h1>Moj Profil Benda</h1>
             <p>Ovde uređujete slike, video i opis koji klijenti vide na platformi.</p>
+            {!loading && bandId && !adminNoBand ? (
+              <p className="profile-poster-hint">
+                <a
+                  href={`/api/bands/${encodeURIComponent(bandId)}/marketing-poster`}
+                  className="profile-poster-link"
+                >
+                  <Download size={16} aria-hidden />
+                  Preuzmi poster za tvoj bend (A4, 300 DPI) — QR vodi na tvoju live stranicu za goste
+                </a>
+              </p>
+            ) : null}
           </div>
         </div>
 
@@ -324,6 +337,25 @@ export default function BandProfilePage() {
             <form onSubmit={handleSave} className="profile-card">
             {error && <div className="alert error">{error}</div>}
             {success && <div className="alert success">{success}</div>}
+
+            <div className="field toggle-field">
+              <label className="toggle-label" htmlFor="allow-tips">
+                Omogući opciju bakšiša za goste
+              </label>
+              <p className="toggle-hint">
+                Na live stranici gosti mogu da pošalju bakšiš preko konobara uz narudžbinu pesme (ako je uključeno).
+              </p>
+              <button
+                type="button"
+                id="allow-tips"
+                role="switch"
+                aria-checked={formData.allowTips}
+                className={`tips-toggle ${formData.allowTips ? 'on' : ''}`}
+                onClick={() => handleChange('allowTips', !formData.allowTips)}
+              >
+                <span className="tips-toggle-knob" />
+              </button>
+            </div>
 
             <div className="grid">
               <div className="field">
@@ -484,7 +516,19 @@ export default function BandProfilePage() {
       <style jsx>{`
         .profile-wrap { max-width: 920px; margin: 0 auto; }
         .profile-header h1 { font-size: 2.1rem; font-weight: 900; color: #0f172a; margin-bottom: 0.3rem; }
-        .profile-header p { color: #64748b; margin-bottom: 1.4rem; }
+        .profile-header p { color: #64748b; }
+        .profile-header p:not(.profile-poster-hint) { margin-bottom: 0.55rem; }
+        .profile-poster-hint { margin: 0 0 1.4rem; }
+        .profile-poster-link {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.45rem;
+          font-size: 0.88rem;
+          font-weight: 700;
+          color: #0d9488;
+          text-decoration: none;
+        }
+        .profile-poster-link:hover { text-decoration: underline; }
         .back-link {
           display: inline-flex;
           align-items: center;
@@ -542,6 +586,52 @@ export default function BandProfilePage() {
           color: #64748b;
           font-size: 0.75rem;
           margin-top: -0.1rem;
+        }
+        .toggle-field {
+          padding-bottom: 0.5rem;
+          border-bottom: 1px solid #f1f5f9;
+          margin-bottom: 0.35rem;
+        }
+        .toggle-label {
+          font-size: 0.95rem;
+          font-weight: 800;
+          color: #0f172a;
+          text-transform: none;
+          letter-spacing: 0;
+        }
+        .toggle-hint {
+          font-size: 0.8rem;
+          color: #64748b;
+          line-height: 1.45;
+          margin: 0;
+        }
+        .tips-toggle {
+          width: 52px;
+          height: 28px;
+          border-radius: 999px;
+          border: none;
+          background: #cbd5e1;
+          position: relative;
+          cursor: pointer;
+          transition: background 0.2s;
+          align-self: flex-start;
+        }
+        .tips-toggle.on {
+          background: #22c55e;
+        }
+        .tips-toggle-knob {
+          position: absolute;
+          top: 3px;
+          left: 3px;
+          width: 22px;
+          height: 22px;
+          background: #fff;
+          border-radius: 50%;
+          transition: transform 0.2s;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+        }
+        .tips-toggle.on .tips-toggle-knob {
+          transform: translateX(24px);
         }
         .upload-row {
           display: flex;

@@ -15,6 +15,7 @@ import {
   MessageSquare,
   CheckCircle,
   X,
+  Download,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useEffect, useMemo, useCallback } from 'react';
@@ -494,6 +495,18 @@ export default function BandDashboard() {
             </button>
             {SHOW_HEADER_ACTION_HINTS && (
               <span className="action-caption">QR za goste — brz pristup linku</span>
+            )}
+          </div>
+          <div className="header-action-item">
+            <a
+              href={`/api/bands/${encodeURIComponent(bandId)}/marketing-poster`}
+              className="btn btn-secondary"
+              style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}
+            >
+              <Download size={18} style={{ marginRight: '8px' }} /> Poster za štampu (A4, 300 DPI)
+            </a>
+            {SHOW_HEADER_ACTION_HINTS && (
+              <span className="action-caption">Tvoj QR za goste — live pesmarica i narudžbine</span>
             )}
           </div>
           <div className="header-action-item">

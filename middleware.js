@@ -137,22 +137,6 @@ function enforceAuthRateLimit(request, pathname) {
   return null;
 }
 
-function applySecurityHeaders(response) {
-  response.headers.set('X-Frame-Options', 'DENY');
-  response.headers.set('X-Content-Type-Options', 'nosniff');
-  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
-  response.headers.set('X-DNS-Prefetch-Control', 'off');
-  response.headers.set('Cross-Origin-Opener-Policy', 'same-origin');
-
-  if (process.env.NODE_ENV === 'production') {
-    response.headers.set(
-      'Strict-Transport-Security',
-      'max-age=31536000; includeSubDomains; preload'
-    );
-  }
-}
-
 function hasAnyAuthCookie(request) {
   const c = request.cookies;
   return Boolean(
@@ -160,6 +144,24 @@ function hasAnyAuthCookie(request) {
       c.get('next-auth.session-token')?.value ||
       c.get('__Secure-next-auth.session-token')?.value
   );
+}
+
+/**
+ * Bezbednosni headeri samo kroz middleware — ne na `/_next/*` (CSS/JS/fontovi).
+ * Ne koristiti Cross-Origin-Opener-Policy na statici (pokvarilo bi učitavanje u nekim okruženjima).
+ */
+function applySecurityHeaders(response) {
+  response.headers.set('X-Frame-Options', 'DENY');
+  response.headers.set('X-Content-Type-Options', 'nosniff');
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  response.headers.set('X-DNS-Prefetch-Control', 'off');
+  if (process.env.NODE_ENV === 'production') {
+    response.headers.set(
+      'Strict-Transport-Security',
+      'max-age=31536000; includeSubDomains; preload'
+    );
+  }
 }
 
 export function middleware(request) {
@@ -199,6 +201,12 @@ export function middleware(request) {
   }
 }
 
+/**
+ * Preskače ceo `/_next/` (chunks, CSS, HMR), favicon i uobičajene statičke ekstenzije
+ * da middleware nikad ne dira Webpack statiku — zvanični Next obrazac.
+ */
 export const config = {
-  matcher: ['/((?!_next/|favicon\\.ico).*)'],
+  matcher: [
+    '/((?!_next/|favicon\\.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|avif|ico|woff2?|css|js|map|txt|xml)$).*)',
+  ],
 };
