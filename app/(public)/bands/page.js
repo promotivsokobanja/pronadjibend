@@ -31,6 +31,16 @@ const SHOW_HEADER_ACTION_HINTS = true;
 /** `1` ili prazno = jedan klik kao ranije; `0` = prozor za napomenu. */
 const LS_CALENDAR_QUICK_BUSY = 'pronadjibend_calendar_quick_busy';
 
+/** Sprečava pad cele tabele ako API vrati HTML grešku ili nevalidan JSON. */
+async function safeResponseJson(res, fallback) {
+  try {
+    if (!res?.ok) return fallback;
+    return await res.json();
+  } catch {
+    return fallback;
+  }
+}
+
 export default function BandDashboard() {
   const router = useRouter();
   const [bandId, setBandId] = useState(null);
@@ -57,6 +67,8 @@ export default function BandDashboard() {
   const [bookingMutation, setBookingMutation] = useState(null);
   const [bookingActionError, setBookingActionError] = useState('');
   const [profileSavedNotice, setProfileSavedNotice] = useState(false);
+  /** Prve 2 pesme za karticu „Digitalni Repertoar“ (iz baze, ne demo) */
+  const [repertoirePreview, setRepertoirePreview] = useState([]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -121,20 +133,23 @@ export default function BandDashboard() {
           setBandId(id);
         }
 
-        const [bookingsRes, bandRes, calendarRes] = await Promise.all([
+        const [bookingsRes, bandRes, calendarRes, songsPreviewRes] = await Promise.all([
           fetch(`/api/bookings?bandId=${encodeURIComponent(id)}`),
           fetch(`/api/bands/${encodeURIComponent(id)}`),
-          fetch(`/api/bands/calendar?bandId=${encodeURIComponent(id)}`)
+          fetch(`/api/bands/calendar?bandId=${encodeURIComponent(id)}`),
+          fetch(`/api/songs?bandId=${encodeURIComponent(id)}&limit=2`, { cache: 'no-store' }),
         ]);
 
-        const bookingsData = await bookingsRes.json();
-        const bandData = await bandRes.json();
-        const calendarData = await calendarRes.json();
+        const bookingsData = await safeResponseJson(bookingsRes, []);
+        const bandData = await safeResponseJson(bandRes, {});
+        const calendarData = await safeResponseJson(calendarRes, {});
+        const songsRaw = await safeResponseJson(songsPreviewRes, []);
         const bookingsList = Array.isArray(bookingsData) ? bookingsData : [];
 
         if (cancelled) return;
         setBookings(bookingsList);
         applyCalendarData(calendarData);
+        setRepertoirePreview(Array.isArray(songsRaw) ? songsRaw : []);
         setStats([
           { label: 'Digitalni Repertoar', value: String(bandData._count?.songs ?? 0), icon: Music },
           { label: 'Novi Upiti', value: bookingsList.filter(b => b.status === 'PENDING').length, icon: Bell },
@@ -159,8 +174,8 @@ export default function BandDashboard() {
       fetch(`/api/bookings?bandId=${encodeURIComponent(id)}`, { cache: 'no-store' }),
       fetch(`/api/bands/calendar?bandId=${encodeURIComponent(id)}`, { cache: 'no-store' }),
     ]);
-    const bookingsData = await bookingsRes.json();
-    const calendarData = await calendarRes.json();
+    const bookingsData = await safeResponseJson(bookingsRes, []);
+    const calendarData = await safeResponseJson(calendarRes, {});
     const list = Array.isArray(bookingsData) ? bookingsData : [];
     setBookings(list);
     applyCalendarData(calendarData);
@@ -584,22 +599,25 @@ export default function BandDashboard() {
             <Link href="/bands/repertoire" className="btn btn-secondary btn-sm">Vidi sve</Link>
           </div>
           <div className="song-list">
-            <div className="song-item">
-              <div>
-                <p className="song-title">Lutka</p>
-                <p className="song-artist text-muted">S.A.R.S.</p>
-              </div>
-              <span className="tonality-badge">G dur</span>
-            </div>
-            <div className="song-item">
-              <div>
-                <p className="song-title">Perspektiva</p>
-                <p className="song-artist text-muted">S.A.R.S.</p>
-              </div>
-              <span className="tonality-badge">E mol</span>
-            </div>
+            {repertoirePreview.length === 0 ? (
+              <p className="repertoire-preview-empty text-muted">
+                Još nema pesama u repertoaru — dodajte ih na stranici Repertoar.
+              </p>
+            ) : (
+              repertoirePreview.map((song) => (
+                <div key={song.id} className="song-item">
+                  <div>
+                    <p className="song-title">{song.title}</p>
+                    <p className="song-artist text-muted">{song.artist}</p>
+                  </div>
+                  <span className="tonality-badge" title="Originalni ton">
+                    {song.key?.trim() ? song.key : '—'}
+                  </span>
+                </div>
+              ))
+            )}
             <Link href="/bands/repertoire" style={{ width: '100%' }}>
-              <button className="btn btn-secondary btn-full">
+              <button className="btn btn-secondary btn-full" type="button">
                 <Plus size={18} /> Dodaj pesmu
               </button>
             </Link>
@@ -825,7 +843,13 @@ export default function BandDashboard() {
         }
         
         .song-list, .booking-list { display: flex; flex-direction: column; gap: 1.25rem; }
-        
+        .repertoire-preview-empty {
+          margin: 0;
+          padding: 0.35rem 0 0.5rem;
+          font-size: 0.92rem;
+          line-height: 1.45;
+        }
+
         .song-item { 
           display: flex; 
           align-items: center; 

@@ -63,3 +63,11 @@ jobs:
       # Uhvati greške kompajliranja pre Netlify.
       - name: Next.js build
         run: npm run build:next
+
+      # Ako Tailwind/CSS ne generiše chunkove, produkcija može izgledati kao „goli“ HTML.
+      - name: Provera da postoji bar jedan CSS iz builda
+        run: |
+          test -d .next/static/css || { echo "::error::Nema direktorijuma .next/static/css"; exit 1; }
+          css_count=$(find .next/static/css -type f -name '*.css' 2>/dev/null | wc -l)
+          if [ "$css_count" -lt 1 ]; then echo "::error::Nema .css fajlova u .next/static/css"; exit 1; fi
+          echo "OK: $css_count CSS fajlova"

@@ -8,6 +8,9 @@ import { adminFetch } from '../lib/adminFetch';
 import { useClientSearch } from './clients/ClientSearchContext';
 import ClientsNavSearchPanel from './clients/ClientsNavSearchPanel';
 
+const NAV_SESSION_CACHE_KEY = 'pb_nav_session_v1';
+const NAV_SESSION_CACHE_TTL_MS = 60 * 1000;
+
 async function logoutAndRedirect() {
   try {
     await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' });
@@ -39,17 +42,52 @@ export default function Navbar() {
 
   useEffect(() => {
     if (pathname !== '/clients') setIsNavSearchOpen(false);
+    setIsOpen(false);
   }, [pathname, setIsNavSearchOpen]);
 
   useEffect(() => {
     let cancelled = false;
+
+    const readCachedSession = () => {
+      if (typeof window === 'undefined') return null;
+      try {
+        const raw = sessionStorage.getItem(NAV_SESSION_CACHE_KEY);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed !== 'object') return null;
+        if (Date.now() - (parsed.ts || 0) > NAV_SESSION_CACHE_TTL_MS) return null;
+        return parsed.user || null;
+      } catch {
+        return null;
+      }
+    };
+
+    const writeCachedSession = (user) => {
+      if (typeof window === 'undefined') return;
+      try {
+        sessionStorage.setItem(
+          NAV_SESSION_CACHE_KEY,
+          JSON.stringify({ ts: Date.now(), user: user || null })
+        );
+      } catch {
+        /* ignore */
+      }
+    };
+
+    const cachedUser = readCachedSession();
+    if (cachedUser) {
+      setSessionUser(cachedUser);
+      setIsAdmin(cachedUser?.role === 'ADMIN');
+    }
+
     (async () => {
       try {
-        const r = await adminFetch('/api/auth/me');
+        const r = await adminFetch('/api/auth/me', { cache: 'no-store' });
         const data = await r.json().catch(() => ({}));
         if (cancelled || !r.ok) return;
         setSessionUser(data.user || null);
         setIsAdmin(data.user?.role === 'ADMIN');
+        writeCachedSession(data.user || null);
       } catch {
         /* ignore */
       }
@@ -82,12 +120,12 @@ export default function Navbar() {
 
         {/* Desktop Menu */}
         <div className="nav-links desktop-only">
-          <Link href="/clients" className={`nav-link ${isActive('/clients') ? 'active' : ''}`}>
+          <Link href="/clients" prefetch={false} className={`nav-link ${isActive('/clients') ? 'active' : ''}`}>
             Pretraži Bendove
           </Link>
-          <Link href="/bands" className={`nav-link ${isActive('/bands') ? 'active' : ''}`}>Portal za Muzičare</Link>
-          <Link href="/about" className={`nav-link ${isActive('/about') ? 'active' : ''}`}>O nama</Link>
-          <Link href="/#vodic" className="nav-link">
+          <Link href="/bands" prefetch={false} className={`nav-link ${isActive('/bands') ? 'active' : ''}`}>Portal za Muzičare</Link>
+          <Link href="/about" prefetch={false} className={`nav-link ${isActive('/about') ? 'active' : ''}`}>O nama</Link>
+          <Link href="/#vodic" prefetch={false} className="nav-link">
             Vodič
           </Link>
           {isAdmin && (

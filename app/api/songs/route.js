@@ -9,6 +9,11 @@ export async function GET(request) {
     const category = searchParams.get('category');
     const search = searchParams.get('search');
     const bandId = searchParams.get('bandId');
+    const limitRaw = searchParams.get('limit');
+    const take =
+      limitRaw != null && limitRaw !== ''
+        ? Math.min(Math.max(parseInt(limitRaw, 10) || 0, 1), 100)
+        : undefined;
 
     let where = {};
     if (bandId) where.bandId = bandId;
@@ -20,7 +25,11 @@ export async function GET(request) {
       ];
     }
 
-    const songs = await prisma.song.findMany({ where, orderBy: { title: 'asc' } });
+    const songs = await prisma.song.findMany({
+      where,
+      orderBy: { title: 'asc' },
+      ...(take ? { take } : {}),
+    });
     return NextResponse.json(songs);
   } catch (error) {
     console.error('API Error:', error);

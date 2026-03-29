@@ -73,15 +73,6 @@ export default function VodicSekcija() {
           <p className="vodic-sekcija__cta-note">
             Podesite profil benda i iskoristite alate platforme za nastupe uživo.
           </p>
-          <p className="vodic-sekcija__legal-resource">
-            <Link
-              href="/resources/contract"
-              className="vodic-sekcija__legal-link"
-              title="Generator ugovora o angažovanju muzičara"
-            >
-              Besplatan pravni resurs
-            </Link>
-          </p>
         </div>
       </div>
 
@@ -163,6 +154,20 @@ export default function VodicSekcija() {
           width: 100%;
           max-width: 100%;
           min-width: 0;
+          transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+          transform-style: preserve-3d;
+          cursor: default;
+        }
+
+        .vodic-sekcija__card:hover {
+          transform: translateY(-8px) rotateX(3deg);
+          box-shadow: 0 20px 40px rgba(139, 92, 246, 0.12),
+                      0 10px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        .vodic-sekcija__card:hover .vodic-sekcija__icon-wrap {
+          transform: scale(1.1) translateZ(20px);
+          box-shadow: 0 8px 20px rgba(0, 122, 255, 0.3);
         }
         .vodic-sekcija__icon-wrap {
           width: 48px;
@@ -174,6 +179,8 @@ export default function VodicSekcija() {
           align-items: center;
           justify-content: center;
           margin-bottom: 1rem;
+          transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+          transform-style: preserve-3d;
         }
         :global(.theme-dark) .vodic-sekcija__icon-wrap {
           background: rgba(0, 122, 255, 0.18);
@@ -228,23 +235,6 @@ export default function VodicSekcija() {
         }
         :global(.theme-dark) .vodic-sekcija__cta-note {
           color: #94a3b8;
-        }
-        .vodic-sekcija__legal-resource {
-          margin: 0.25rem 0 0;
-        }
-        .vodic-sekcija__legal-link {
-          font-size: 0.88rem;
-          font-weight: 700;
-          color: #007aff;
-          text-decoration: none;
-          border-bottom: 1px solid transparent;
-          transition: border-color 0.2s ease;
-        }
-        .vodic-sekcija__legal-link:hover {
-          border-bottom-color: rgba(0, 122, 255, 0.45);
-        }
-        :global(.theme-dark) .vodic-sekcija__legal-link {
-          color: #60a5fa;
         }
       `}</style>
     </section>
