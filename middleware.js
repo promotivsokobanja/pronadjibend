@@ -182,8 +182,8 @@ function hasAnyAuthCookie(request) {
 }
 
 /**
- * Bezbednosni headeri samo kroz middleware — ne na `/_next/*` (CSS/JS/fontovi).
- * Ne koristiti Cross-Origin-Opener-Policy na statici (pokvarilo bi učitavanje u nekim okruženjima).
+ * Headeri za odgovore koje middleware vraća (admin redirect, API greške).
+ * Globalni headere za HTML/API stranice (bez `/_next/*`) definiše `next.config.mjs` → `headers()`.
  */
 function applySecurityHeaders(response) {
   response.headers.set('X-Frame-Options', 'DENY');
@@ -203,19 +203,6 @@ function applySecurityHeaders(response) {
 export function middleware(request) {
   try {
     const { pathname } = request.nextUrl;
-
-    /**
-     * Next statika (CSS/JS/fontovi) i fajlovi iz `public/` — bez naših headera.
-     * Tako CSS/JS uvek ostaju „čisti“ (izbegnut gol HTML bez stilova na Netlify/dev).
-     */
-    if (
-      pathname.startsWith('/_next/') ||
-      pathname === '/favicon.ico' ||
-      pathname.startsWith('/images/') ||
-      pathname.startsWith('/marketing/')
-    ) {
-      return NextResponse.next();
-    }
 
     if (pathname.startsWith('/admin')) {
       if (!hasAnyAuthCookie(request)) {
@@ -255,10 +242,16 @@ export function middleware(request) {
 }
 
 /**
- * Pokreni middleware na svim rutama; u telu odmah `next()` za `/_next/*` i javne assete.
- * Regex `(?!_next)` u matcheru je na Windowsu znao da pokvari statiku — ovde ga nema.
- * `'/'` eksplicitno: neke verzije `/:path*` ne poklope samo korensku rutu.
+ * Samo rute gde je logika neophodna. Široki `/:path*` na Windowsu + next dev često pokvari
+ * učitavanje `/_next/static` → stranice bez CSS-a. Javne stranice (/clients, /, …) ne ulaze u middleware.
  */
 export const config = {
-  matcher: ['/', '/:path*'],
+  matcher: [
+    '/admin',
+    '/admin/:path*',
+    '/api/auth/login',
+    '/api/auth/register',
+    '/api/bookings',
+    '/api/bookings/:path*',
+  ],
 };
