@@ -7,7 +7,7 @@
   z-index: 1000;
   width: 100%;
   max-width: 100%;
-  overflow-x: hidden;
+  /* Bez overflow-x: hidden — sa visible-y spec često postavlja overflow-y: auto → dodatni skrol. Širinu drže deca (min-width: 0). */
   box-sizing: border-box;
   background: #f3f4f6 !important;
   backdrop-filter: none;

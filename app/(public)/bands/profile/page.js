@@ -116,7 +116,7 @@ export default function BandProfilePage() {
       if (!res.ok) {
         throw new Error(data?.error || 'Greška pri snimanju.');
       }
-      setSuccess('Profil je uspešno sačuvan.');
+      router.push('/bands?saved=1');
     } catch (err) {
       setError(err.message || 'Došlo je do greške.');
     } finally {

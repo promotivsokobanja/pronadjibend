@@ -211,6 +211,12 @@
   background: #ffffff;
 }
 
+/* Sekcija „Za bendove“ (VodicSekcija) — isti vertikalni ritam kao pricing / vodič */
+.home-container > .vodic-sekcija {
+  padding-top: 8rem;
+  padding-bottom: 8rem;
+}
+
 .experience-gallery {
   background: #f8fafc;
 }
@@ -587,7 +593,8 @@
   .experience-gallery,
   .testimonials,
   .home-blog-guide,
-  .pricing {
+  .pricing,
+  .home-container > .vodic-sekcija {
     padding: 4rem 0;
   }
 }

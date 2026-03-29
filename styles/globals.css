@@ -126,11 +126,21 @@ body {
   }
 }
 
-/* MOBILE FLOW LOCK — sprečava horizontalni skrol / swipe širine > 100% */
-html,
+/*
+ * Horizontalno „zaključavanje“ samo na <html>.
+ * NIKAD overflow-x: hidden na <body> — spec tada tretira overflow-y kao auto → dupli vertikalni skrol.
+ */
+html {
+  max-width: 100% !important;
+  overflow-x: clip !important;
+  overflow-y: auto !important;
+  position: relative;
+  touch-action: pan-y;
+}
+
 body {
   max-width: 100% !important;
-  overflow-x: hidden !important;
+  overflow: visible !important;
   position: relative;
   touch-action: pan-y;
 }

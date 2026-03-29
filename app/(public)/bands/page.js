@@ -1,5 +1,21 @@
 'use client';
-import { Music, Play, Plus, Star, Bell, QrCode, Pencil, BookOpen, FileMusic, LayoutDashboard, Mail, Phone, MessageSquare } from 'lucide-react';
+import {
+  Music,
+  Play,
+  Plus,
+  Star,
+  Bell,
+  QrCode,
+  Pencil,
+  BookOpen,
+  FileMusic,
+  LayoutDashboard,
+  Mail,
+  Phone,
+  MessageSquare,
+  CheckCircle,
+  X,
+} from 'lucide-react';
 import Link from 'next/link';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -39,6 +55,21 @@ export default function BandDashboard() {
   /** `{ id, op: 'patch' | 'delete' }` dok traje API poziv */
   const [bookingMutation, setBookingMutation] = useState(null);
   const [bookingActionError, setBookingActionError] = useState('');
+  const [profileSavedNotice, setProfileSavedNotice] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const q = new URLSearchParams(window.location.search);
+    if (q.get('saved') !== '1') return;
+    setProfileSavedNotice(true);
+    router.replace('/bands', { scroll: false });
+  }, [router]);
+
+  useEffect(() => {
+    if (!profileSavedNotice) return;
+    const t = setTimeout(() => setProfileSavedNotice(false), 6000);
+    return () => clearTimeout(t);
+  }, [profileSavedNotice]);
 
   useEffect(() => {
     try {
@@ -397,6 +428,48 @@ export default function BandDashboard() {
 
   return (
     <div className="dashboard-container container">
+      {profileSavedNotice && (
+        <div
+          role="status"
+          className="profile-saved-toast"
+          style={{
+            marginBottom: '1rem',
+            padding: '0.85rem 1rem',
+            borderRadius: 14,
+            background: '#ecfdf5',
+            border: '1px solid #a7f3d0',
+            color: '#047857',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '1rem',
+            fontWeight: 600,
+            fontSize: '0.95rem',
+          }}
+        >
+          <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <CheckCircle size={22} aria-hidden />
+            Profil je uspešno sačuvan.
+          </span>
+          <button
+            type="button"
+            onClick={() => setProfileSavedNotice(false)}
+            aria-label="Zatvori obaveštenje"
+            style={{
+              background: 'transparent',
+              border: 'none',
+              padding: 4,
+              cursor: 'pointer',
+              color: '#047857',
+              borderRadius: 8,
+              lineHeight: 1,
+              display: 'flex',
+            }}
+          >
+            <X size={20} />
+          </button>
+        </div>
+      )}
       <div className="blob" style={{ top: '10%', left: '10%' }}></div>
       
       <header className="dash-header">

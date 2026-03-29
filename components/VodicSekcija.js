@@ -27,64 +27,200 @@ export default function VodicSekcija() {
     <section
       id="vodic"
       aria-labelledby="vodic-heading"
-      className="scroll-mt-[calc(var(--navbar-height)+0.5rem)] w-full max-w-full min-w-0 overflow-x-hidden border-t border-slate-200/80 bg-gray-50 px-4 py-16 text-slate-800 md:px-0 md:py-24 [.theme-dark_&]:border-white/10 [.theme-dark_&]:bg-zinc-950 [.theme-dark_&]:text-slate-100"
+      className="vodic-sekcija scroll-mt-[calc(var(--navbar-height)+0.5rem)] w-full min-w-0 border-t border-slate-200/80 bg-slate-100 text-slate-800 [.theme-dark_&]:border-white/10 [.theme-dark_&]:bg-zinc-950 [.theme-dark_&]:text-slate-100"
     >
-      <div className="mx-auto w-full min-w-0 max-w-5xl px-0 sm:px-4 md:px-6">
-        <div className="mx-auto w-full min-w-0 max-w-3xl text-center">
-          <p className="mb-3 flex flex-wrap items-center justify-center gap-2 text-center text-xs font-bold uppercase tracking-[0.2em] text-slate-500 [.theme-dark_&]:text-slate-400">
-            <Sparkles className="h-4 w-4 shrink-0 text-[#007AFF]" aria-hidden />
+      <div className="container">
+        <div className="section-title reveal">
+          <div className="vodic-sekcija__eyebrow">
+            <Sparkles size={16} className="vodic-sekcija__eyebrow-icon" aria-hidden />
             Za bendove
-          </p>
-          <h2
-            id="vodic-heading"
-            className="text-balance px-1 text-center text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl [.theme-dark_&]:text-white"
-          >
-            Digitalna revolucija za tvoj bend
-          </h2>
-          <div className="mt-6 space-y-4 text-center text-base leading-relaxed text-slate-600 sm:text-lg [.theme-dark_&]:text-slate-300">
-            <p>
-              Savremeni nastup nije samo zvuk i svetlo — očekuje se i digitalna usluga. QR pesmarica omogućava gostima da
-              pregledaju vaš repertoar i pošalju zahtev bez gužve na binu, dok vi na{' '}
-              <strong className="font-semibold text-slate-800 [.theme-dark_&]:text-white">Live Dashboard-u</strong>{' '}
-              vidite red, prihvatate ili preskačete stavke i držite kontrolu nad večeri.
-            </p>
-            <p>
-              Takav tok smanjuje prekide, profesionalizuje komunikaciju sa lokalom i često doprinosi boljem iskustvu
-              publike — što se u praksi odražava i na zadovoljstvo gostiju i na mogućnost većeg bakšiša zahvaljujući
-              jasnijoj usluzi i manje haotičnoj atmosferi.
-            </p>
           </div>
+          <h2 id="vodic-heading">
+            Digitalna revolucija <span className="gradient-text">za tvoj bend</span>
+          </h2>
         </div>
 
-        <ul className="mt-14 grid w-full min-w-0 max-w-full grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 lg:gap-6">
+        <div className="vodic-sekcija__intro">
+          <p>
+            Savremeni nastup nije samo zvuk i svetlo — očekuje se i digitalna usluga. QR pesmarica omogućava gostima da
+            pregledaju vaš repertoar i pošalju zahtev bez gužve na binu, dok vi na{' '}
+            <strong className="vodic-sekcija__strong">Live Dashboard-u</strong> vidite red, prihvatate ili preskačete
+            stavke.
+          </p>
+          <p>
+            Takav tok smanjuje prekide, profesionalizuje komunikaciju sa lokalom i često doprinosi boljem iskustvu publike
+            — što se u praksi odražava i na zadovoljstvo gostiju i na mogućnost većeg bakšiša zahvaljujući jasnijoj usluzi
+            i manje haotičnoj atmosferi.
+          </p>
+        </div>
+
+        <ul className="vodic-sekcija__grid">
           {cards.map(({ icon: Icon, title, text }) => (
-            <li
-              key={title}
-              className="flex w-full min-w-0 max-w-full flex-col rounded-2xl border border-slate-200/90 bg-white p-5 shadow-sm transition-shadow duration-300 hover:shadow-md sm:p-6 [.theme-dark_&]:border-white/10 [.theme-dark_&]:bg-zinc-900/80"
-            >
-              <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-[#007AFF]/10 text-[#007AFF] [.theme-dark_&]:bg-[#007AFF]/20">
-                <Icon className="h-6 w-6" strokeWidth={2} aria-hidden />
+            <li key={title} className="glass-card vodic-sekcija__card">
+              <div className="vodic-sekcija__icon-wrap" aria-hidden>
+                <Icon size={24} strokeWidth={2} />
               </div>
-              <h3 className="text-balance text-lg font-bold text-slate-900 [.theme-dark_&]:text-white">{title}</h3>
-              <p className="mt-2 min-w-0 max-w-full flex-1 text-pretty text-sm leading-relaxed text-slate-600 [.theme-dark_&]:text-slate-400">
-                {text}
-              </p>
+              <h3 className="vodic-sekcija__card-title">{title}</h3>
+              <p className="vodic-sekcija__card-text">{text}</p>
             </li>
           ))}
         </ul>
 
-        <div className="mt-14 flex w-full min-w-0 max-w-full flex-col items-center gap-3 px-0 text-center sm:gap-4">
-          <Link
-            href="/bands/profile"
-            className="inline-flex min-h-[3.25rem] w-full max-w-full min-w-0 items-center justify-center rounded-full bg-[#007AFF] px-6 text-base font-bold text-white shadow-lg shadow-blue-500/25 transition hover:bg-[#0066dd] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#007AFF] sm:max-w-md sm:px-8 sm:text-lg"
-          >
+        <div className="vodic-sekcija__cta-wrap">
+          <Link href="/bands/profile" className="btn btn-primary vodic-sekcija__cta">
             Aktiviraj svoj PRO sistem
           </Link>
-          <p className="mx-auto w-full min-w-0 max-w-md text-sm text-slate-500 [.theme-dark_&]:text-slate-500">
+          <p className="vodic-sekcija__cta-note">
             Podesite profil benda i iskoristite alate platforme za nastupe uživo.
           </p>
         </div>
       </div>
+
+      <style jsx>{`
+        .vodic-sekcija__eyebrow {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.4rem;
+          font-size: 0.7rem;
+          font-weight: 800;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          color: #64748b;
+          margin-bottom: 0.85rem;
+        }
+        .vodic-sekcija__eyebrow-icon {
+          color: #007aff;
+          flex-shrink: 0;
+        }
+        :global(.theme-dark) .vodic-sekcija__eyebrow {
+          color: #94a3b8;
+        }
+        .vodic-sekcija__intro {
+          max-width: 42rem;
+          margin: -2rem auto 0;
+          padding: 0 0.25rem;
+          text-align: center;
+          font-size: 1.05rem;
+          line-height: 1.65;
+          color: #64748b;
+        }
+        @media (min-width: 768px) {
+          .vodic-sekcija__intro {
+            margin-top: -1.5rem;
+          }
+        }
+        :global(.theme-dark) .vodic-sekcija__intro {
+          color: #94a3b8;
+        }
+        .vodic-sekcija__intro p + p {
+          margin-top: 1rem;
+        }
+        .vodic-sekcija__strong {
+          font-weight: 600;
+          color: #0f172a;
+        }
+        :global(.theme-dark) .vodic-sekcija__strong {
+          color: #fff;
+        }
+        .vodic-sekcija__grid {
+          list-style: none;
+          margin: 0;
+          padding: 0;
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 1.5rem;
+          margin-top: 3rem;
+          width: 100%;
+          max-width: 100%;
+        }
+        @media (min-width: 640px) {
+          .vodic-sekcija__grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+        }
+        @media (min-width: 1024px) {
+          .vodic-sekcija__grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 2rem;
+          }
+        }
+        .vodic-sekcija__card {
+          display: flex;
+          flex-direction: column;
+          padding: 1.5rem;
+          border-radius: 24px;
+          text-align: left;
+          width: 100%;
+          max-width: 100%;
+          min-width: 0;
+        }
+        .vodic-sekcija__icon-wrap {
+          width: 48px;
+          height: 48px;
+          border-radius: 14px;
+          background: rgba(0, 122, 255, 0.1);
+          color: #007aff;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-bottom: 1rem;
+        }
+        :global(.theme-dark) .vodic-sekcija__icon-wrap {
+          background: rgba(0, 122, 255, 0.18);
+        }
+        .vodic-sekcija__card-title {
+          font-size: 1.1rem;
+          font-weight: 800;
+          color: #0f172a;
+          margin: 0 0 0.5rem;
+          letter-spacing: -0.02em;
+        }
+        :global(.theme-dark) .vodic-sekcija__card-title {
+          color: #fff;
+        }
+        .vodic-sekcija__card-text {
+          margin: 0;
+          font-size: 0.9rem;
+          line-height: 1.6;
+          color: #64748b;
+        }
+        :global(.theme-dark) .vodic-sekcija__card-text {
+          color: #94a3b8;
+        }
+        .vodic-sekcija__cta-wrap {
+          margin-top: 3rem;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          text-align: center;
+          gap: 1rem;
+          width: 100%;
+        }
+        .vodic-sekcija__cta {
+          min-height: 3.25rem;
+          padding-left: 2rem;
+          padding-right: 2rem;
+          font-size: 1rem;
+          font-weight: 800;
+          max-width: 100%;
+        }
+        @media (min-width: 480px) {
+          .vodic-sekcija__cta {
+            min-width: 280px;
+          }
+        }
+        .vodic-sekcija__cta-note {
+          margin: 0;
+          font-size: 0.85rem;
+          color: #64748b;
+          max-width: 28rem;
+          line-height: 1.5;
+        }
+        :global(.theme-dark) .vodic-sekcija__cta-note {
+          color: #94a3b8;
+        }
+      `}</style>
     </section>
   );
 }
