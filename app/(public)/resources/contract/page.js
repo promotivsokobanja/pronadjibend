@@ -4,13 +4,8 @@ import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { ArrowLeft, Printer } from 'lucide-react';
 
-function displayVal(v, fallback = '___________') {
-  const s = String(v ?? '').trim();
-  return s || fallback;
-}
-
 function formatDateSr(iso) {
-  if (!iso) return '___________';
+  if (!iso) return null;
   try {
     const d = new Date(iso + 'T12:00:00');
     return d.toLocaleDateString('sr-Latn-RS', {
@@ -23,13 +18,34 @@ function formatDateSr(iso) {
   }
 }
 
+/** Prazno = placeholder u ugovoru; popunjeno = istaknuto kao uneti tekst */
+function Field({ value, empty = '___________' }) {
+  const s = String(value ?? '').trim();
+  if (!s) {
+    return (
+      <span className="contract-placeholder select-none border-b border-dashed border-slate-300 text-slate-400">
+        {empty}
+      </span>
+    );
+  }
+  return (
+    <span className="font-semibold text-slate-900 underline decoration-slate-200 underline-offset-[3px] print:decoration-transparent">
+      {s}
+    </span>
+  );
+}
+
 export default function ContractGeneratorPage() {
   const [poslodavac, setPoslodavac] = useState('');
+  const [poslodavacPib, setPoslodavacPib] = useState('');
   const [bend, setBend] = useState('');
+  const [bendPib, setBendPib] = useState('');
   const [datum, setDatum] = useState('');
   const [mesto, setMesto] = useState('');
   const [iznos, setIznos] = useState('');
   const [kapara, setKapara] = useState('');
+  const [potpisPoslodavac, setPotpisPoslodavac] = useState('');
+  const [potpisBend, setPotpisBend] = useState('');
 
   const datumTekst = useMemo(() => formatDateSr(datum), [datum]);
 
@@ -83,21 +99,21 @@ export default function ContractGeneratorPage() {
               Generator ugovora o angažovanju muzičara
             </h1>
             <p className="mt-2 max-w-2xl text-sm text-slate-600 sm:text-base">
-              Popunite polja levo — tekst desno se menja odmah. Za PDF koristite „Odštampaj ugovor“, pa u dijalogu
-              izaberite „Sačuvaj kao PDF“ (Chrome / Edge).
+              Unosite podatke levo — <strong className="text-slate-800">tekst ugovora desno se odmah menja</strong>.
+              Štampa/PDF: dugme ispod, pa u dijalogu „Sačuvaj kao PDF“.
             </p>
           </header>
 
           <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:gap-10">
             {/* Form */}
             <section
-              className="no-print w-full shrink-0 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6 lg:sticky lg:top-28 lg:max-w-md lg:self-start print:hidden"
+              className="no-print w-full shrink-0 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6 lg:max-w-md lg:self-start print:hidden"
               aria-label="Podaci za ugovor"
             >
               <h2 className="mb-4 text-sm font-bold uppercase tracking-wide text-slate-500">Unos podataka</h2>
               <div className="flex flex-col gap-4">
                 <label className="block text-sm font-semibold text-slate-700">
-                  Naziv poslodavca
+                  Naziv poslodavca (naručilac)
                   <input
                     type="text"
                     value={poslodavac}
@@ -108,13 +124,35 @@ export default function ContractGeneratorPage() {
                   />
                 </label>
                 <label className="block text-sm font-semibold text-slate-700">
-                  Naziv benda
+                  PIB ili JMBG poslodavca
+                  <input
+                    type="text"
+                    value={poslodavacPib}
+                    onChange={(e) => setPoslodavacPib(e.target.value)}
+                    className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-slate-900 outline-none ring-blue-500/30 transition focus:border-blue-400 focus:bg-white focus:ring-2"
+                    placeholder="npr. 123456789"
+                    autoComplete="off"
+                  />
+                </label>
+                <label className="block text-sm font-semibold text-slate-700">
+                  Naziv benda (izvođač)
                   <input
                     type="text"
                     value={bend}
                     onChange={(e) => setBend(e.target.value)}
                     className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-slate-900 outline-none ring-blue-500/30 transition focus:border-blue-400 focus:bg-white focus:ring-2"
                     placeholder="npr. Bend „Y“"
+                    autoComplete="off"
+                  />
+                </label>
+                <label className="block text-sm font-semibold text-slate-700">
+                  JMBG ili PIB benda / odgovornog lica
+                  <input
+                    type="text"
+                    value={bendPib}
+                    onChange={(e) => setBendPib(e.target.value)}
+                    className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-slate-900 outline-none ring-blue-500/30 transition focus:border-blue-400 focus:bg-white focus:ring-2"
+                    placeholder="npr. 987654321"
                     autoComplete="off"
                   />
                 </label>
@@ -139,7 +177,7 @@ export default function ContractGeneratorPage() {
                   />
                 </label>
                 <label className="block text-sm font-semibold text-slate-700">
-                  Iznos honorara
+                  Iznos honorara (navedite valutu u tekstu)
                   <input
                     type="text"
                     value={iznos}
@@ -156,10 +194,34 @@ export default function ContractGeneratorPage() {
                     value={kapara}
                     onChange={(e) => setKapara(e.target.value)}
                     className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-slate-900 outline-none ring-blue-500/30 transition focus:border-blue-400 focus:bg-white focus:ring-2"
-                    placeholder="npr. 10.000"
+                    placeholder="npr. 10.000 RSD"
                     autoComplete="off"
                   />
                 </label>
+                <div className="border-t border-slate-100 pt-2">
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                    Potpisi (opciono, za štampu)
+                  </p>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">
+                    Ime i prezime / funkcija (poslodavac)
+                    <input
+                      type="text"
+                      value={potpisPoslodavac}
+                      onChange={(e) => setPotpisPoslodavac(e.target.value)}
+                      className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-slate-900 outline-none ring-blue-500/30 transition focus:border-blue-400 focus:bg-white focus:ring-2"
+                      placeholder="ispod će biti linija za potpis"
+                    />
+                  </label>
+                  <label className="block text-sm font-semibold text-slate-700">
+                    Ime i prezime (bend / odgovorno lice)
+                    <input
+                      type="text"
+                      value={potpisBend}
+                      onChange={(e) => setPotpisBend(e.target.value)}
+                      className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-slate-900 outline-none ring-blue-500/30 transition focus:border-blue-400 focus:bg-white focus:ring-2"
+                    />
+                  </label>
+                </div>
               </div>
 
               <button
@@ -175,10 +237,17 @@ export default function ContractGeneratorPage() {
               </p>
             </section>
 
-            {/* Preview + print surface */}
-            <section className="w-full min-w-0 flex-1" aria-label="Pregled ugovora">
-              <div className="no-print mb-3 flex items-center justify-between lg:hidden">
-                <h2 className="text-sm font-bold uppercase tracking-wide text-slate-500">Pregled</h2>
+            {/* Preview + print surface — sticky na širokom ekranu da uvek vidiš ažuriranje */}
+            <section
+              className="w-full min-w-0 flex-1 lg:sticky lg:top-24 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto"
+              aria-label="Pregled ugovora"
+              aria-live="polite"
+            >
+              <div className="no-print mb-3 lg:mb-4">
+                <h2 className="text-sm font-bold uppercase tracking-wide text-slate-500">Pregled ugovora (uživo)</h2>
+                <p className="mt-1 text-xs text-slate-500">
+                  Sve što ukucaš levo pojavljuje se ovde odmah.
+                </p>
               </div>
 
               <div className="contract-print-surface rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 lg:p-10">
@@ -189,31 +258,36 @@ export default function ContractGeneratorPage() {
                   <p className="text-center text-sm sm:text-base">Zaključen u Republici Srbiji, između:</p>
 
                   <p className="text-sm leading-relaxed sm:text-base">
-                    <strong>POSLODAVAC:</strong> {displayVal(poslodavac)}, PIB/JMBG: ___________ (u daljem tekstu:
-                    Naručilac).
+                    <strong>POSLODAVAC:</strong> <Field value={poslodavac} />, PIB/JMBG:{' '}
+                    <Field value={poslodavacPib} /> (u daljem tekstu: Naručilac).
                   </p>
                   <p className="text-sm leading-relaxed sm:text-base">
-                    <strong>IZVOĐAČ:</strong> {displayVal(bend)}, JMBG/PIB: ___________ (u daljem tekstu: Izvođač).
+                    <strong>IZVOĐAČ:</strong> <Field value={bend} />, JMBG/PIB: <Field value={bendPib} /> (u daljem
+                    tekstu: Izvođač).
                   </p>
 
                   <div className="space-y-3 border-t border-slate-200 pt-4 text-sm leading-relaxed sm:text-base">
                     <p>
                       <strong>Član 1: Predmet ugovora</strong>
                       <br />
-                      Naručilac angažuje Izvođača za muzički nastup dana <strong>{datumTekst}</strong> u objektu{' '}
-                      <strong>{displayVal(mesto)}</strong>.
+                      Naručilac angažuje Izvođača za muzički nastup dana{' '}
+                      <strong>
+                        <Field value={datumTekst || ''} empty="[datum nastupa]" />
+                      </strong>{' '}
+                      u objektu <Field value={mesto} empty="[mesto nastupa]" />.
                     </p>
                     <p>
                       <strong>Član 2: Naknada</strong>
                       <br />
-                      Naručilac se obavezuje da Izvođaču isplati neto iznos od <strong>{displayVal(iznos)}</strong>{' '}
-                      RSD/EUR odmah nakon nastupa.
+                      Naručilac se obavezuje da Izvođaču isplati neto iznos od <Field value={iznos} empty="[iznos]" /> po
+                      dogovoru (navedite valutu u iznosu), odmah nakon nastupa, osim ako strane drugačije ne dogovore.
                     </p>
                     <p>
                       <strong>Član 3: Kapara</strong>
                       <br />
-                      Naručilac na dan potpisivanja isplaćuje kaparu od <strong>{displayVal(kapara)}</strong> RSD, koja
-                      se u slučaju otkazivanja od strane Naručioca ne vraća.
+                      Naručilac na dan potpisivanja isplaćuje kaparu od <Field value={kapara} empty="[iznos kapare]" />,
+                      koja se u slučaju otkazivanja od strane Naručioca ne vraća, u skladu sa zakonom i međusobnim
+                      dogovorom.
                     </p>
                     <p>
                       <strong>Član 4: Obaveze</strong>
@@ -225,13 +299,29 @@ export default function ContractGeneratorPage() {
                       <strong>Član 5: Otkazivanje</strong>
                       <br />
                       Strana koja otkaže nastup manje od 30 dana pre događaja, dužna je da drugoj strani nadoknadi 50%
-                      ugovorenog honorara.
+                      ugovorenog honorara, osim u slučaju više sile.
                     </p>
                   </div>
 
-                  <p className="border-t border-slate-200 pt-6 text-sm sm:text-base">
-                    Potpisi strana: _________________ / _________________
-                  </p>
+                  <div className="border-t border-slate-200 pt-6 text-sm sm:text-base">
+                    <p className="mb-6 font-semibold text-slate-900">Potpisi strana:</p>
+                    <div className="grid gap-8 sm:grid-cols-2 sm:gap-12">
+                      <div>
+                        <p className="mb-2 min-h-[1.5rem] text-center text-sm font-medium text-slate-900">
+                          {potpisPoslodavac.trim() || ' '}
+                        </p>
+                        <div className="mb-1 h-px w-full bg-slate-900" aria-hidden />
+                        <p className="pt-1 text-center text-xs text-slate-600">Naručilac (poslodavac)</p>
+                      </div>
+                      <div>
+                        <p className="mb-2 min-h-[1.5rem] text-center text-sm font-medium text-slate-900">
+                          {potpisBend.trim() || ' '}
+                        </p>
+                        <div className="mb-1 h-px w-full bg-slate-900" aria-hidden />
+                        <p className="pt-1 text-center text-xs text-slate-600">Izvođač (bend)</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </section>
