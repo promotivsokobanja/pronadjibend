@@ -1,5 +1,5 @@
 'use client';
-import { Search, Music, Download, Lock, X, ChevronLeft, ChevronRight, Play, Upload, Trash2, Headphones, Usb, Mic2, Volume2, MonitorSpeaker, FileAudio, Sparkles } from 'lucide-react';
+import { Search, Music, Download, Lock, X, ChevronLeft, ChevronRight, Play, Upload, Trash2, Headphones, Usb, Mic2, Volume2, MonitorSpeaker, FileAudio, Sparkles, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -171,7 +171,19 @@ export default function MidiLibraryPage() {
       <div className="blob" style={{ top: '10%', right: '-10%' }}></div>
 
       <header className="page-header">
-        <Link href="/bands" className="back-link"><Music size={14} /> Dashboard</Link>
+        <button
+          type="button"
+          className="back-link"
+          onClick={() => {
+            if (window.history.length > 1) {
+              router.back();
+            } else {
+              router.push('/bands');
+            }
+          }}
+        >
+          <ArrowLeft size={14} /> NAZAD
+        </button>
         <div className="title-row">
           <h1>MIDI / Audio Biblioteka</h1>
           <span className="total-badge">{(counts['Sve'] || 0).toLocaleString()} fajlova</span>
