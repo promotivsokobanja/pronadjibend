@@ -4,33 +4,39 @@ import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import prisma from '../../../../lib/prisma';
 import { hasDatabaseUrl } from '../../../../lib/dbClientErrors';
+import { isDisposableEmail } from '../../../../lib/emailPolicy';
 
 const hasGoogleConfig =
   !!process.env.GOOGLE_CLIENT_ID && !!process.env.GOOGLE_CLIENT_SECRET;
+
+const providers = [];
+
+if (hasGoogleConfig) {
+  providers.push(
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    })
+  );
+}
 
 const handler = NextAuth({
   trustHost: true,
   session: { strategy: 'jwt', maxAge: 60 * 60 * 24 * 7 },
   secret: process.env.NEXTAUTH_SECRET || process.env.JWT_SECRET || 'dev-only-change-me',
-  providers: hasGoogleConfig
-    ? [
-        GoogleProvider({
-          clientId: process.env.GOOGLE_CLIENT_ID,
-          clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        }),
-      ]
-    : [],
+  providers,
   pages: {
     signIn: '/login',
   },
   callbacks: {
     async signIn({ account, profile }) {
-      if (account?.provider !== 'google') return true;
+      if (!account?.provider || account.provider === 'credentials') return true;
       if (!process.env.DATABASE_URL) return false;
       const email = String(profile?.email || '')
         .trim()
         .toLowerCase();
       if (!email) return false;
+      if (isDisposableEmail(email)) return false;
       try {
         const hash = await bcrypt.hash(
           `${crypto.randomUUID()}${crypto.randomUUID()}`,
@@ -47,7 +53,7 @@ const handler = NextAuth({
         });
         return true;
       } catch (e) {
-        console.error('Google signIn:', e);
+        console.error('OAuth signIn:', e);
         return false;
       }
     },

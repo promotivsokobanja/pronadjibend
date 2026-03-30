@@ -7,6 +7,7 @@ import {
   hasDatabaseUrl,
   responseFromDatabaseError,
 } from '../../../../lib/dbClientErrors';
+import { isDisposableEmail } from '../../../../lib/emailPolicy';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -42,6 +43,13 @@ export async function POST(request) {
 
     if (!EMAIL_REGEX.test(normalizedEmail)) {
       return NextResponse.json({ error: 'Email format nije ispravan.' }, { status: 400 });
+    }
+
+    if (isDisposableEmail(normalizedEmail)) {
+      return NextResponse.json(
+        { error: 'Privremene email adrese nisu dozvoljene.' },
+        { status: 400 }
+      );
     }
 
     if (normalizedPassword.length < 6 || normalizedPassword.length > 128) {
