@@ -1,6 +1,11 @@
 'use client';
 
-import { useClientSearch, CLIENT_GENRE_CATEGORIES } from './ClientSearchContext';
+import {
+  useClientSearch,
+  CLIENT_GENRE_CATEGORIES,
+  CLIENT_EVENT_TYPES,
+  CLIENT_BUDGET_OPTIONS,
+} from './ClientSearchContext';
 
 export default function ClientFilterForm() {
   const { activeFilters, setActiveFilters, handleCategorySelect } = useClientSearch();
@@ -75,6 +80,72 @@ export default function ClientFilterForm() {
             Sopstveno ozvučenje i rasveta
           </span>
         </label>
+      </div>
+
+      <div className="grid gap-2 sm:grid-cols-3 sm:items-end sm:gap-3">
+        <section className="min-w-0 space-y-1">
+          <label
+            htmlFor="cff-event-type"
+            className="text-[0.625rem] font-bold uppercase tracking-[0.14em] text-slate-400"
+          >
+            Vrsta događaja
+          </label>
+          <select
+            id="cff-event-type"
+            className="h-9 w-full rounded-lg border border-slate-200 bg-slate-50/80 px-3 text-xs font-medium text-slate-900 outline-none transition focus:border-[#007AFF] focus:bg-white focus:ring-2 focus:ring-[#007AFF]/12"
+            value={activeFilters.eventType}
+            onChange={(e) =>
+              setActiveFilters((prev) => ({ ...prev, eventType: e.target.value }))
+            }
+          >
+            {CLIENT_EVENT_TYPES.map((option) => (
+              <option key={option.value || 'all'} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </section>
+
+        <section className="min-w-0 space-y-1">
+          <label
+            htmlFor="cff-budget"
+            className="text-[0.625rem] font-bold uppercase tracking-[0.14em] text-slate-400"
+          >
+            Budžet
+          </label>
+          <select
+            id="cff-budget"
+            className="h-9 w-full rounded-lg border border-slate-200 bg-slate-50/80 px-3 text-xs font-medium text-slate-900 outline-none transition focus:border-[#007AFF] focus:bg-white focus:ring-2 focus:ring-[#007AFF]/12"
+            value={activeFilters.budget}
+            onChange={(e) =>
+              setActiveFilters((prev) => ({ ...prev, budget: e.target.value }))
+            }
+          >
+            {CLIENT_BUDGET_OPTIONS.map((option) => (
+              <option key={option.value || 'all'} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </section>
+
+        <section className="min-w-0 space-y-1">
+          <label
+            htmlFor="cff-event-date"
+            className="text-[0.625rem] font-bold uppercase tracking-[0.14em] text-slate-400"
+          >
+            Datum događaja
+          </label>
+          <input
+            id="cff-event-date"
+            type="date"
+            className="h-9 w-full rounded-lg border border-slate-200 bg-slate-50/80 px-3 text-xs font-medium text-slate-900 outline-none transition focus:border-[#007AFF] focus:bg-white focus:ring-2 focus:ring-[#007AFF]/12"
+            value={activeFilters.eventDate}
+            onChange={(e) =>
+              setActiveFilters((prev) => ({ ...prev, eventDate: e.target.value }))
+            }
+          />
+        </section>
       </div>
     </div>
   );

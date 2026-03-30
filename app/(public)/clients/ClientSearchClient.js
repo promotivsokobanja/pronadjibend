@@ -1,13 +1,18 @@
 'use client';
 
 import { Music } from 'lucide-react';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import BandCard from '../../../components/BandCard';
 import BandCardSkeleton from '../../../components/BandCardSkeleton';
 import { useClientSearch } from '../../../components/clients/ClientSearchContext';
 
 export default function ClientSearchClient() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
   const {
     searchTerm,
     setSearchTerm,
@@ -21,19 +26,27 @@ export default function ClientSearchClient() {
   const [bands, setBands] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
+  const [isHydratedFromUrl, setIsHydratedFromUrl] = useState(false);
   const bandsPerPage = 6;
+  const lastSyncedQueryRef = useRef('');
 
   const normalize = (v) => (v || '').toString().toLowerCase().trim();
   const isAllGenres = !activeFilters.genre;
 
   const fetchBands = useCallback(async () => {
+    if (!isHydratedFromUrl) return;
     setIsLoading(true);
     try {
-      const query = new URLSearchParams({
-        search: searchTerm,
-        genre: activeFilters.genre,
-        location: activeFilters.location,
-      }).toString();
+      const params = new URLSearchParams();
+      if (searchTerm?.trim()) params.set('search', searchTerm.trim());
+      if (activeFilters.genre) params.set('genre', activeFilters.genre);
+      if (activeFilters.location?.trim()) params.set('location', activeFilters.location.trim());
+      if (activeFilters.equipment) params.set('equipment', '1');
+      if (activeFilters.eventType) params.set('eventType', activeFilters.eventType);
+      if (activeFilters.budget) params.set('budget', activeFilters.budget);
+      if (activeFilters.eventDate) params.set('eventDate', activeFilters.eventDate);
+
+      const query = params.toString();
       const resp = await fetch(`/api/bands?${query}`, { cache: 'no-store' });
       if (!resp.ok) throw new Error('Network response was not ok');
       const data = await resp.json();
@@ -43,7 +56,59 @@ export default function ClientSearchClient() {
     } finally {
       setIsLoading(false);
     }
-  }, [searchTerm, activeFilters]);
+  }, [searchTerm, activeFilters, isHydratedFromUrl]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams?.toString() || '');
+
+    const nextSearch = params.get('search') || '';
+    const nextGenre = params.get('genre') || '';
+    const nextLocation = params.get('location') || '';
+    const nextEquipment = params.get('equipment') === '1' || params.get('equipment') === 'true';
+    const nextEventType = params.get('eventType') || '';
+    const nextBudget = params.get('budget') || '';
+    const nextEventDate = params.get('eventDate') || '';
+    const nextSort = params.get('sort') || 'recommended';
+
+    setSearchTerm(nextSearch);
+    setActiveFilters((prev) => ({
+      ...prev,
+      genre: nextGenre,
+      location: nextLocation,
+      equipment: nextEquipment,
+      eventType: nextEventType,
+      budget: nextBudget,
+      eventDate: nextEventDate,
+    }));
+
+    if (['recommended', 'genre', 'rating', 'name'].includes(nextSort)) {
+      setSortBy(nextSort);
+    }
+
+    lastSyncedQueryRef.current = params.toString();
+    setIsHydratedFromUrl(true);
+  }, [searchParams, setActiveFilters, setSearchTerm, setSortBy]);
+
+  useEffect(() => {
+    if (!isHydratedFromUrl) return;
+
+    const params = new URLSearchParams();
+    if (searchTerm?.trim()) params.set('search', searchTerm.trim());
+    if (activeFilters.genre) params.set('genre', activeFilters.genre);
+    if (activeFilters.location?.trim()) params.set('location', activeFilters.location.trim());
+    if (activeFilters.equipment) params.set('equipment', '1');
+    if (activeFilters.eventType) params.set('eventType', activeFilters.eventType);
+    if (activeFilters.budget) params.set('budget', activeFilters.budget);
+    if (activeFilters.eventDate) params.set('eventDate', activeFilters.eventDate);
+    if (sortBy !== 'recommended') params.set('sort', sortBy);
+
+    const nextQuery = params.toString();
+    if (lastSyncedQueryRef.current === nextQuery) return;
+    lastSyncedQueryRef.current = nextQuery;
+
+    const nextUrl = nextQuery ? `${pathname}?${nextQuery}` : pathname;
+    router.replace(nextUrl, { scroll: false });
+  }, [searchTerm, activeFilters, sortBy, pathname, router, isHydratedFromUrl]);
 
   useEffect(() => {
     const timer = setTimeout(() => fetchBands(), 300);
@@ -52,7 +117,7 @@ export default function ClientSearchClient() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, activeFilters.genre, activeFilters.location, activeFilters.equipment]);
+  }, [searchTerm, activeFilters.genre, activeFilters.location, activeFilters.equipment, activeFilters.eventType, activeFilters.budget, activeFilters.eventDate]);
 
   const genreFilteredBands = isAllGenres
     ? bands
@@ -174,7 +239,14 @@ export default function ClientSearchClient() {
               className="btn btn-secondary mt-6"
               onClick={() => {
                 setSearchTerm('');
-                setActiveFilters({ genre: '', location: '', equipment: false });
+                setActiveFilters({
+                  genre: '',
+                  location: '',
+                  equipment: false,
+                  eventType: '',
+                  budget: '',
+                  eventDate: '',
+                });
                 setSortBy('recommended');
               }}
             >

@@ -17,7 +17,32 @@ export const CLIENT_GENRE_CATEGORIES = [
   'Acoustic',
 ];
 
-const defaultFilters = { genre: '', location: '', equipment: false };
+export const CLIENT_EVENT_TYPES = [
+  { value: '', label: 'Sve vrste događaja' },
+  { value: 'svadba', label: 'Svadba' },
+  { value: 'rodjendan', label: 'Rođendan' },
+  { value: 'korporativno', label: 'Korporativni događaj' },
+  { value: 'restoran', label: 'Restoran / Kafić' },
+  { value: 'hotel', label: 'Hotel' },
+  { value: 'festival', label: 'Festival / Manifestacija' },
+];
+
+export const CLIENT_BUDGET_OPTIONS = [
+  { value: '', label: 'Svi budžeti' },
+  { value: 'do500', label: 'Do 500€' },
+  { value: '500-1000', label: '500€ – 1000€' },
+  { value: '1000-1500', label: '1000€ – 1500€' },
+  { value: '1500plus', label: '1500€+' },
+];
+
+const defaultFilters = {
+  genre: '',
+  location: '',
+  equipment: false,
+  eventType: '',
+  budget: '',
+  eventDate: '',
+};
 
 const ClientSearchContext = createContext(null);
 
@@ -37,7 +62,10 @@ export function ClientSearchProvider({ children }) {
     () =>
       (activeFilters.genre ? 1 : 0) +
       (activeFilters.location?.trim() ? 1 : 0) +
-      (activeFilters.equipment ? 1 : 0),
+      (activeFilters.equipment ? 1 : 0) +
+      (activeFilters.eventType ? 1 : 0) +
+      (activeFilters.budget ? 1 : 0) +
+      (activeFilters.eventDate ? 1 : 0),
     [activeFilters],
   );
 
