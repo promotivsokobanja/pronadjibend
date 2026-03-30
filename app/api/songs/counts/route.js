@@ -3,6 +3,12 @@ import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
+const COUNT_ALIAS_TARGET = {
+  Zabavne: 'Muške Zabavne',
+  Narodne: 'Muške Narodne',
+  Strane: 'Starije Zabavne',
+};
+
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -16,7 +22,9 @@ export async function GET(request) {
     });
 
     const formattedCounts = counts.reduce((acc, item) => {
-      acc[item.category] = item._count.id;
+      const categoryKey = item.category || '';
+      const targetKey = COUNT_ALIAS_TARGET[categoryKey] || categoryKey;
+      acc[targetKey] = (acc[targetKey] || 0) + item._count.id;
       return acc;
     }, {});
 

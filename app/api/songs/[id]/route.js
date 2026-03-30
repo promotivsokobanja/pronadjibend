@@ -54,7 +54,14 @@ export async function DELETE(request, { params } = {}) {
       return NextResponse.json({ error: 'Song not found' }, { status: 404 });
     }
 
-    await prisma.song.delete({ where: { id: song.id } });
+    await prisma.$transaction([
+      prisma.liveRequest.updateMany({
+        where: { songId: song.id },
+        data: { songId: null },
+      }),
+      prisma.song.delete({ where: { id: song.id } }),
+    ]);
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('API Error:', error);

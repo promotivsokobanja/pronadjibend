@@ -3,6 +3,21 @@ import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
+const CATEGORY_FILTER_MAP = {
+  'Muške Zabavne': ['Muške Zabavne', 'Zabavne'],
+  'Muške Narodne': ['Muške Narodne', 'Narodne'],
+  'Starije Zabavne': ['Starije Zabavne', 'Strane'],
+};
+
+function normalizeSongCategory(category) {
+  const value = String(category || '').trim();
+  if (!value) return value;
+  if (value === 'Zabavne') return 'Muške Zabavne';
+  if (value === 'Narodne') return 'Muške Narodne';
+  if (value === 'Strane') return 'Starije Zabavne';
+  return value;
+}
+
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -17,7 +32,10 @@ export async function GET(request) {
 
     let where = {};
     if (bandId) where.bandId = bandId;
-    if (category && category !== 'Sve') where.category = category;
+    if (category && category !== 'Sve') {
+      const allowedCategories = CATEGORY_FILTER_MAP[category];
+      where.category = allowedCategories ? { in: allowedCategories } : category;
+    }
     if (search) {
       where.OR = [
         { title: { contains: search, mode: 'insensitive' } },
@@ -64,7 +82,15 @@ export async function POST(request) {
     }
 
     const song = await prisma.song.create({
-      data: { title, artist, lyrics: finalLyrics, chords, category, type, bandId },
+      data: {
+        title,
+        artist,
+        lyrics: finalLyrics,
+        chords,
+        category: normalizeSongCategory(category),
+        type,
+        bandId,
+      },
     });
 
     return NextResponse.json({ success: true, song });
