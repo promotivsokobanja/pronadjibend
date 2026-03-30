@@ -21,7 +21,6 @@ const nextConfig = {
   },
   experimental: {
     serverComponentsExternalPackages: ['@prisma/client'],
-    optimizePackageImports: ['lucide-react'],
   },
   images: {
     formats: ['image/avif', 'image/webp'],
