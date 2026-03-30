@@ -65,6 +65,29 @@ model Song {
   liveRequests LiveRequest[]
 }
 
+model SongSubmission {
+  id                String   @id @default(cuid())
+  title             String
+  artist            String
+  lyrics            String?
+  chords            String?
+  key               String?
+  category          String?
+  type              String?
+  status            String   @default("PENDING") // "PENDING", "APPROVED", "REJECTED", "DUPLICATE"
+  sourceSongId      String?
+  submittedByBandId String?
+  reviewedByUserId  String?
+  approvedSongId    String?
+  rejectReason      String?
+  reviewedAt        DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([status, createdAt])
+  @@index([submittedByBandId, createdAt])
+}
+
 model Review {
   id        String   @id @default(cuid())
   rating    Int

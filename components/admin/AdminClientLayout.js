@@ -20,6 +20,7 @@ const NAV = [
   { href: '/admin/users', label: 'Korisnici', icon: Users },
   { href: '/admin/bands', label: 'Bendovi', icon: Music2 },
   { href: '/admin/pesmarica', label: 'Pesmarica', icon: BookOpen },
+  { href: '/admin/pesmarica/predlozi', label: 'Predlozi pesama', icon: BookOpen },
   { href: '/admin/bookings', label: 'Rezervacije', icon: Calendar },
   { href: '/admin/reviews', label: 'Recenzije', icon: Star },
   { href: '/admin/billing', label: 'Naplate', icon: CreditCard },

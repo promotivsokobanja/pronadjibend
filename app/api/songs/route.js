@@ -18,6 +18,48 @@ function normalizeSongCategory(category) {
   return value;
 }
 
+async function createPendingSubmissionIfNeeded(song, bandId) {
+  const normalizedBandId = String(bandId || '').trim();
+  if (!normalizedBandId) return;
+
+  const existingGlobal = await prisma.song.findFirst({
+    where: {
+      bandId: null,
+      title: { equals: song.title, mode: 'insensitive' },
+      artist: { equals: song.artist, mode: 'insensitive' },
+    },
+    select: { id: true },
+  });
+
+  if (existingGlobal) return;
+
+  const existingPending = await prisma.songSubmission.findFirst({
+    where: {
+      status: 'PENDING',
+      submittedByBandId: normalizedBandId,
+      title: { equals: song.title, mode: 'insensitive' },
+      artist: { equals: song.artist, mode: 'insensitive' },
+    },
+    select: { id: true },
+  });
+
+  if (existingPending) return;
+
+  await prisma.songSubmission.create({
+    data: {
+      title: song.title,
+      artist: song.artist,
+      lyrics: song.lyrics,
+      chords: song.chords,
+      key: song.key,
+      category: song.category,
+      type: song.type,
+      sourceSongId: song.id,
+      submittedByBandId: normalizedBandId,
+    },
+  });
+}
+
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -92,6 +134,12 @@ export async function POST(request) {
         bandId,
       },
     });
+
+    try {
+      await createPendingSubmissionIfNeeded(song, bandId);
+    } catch (submissionError) {
+      console.error('Song submission queue error:', submissionError);
+    }
 
     return NextResponse.json({ success: true, song });
   } catch (error) {

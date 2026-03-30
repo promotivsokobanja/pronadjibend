@@ -11,7 +11,17 @@ import ClientsNavSearchPanel from './clients/ClientsNavSearchPanel';
 const NAV_SESSION_CACHE_KEY = 'pb_nav_session_v1';
 const NAV_SESSION_CACHE_TTL_MS = 60 * 1000;
 
+function clearCachedSession() {
+  if (typeof window === 'undefined') return;
+  try {
+    sessionStorage.removeItem(NAV_SESSION_CACHE_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
 async function logoutAndRedirect() {
+  clearCachedSession();
   try {
     await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' });
   } catch {
@@ -84,18 +94,27 @@ export default function Navbar() {
       try {
         const r = await adminFetch('/api/auth/me', { cache: 'no-store' });
         const data = await r.json().catch(() => ({}));
-        if (cancelled || !r.ok) return;
+        if (cancelled) return;
+        if (!r.ok || !data?.user) {
+          setSessionUser(null);
+          setIsAdmin(false);
+          clearCachedSession();
+          return;
+        }
         setSessionUser(data.user || null);
         setIsAdmin(data.user?.role === 'ADMIN');
         writeCachedSession(data.user || null);
       } catch {
-        /* ignore */
+        if (cancelled) return;
+        setSessionUser(null);
+        setIsAdmin(false);
+        clearCachedSession();
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [pathname]);
 
   return (
     <nav className="navbar">
