@@ -33,3 +33,31 @@ export async function PATCH(request, { params } = {}) {
     return NextResponse.json({ error: 'Failed to update song' }, { status: 500 });
   }
 }
+
+export async function DELETE(request, { params } = {}) {
+  const id = params?.id;
+  if (!id) return NextResponse.json({ error: 'ID is required' }, { status: 400 });
+
+  try {
+    const { searchParams } = new URL(request.url);
+    const bandId = searchParams.get('bandId');
+
+    const song = await prisma.song.findFirst({
+      where: {
+        id: id.toString(),
+        ...(bandId ? { bandId } : {}),
+      },
+      select: { id: true },
+    });
+
+    if (!song) {
+      return NextResponse.json({ error: 'Song not found' }, { status: 404 });
+    }
+
+    await prisma.song.delete({ where: { id: song.id } });
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('API Error:', error);
+    return NextResponse.json({ error: 'Failed to delete song' }, { status: 500 });
+  }
+}

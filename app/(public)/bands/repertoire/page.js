@@ -106,9 +106,27 @@ export default function RepertoirePage() {
   const categories = ['Muške Zabavne', 'Ženske Zabavne', 'Muške Narodne', 'Ženske Narodne', 'Starije Zabavne'];
 
   const removeSong = async (id) => {
-    if (confirm('Da li ste sigurni da želite da obrišete ovu pesmu?')) {
-      setSongs(songs.filter(s => s.id !== id));
-      // In real app, call DELETE /api/songs/[id]
+    if (!confirm('Da li ste sigurni da želite da obrišete ovu pesmu?')) return;
+
+    const previousSongs = songs;
+    setSongs((prev) => prev.filter((s) => s.id !== id));
+
+    try {
+      const qs = bandId ? `?bandId=${encodeURIComponent(bandId)}` : '';
+      const resp = await fetch(`/api/songs/${encodeURIComponent(id)}${qs}`, {
+        method: 'DELETE',
+      });
+
+      if (!resp.ok) {
+        const data = await resp.json().catch(() => null);
+        throw new Error(data?.error || 'Brisanje pesme nije uspelo.');
+      }
+
+      fetchCounts();
+    } catch (err) {
+      console.error(err);
+      setSongs(previousSongs);
+      alert(err?.message || 'Greška pri brisanju pesme.');
     }
   };
 
