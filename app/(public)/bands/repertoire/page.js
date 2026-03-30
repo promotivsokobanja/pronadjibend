@@ -2,9 +2,11 @@
 import { Music, Search, Plus, Trash2, ArrowLeft, Edit2 } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { songs as allSongs } from '../../../../lib/songs';
 
 export default function RepertoirePage() {
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('Muške Zabavne');
   const [songs, setSongs] = useState([]);
@@ -134,7 +136,19 @@ export default function RepertoirePage() {
     <div className="repertoire-container container">
       <div className="blob" style={{ top: '10%', right: '-10%' }}></div>
       <header className="page-header">
-        <Link href="/bands" className="back-link"><Music size={14} /> Dashboard</Link>
+        <button
+          type="button"
+          className="back-link"
+          onClick={() => {
+            if (window.history.length > 1) {
+              router.back();
+            } else {
+              router.push('/bands');
+            }
+          }}
+        >
+          <ArrowLeft size={14} /> NAZAD
+        </button>
         <div className="title-section">
           <h1>Upravljanje <span className="gradient-text">Repertoarom</span></h1>
           <p className="text-muted">Personalizovana baza pesama. Kliknite na ime za brzi pregled.</p>

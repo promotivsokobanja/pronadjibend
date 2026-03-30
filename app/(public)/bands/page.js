@@ -495,33 +495,13 @@ export default function BandDashboard() {
         </div>
         <div className="header-actions">
           <div className="header-action-item">
-            <Link href="/bands/profile">
-              <button type="button" className="btn btn-secondary">
-                <Pencil size={18} style={{ marginRight: '8px' }} /> Moj Profil
+            <Link href="/bands/live">
+              <button type="button" className="btn btn-primary">
+                <Play size={18} style={{ marginRight: '8px' }} /> Pokreni Nastup
               </button>
             </Link>
             {SHOW_HEADER_ACTION_HINTS && (
-              <span className="action-caption">Javni profil, slike, video i opis</span>
-            )}
-          </div>
-          <div className="header-action-item">
-            <button type="button" className="btn btn-secondary" onClick={() => setShowQr(true)}>
-              <QrCode size={18} style={{ marginRight: '8px' }} /> Vaš QR Kod
-            </button>
-            {SHOW_HEADER_ACTION_HINTS && (
-              <span className="action-caption">QR za goste — brz pristup linku</span>
-            )}
-          </div>
-          <div className="header-action-item">
-            <a
-              href={`/api/bands/${encodeURIComponent(bandId)}/marketing-poster`}
-              className="btn btn-secondary"
-              style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}
-            >
-              <Download size={18} style={{ marginRight: '8px' }} /> Poster za štampu (A4, 300 DPI)
-            </a>
-            {SHOW_HEADER_ACTION_HINTS && (
-              <span className="action-caption">Tvoj QR za goste — live pesmarica i narudžbine</span>
+              <span className="action-caption action-caption-primary">Live zahtevi pesama</span>
             )}
           </div>
           <div className="header-action-item">
@@ -545,13 +525,33 @@ export default function BandDashboard() {
             )}
           </div>
           <div className="header-action-item">
-            <Link href="/bands/live">
-              <button type="button" className="btn btn-primary">
-                <Play size={18} style={{ marginRight: '8px' }} /> Pokreni Nastup
+            <button type="button" className="btn btn-secondary" onClick={() => setShowQr(true)}>
+              <QrCode size={18} style={{ marginRight: '8px' }} /> Vaš QR Kod
+            </button>
+            {SHOW_HEADER_ACTION_HINTS && (
+              <span className="action-caption">QR za goste — brz pristup linku</span>
+            )}
+          </div>
+          <div className="header-action-item">
+            <a
+              href={`/api/bands/${encodeURIComponent(bandId)}/marketing-poster`}
+              className="btn btn-secondary"
+              style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}
+            >
+              <Download size={18} style={{ marginRight: '8px' }} /> Poster za štampu (A4, 300 DPI)
+            </a>
+            {SHOW_HEADER_ACTION_HINTS && (
+              <span className="action-caption">Tvoj QR za goste — live pesmarica i narudžbine</span>
+            )}
+          </div>
+          <div className="header-action-item">
+            <Link href="/bands/profile">
+              <button type="button" className="btn btn-secondary">
+                <Pencil size={18} style={{ marginRight: '8px' }} /> Moj Profil
               </button>
             </Link>
             {SHOW_HEADER_ACTION_HINTS && (
-              <span className="action-caption action-caption-primary">Live zahtevi pesama</span>
+              <span className="action-caption">Javni profil, slike, video i opis</span>
             )}
           </div>
         </div>

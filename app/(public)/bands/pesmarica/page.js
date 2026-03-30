@@ -1,6 +1,5 @@
 'use client';
-import { Search, Music, BookOpen, ChevronDown, ChevronUp, Plus, Check, X } from 'lucide-react';
-import Link from 'next/link';
+import { Search, BookOpen, ChevronDown, ChevronUp, Plus, Check, X, ArrowLeft } from 'lucide-react';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -110,7 +109,19 @@ export default function PesmaricaPage() {
       <div className="blob" style={{ top: '10%', right: '-10%' }}></div>
 
       <header className="page-header">
-        <Link href="/bands" className="back-link"><Music size={14} /> Dashboard</Link>
+        <button
+          type="button"
+          className="back-link"
+          onClick={() => {
+            if (window.history.length > 1) {
+              router.back();
+            } else {
+              router.push('/bands');
+            }
+          }}
+        >
+          <ArrowLeft size={14} /> NAZAD
+        </button>
         <div className="title-row">
           <h1><BookOpen size={32} className="inline-icon" /> Pesmarica</h1>
           <span className="total-badge">{(counts['Sve'] || total).toLocaleString()} pesama</span>
