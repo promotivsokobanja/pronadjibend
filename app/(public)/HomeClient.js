@@ -27,7 +27,7 @@ function FeaturedBandCover({ band, priority }) {
 
   useEffect(() => {
     setSrc(resolveBandCoverImage(band));
-  }, [band?.id, band?.img, band?.name]);
+  }, [band]);
 
   return (
     <Image

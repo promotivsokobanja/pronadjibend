@@ -35,14 +35,14 @@ export default function PesmaricaPage() {
     })();
   }, [router]);
 
-  const fetchSongs = useCallback(async () => {
+  const fetchSongs = useCallback(async (pageToFetch) => {
     setIsLoading(true);
     try {
       const qs = new URLSearchParams({
         search: searchTerm,
         category,
         letter: activeLetter,
-        page: String(page),
+        page: String(pageToFetch),
       });
       const resp = await fetch(`/api/pesmarica?${qs}`, { cache: 'no-store' });
       const data = await resp.json();
@@ -55,19 +55,19 @@ export default function PesmaricaPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [searchTerm, category, activeLetter, page]);
+  }, [searchTerm, category, activeLetter]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       setPage(1);
-      fetchSongs();
+      fetchSongs(1);
     }, 300);
     return () => clearTimeout(timer);
-  }, [searchTerm, category, activeLetter]);
+  }, [searchTerm, category, activeLetter, fetchSongs]);
 
   useEffect(() => {
-    fetchSongs();
-  }, [page]);
+    fetchSongs(page);
+  }, [page, fetchSongs]);
 
   const handleCategoryChange = (cat) => {
     setCategory(cat);
@@ -224,9 +224,26 @@ export default function PesmaricaPage() {
       <style jsx>{`
         .pesmarica-container { padding-top: 8rem; padding-bottom: 6rem; min-height: 100vh; }
 
-        .page-header { margin-bottom: 2rem; }
-        .back-link { display: flex; align-items: center; gap: 0.5rem; color: #555; font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1.5rem; transition: 0.3s; }
-        .back-link:hover { color: white; }
+        .page-header { margin-bottom: 2rem; position: relative; z-index: 2; }
+        .back-link {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+          color: #334155;
+          font-weight: 800;
+          font-size: 0.8rem;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+          margin-bottom: 1.5rem;
+          padding: 0.45rem 0.7rem;
+          border-radius: 999px;
+          border: 1px solid rgba(148, 163, 184, 0.5);
+          background: rgba(255, 255, 255, 0.88);
+          position: relative;
+          z-index: 3;
+          transition: 0.2s ease;
+        }
+        .back-link:hover { color: #0f172a; border-color: rgba(100, 116, 139, 0.75); }
 
         .title-row { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
         .title-row h1 { font-size: 2.8rem; font-weight: 800; letter-spacing: -2px; display: flex; align-items: center; gap: 10px; }

@@ -21,6 +21,14 @@ export default function SongView({ params }) {
   const [nextSongs, setNextSongs] = useState([]);
   const scrollRef = useRef(null);
 
+  const handleStepBack = () => {
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      window.history.back();
+      return;
+    }
+    window.location.href = '/bands/repertoire';
+  };
+
   const fetchSong = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -146,6 +154,14 @@ export default function SongView({ params }) {
       <main className="stage-lyrics" ref={scrollRef}>
         {isEditing ? (
           <div className="edit-layout">
+            <div className="edit-actions-row">
+              <button type="button" className="edit-nav-btn" onClick={handleStepBack}>
+                <ArrowLeft size={16} /> Korak nazad
+              </button>
+              <button type="button" className="edit-nav-btn ghost" onClick={() => setIsEditing(false)}>
+                <X size={16} /> Izađi iz unosa
+              </button>
+            </div>
             {librarySongs.length > 0 && (
               <div className="import-row">
                 <select
@@ -236,11 +252,20 @@ export default function SongView({ params }) {
 
       <style jsx>{`
         .stage-view-container { 
-          height: 100vh; background: #000; color: #fff; display: flex; flex-direction: column; overflow: hidden; 
+          height: calc(100vh - 72px);
+          margin-top: 72px;
+          background: #000;
+          color: #fff;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
         }
         .stage-nav { 
           padding: 1.5rem 3rem; border-bottom: 1px solid #1a1a1e; 
           display: flex; justify-content: space-between; align-items: center; background: #000;
+          position: sticky;
+          top: 0;
+          z-index: 8;
         }
         .header-controls { display: flex; align-items: center; gap: 2rem; }
         .btn-edit { background: #111; border: 1px solid #222; color: #888; padding: 0.6rem 1.25rem; border-radius: 8px; display: flex; align-items: center; gap: 0.75rem; font-weight: 700; cursor: pointer; transition: 0.3s; }
@@ -254,6 +279,29 @@ export default function SongView({ params }) {
           -webkit-overflow-scrolling: touch;
         }
         .edit-layout { height: 100%; display: flex; flex-direction: column; gap: 0.75rem; }
+        .edit-actions-row {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.6rem;
+          align-items: center;
+        }
+        .edit-nav-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.4rem;
+          background: #111;
+          border: 1px solid #2a2a2a;
+          color: #d1d5db;
+          border-radius: 8px;
+          padding: 0.55rem 0.8rem;
+          font-size: 0.75rem;
+          font-weight: 800;
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
+          cursor: pointer;
+        }
+        .edit-nav-btn:hover { border-color: #00ff00; color: #00ff00; }
+        .edit-nav-btn.ghost:hover { border-color: #f59e0b; color: #f59e0b; }
         .import-row {
           display: grid;
           grid-template-columns: 1fr auto;
@@ -287,7 +335,19 @@ export default function SongView({ params }) {
 
         .no-lyrics { text-align: center; padding: 5rem; display: flex; flex-direction: column; align-items: center; gap: 2rem; color: #444; }
 
-        .back-link { display: flex; align-items: center; gap: 0.5rem; color: #444; font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; }
+        .back-link {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          color: #cbd5e1;
+          font-weight: 800;
+          font-size: 0.82rem;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+          position: relative;
+          z-index: 9;
+        }
+        .back-link:hover { color: #ffffff; }
         .song-meta h1 { font-size: 1.5rem; font-weight: 800; margin: 0; }
         .song-meta p { font-size: 0.9rem; color: #555; margin: 0; font-weight: 600; }
         
@@ -342,6 +402,10 @@ export default function SongView({ params }) {
           .desktop-only { display: none; }
           .stage-nav { padding: 1rem 1.5rem; }
           .song-meta h1 { font-size: 1.2rem; }
+          .stage-view-container {
+            height: calc(100vh - 64px);
+            margin-top: 64px;
+          }
         }
       `}</style>
     </div>

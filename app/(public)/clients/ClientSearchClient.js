@@ -87,14 +87,14 @@ export default function ClientSearchClient() {
     <div className="search-page theme-light page-below-fixed-nav min-h-screen bg-white">
       <main className="container pb-10 pt-6 md:pb-14 md:pt-10">
         <div className="mb-8 flex flex-col gap-6 border-b border-slate-200/70 pb-8 md:mb-10 md:flex-row md:items-center md:justify-between md:gap-8 md:pb-8">
-          <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
+          <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:gap-6 md:gap-7">
             <h1 className="text-[1.65rem] font-black leading-[1.15] tracking-[-0.03em] text-slate-900 sm:text-3xl md:text-4xl">
               Pronađi <span className="text-[#007AFF]">savršeni bend</span>
             </h1>
             <button
               type="button"
               onClick={() => setIsNavSearchOpen(true)}
-              className="inline-flex max-w-full min-h-11 min-w-[13.5rem] shrink-0 items-center justify-center rounded-full border border-slate-400 bg-[#007AFF] px-5 py-2.5 text-center text-xs font-semibold leading-snug text-white shadow-md shadow-[#007AFF]/25 transition hover:border-slate-500 hover:bg-[#0066d6] hover:shadow-lg hover:shadow-[#007AFF]/30 sm:h-10 sm:min-h-0 sm:min-w-[15rem] sm:px-5 sm:text-sm sm:leading-tight sm:py-0"
+              className="inline-flex max-w-full min-h-11 min-w-[13.5rem] shrink-0 items-center justify-center rounded-full border border-slate-400 bg-[#007AFF] px-5 py-2.5 text-center text-xs font-semibold leading-snug text-white shadow-md shadow-[#007AFF]/25 transition hover:border-slate-500 hover:bg-[#0066d6] hover:shadow-lg hover:shadow-[#007AFF]/30 sm:ml-2 sm:h-10 sm:min-h-0 sm:min-w-[15rem] sm:px-5 sm:text-sm sm:leading-tight sm:py-0"
             >
               Pretraga
             </button>
@@ -117,14 +117,14 @@ export default function ClientSearchClient() {
         </div>
 
         {isLoading ? (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 sm:gap-7 lg:grid-cols-3 lg:gap-8">
+          <div className="mt-4 grid grid-cols-1 gap-7 sm:mt-5 sm:grid-cols-2 sm:gap-8 lg:mt-6 lg:grid-cols-3 lg:gap-9">
             {Array.from({ length: 6 }).map((_, i) => (
               <BandCardSkeleton key={i} />
             ))}
           </div>
         ) : bands.length > 0 ? (
           <>
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 sm:gap-7 lg:grid-cols-3 lg:gap-8">
+            <div className="mt-4 grid grid-cols-1 gap-7 sm:mt-5 sm:grid-cols-2 sm:gap-8 lg:mt-6 lg:grid-cols-3 lg:gap-9">
               {visibleBands.map((band, i) => (
                 <motion.div
                   key={`${currentPage}-${band.id}`}

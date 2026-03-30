@@ -533,13 +533,21 @@ export default function BandProfilePage() {
           display: inline-flex;
           align-items: center;
           gap: 0.4rem;
-          color: #64748b;
-          font-weight: 700;
+          color: #334155;
+          font-weight: 800;
           text-transform: uppercase;
           letter-spacing: 0.08em;
-          font-size: 0.72rem;
+          font-size: 0.76rem;
           margin-bottom: 0.9rem;
+          padding: 0.45rem 0.7rem;
+          border-radius: 999px;
+          border: 1px solid rgba(148, 163, 184, 0.5);
+          background: rgba(255, 255, 255, 0.9);
+          position: relative;
+          z-index: 3;
+          transition: 0.2s ease;
         }
+        .back-link:hover { color: #0f172a; border-color: rgba(100, 116, 139, 0.75); }
         .profile-card {
           background: #fff;
           border: 1px solid #e2e8f0;

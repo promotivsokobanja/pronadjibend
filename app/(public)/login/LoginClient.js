@@ -1,5 +1,5 @@
 'use client';
-import { Mail, Lock, User, ArrowRight, Music, Users, Download } from 'lucide-react';
+import { Mail, Lock, User, ArrowRight, Music, Users, Download, Eye, EyeOff } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
@@ -15,6 +15,10 @@ export default function LoginClient() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [capsOnPassword, setCapsOnPassword] = useState(false);
+  const [capsOnConfirmPassword, setCapsOnConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const [selectedPlan, setSelectedPlan] = useState('');
@@ -200,24 +204,58 @@ export default function LoginClient() {
           <div className="input-group">
             <Lock size={18} className="text-muted" />
             <input 
-              type="password" 
+              type={showPassword ? 'text' : 'password'} 
               placeholder={isLogin ? 'Lozinka' : 'Lozinka (min 6 karaktera)'} 
               value={formData.password} 
               onChange={(e) => setFormData({...formData, password: e.target.value})} 
+              onKeyUp={(e) => setCapsOnPassword(e.getModifierState('CapsLock'))}
+              onBlur={() => setCapsOnPassword(false)}
               required 
             />
+            <button
+              type="button"
+              className="password-toggle"
+              onClick={() => setShowPassword((prev) => !prev)}
+              aria-label={showPassword ? 'Sakrij lozinku' : 'Prikaži lozinku'}
+              aria-pressed={showPassword}
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
           </div>
+          {capsOnPassword && (
+            <p className="caps-warning" role="status" aria-live="polite">
+              Uključen je Caps Lock.
+            </p>
+          )}
           {!isLogin && (
-            <div className="input-group">
-              <Lock size={18} className="text-muted" />
-              <input
-                type="password"
-                placeholder="Potvrdi lozinku"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-              />
-            </div>
+            <>
+              <div className="input-group">
+                <Lock size={18} className="text-muted" />
+                <input
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  placeholder="Potvrdi lozinku"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  onKeyUp={(e) => setCapsOnConfirmPassword(e.getModifierState('CapsLock'))}
+                  onBlur={() => setCapsOnConfirmPassword(false)}
+                  required
+                />
+                <button
+                  type="button"
+                  className="password-toggle"
+                  onClick={() => setShowConfirmPassword((prev) => !prev)}
+                  aria-label={showConfirmPassword ? 'Sakrij potvrdu lozinke' : 'Prikaži potvrdu lozinke'}
+                  aria-pressed={showConfirmPassword}
+                >
+                  {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+              {capsOnConfirmPassword && (
+                <p className="caps-warning" role="status" aria-live="polite">
+                  Uključen je Caps Lock.
+                </p>
+              )}
+            </>
           )}
 
           <button className="btn btn-primary btn-full auth-submit-btn" type="submit" disabled={isLoading}>
@@ -359,6 +397,33 @@ export default function LoginClient() {
         .input-group:focus-within { border-color: #007aff; box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.12); }
         .input-group input { background: none; border: none; color: #0f172a; width: 100%; outline: none; font-size: 0.95rem; font-weight: 500; }
         .input-group :global(svg) { color: #94a3b8; }
+        .password-toggle {
+          border: none;
+          background: transparent;
+          padding: 0;
+          margin: 0;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          color: #64748b;
+          transition: color 0.2s ease;
+        }
+        .password-toggle:hover {
+          color: #0f172a;
+        }
+        .password-toggle:focus-visible {
+          outline: 2px solid #007aff;
+          outline-offset: 3px;
+          border-radius: 8px;
+        }
+        .caps-warning {
+          margin: -0.4rem 0 0.85rem;
+          font-size: 0.78rem;
+          font-weight: 700;
+          color: #b45309;
+          letter-spacing: 0.01em;
+        }
         
         .divider { margin: 1.4rem 0; text-align: center; color: #94a3b8; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 2px; position: relative; }
         .divider:before, .divider:after { content: ''; position: absolute; height: 1px; width: 40%; background: #e2e8f0; top: 50%; }

@@ -219,8 +219,26 @@ export default function RepertoirePage() {
 
       <style jsx>{`
         .repertoire-container { padding-top: 8rem; padding-bottom: 6rem; min-height: 100vh; }
-        .page-header { margin-bottom: 4rem; }
-        .back-link { display: flex; align-items: center; gap: 0.5rem; color: #555; font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2rem; }
+        .page-header { margin-bottom: 4rem; position: relative; z-index: 2; }
+        .back-link {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+          color: #334155;
+          font-weight: 800;
+          font-size: 0.8rem;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+          margin-bottom: 2rem;
+          padding: 0.45rem 0.7rem;
+          border-radius: 999px;
+          border: 1px solid rgba(148, 163, 184, 0.5);
+          background: rgba(255, 255, 255, 0.85);
+          position: relative;
+          z-index: 3;
+          transition: 0.2s ease;
+        }
+        .back-link:hover { color: #0f172a; border-color: rgba(100, 116, 139, 0.75); }
         .title-section h1 { font-size: 3.5rem; font-weight: 800; margin-bottom: 1.5rem; letter-spacing: -2px; }
         .header-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 3rem; gap: 2rem; flex-wrap: wrap; }
         .search-box { flex: 1; min-width: 300px; max-width: 500px; display: flex; align-items: center; gap: 1rem; padding: 0.75rem 1.5rem; background: #fff; border: 1px solid #e2e8f0; border-radius: 100px; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04); }

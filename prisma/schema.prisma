@@ -41,6 +41,8 @@ model Band {
   plan          String         @default("FREE")
   /// Gost na live stranici vidi korak bakšiša uz narudžbinu pesme + „Časti bend”
   allowTips     Boolean        @default(true)
+  /// Maksimalan broj live zahteva koji mogu biti na čekanju (PENDING). 0 = bez limita.
+  maxPendingRequests Int       @default(10)
   songs         Song[]         // Repertoire
   bookings      Booking[]
   liveRequests  LiveRequest[]

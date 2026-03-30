@@ -30,8 +30,45 @@ export default function LiveDashboard({ bandId }) {
     fontSize: 100, // percentage
   });
 
+  const normalizeMaxRequests = useCallback((value) => {
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed)) return 10;
+    const normalized = Math.floor(parsed);
+    if (normalized < 0) return 0;
+    if (normalized > 50) return 50;
+    return normalized;
+  }, []);
+
   const updateSetting = (key, value) => {
     setSettings(prev => ({ ...prev, [key]: value }));
+  };
+
+  const saveMaxPendingRequests = useCallback(async (nextValue) => {
+    if (!bandId) return;
+    try {
+      await fetch(`/api/bands/${encodeURIComponent(bandId)}/live-settings`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ maxPendingRequests: nextValue }),
+      });
+    } catch (err) {
+      console.error('Error saving maxPendingRequests:', err);
+    }
+  }, [bandId]);
+
+  const maxRequestsSaveTimerRef = useRef(null);
+
+  const handleMaxRequestsChange = (rawValue) => {
+    const nextValue = normalizeMaxRequests(rawValue);
+    updateSetting('maxRequests', nextValue);
+    if (!bandId) return;
+    if (maxRequestsSaveTimerRef.current) {
+      clearTimeout(maxRequestsSaveTimerRef.current);
+    }
+    maxRequestsSaveTimerRef.current = setTimeout(() => {
+      saveMaxPendingRequests(nextValue);
+      maxRequestsSaveTimerRef.current = null;
+    }, 220);
   };
 
   const resetSession = () => {
@@ -39,6 +76,42 @@ export default function LiveDashboard({ bandId }) {
       setRequests([]);
     }
   };
+
+  useEffect(() => {
+    if (!bandId) return;
+    let cancelled = false;
+
+    const loadLiveSettings = async () => {
+      try {
+        const response = await fetch(`/api/bands/${encodeURIComponent(bandId)}`, {
+          cache: 'no-store',
+        });
+        if (!response.ok) return;
+        const band = await response.json();
+        if (cancelled) return;
+        setSettings((prev) => ({
+          ...prev,
+          maxRequests: normalizeMaxRequests(band?.maxPendingRequests),
+        }));
+      } catch (err) {
+        console.error('Error loading live settings:', err);
+      }
+    };
+
+    loadLiveSettings();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [bandId, normalizeMaxRequests]);
+
+  useEffect(() => {
+    return () => {
+      if (maxRequestsSaveTimerRef.current) {
+        clearTimeout(maxRequestsSaveTimerRef.current);
+      }
+    };
+  }, []);
 
   const fontScale = settings.fontSize / 100;
   const settingsRef = useRef(settings);
@@ -568,9 +641,9 @@ export default function LiveDashboard({ bandId }) {
                   ))}
                 </div>
               )}
-              {settings.maxRequests > 0 && requests.length >= settings.maxRequests && (
+              {settings.maxRequests > 0 && pendingCount >= settings.maxRequests && (
                 <div className="max-requests-warning">
-                  ⚠ Dostignut maksimalan broj zahteva ({settings.maxRequests})
+                  ⚠ Dostignut maksimalan broj zahteva na čekanju ({settings.maxRequests})
                 </div>
               )}
             </div>
@@ -756,12 +829,12 @@ export default function LiveDashboard({ bandId }) {
                     min="0"
                     max="50"
                     value={settings.maxRequests}
-                    onChange={e => updateSetting('maxRequests', parseInt(e.target.value))}
+                    onChange={e => handleMaxRequestsChange(e.target.value)}
                     className="setting-range"
                   />
                   <span className="range-value">{settings.maxRequests === 0 ? '∞' : settings.maxRequests}</span>
                 </div>
-                <p className="setting-hint">Ograničite koliko zahteva gosti mogu poslati (0 = bez limita)</p>
+                <p className="setting-hint">Ograničite koliko neprihvaćenih zahteva može čekati na prihvat (0 = bez limita)</p>
               </div>
 
               {/* Font Size */}

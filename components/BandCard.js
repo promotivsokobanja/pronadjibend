@@ -14,7 +14,7 @@ export default function BandCard({ band, priority = false }) {
 
   useEffect(() => {
     setImgSrc(resolveBandCoverImage(band));
-  }, [band?.id, band?.img, band?.name]);
+  }, [band]);
 
   const handleMouseEnter = () => {
     setIsHovered(true);

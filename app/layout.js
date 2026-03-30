@@ -1,5 +1,5 @@
 import '../styles/globals.css';
-import { Inter, Montserrat } from 'next/font/google';
+import { Inter, Montserrat, Playfair_Display, Poppins, Bebas_Neue, Raleway, Oswald, Roboto_Slab } from 'next/font/google';
 import StrictModeProvider from '@/components/providers/StrictModeProvider';
 import { getSiteUrl, getSiteMetadataBaseUrl } from '@/lib/siteUrl';
 
@@ -15,6 +15,44 @@ const inter = Inter({
 const montserrat = Montserrat({
   subsets: ['latin'],
   variable: '--font-heading',
+  display: 'swap',
+});
+
+const playfair = Playfair_Display({
+  subsets: ['latin'],
+  variable: '--font-playfair',
+  display: 'swap',
+});
+
+const poppins = Poppins({
+  subsets: ['latin'],
+  weight: ['400', '600', '800'],
+  variable: '--font-poppins',
+  display: 'swap',
+});
+
+const bebas = Bebas_Neue({
+  subsets: ['latin'],
+  weight: '400',
+  variable: '--font-bebas',
+  display: 'swap',
+});
+
+const raleway = Raleway({
+  subsets: ['latin'],
+  variable: '--font-raleway',
+  display: 'swap',
+});
+
+const oswald = Oswald({
+  subsets: ['latin'],
+  variable: '--font-oswald',
+  display: 'swap',
+});
+
+const robotoSlab = Roboto_Slab({
+  subsets: ['latin'],
+  variable: '--font-robotoslab',
   display: 'swap',
 });
 
@@ -96,11 +134,11 @@ export const viewport = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="sr" className={`${inter.variable} ${montserrat.variable}`}>
+    <html lang="sr" className={`${inter.variable} ${montserrat.variable} ${playfair.variable} ${poppins.variable} ${bebas.variable} ${raleway.variable} ${oswald.variable} ${robotoSlab.variable}`}>
       <body
         style={{
           margin: 0,
-          backgroundColor: '#f8fafc',
+          backgroundColor: '#f0e8ff',
           color: '#0f172a',
         }}
       >

@@ -161,9 +161,26 @@ export default function NewSongPage() {
 
       <style jsx>{`
         .edit-container { padding-top: 8rem; padding-bottom: 6rem; }
-        .edit-header { margin-bottom: 3rem; }
-        .back-link { display: flex; align-items: center; gap: 0.5rem; color: var(--text-muted); font-weight: 700; margin-bottom: 1rem; transition: 0.3s; }
-        .back-link:hover { color: white; }
+        .edit-header { margin-bottom: 3rem; position: relative; z-index: 2; }
+        .back-link {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+          color: #334155;
+          font-weight: 800;
+          margin-bottom: 1rem;
+          font-size: 0.8rem;
+          text-transform: uppercase;
+          letter-spacing: 0.06em;
+          padding: 0.45rem 0.7rem;
+          border-radius: 999px;
+          border: 1px solid rgba(148, 163, 184, 0.5);
+          background: rgba(255, 255, 255, 0.88);
+          position: relative;
+          z-index: 3;
+          transition: 0.2s ease;
+        }
+        .back-link:hover { color: #0f172a; border-color: rgba(100, 116, 139, 0.75); }
         
         .edit-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 3rem; align-items: start; }
         .edit-card { padding: 3rem; border: 1px solid var(--border); }

@@ -7,6 +7,23 @@ function displayWaiterNote(note) {
   return note.replace(/^STRELO:\s*/i, '').trim();
 }
 
+function normalizeMaxPendingRequests(value) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return 10;
+  const normalized = Math.floor(parsed);
+  if (normalized < 0) return 0;
+  return normalized;
+}
+
+async function hasPendingCapacity(bandId, maxPendingRequests) {
+  const max = normalizeMaxPendingRequests(maxPendingRequests);
+  if (max === 0) return true;
+  const pendingCount = await prisma.liveRequest.count({
+    where: { bandId, status: 'PENDING' },
+  });
+  return pendingCount < max;
+}
+
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -81,9 +98,22 @@ export async function POST(request) {
         );
       }
 
-      const band = await prisma.band.findUnique({ where: { id: bandId }, select: { id: true } });
+      const band = await prisma.band.findUnique({
+        where: { id: bandId },
+        select: { id: true, maxPendingRequests: true },
+      });
       if (!band) {
         return NextResponse.json({ error: 'Bend nije pronađen' }, { status: 404 });
+      }
+
+      const canQueue = await hasPendingCapacity(bandId, band.maxPendingRequests);
+      if (!canQueue) {
+        return NextResponse.json(
+          {
+            error: `Trenutno je dostignut limit zahteva na čekanju (${normalizeMaxPendingRequests(band.maxPendingRequests)}). Sačekajte da bend prihvati neki zahtev.`,
+          },
+          { status: 429 }
+        );
       }
 
       const liveRequest = await prisma.liveRequest.create({
@@ -126,10 +156,20 @@ export async function POST(request) {
 
     const band = await prisma.band.findUnique({
       where: { id: bandId },
-      select: { id: true, allowTips: true },
+      select: { id: true, allowTips: true, maxPendingRequests: true },
     });
     if (!band) {
       return NextResponse.json({ error: 'Bend nije pronađen' }, { status: 404 });
+    }
+
+    const canQueue = await hasPendingCapacity(bandId, band.maxPendingRequests);
+    if (!canQueue) {
+      return NextResponse.json(
+        {
+          error: `Trenutno je dostignut limit zahteva na čekanju (${normalizeMaxPendingRequests(band.maxPendingRequests)}). Sačekajte da bend prihvati neki zahtev.`,
+        },
+        { status: 429 }
+      );
     }
 
     if (waiterTipRsd > 0 && !band.allowTips) {
