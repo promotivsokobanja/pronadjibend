@@ -1,5 +1,5 @@
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import { encode } from 'next-auth/jwt';
 import { NextResponse } from 'next/server';
 import prisma from '../../../../lib/prisma';
 import {
@@ -80,24 +80,36 @@ export async function POST(request) {
       );
     }
 
-    const token = jwt.sign(
-      { userId: user.id, email: user.email, role: user.role, bandId: user.bandId || null },
-      JWT_SECRET,
-      { expiresIn: '7d' }
-    );
-
-    const response = NextResponse.json({ 
-      success: true, 
-      user: { email: user.email, role: user.role, bandId: user.bandId || null } 
+    const maxAge = 60 * 60 * 24 * 7;
+    const token = await encode({
+      token: {
+        sub: user.id,
+        userId: user.id,
+        email: user.email,
+        role: user.role,
+        bandId: user.bandId || null,
+      },
+      secret: JWT_SECRET,
+      maxAge,
     });
 
+    const response = NextResponse.json({
+      success: true,
+      user: { email: user.email, role: user.role, bandId: user.bandId || null },
+    });
+
+    const secure = process.env.NODE_ENV === 'production';
+    const sessionCookieName = secure
+      ? '__Secure-next-auth.session-token'
+      : 'next-auth.session-token';
+
     response.cookies.set({
-      name: 'auth-token',
+      name: sessionCookieName,
       value: token,
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure,
       sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7,
+      maxAge,
       path: '/',
     });
 

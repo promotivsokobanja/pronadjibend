@@ -21,6 +21,7 @@ model User {
   updatedAt DateTime @updatedAt
   band      Band?    @relation(fields: [bandId], references: [id])
   bandId    String?  @unique
+  musicianProfile MusicianProfile?
 }
 
 model Band {
@@ -164,6 +165,18 @@ model BillingEvent {
   customerEmail      String?
   status             String
   createdAt          DateTime @default(now())
+}
+
+model MusicianProfile {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  instrument  String
+  city        String
+  bio         String
+  experience  String
+  isAvailable Boolean  @default(true)
+  phone       String
+  user        User     @relation(fields: [userId], references: [id])
 }
 
 /// Jedan zapis (id = 1): javna podešavanja (admin /sistem)
