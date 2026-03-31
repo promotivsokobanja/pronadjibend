@@ -62,15 +62,15 @@ export default function LoginClient() {
     setSuccess('');
 
     const emailTrimmed = String(formData.email || '').trim();
-    const passwordTrimmed = String(formData.password || '').trim();
-    const confirmTrimmed = String(confirmPassword || '').trim();
+    const passwordValue = String(formData.password || '');
+    const confirmValue = String(confirmPassword || '');
 
     if (!isLogin) {
-      if (passwordTrimmed !== confirmTrimmed) {
+      if (passwordValue !== confirmValue) {
         setError('Lozinke se ne poklapaju. Proverite i razmake na kraju polja.');
         return;
       }
-      if (passwordTrimmed.length < 6) {
+      if (passwordValue.length < 6) {
         setError('Lozinka mora imati najmanje 6 karaktera.');
         return;
       }
@@ -81,7 +81,7 @@ export default function LoginClient() {
     const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
     const payload = {
       email: emailTrimmed,
-      password: passwordTrimmed,
+      password: passwordValue,
       ...(isLogin ? {} : { name: String(formData.name || '').trim(), role: formData.role }),
     };
     
