@@ -532,6 +532,8 @@ export default function BandProfileClient({ params }) {
           line-height: 1.6; 
           margin-bottom: 2.5rem; 
           max-width: 600px;
+          white-space: pre-line;
+          overflow-wrap: anywhere;
         }
         
         .meta-info { 

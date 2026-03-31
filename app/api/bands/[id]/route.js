@@ -1,6 +1,7 @@
 import prisma from '../../../../lib/prisma';
 import { NextResponse } from 'next/server';
 import { getAuthUserFromRequest } from '../../../../lib/auth';
+import { getBandProfileMediaLimits } from '../../../../lib/siteConfig';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,6 +20,12 @@ function isAllowedVideoUrl(url) {
   } catch {
     return false;
   }
+}
+
+function countUrlsInText(text) {
+  if (!text) return 0;
+  const matches = String(text).match(/https?:\/\/[^\s]+/gi);
+  return matches ? matches.length : 0;
 }
 
 export async function GET(request) {
@@ -88,6 +95,7 @@ export async function PUT(request) {
     const priceRange = String(body?.priceRange || '').trim();
     const allowTips =
       body?.allowTips === undefined ? undefined : Boolean(body.allowTips);
+    const mediaLimits = await getBandProfileMediaLimits();
 
     if (!name) {
       return NextResponse.json({ error: 'Naziv benda je obavezan.' }, { status: 400 });
@@ -104,6 +112,30 @@ export async function PUT(request) {
     if (!isAllowedVideoUrl(videoUrl)) {
       return NextResponse.json(
         { error: 'Dozvoljeni su samo YouTube/Vimeo/Cloudinary video linkovi.' },
+        { status: 400 }
+      );
+    }
+
+    if (img && mediaLimits.maxImages < 1) {
+      return NextResponse.json(
+        { error: 'Dodavanje slike je trenutno onemogućeno od strane administratora.' },
+        { status: 400 }
+      );
+    }
+
+    if (videoUrl && mediaLimits.maxVideos < 1) {
+      return NextResponse.json(
+        { error: 'Dodavanje videa je trenutno onemogućeno od strane administratora.' },
+        { status: 400 }
+      );
+    }
+
+    const bioLinksCount = countUrlsInText(bio);
+    if (bioLinksCount > mediaLimits.maxLinks) {
+      return NextResponse.json(
+        {
+          error: `Opis sadrži previše linkova (${bioLinksCount}/${mediaLimits.maxLinks}). Smanjite broj URL-ova u opisu.`,
+        },
         { status: 400 }
       );
     }

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '../../../../lib/adminAuth';
 import { hasDatabaseUrl } from '../../../../lib/dbClientErrors';
-import { getDemoBandsEnvOverrideHint, getShowDemoBands } from '../../../../lib/siteConfig';
+import { getBandProfileMediaLimits, getDemoBandsEnvOverrideHint, getShowDemoBands } from '../../../../lib/siteConfig';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,6 +10,7 @@ export async function GET(request) {
   if (!gate.ok) return gate.response;
 
   const showDemoBands = await getShowDemoBands();
+  const bandProfileMediaLimits = await getBandProfileMediaLimits();
   const demoBandsEnv = getDemoBandsEnvOverrideHint();
 
   return NextResponse.json({
@@ -21,6 +22,7 @@ export async function GET(request) {
     stripeWebhook: Boolean(process.env.STRIPE_WEBHOOK_SECRET),
     nodeEnv: process.env.NODE_ENV || 'development',
     showDemoBands,
+    bandProfileMediaLimits,
     demoBandsEnvLocked: Boolean(demoBandsEnv),
     demoBandsEnvValue: demoBandsEnv,
   });

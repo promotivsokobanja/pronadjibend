@@ -229,5 +229,8 @@ model MusicianInvite {
 model SiteConfig {
   id            Int      @id @default(1)
   showDemoBands Boolean  @default(true)
+  bandProfileMaxImages Int @default(1)
+  bandProfileMaxVideos Int @default(1)
+  bandProfileMaxLinks  Int @default(5)
   updatedAt     DateTime @updatedAt
 }
