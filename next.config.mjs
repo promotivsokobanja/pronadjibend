@@ -4,6 +4,7 @@
 
 const nextConfig = {
   poweredByHeader: false,
+  compress: true,
   webpack: (config, { dev }) => {
     if (dev && process.env.WEBPACK_POLL === '1') {
       config.watchOptions = {

@@ -3,6 +3,8 @@ import prisma from '../../../lib/prisma';
 import { getDemoBands } from '../../../lib/demoBands';
 import { getShowDemoBands } from '../../../lib/siteConfig';
 
+export const revalidate = 60;
+
 const EVENT_TYPE_KEYWORDS = {
   svadba: ['svadba', 'venč', 'venc', 'wedding'],
   rodjendan: ['rođendan', 'rodjendan', 'proslav', 'birthday'],
@@ -175,10 +177,9 @@ export async function GET(request) {
 
     const headers = new Headers();
     if (!hasFilters) {
-      headers.set(
-        'Cache-Control',
-        'public, s-maxage=60, stale-while-revalidate=300'
-      );
+      headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
+    } else {
+      headers.set('Cache-Control', 'public, s-maxage=30, stale-while-revalidate=120');
     }
 
     return NextResponse.json(combined, { headers });

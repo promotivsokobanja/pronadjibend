@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getDemoMusicians } from '@/lib/demoMusicians';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
 function toNumber(value) {
   if (value == null) return null;
@@ -171,6 +171,8 @@ export async function GET(request) {
     const headers = new Headers();
     if (!hasFilters) {
       headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
+    } else {
+      headers.set('Cache-Control', 'public, s-maxage=30, stale-while-revalidate=120');
     }
 
     return NextResponse.json(sorted, { headers });
