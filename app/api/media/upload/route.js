@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import sharp from 'sharp';
-import cloudinary from '../../../../lib/cloudinary';
+import { isMediaStorageConfigured, uploadMedia } from '../../../../lib/mediaStorage';
 import { getAuthUserFromRequest } from '../../../../lib/auth';
 
 const IMAGE_MAX_BYTES = 10 * 1024 * 1024;
@@ -18,24 +18,6 @@ const ALLOWED_VIDEO_MIME = new Set([
   'video/quicktime',
 ]);
 
-function isConfigured() {
-  return (
-    !!process.env.CLOUDINARY_CLOUD_NAME &&
-    !!process.env.CLOUDINARY_API_KEY &&
-    !!process.env.CLOUDINARY_API_SECRET
-  );
-}
-
-function uploadBuffer(buffer, options) {
-  return new Promise((resolve, reject) => {
-    const stream = cloudinary.uploader.upload_stream(options, (err, result) => {
-      if (err) return reject(err);
-      resolve(result);
-    });
-    stream.end(buffer);
-  });
-}
-
 export async function POST(request) {
   try {
     const authUser = await getAuthUserFromRequest(request);
@@ -43,7 +25,7 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
     }
 
-    if (!isConfigured()) {
+    if (!isMediaStorageConfigured()) {
       return NextResponse.json(
         { error: 'Media servis nije konfigurisan.' },
         { status: 503 }
@@ -81,15 +63,16 @@ export async function POST(request) {
         .webp({ quality: 80 })
         .toBuffer();
 
-      const uploaded = await uploadBuffer(optimized, {
-        resource_type: 'image',
-        folder: 'pronadjibend/bands',
-        format: 'webp',
+      const uploaded = await uploadMedia({
+        kind: 'image',
+        buffer: optimized,
+        mimeType: 'image/webp',
+        fileName: file.name,
       });
 
       return NextResponse.json({
-        url: uploaded.secure_url,
-        publicId: uploaded.public_id,
+        url: uploaded.url,
+        publicId: uploaded.publicId,
         bytes: uploaded.bytes,
       });
     }
@@ -108,24 +91,17 @@ export async function POST(request) {
         );
       }
 
-      const uploaded = await uploadBuffer(fileBuffer, {
-        resource_type: 'video',
-        folder: 'pronadjibend/bands',
-      });
-
-      const optimizedUrl = cloudinary.url(uploaded.public_id, {
-        resource_type: 'video',
-        secure: true,
-        fetch_format: 'auto',
-        quality: 'auto',
-        width: 1280,
-        crop: 'limit',
+      const uploaded = await uploadMedia({
+        kind: 'video',
+        buffer: fileBuffer,
+        mimeType,
+        fileName: file.name,
       });
 
       return NextResponse.json({
-        url: optimizedUrl,
-        originalUrl: uploaded.secure_url,
-        publicId: uploaded.public_id,
+        url: uploaded.url,
+        originalUrl: uploaded.originalUrl || uploaded.url,
+        publicId: uploaded.publicId,
         bytes: uploaded.bytes,
       });
     }

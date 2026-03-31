@@ -219,7 +219,12 @@ export default function BandProfilePage() {
           : 'Video je uploadovan i optimizovan za streaming.'
       );
     } catch (err) {
-      setError(err.message || 'Greška pri upload-u.');
+      const message = err?.message || 'Greška pri upload-u.';
+      if (message.toLowerCase().includes('media servis nije konfigurisan')) {
+        setError('Media servis nije konfigurisan. Privremeno unesite direktan URL u polje (slika/video), pa Sačuvaj izmene.');
+      } else {
+        setError(message);
+      }
     } finally {
       setUploading(false);
       setProgress(0);
@@ -418,6 +423,7 @@ export default function BandProfilePage() {
                   onChange={(e) => handleChange('img', e.target.value)}
                   placeholder="https://..."
                 />
+                <small className="field-hint">Ako upload nije dostupan, nalepite direktan HTTPS URL slike i kliknite „Sačuvaj izmene”.</small>
                 <div className="upload-row">
                   <input
                     ref={imageInputRef}
@@ -454,7 +460,7 @@ export default function BandProfilePage() {
                   onChange={(e) => handleChange('videoUrl', e.target.value)}
                   placeholder="https://www.youtube.com/watch?v=..."
                 />
-                <small className="field-hint">Prihvaćeni su YouTube, Vimeo i Cloudinary video linkovi.</small>
+                <small className="field-hint">Prihvaćeni su YouTube, Vimeo i Cloudinary video linkovi. Ako upload ne radi, nalepite direktan URL pa sačuvajte.</small>
                 <div className="upload-row">
                   <input
                     ref={videoInputRef}
