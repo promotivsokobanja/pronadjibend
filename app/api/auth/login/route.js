@@ -36,7 +36,7 @@ export async function POST(request) {
     }
     const { email, password } = body || {};
     const normalizedEmail = String(email || '').trim().toLowerCase();
-    const normalizedPassword = String(password || '').trim();
+    const normalizedPassword = String(password || '');
 
     if (!normalizedEmail || !normalizedPassword) {
       return NextResponse.json(
@@ -60,7 +60,7 @@ export async function POST(request) {
       );
     }
 
-    const user = await prisma.user.findUnique({
+    let user = await prisma.user.findUnique({
       where: { email: normalizedEmail },
       select: {
         id: true,
@@ -70,6 +70,24 @@ export async function POST(request) {
         bandId: true,
       },
     });
+
+    if (!user) {
+      user = await prisma.user.findFirst({
+        where: {
+          email: {
+            equals: normalizedEmail,
+            mode: 'insensitive',
+          },
+        },
+        select: {
+          id: true,
+          email: true,
+          role: true,
+          password: true,
+          bandId: true,
+        },
+      });
+    }
 
     const hashToVerify = user?.password ?? BCRYPT_DUMMY_HASH;
     const passwordMatch = await bcrypt.compare(normalizedPassword, hashToVerify);
