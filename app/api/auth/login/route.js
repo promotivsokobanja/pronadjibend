@@ -17,6 +17,11 @@ const BCRYPT_DUMMY_HASH =
   '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy';
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+function isBcryptHash(value) {
+  const hash = String(value || '');
+  return hash.startsWith('$2a$') || hash.startsWith('$2b$') || hash.startsWith('$2y$');
+}
+
 export async function GET() {
   return NextResponse.json({
     ok: true,
@@ -89,8 +94,21 @@ export async function POST(request) {
       });
     }
 
-    const hashToVerify = user?.password ?? BCRYPT_DUMMY_HASH;
-    const passwordMatch = await bcrypt.compare(normalizedPassword, hashToVerify);
+    const storedPassword = String(user?.password || '');
+    const hashToVerify = user ? storedPassword : BCRYPT_DUMMY_HASH;
+    let passwordMatch = await bcrypt.compare(normalizedPassword, hashToVerify);
+
+    if (!passwordMatch && user && !isBcryptHash(storedPassword)) {
+      passwordMatch = normalizedPassword === storedPassword;
+      if (passwordMatch) {
+        const upgradedHash = await bcrypt.hash(normalizedPassword, 10);
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { password: upgradedHash },
+        });
+      }
+    }
+
     if (!user || !passwordMatch) {
       return NextResponse.json(
         { error: 'Neispravan email ili lozinka.' },
