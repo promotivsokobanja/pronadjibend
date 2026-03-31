@@ -1,12 +1,10 @@
 import { NextResponse } from 'next/server';
 import sharp from 'sharp';
-import { isMediaStorageConfigured, uploadMedia } from '../../../../lib/mediaStorage';
-import { transcodeVideoBuffer } from '../../../../lib/videoTranscode';
+import cloudinary from '../../../../lib/cloudinary';
 import { getAuthUserFromRequest } from '../../../../lib/auth';
 
 const IMAGE_MAX_BYTES = 10 * 1024 * 1024;
-const IMAGE_MAX_DIMENSION = 1280;
-const VIDEO_MAX_BYTES = 50 * 1024 * 1024;
+const VIDEO_MAX_BYTES = 100 * 1024 * 1024;
 
 const ALLOWED_IMAGE_MIME = new Set([
   'image/jpeg',
@@ -20,6 +18,24 @@ const ALLOWED_VIDEO_MIME = new Set([
   'video/quicktime',
 ]);
 
+function isConfigured() {
+  return (
+    !!process.env.CLOUDINARY_CLOUD_NAME &&
+    !!process.env.CLOUDINARY_API_KEY &&
+    !!process.env.CLOUDINARY_API_SECRET
+  );
+}
+
+function uploadBuffer(buffer, options) {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(options, (err, result) => {
+      if (err) return reject(err);
+      resolve(result);
+    });
+    stream.end(buffer);
+  });
+}
+
 export async function POST(request) {
   try {
     const authUser = await getAuthUserFromRequest(request);
@@ -27,7 +43,7 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
     }
 
-    if (!isMediaStorageConfigured()) {
+    if (!isConfigured()) {
       return NextResponse.json(
         { error: 'Media servis nije konfigurisan.' },
         { status: 503 }
@@ -61,25 +77,19 @@ export async function POST(request) {
 
       const optimized = await sharp(fileBuffer)
         .rotate()
-        .resize({
-          width: IMAGE_MAX_DIMENSION,
-          height: IMAGE_MAX_DIMENSION,
-          fit: 'inside',
-          withoutEnlargement: true,
-        })
+        .resize({ width: 1600, height: 1600, fit: 'inside', withoutEnlargement: true })
         .webp({ quality: 80 })
         .toBuffer();
 
-      const uploaded = await uploadMedia({
-        kind: 'image',
-        buffer: optimized,
-        mimeType: 'image/webp',
-        fileName: file.name,
+      const uploaded = await uploadBuffer(optimized, {
+        resource_type: 'image',
+        folder: 'pronadjibend/bands',
+        format: 'webp',
       });
 
       return NextResponse.json({
-        url: uploaded.url,
-        publicId: uploaded.publicId,
+        url: uploaded.secure_url,
+        publicId: uploaded.public_id,
         bytes: uploaded.bytes,
       });
     }
@@ -93,24 +103,29 @@ export async function POST(request) {
       }
       if (fileBuffer.byteLength > VIDEO_MAX_BYTES) {
         return NextResponse.json(
-          { error: 'Video je prevelik (max 50MB).' },
+          { error: 'Video je prevelik (max 100MB).' },
           { status: 400 }
         );
       }
 
-      const transcoded = await transcodeVideoBuffer(fileBuffer, mimeType);
+      const uploaded = await uploadBuffer(fileBuffer, {
+        resource_type: 'video',
+        folder: 'pronadjibend/bands',
+      });
 
-      const uploaded = await uploadMedia({
-        kind: 'video',
-        buffer: transcoded.buffer,
-        mimeType: transcoded.mimeType,
-        fileName: transcoded.ext === 'mp4' ? `${file.name.replace(/\.[^/.]+$/, '')}.mp4` : file.name,
+      const optimizedUrl = cloudinary.url(uploaded.public_id, {
+        resource_type: 'video',
+        secure: true,
+        fetch_format: 'auto',
+        quality: 'auto',
+        width: 1280,
+        crop: 'limit',
       });
 
       return NextResponse.json({
-        url: uploaded.url,
-        originalUrl: uploaded.originalUrl || uploaded.url,
-        publicId: uploaded.publicId,
+        url: optimizedUrl,
+        originalUrl: uploaded.secure_url,
+        publicId: uploaded.public_id,
         bytes: uploaded.bytes,
       });
     }

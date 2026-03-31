@@ -11,17 +11,16 @@ datasource db {
 }
 
 model User {
-  id            String   @id @default(cuid())
-  email         String   @unique
-  password      String
-  plainPassword String?  // Plain text password for admin view only
-  role          String   // "ADMIN", "BAND", "CLIENT"
-  plan          String   @default("BASIC")
-  planUntil     DateTime?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  band          Band?    @relation(fields: [bandId], references: [id])
-  bandId        String?  @unique
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  role      String   // "ADMIN", "BAND", "CLIENT"
+  plan      String   @default("BASIC")
+  planUntil DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  band      Band?    @relation(fields: [bandId], references: [id])
+  bandId    String?  @unique
   musicianProfile MusicianProfile?
 }
 
@@ -230,8 +229,5 @@ model MusicianInvite {
 model SiteConfig {
   id            Int      @id @default(1)
   showDemoBands Boolean  @default(true)
-  bandProfileMaxImages Int @default(1)
-  bandProfileMaxVideos Int @default(1)
-  bandProfileMaxLinks  Int @default(5)
   updatedAt     DateTime @updatedAt
 }

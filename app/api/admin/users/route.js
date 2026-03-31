@@ -33,7 +33,6 @@ export async function GET(request) {
         select: {
           id: true,
           email: true,
-          plainPassword: true,
           role: true,
           plan: true,
           planUntil: true,

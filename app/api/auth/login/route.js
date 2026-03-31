@@ -17,11 +17,6 @@ const BCRYPT_DUMMY_HASH =
   '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy';
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-function isBcryptHash(value) {
-  const hash = String(value || '');
-  return hash.startsWith('$2a$') || hash.startsWith('$2b$') || hash.startsWith('$2y$');
-}
-
 export async function GET() {
   return NextResponse.json({
     ok: true,
@@ -41,7 +36,7 @@ export async function POST(request) {
     }
     const { email, password } = body || {};
     const normalizedEmail = String(email || '').trim().toLowerCase();
-    const normalizedPassword = String(password || '');
+    const normalizedPassword = String(password || '').trim();
 
     if (!normalizedEmail || !normalizedPassword) {
       return NextResponse.json(
@@ -65,7 +60,7 @@ export async function POST(request) {
       );
     }
 
-    let user = await prisma.user.findUnique({
+    const user = await prisma.user.findUnique({
       where: { email: normalizedEmail },
       select: {
         id: true,
@@ -76,39 +71,8 @@ export async function POST(request) {
       },
     });
 
-    if (!user) {
-      user = await prisma.user.findFirst({
-        where: {
-          email: {
-            equals: normalizedEmail,
-            mode: 'insensitive',
-          },
-        },
-        select: {
-          id: true,
-          email: true,
-          role: true,
-          password: true,
-          bandId: true,
-        },
-      });
-    }
-
-    const storedPassword = String(user?.password || '');
-    const hashToVerify = user ? storedPassword : BCRYPT_DUMMY_HASH;
-    let passwordMatch = await bcrypt.compare(normalizedPassword, hashToVerify);
-
-    if (!passwordMatch && user && !isBcryptHash(storedPassword)) {
-      passwordMatch = normalizedPassword === storedPassword;
-      if (passwordMatch) {
-        const upgradedHash = await bcrypt.hash(normalizedPassword, 10);
-        await prisma.user.update({
-          where: { id: user.id },
-          data: { password: upgradedHash },
-        });
-      }
-    }
-
+    const hashToVerify = user?.password ?? BCRYPT_DUMMY_HASH;
+    const passwordMatch = await bcrypt.compare(normalizedPassword, hashToVerify);
     if (!user || !passwordMatch) {
       return NextResponse.json(
         { error: 'Neispravan email ili lozinka.' },

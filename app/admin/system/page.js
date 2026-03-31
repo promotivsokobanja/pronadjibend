@@ -8,9 +8,6 @@ export default function AdminSystemPage() {
   const [error, setError] = useState('');
   const [savingDemo, setSavingDemo] = useState(false);
   const [demoMsg, setDemoMsg] = useState('');
-  const [savingLimits, setSavingLimits] = useState(false);
-  const [limitsMsg, setLimitsMsg] = useState('');
-  const [limitsForm, setLimitsForm] = useState({ maxImages: 1, maxVideos: 1, maxLinks: 5 });
 
   const load = useCallback(async () => {
     setError('');
@@ -19,11 +16,6 @@ export default function AdminSystemPage() {
       const j = await r.json();
       if (!r.ok) throw new Error(j.error || 'Greška');
       setData(j);
-      setLimitsForm({
-        maxImages: Number(j?.bandProfileMediaLimits?.maxImages ?? 1),
-        maxVideos: Number(j?.bandProfileMediaLimits?.maxVideos ?? 1),
-        maxLinks: Number(j?.bandProfileMediaLimits?.maxLinks ?? 5),
-      });
     } catch (e) {
       setError(e.message);
     }
@@ -51,52 +43,6 @@ export default function AdminSystemPage() {
       setDemoMsg(e.message);
     } finally {
       setSavingDemo(false);
-    }
-  };
-
-  const handleLimitInput = (key, value) => {
-    setLimitsForm((prev) => ({ ...prev, [key]: value }));
-  };
-
-  const saveMediaLimits = async () => {
-    setSavingLimits(true);
-    setLimitsMsg('');
-    try {
-      const payload = {
-        bandProfileMediaLimits: {
-          maxImages: Number(limitsForm.maxImages),
-          maxVideos: Number(limitsForm.maxVideos),
-          maxLinks: Number(limitsForm.maxLinks),
-        },
-      };
-
-      const r = await adminFetch('/api/admin/system/settings', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      const j = await r.json();
-      if (!r.ok) throw new Error(j.error || 'Greška pri čuvanju');
-
-      setData((prev) =>
-        prev
-          ? {
-              ...prev,
-              bandProfileMediaLimits: j.bandProfileMediaLimits,
-            }
-          : prev
-      );
-      setLimitsForm({
-        maxImages: Number(j?.bandProfileMediaLimits?.maxImages ?? 1),
-        maxVideos: Number(j?.bandProfileMediaLimits?.maxVideos ?? 1),
-        maxLinks: Number(j?.bandProfileMediaLimits?.maxLinks ?? 5),
-      });
-      setLimitsMsg('Media limiti su sačuvani.');
-    } catch (e) {
-      setLimitsMsg(e.message);
-    } finally {
-      setSavingLimits(false);
     }
   };
 
@@ -169,87 +115,6 @@ export default function AdminSystemPage() {
             </p>
           </>
         )}
-      </div>
-
-      <div
-        className="admin-table-wrap"
-        style={{
-          maxWidth: 560,
-          marginBottom: '1.75rem',
-          padding: '1.25rem',
-          borderRadius: 12,
-          border: '1px solid rgba(148, 163, 184, 0.35)',
-          background: 'rgba(15, 23, 42, 0.35)',
-        }}
-      >
-        <h2 style={{ fontSize: '1rem', margin: '0 0 0.5rem', fontWeight: 800 }}>Moj profil benda — media limiti</h2>
-        <p style={{ color: '#94a3b8', fontSize: '0.875rem', margin: '0 0 1rem', lineHeight: 1.5 }}>
-          Odredite koliko je priloga dozvoljeno na profilu benda. Trenutni model podržava najviše 1 glavnu sliku, 1
-          video i više linkova u opisu.
-        </p>
-
-        <div style={{ display: 'grid', gap: '0.8rem' }}>
-          <label style={{ display: 'grid', gap: '0.35rem', fontSize: '0.85rem' }}>
-            Maksimalan broj slika (0-1)
-            <input
-              type="number"
-              min={0}
-              max={1}
-              value={limitsForm.maxImages}
-              onChange={(e) => handleLimitInput('maxImages', e.target.value)}
-              style={{
-                borderRadius: 8,
-                border: '1px solid rgba(148, 163, 184, 0.5)',
-                background: 'rgba(15, 23, 42, 0.35)',
-                color: '#e2e8f0',
-                padding: '0.55rem 0.65rem',
-              }}
-            />
-          </label>
-
-          <label style={{ display: 'grid', gap: '0.35rem', fontSize: '0.85rem' }}>
-            Maksimalan broj videa (0-1)
-            <input
-              type="number"
-              min={0}
-              max={1}
-              value={limitsForm.maxVideos}
-              onChange={(e) => handleLimitInput('maxVideos', e.target.value)}
-              style={{
-                borderRadius: 8,
-                border: '1px solid rgba(148, 163, 184, 0.5)',
-                background: 'rgba(15, 23, 42, 0.35)',
-                color: '#e2e8f0',
-                padding: '0.55rem 0.65rem',
-              }}
-            />
-          </label>
-
-          <label style={{ display: 'grid', gap: '0.35rem', fontSize: '0.85rem' }}>
-            Maksimalan broj linkova u opisu (0-30)
-            <input
-              type="number"
-              min={0}
-              max={30}
-              value={limitsForm.maxLinks}
-              onChange={(e) => handleLimitInput('maxLinks', e.target.value)}
-              style={{
-                borderRadius: 8,
-                border: '1px solid rgba(148, 163, 184, 0.5)',
-                background: 'rgba(15, 23, 42, 0.35)',
-                color: '#e2e8f0',
-                padding: '0.55rem 0.65rem',
-              }}
-            />
-          </label>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', flexWrap: 'wrap' }}>
-            <button type="button" className="admin-btn" disabled={savingLimits} onClick={saveMediaLimits}>
-              {savingLimits ? 'Čuvanje…' : 'Sačuvaj media limite'}
-            </button>
-            {limitsMsg ? <span style={{ fontSize: '0.84rem', color: '#94a3b8' }}>{limitsMsg}</span> : null}
-          </div>
-        </div>
       </div>
 
       <div className="admin-table-wrap" style={{ maxWidth: 560 }}>

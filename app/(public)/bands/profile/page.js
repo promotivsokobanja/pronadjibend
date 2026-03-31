@@ -5,12 +5,6 @@ import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-function countUrlsInText(text) {
-  if (!text) return 0;
-  const matches = String(text).match(/https?:\/\/[^\s]+/gi);
-  return matches ? matches.length : 0;
-}
-
 export default function BandProfilePage() {
   const router = useRouter();
   const [bandId, setBandId] = useState('');
@@ -34,26 +28,14 @@ export default function BandProfilePage() {
   const [videoProgress, setVideoProgress] = useState(0);
   const [adminNoBand, setAdminNoBand] = useState(false);
   const [confirmedBookings, setConfirmedBookings] = useState([]);
-  const [mediaLimits, setMediaLimits] = useState({ maxImages: 1, maxVideos: 1, maxLinks: 5 });
   const imageInputRef = useRef(null);
   const videoInputRef = useRef(null);
-  const bioLinksCount = countUrlsInText(formData.bio);
 
   useEffect(() => {
     const load = async () => {
       setLoading(true);
       setError('');
       try {
-        const limitsRes = await fetch('/api/site-config/band-profile-media-limits');
-        if (limitsRes.ok) {
-          const limits = await limitsRes.json();
-          setMediaLimits({
-            maxImages: Number(limits?.maxImages ?? 1),
-            maxVideos: Number(limits?.maxVideos ?? 1),
-            maxLinks: Number(limits?.maxLinks ?? 5),
-          });
-        }
-
         const meRes = await fetch('/api/auth/me');
         if (!meRes.ok) {
           router.replace('/login');
@@ -123,22 +105,6 @@ export default function BandProfilePage() {
       setError('Bend profil nije pronađen.');
       return;
     }
-
-    if (formData.img && mediaLimits.maxImages < 1) {
-      setError('Administrator je onemogućio sliku na profilu benda.');
-      return;
-    }
-
-    if (formData.videoUrl && mediaLimits.maxVideos < 1) {
-      setError('Administrator je onemogućio video na profilu benda.');
-      return;
-    }
-
-    if (bioLinksCount > mediaLimits.maxLinks) {
-      setError(`Opis sadrži previše linkova (${bioLinksCount}/${mediaLimits.maxLinks}).`);
-      return;
-    }
-
     setSaving(true);
     setError('');
     setSuccess('');
@@ -204,16 +170,6 @@ export default function BandProfilePage() {
   };
 
   const handleUpload = async (file, kind) => {
-    if (kind === 'image' && mediaLimits.maxImages < 1) {
-      setError('Upload slike je onemogućen od strane administratora.');
-      return;
-    }
-
-    if (kind === 'video' && mediaLimits.maxVideos < 1) {
-      setError('Upload videa je onemogućen od strane administratora.');
-      return;
-    }
-
     const setUploading = kind === 'image' ? setUploadingImage : setUploadingVideo;
     const setProgress = kind === 'image' ? setImageProgress : setVideoProgress;
     setUploading(true);
@@ -263,12 +219,7 @@ export default function BandProfilePage() {
           : 'Video je uploadovan i optimizovan za streaming.'
       );
     } catch (err) {
-      const message = err?.message || 'Greška pri upload-u.';
-      if (message.toLowerCase().includes('media servis nije konfigurisan')) {
-        setError('Media servis nije konfigurisan. Privremeno unesite direktan URL u polje (slika/video), pa Sačuvaj izmene.');
-      } else {
-        setError(message);
-      }
+      setError(err.message || 'Greška pri upload-u.');
     } finally {
       setUploading(false);
       setProgress(0);
@@ -455,15 +406,6 @@ export default function BandProfilePage() {
                 placeholder="Kratak opis nastupa, iskustva i repertoara..."
                 rows={5}
               />
-              <small className={`field-hint ${bioLinksCount > mediaLimits.maxLinks ? 'field-hint-warning' : ''}`}>
-                Linkovi u opisu: {bioLinksCount} / {mediaLimits.maxLinks}
-              </small>
-            </div>
-
-            <div className="limit-strip">
-              <span>Admin limit — slike: {mediaLimits.maxImages}</span>
-              <span>video: {mediaLimits.maxVideos}</span>
-              <span>linkovi u opisu: {mediaLimits.maxLinks}</span>
             </div>
 
             <div className="media-grid">
@@ -475,33 +417,23 @@ export default function BandProfilePage() {
                   value={formData.img}
                   onChange={(e) => handleChange('img', e.target.value)}
                   placeholder="https://..."
-                  disabled={mediaLimits.maxImages < 1}
                 />
-                <small className="field-hint">
-                  {mediaLimits.maxImages < 1
-                    ? 'Administrator je trenutno onemogućio slike na profilu.'
-                    : 'Ako upload nije dostupan, nalepite direktan HTTPS URL slike i kliknite „Sačuvaj izmene”.'}
-                </small>
                 <div className="upload-row">
                   <input
                     ref={imageInputRef}
                     type="file"
                     accept="image/*"
                     onChange={(e) => handleFilePick(e, 'image')}
-                    disabled={mediaLimits.maxImages < 1}
                   />
                   <div
-                    className={`drop-zone ${mediaLimits.maxImages < 1 ? 'drop-zone-disabled' : ''}`}
+                    className="drop-zone"
                     onDragOver={(e) => e.preventDefault()}
                     onDrop={(e) => handleDrop(e, 'image')}
-                    onClick={() => {
-                      if (mediaLimits.maxImages < 1) return;
-                      imageInputRef.current?.click();
-                    }}
+                    onClick={() => imageInputRef.current?.click()}
                   >
                     Prevuci sliku ovde ili klikni za upload
                   </div>
-                  <span>{uploadingImage ? 'Upload slike u toku...' : 'Auto resize: max 1280px, webp'}</span>
+                  <span>{uploadingImage ? 'Upload slike u toku...' : 'Auto resize: max 1600px, webp'}</span>
                   {uploadingImage && (
                     <div className="progress-wrap">
                       <div className="progress-bar" style={{ width: `${imageProgress}%` }} />
@@ -521,29 +453,20 @@ export default function BandProfilePage() {
                   value={formData.videoUrl}
                   onChange={(e) => handleChange('videoUrl', e.target.value)}
                   placeholder="https://www.youtube.com/watch?v=..."
-                  disabled={mediaLimits.maxVideos < 1}
                 />
-                <small className="field-hint">
-                  {mediaLimits.maxVideos < 1
-                    ? 'Administrator je trenutno onemogućio video na profilu.'
-                    : 'Prihvaćeni su YouTube, Vimeo i Cloudinary video linkovi. Ako upload ne radi, nalepite direktan URL pa sačuvajte.'}
-                </small>
+                <small className="field-hint">Prihvaćeni su YouTube, Vimeo i Cloudinary video linkovi.</small>
                 <div className="upload-row">
                   <input
                     ref={videoInputRef}
                     type="file"
                     accept="video/*"
                     onChange={(e) => handleFilePick(e, 'video')}
-                    disabled={mediaLimits.maxVideos < 1}
                   />
                   <div
-                    className={`drop-zone ${mediaLimits.maxVideos < 1 ? 'drop-zone-disabled' : ''}`}
+                    className="drop-zone"
                     onDragOver={(e) => e.preventDefault()}
                     onDrop={(e) => handleDrop(e, 'video')}
-                    onClick={() => {
-                      if (mediaLimits.maxVideos < 1) return;
-                      videoInputRef.current?.click();
-                    }}
+                    onClick={() => videoInputRef.current?.click()}
                   >
                     Prevuci video ovde ili klikni za upload
                   </div>
@@ -672,25 +595,6 @@ export default function BandProfilePage() {
           font-size: 0.75rem;
           margin-top: -0.1rem;
         }
-        .field-hint-warning {
-          color: #b45309;
-          font-weight: 700;
-        }
-        .limit-strip {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 0.55rem;
-          margin-top: -0.2rem;
-        }
-        .limit-strip span {
-          background: #eff6ff;
-          border: 1px solid #bfdbfe;
-          color: #1d4ed8;
-          font-size: 0.74rem;
-          font-weight: 700;
-          border-radius: 999px;
-          padding: 0.28rem 0.55rem;
-        }
         .toggle-field {
           padding-bottom: 0.5rem;
           border-bottom: 1px solid #f1f5f9;
@@ -762,13 +666,6 @@ export default function BandProfilePage() {
           text-align: center;
         }
         .drop-zone:hover { background: #dbeafe; }
-        .drop-zone.drop-zone-disabled,
-        .drop-zone.drop-zone-disabled:hover {
-          border-color: #cbd5e1;
-          color: #94a3b8;
-          background: #f1f5f9;
-          cursor: not-allowed;
-        }
         .upload-row span {
           color: #64748b;
           font-size: 0.74rem;

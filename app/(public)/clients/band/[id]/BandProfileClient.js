@@ -15,46 +15,6 @@ function formatDateKeySr(ymd) {
   return `${parseInt(d, 10)}. ${parseInt(mo, 10)}. ${y}.`;
 }
 
-function extractVideoEmbed(url) {
-  if (!url) return '';
-  try {
-    const parsed = new URL(url);
-    const host = parsed.hostname.toLowerCase();
-
-    if (host.includes('youtu.be')) {
-      const id = parsed.pathname.split('/').filter(Boolean)[0];
-      return id ? `https://www.youtube.com/embed/${id}` : '';
-    }
-
-    if (host.includes('youtube.com') || host.includes('youtube-nocookie.com')) {
-      const id = parsed.searchParams.get('v');
-      if (id) return `https://www.youtube.com/embed/${id}`;
-      const embedPath = parsed.pathname.split('/embed/')[1];
-      return embedPath ? `https://www.youtube.com/embed/${embedPath}` : '';
-    }
-
-    if (host.includes('vimeo.com')) {
-      const parts = parsed.pathname.split('/').filter(Boolean);
-      const id = parts[parts.length - 1];
-      return /^\d+$/.test(id) ? `https://player.vimeo.com/video/${id}` : '';
-    }
-
-    return '';
-  } catch {
-    return '';
-  }
-}
-
-function isCloudinaryVideo(url) {
-  if (!url) return false;
-  try {
-    const parsed = new URL(url);
-    return parsed.hostname.toLowerCase().includes('res.cloudinary.com');
-  } catch {
-    return false;
-  }
-}
-
 export default function BandProfileClient({ params }) {
   const [band, setBand] = useState(null);
   const [reviews, setReviews] = useState([]);
@@ -178,9 +138,6 @@ export default function BandProfileClient({ params }) {
   if (!band) return <div className="error">Bend nije pronađen.</div>;
 
   const isDemo = typeof params?.id === 'string' && params.id.startsWith('demo-');
-  const embeddedVideo = extractVideoEmbed(band.videoUrl);
-  const cloudinaryVideo = !embeddedVideo && isCloudinaryVideo(band.videoUrl) ? band.videoUrl : '';
-  const hasDirectVideoLink = Boolean(band.videoUrl);
 
   return (
     <div className="profile-container">
@@ -206,25 +163,18 @@ export default function BandProfileClient({ params }) {
       <section className="profile-hero">
         <div className="container">
           <div className="hero-grid">
-            <div className="hero-main">
-              {band.img ? (
-                <div className="hero-media">
-                  <img src={band.img} alt={`Fotografija benda ${band.name}`} loading="lazy" />
-                </div>
-              ) : null}
-              <div className="hero-content">
-                <span className="badge">{band.genre}</span>
-                <h1 className="band-name">{band.name}</h1>
-                <div className="rating-pill">
-                  <Star size={16} fill="var(--accent-primary)" />
-                  <span>{band.rating.toFixed(1)}</span>
-                  <span className="review-count">({reviews.length} recenzija)</span>
-                </div>
-                <p className="description">{band.bio || 'Profesionalni muzički sastav za sve vrste proslava.'}</p>
-                <div className="meta-info">
-                  <div className="meta-item"><MapPin size={18} /> {band.location}</div>
-                  <div className="meta-item"><Info size={18} /> {band.priceRange || 'Dogovor'}</div>
-                </div>
+            <div className="hero-content">
+              <span className="badge">{band.genre}</span>
+              <h1 className="band-name">{band.name}</h1>
+              <div className="rating-pill">
+                <Star size={16} fill="var(--accent-primary)" />
+                <span>{band.rating.toFixed(1)}</span>
+                <span className="review-count">({reviews.length} recenzija)</span>
+              </div>
+              <p className="description">{band.bio || 'Profesionalni muzički sastav za sve vrste proslava.'}</p>
+              <div className="meta-info">
+                <div className="meta-item"><MapPin size={18} /> {band.location}</div>
+                <div className="meta-item"><Info size={18} /> {band.priceRange || 'Dogovor'}</div>
               </div>
             </div>
             
@@ -308,34 +258,16 @@ export default function BandProfileClient({ params }) {
           <h2><Video size={24} /> Video Nastupi</h2>
         </div>
         <div className="video-grid">
-          {embeddedVideo ? (
-            <>
-              <iframe
-                width="100%"
-                height="315"
-                src={embeddedVideo}
+          {band.videoUrl ? (
+             <iframe 
+                width="100%" 
+                height="315" 
+                src={`https://www.youtube.com/embed/${band.videoUrl.split('v=')[1]}`} 
                 title={`Video nastup benda ${band.name}`}
-                frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                frameBorder="0" 
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                 allowFullScreen
-              />
-              {hasDirectVideoLink ? (
-                <a className="video-fallback-link" href={band.videoUrl} target="_blank" rel="noreferrer">
-                  Ako se video ne prikazuje, otvori u novom tabu
-                </a>
-              ) : null}
-            </>
-          ) : cloudinaryVideo ? (
-            <video className="cloudinary-video" controls preload="metadata" src={cloudinaryVideo}>
-              Vaš browser ne podržava video tag.
-            </video>
-          ) : hasDirectVideoLink ? (
-            <div className="no-media glass-card">
-              Video ne podržava ugrađeni prikaz.
-              <a className="video-fallback-link" href={band.videoUrl} target="_blank" rel="noreferrer">
-                Otvori video direktno
-              </a>
-            </div>
+              ></iframe>
           ) : (
             <div className="no-media glass-card">Trenutno nema video zapisa.</div>
           )}
@@ -467,27 +399,6 @@ export default function BandProfileClient({ params }) {
           gap: 4rem; 
           align-items: start; 
         }
-
-        .hero-main {
-          display: flex;
-          flex-direction: column;
-          gap: 1.75rem;
-        }
-
-        .hero-media {
-          border-radius: 24px;
-          overflow: hidden;
-          border: 1px solid #e2e8f0;
-          background: #0f172a;
-          box-shadow: 0 25px 60px rgba(15, 23, 42, 0.15);
-        }
-
-        .hero-media img {
-          width: 100%;
-          height: auto;
-          display: block;
-          object-fit: cover;
-        }
         
         .hero-content .badge { 
           background: #f1f5f9; 
@@ -532,8 +443,6 @@ export default function BandProfileClient({ params }) {
           line-height: 1.6; 
           margin-bottom: 2.5rem; 
           max-width: 600px;
-          white-space: pre-line;
-          overflow-wrap: anywhere;
         }
         
         .meta-info { 
@@ -795,36 +704,6 @@ export default function BandProfileClient({ params }) {
           overflow: hidden; 
           border: 1px solid #f1f5f9; 
           box-shadow: 0 4px 20px rgba(0,0,0,0.02);
-          background: #0f172a;
-        }
-
-        .video-grid iframe,
-        .cloudinary-video {
-          width: 100%;
-          height: 315px;
-          border: none;
-          display: block;
-        }
-
-        .cloudinary-video {
-          background: #000;
-        }
-
-        .video-fallback-link {
-          display: block;
-          padding: 0.75rem 1rem;
-          font-size: 0.85rem;
-          font-weight: 700;
-          color: #93c5fd;
-          background: #111827;
-          text-align: center;
-          text-decoration: none;
-          border-top: 1px solid rgba(148, 163, 184, 0.25);
-        }
-
-        .video-fallback-link:hover {
-          color: #dbeafe;
-          text-decoration: underline;
         }
         
         .reviews-grid { 

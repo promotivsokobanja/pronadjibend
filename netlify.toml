@@ -16,8 +16,8 @@
 # Svaki git push na main pokreće build (migrate + next build) i objavu.
 
 [build]
-  # prisma generate je već u npm run build; db push sinhronizuje šemu direktno
-  command = "npm run build"
+  # Migracije → čist .next (izbegava „Cannot find module ./NNNN.js” i zaglavljene statike) → build
+  command = "npx prisma migrate deploy && npm run build:clean"
 
 [build.environment]
   NODE_VERSION = "20"
@@ -27,18 +27,3 @@
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
-
-[[headers]]
-  for = "/_next/static/*"
-  [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
-
-[[headers]]
-  for = "/images/*"
-  [headers.values]
-    Cache-Control = "public, max-age=86400, stale-while-revalidate=604800"
-
-[[headers]]
-  for = "/_next/image*"
-  [headers.values]
-    Cache-Control = "public, max-age=86400, stale-while-revalidate=604800"
