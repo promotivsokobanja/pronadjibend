@@ -1,10 +1,12 @@
 import { NextResponse } from 'next/server';
 import sharp from 'sharp';
 import { isMediaStorageConfigured, uploadMedia } from '../../../../lib/mediaStorage';
+import { transcodeVideoBuffer } from '../../../../lib/videoTranscode';
 import { getAuthUserFromRequest } from '../../../../lib/auth';
 
 const IMAGE_MAX_BYTES = 10 * 1024 * 1024;
-const VIDEO_MAX_BYTES = 100 * 1024 * 1024;
+const IMAGE_MAX_DIMENSION = 1280;
+const VIDEO_MAX_BYTES = 50 * 1024 * 1024;
 
 const ALLOWED_IMAGE_MIME = new Set([
   'image/jpeg',
@@ -59,7 +61,12 @@ export async function POST(request) {
 
       const optimized = await sharp(fileBuffer)
         .rotate()
-        .resize({ width: 1600, height: 1600, fit: 'inside', withoutEnlargement: true })
+        .resize({
+          width: IMAGE_MAX_DIMENSION,
+          height: IMAGE_MAX_DIMENSION,
+          fit: 'inside',
+          withoutEnlargement: true,
+        })
         .webp({ quality: 80 })
         .toBuffer();
 
@@ -86,16 +93,18 @@ export async function POST(request) {
       }
       if (fileBuffer.byteLength > VIDEO_MAX_BYTES) {
         return NextResponse.json(
-          { error: 'Video je prevelik (max 100MB).' },
+          { error: 'Video je prevelik (max 50MB).' },
           { status: 400 }
         );
       }
 
+      const transcoded = await transcodeVideoBuffer(fileBuffer, mimeType);
+
       const uploaded = await uploadMedia({
         kind: 'video',
-        buffer: fileBuffer,
-        mimeType,
-        fileName: file.name,
+        buffer: transcoded.buffer,
+        mimeType: transcoded.mimeType,
+        fileName: transcoded.ext === 'mp4' ? `${file.name.replace(/\.[^/.]+$/, '')}.mp4` : file.name,
       });
 
       return NextResponse.json({
