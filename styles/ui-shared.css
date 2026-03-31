@@ -448,6 +448,37 @@
   transform: translateZ(30px);
 }
 
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .blob,
+  .blob-2,
+  .float-slow,
+  .float-medium,
+  .float-fast,
+  .float-rotate,
+  .pulse-glow,
+  .shimmer {
+    animation: none !important;
+  }
+
+  .glass-card:hover,
+  .hover-lift:hover,
+  .scale-on-hover:hover,
+  .card-3d-wrap:hover .card-3d-content,
+  .card-3d-wrap:hover {
+    transform: none !important;
+    box-shadow: inherit !important;
+  }
+}
+
 /* ===== CHIP TAG PREMIUM ===== */
 .chip-tag-premium {
   background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(0, 122, 255, 0.15) 100%);

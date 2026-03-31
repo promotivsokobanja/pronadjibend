@@ -1,6 +1,5 @@
 import NextAuth from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
-import CredentialsProvider from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import prisma from '../../../../lib/prisma';
@@ -10,46 +9,7 @@ import { isDisposableEmail } from '../../../../lib/emailPolicy';
 const hasGoogleConfig =
   !!process.env.GOOGLE_CLIENT_ID && !!process.env.GOOGLE_CLIENT_SECRET;
 
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-const providers = [
-  CredentialsProvider({
-    name: 'Credentials',
-    credentials: {
-      email: { label: 'Email', type: 'email' },
-      password: { label: 'Password', type: 'password' },
-    },
-    async authorize(credentials) {
-      if (!hasDatabaseUrl()) return null;
-
-      const email = String(credentials?.email || '')
-        .trim()
-        .toLowerCase();
-      const password = String(credentials?.password || '').trim();
-
-      if (!email || !password) return null;
-      if (!EMAIL_REGEX.test(email)) return null;
-      if (password.length < 6 || password.length > 128) return null;
-
-      const dbUser = await prisma.user.findUnique({
-        where: { email },
-        select: { id: true, email: true, password: true, role: true, bandId: true },
-      });
-
-      if (!dbUser?.password) return null;
-
-      const ok = await bcrypt.compare(password, dbUser.password);
-      if (!ok) return null;
-
-      return {
-        id: dbUser.id,
-        email: dbUser.email,
-        role: dbUser.role,
-        bandId: dbUser.bandId ?? null,
-      };
-    },
-  }),
-];
+const providers = [];
 
 if (hasGoogleConfig) {
   providers.push(
@@ -71,7 +31,7 @@ const handler = NextAuth({
   callbacks: {
     async signIn({ account, profile }) {
       if (!account?.provider || account.provider === 'credentials') return true;
-      if (!hasDatabaseUrl()) return false;
+      if (!process.env.DATABASE_URL) return false;
       const email = String(profile?.email || '')
         .trim()
         .toLowerCase();
@@ -98,14 +58,6 @@ const handler = NextAuth({
       }
     },
     async jwt({ token, user, account, profile }) {
-      if (account?.provider === 'credentials' && user?.id) {
-        token.userId = user.id;
-        token.role = user.role;
-        token.bandId = user.bandId ?? null;
-        token.email = user.email;
-        return token;
-      }
-
       const email = String(
         profile?.email || token.email || user?.email || ''
       )

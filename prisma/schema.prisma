@@ -49,6 +49,7 @@ model Band {
   liveRequests  LiveRequest[]
   reviews       Review[]
   busyDates     BusyDate[]
+  musicianInvites MusicianInvite[]
   user          User?
 }
 
@@ -168,15 +169,60 @@ model BillingEvent {
 }
 
 model MusicianProfile {
-  id          String   @id @default(cuid())
-  userId      String   @unique
-  instrument  String
-  city        String
-  bio         String
-  experience  String
-  isAvailable Boolean  @default(true)
-  phone       String
-  user        User     @relation(fields: [userId], references: [id])
+  id                String               @id @default(cuid())
+  user              User?                @relation(fields: [userId], references: [id])
+  userId            String?              @unique
+  name              String
+  primaryInstrument String
+  genres            String?
+  city              String
+  priceFromEur      Int?
+  priceToEur        Int?
+  experienceYears   Int?
+  bio               String?
+  img               String?
+  videoUrl          String?
+  rating            Float                @default(0)
+  isFeatured        Boolean              @default(false)
+  isAvailable       Boolean              @default(true)
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+  availabilities    MusicianAvailability[]
+  invites           MusicianInvite[]
+
+  @@index([city])
+  @@index([primaryInstrument])
+  @@index([isAvailable, isFeatured])
+}
+
+model MusicianAvailability {
+  id         String          @id @default(cuid())
+  date       DateTime
+  isAvailable Boolean        @default(true)
+  note       String?
+  musician   MusicianProfile @relation(fields: [musicianId], references: [id])
+  musicianId String
+
+  @@index([musicianId, date])
+}
+
+model MusicianInvite {
+  id           String          @id @default(cuid())
+  status       String          @default("PENDING") // "PENDING", "ACCEPTED", "REJECTED", "CANCELLED"
+  eventDate    DateTime?
+  location     String?
+  feeEur       Int?
+  message      String?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  band         Band            @relation(fields: [bandId], references: [id])
+  bandId       String
+  musician     MusicianProfile @relation(fields: [musicianId], references: [id])
+  musicianId   String
+
+  @@index([bandId, createdAt])
+  @@index([musicianId, createdAt])
+  @@index([status])
 }
 
 /// Jedan zapis (id = 1): javna podešavanja (admin /sistem)

@@ -142,6 +142,9 @@ export default function Navbar() {
           <Link href="/clients" prefetch={false} className={`nav-link ${isActive('/clients') ? 'active' : ''}`}>
             Pretraži Bendove
           </Link>
+          <Link href="/muzicari" prefetch={false} className={`nav-link ${isActive('/muzicari') ? 'active' : ''}`}>
+            Pretraži Muzičare
+          </Link>
           <Link href="/bands" prefetch={false} className={`nav-link ${isActive('/bands') ? 'active' : ''}`}>Portal za Muzičare</Link>
           <Link href="/about" prefetch={false} className={`nav-link ${isActive('/about') ? 'active' : ''}`}>O nama</Link>
           <Link href="/#vodic" prefetch={false} className="nav-link">
@@ -175,6 +178,9 @@ export default function Navbar() {
             onClick={() => setIsOpen(false)}
           >
             Pretraži Bendove
+          </Link>
+          <Link href="/muzicari" className={isActive('/muzicari') ? 'active-mobile' : ''} onClick={() => setIsOpen(false)}>
+            Pretraži Muzičare
           </Link>
           <Link href="/bands" className={isActive('/bands') ? 'active-mobile' : ''} onClick={() => setIsOpen(false)}>Portal za Muzičare</Link>
           <Link href="/about" className={isActive('/about') ? 'active-mobile' : ''} onClick={() => setIsOpen(false)}>O nama</Link>
