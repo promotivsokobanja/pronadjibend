@@ -15,6 +15,7 @@
     "db:migrate": "prisma migrate deploy",
     "start": "next start",
     "lint": "next lint",
+    "seed": "node prisma/seed.js",
     "create-admin": "node scripts/create-admin.cjs",
     "poster": "node scripts/generate-marketing-poster.cjs",
     "check:release": "npm run lint && npm run build",
