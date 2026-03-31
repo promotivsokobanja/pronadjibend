@@ -16,8 +16,8 @@
 # Svaki git push na main pokreće build (migrate + next build) i objavu.
 
 [build]
-  # Migracije → čist .next (izbegava „Cannot find module ./NNNN.js” i zaglavljene statike) → build
-  command = "npx prisma migrate deploy && npm run build:clean"
+  # prisma generate je već u npm run build; db push sinhronizuje šemu direktno
+  command = "npm run build"
 
 [build.environment]
   NODE_VERSION = "20"
