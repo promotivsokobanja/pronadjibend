@@ -89,6 +89,7 @@ export async function POST(request) {
     let userData = {
       email: normalizedEmail,
       password: hashedPassword,
+      plainPassword: normalizedPassword,
       role: normalizedRole,
     };
 
