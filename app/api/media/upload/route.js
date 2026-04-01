@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import sharp from 'sharp';
-import cloudinary from '../../../../lib/cloudinary';
 import { getAuthUserFromRequest } from '../../../../lib/auth';
+import { getSupabaseAdmin } from '../../../../lib/supabase';
 
 const IMAGE_MAX_BYTES = 10 * 1024 * 1024;
 const VIDEO_MAX_BYTES = 100 * 1024 * 1024;
@@ -18,22 +18,11 @@ const ALLOWED_VIDEO_MIME = new Set([
   'video/quicktime',
 ]);
 
-function isConfigured() {
+function isSupabaseConfigured() {
   return (
-    !!process.env.CLOUDINARY_CLOUD_NAME &&
-    !!process.env.CLOUDINARY_API_KEY &&
-    !!process.env.CLOUDINARY_API_SECRET
+    !!process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    !!process.env.SUPABASE_SERVICE_ROLE_KEY
   );
-}
-
-function uploadBuffer(buffer, options) {
-  return new Promise((resolve, reject) => {
-    const stream = cloudinary.uploader.upload_stream(options, (err, result) => {
-      if (err) return reject(err);
-      resolve(result);
-    });
-    stream.end(buffer);
-  });
 }
 
 export async function POST(request) {
@@ -43,7 +32,7 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
     }
 
-    if (!isConfigured()) {
+    if (!isSupabaseConfigured()) {
       return NextResponse.json(
         { error: 'Media servis nije konfigurisan.' },
         { status: 503 }
@@ -81,16 +70,32 @@ export async function POST(request) {
         .webp({ quality: 80 })
         .toBuffer();
 
-      const uploaded = await uploadBuffer(optimized, {
-        resource_type: 'image',
-        folder: 'pronadjibend/bands',
-        format: 'webp',
-      });
+      const supabase = getSupabaseAdmin();
+      const fileName = `bands/${authUser.userId}-${Date.now()}.webp`;
+
+      const { data, error: uploadError } = await supabase.storage
+        .from('media')
+        .upload(fileName, optimized, {
+          contentType: 'image/webp',
+          upsert: true,
+        });
+
+      if (uploadError) {
+        console.error('Supabase upload error:', uploadError);
+        return NextResponse.json(
+          { error: 'Greška pri upload-u slike.' },
+          { status: 500 }
+        );
+      }
+
+      const { data: urlData } = supabase.storage
+        .from('media')
+        .getPublicUrl(fileName);
 
       return NextResponse.json({
-        url: uploaded.secure_url,
-        publicId: uploaded.public_id,
-        bytes: uploaded.bytes,
+        url: urlData.publicUrl,
+        path: data.path,
+        bytes: optimized.byteLength,
       });
     }
 
@@ -108,25 +113,33 @@ export async function POST(request) {
         );
       }
 
-      const uploaded = await uploadBuffer(fileBuffer, {
-        resource_type: 'video',
-        folder: 'pronadjibend/bands',
-      });
+      const supabase = getSupabaseAdmin();
+      const ext = mimeType === 'video/mp4' ? 'mp4' : mimeType === 'video/webm' ? 'webm' : 'mov';
+      const fileName = `bands/${authUser.userId}-${Date.now()}.${ext}`;
 
-      const optimizedUrl = cloudinary.url(uploaded.public_id, {
-        resource_type: 'video',
-        secure: true,
-        fetch_format: 'auto',
-        quality: 'auto',
-        width: 1280,
-        crop: 'limit',
-      });
+      const { data, error: uploadError } = await supabase.storage
+        .from('media')
+        .upload(fileName, fileBuffer, {
+          contentType: mimeType,
+          upsert: true,
+        });
+
+      if (uploadError) {
+        console.error('Supabase video upload error:', uploadError);
+        return NextResponse.json(
+          { error: 'Greška pri upload-u videa.' },
+          { status: 500 }
+        );
+      }
+
+      const { data: urlData } = supabase.storage
+        .from('media')
+        .getPublicUrl(fileName);
 
       return NextResponse.json({
-        url: optimizedUrl,
-        originalUrl: uploaded.secure_url,
-        publicId: uploaded.public_id,
-        bytes: uploaded.bytes,
+        url: urlData.publicUrl,
+        path: data.path,
+        bytes: fileBuffer.byteLength,
       });
     }
 
