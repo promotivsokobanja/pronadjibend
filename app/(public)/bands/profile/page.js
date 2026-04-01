@@ -146,15 +146,25 @@ export default function BandProfilePage() {
 
   const handleSave = async (e) => {
     e.preventDefault();
-    if (!bandId) {
-      setError('Bend profil nije pronađen.');
-      return;
-    }
     setSaving(true);
     setError('');
     setSuccess('');
     try {
-      const res = await fetch(`/api/bands/${bandId}`, {
+      let resolvedBandId = bandId;
+      if (!resolvedBandId) {
+        const meRes = await fetch('/api/auth/me', { cache: 'no-store' });
+        const meData = await meRes.json().catch(() => ({}));
+        resolvedBandId = String(meData?.user?.bandId || '').trim();
+        if (resolvedBandId) {
+          setBandId(resolvedBandId);
+        }
+      }
+
+      if (!resolvedBandId) {
+        throw new Error('Bend profil nije pronađen.');
+      }
+
+      const res = await fetch(`/api/bands/${resolvedBandId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
@@ -551,7 +561,7 @@ export default function BandProfilePage() {
               </div>
             </div>
 
-            <button type="submit" className="btn btn-primary save-btn" disabled={saving || !bandId}>
+            <button type="submit" className="btn btn-primary save-btn">
               <Save size={16} /> {saving ? 'Čuvanje...' : 'Sačuvaj izmene'}
             </button>
           </form>

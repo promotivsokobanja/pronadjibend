@@ -111,6 +111,10 @@ export default function BandDashboard() {
           return;
         }
         const meData = await meRes.json();
+        if (meData?.user?.role === 'MUSICIAN') {
+          router.replace('/muzicari/profil');
+          return;
+        }
         const id = meData?.user?.bandId;
         const isAdmin = meData?.user?.role === 'ADMIN';
         if (!id) {
@@ -385,7 +389,7 @@ export default function BandDashboard() {
     return (
       <div className="dashboard-container container" style={{ paddingTop: '10rem' }}>
         <p className="text-muted">{loadError}</p>
-        <Link href="/bands/profile" className="btn btn-primary" style={{ marginTop: '1rem', display: 'inline-block' }}>
+        <Link href="/muzicari/profil" className="btn btn-primary" style={{ marginTop: '1rem', display: 'inline-block' }}>
           Podešavanje profila
         </Link>
       </div>

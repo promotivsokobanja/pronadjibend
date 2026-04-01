@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, Save, UserRound, Mail, CalendarDays, Euro, MapPin } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { ArrowLeft, Save, UserRound, Mail, CalendarDays, Euro, MapPin, Music, Video, Image as ImageIcon } from 'lucide-react';
 
 const initialForm = {
   name: '',
@@ -33,6 +33,12 @@ export default function MusicianProfileEditorClient() {
   const [form, setForm] = useState(initialForm);
   const [invites, setInvites] = useState([]);
   const [inviteMutation, setInviteMutation] = useState(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
+  const [imageProgress, setImageProgress] = useState(0);
+  const [videoProgress, setVideoProgress] = useState(0);
+  const imageInputRef = useRef(null);
+  const videoInputRef = useRef(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -136,6 +142,120 @@ export default function MusicianProfileEditorClient() {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
+  const getYouTubeEmbedUrl = (url) => {
+    if (!url) return '';
+    try {
+      const parsed = new URL(url);
+      const host = parsed.hostname.toLowerCase();
+      if (host.includes('youtu.be')) {
+        const id = parsed.pathname.split('/').filter(Boolean)[0];
+        return id ? `https://www.youtube.com/embed/${id}` : '';
+      }
+      if (host.includes('youtube.com') || host.includes('youtube-nocookie.com')) {
+        const id = parsed.searchParams.get('v');
+        if (id) return `https://www.youtube.com/embed/${id}`;
+        const short = parsed.pathname.split('/embed/')[1];
+        return short ? `https://www.youtube.com/embed/${short}` : '';
+      }
+      return '';
+    } catch {
+      return '';
+    }
+  };
+
+  const getVimeoEmbedUrl = (url) => {
+    if (!url) return '';
+    try {
+      const parsed = new URL(url);
+      if (!parsed.hostname.toLowerCase().includes('vimeo.com')) return '';
+      const segments = parsed.pathname.split('/').filter(Boolean);
+      const id = segments[segments.length - 1];
+      return id && /^\d+$/.test(id) ? `https://player.vimeo.com/video/${id}` : '';
+    } catch {
+      return '';
+    }
+  };
+
+  const isCloudinaryVideo = (url) => {
+    try {
+      const parsed = new URL(url);
+      return parsed.hostname.toLowerCase().includes('res.cloudinary.com');
+    } catch {
+      return false;
+    }
+  };
+
+  const handleUpload = async (file, kind) => {
+    if (!file) return;
+    const setUploading = kind === 'image' ? setUploadingImage : setUploadingVideo;
+    const setProgress = kind === 'image' ? setImageProgress : setVideoProgress;
+    setUploading(true);
+    setProgress(0);
+    setError('');
+    setSuccess('');
+
+    try {
+      const payload = new FormData();
+      payload.append('file', file);
+      payload.append('kind', kind);
+
+      const data = await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '/api/media/upload', true);
+
+        xhr.upload.onprogress = (event) => {
+          if (!event.lengthComputable) return;
+          const percent = Math.round((event.loaded / event.total) * 100);
+          setProgress(percent);
+        };
+
+        xhr.onload = () => {
+          try {
+            const parsed = JSON.parse(xhr.responseText || '{}');
+            if (xhr.status >= 200 && xhr.status < 300) {
+              resolve(parsed);
+              return;
+            }
+            const msg = parsed?.error || parsed?.full?.message || parsed?.full?.error_description || JSON.stringify(parsed?.full) || 'Upload nije uspeo.';
+            reject(new Error(msg));
+          } catch {
+            reject(new Error('Upload nije uspeo.'));
+          }
+        };
+
+        xhr.onerror = () => reject(new Error('Greška pri upload-u.'));
+        xhr.send(payload);
+      });
+
+      if (kind === 'image') {
+        setForm((prev) => ({ ...prev, img: data.url }));
+      } else {
+        setForm((prev) => ({ ...prev, videoUrl: data.url }));
+      }
+
+      setSuccess(kind === 'image' ? 'Slika je uploadovana i optimizovana.' : 'Video je uploadovan i optimizovan za streaming.');
+    } catch (err) {
+      setError(err?.message || 'Greška pri upload-u.');
+    } finally {
+      setUploading(false);
+      setProgress(0);
+    }
+  };
+
+  const handleFilePick = (event, kind) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    handleUpload(file, kind);
+    event.target.value = '';
+  };
+
+  const handleDrop = (event, kind) => {
+    event.preventDefault();
+    const file = event.dataTransfer.files?.[0];
+    if (!file) return;
+    handleUpload(file, kind);
+  };
+
   const onSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
@@ -163,126 +283,222 @@ export default function MusicianProfileEditorClient() {
   };
 
   return (
-    <div className="page-below-fixed-nav min-h-screen bg-white">
-      <main className="container py-8 md:py-10">
-        <Link href="/muzicari" className="mb-5 inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-slate-600 transition hover:border-slate-300 hover:text-slate-900">
-          <ArrowLeft size={14} /> Nazad na muzičare
-        </Link>
-
-        <header className="mb-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">Moj nalog</p>
-          <h1 className="mt-2 text-2xl font-black text-slate-900 md:text-3xl">Profil muzičara</h1>
-          <p className="mt-2 text-sm text-slate-600">Uredite javnu prezentaciju i povećajte šansu da vas bendovi angažuju.</p>
-          <p className="mt-2 inline-flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-500">
-            <UserRound size={14} /> {profilePreview}
-          </p>
-        </header>
+    <div className="container" style={{ paddingTop: '9.5rem', paddingBottom: '5rem' }}>
+      <div className="profile-wrap musician-profile-wrap">
+        <div className="profile-header">
+          <div>
+            <Link href="/bands" className="back-link">
+              <ArrowLeft size={15} />
+              Nazad na portal
+            </Link>
+            <h1>Moj Profil Muzičara</h1>
+            <p>Ovde uređujete sliku, video i opis koji bendovi vide na platformi.</p>
+            <p className="profile-poster-hint musician-badge">
+              <UserRound size={16} aria-hidden />
+              {profilePreview}
+            </p>
+          </div>
+        </div>
 
         {loading ? (
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 text-slate-500">Učitavanje...</div>
+          <div className="state-box">Učitavanje profila...</div>
         ) : isBandAccount ? (
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-amber-800">
-            Ovaj ekran je za muzičarske naloge. Trenutno ste prijavljeni kao bend nalog.
+          <div className="profile-card state-box" style={{ maxWidth: 520 }}>
+            <p style={{ marginBottom: '1rem', color: 'var(--text-muted, #94a3b8)' }}>
+              Ovaj ekran je namenjen solo muzičarima. Trenutno ste prijavljeni kao bend nalog.
+            </p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
+              <Link href="/bands" className="btn btn-primary">
+                Portal za muzičare
+              </Link>
+              <Link href="/muzicari" className="btn btn-secondary">
+                Javni prikaz muzičara
+              </Link>
+            </div>
           </div>
         ) : (
-          <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
-            <form onSubmit={onSubmit} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
-              {error ? <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700">{error}</div> : null}
-              {success ? <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700">{success}</div> : null}
+          <div className="musician-layout">
+            <form onSubmit={onSubmit} className="profile-card">
+              {error ? <div className="alert error">{error}</div> : null}
+              {success ? <div className="alert success">{success}</div> : null}
 
-              <div className="grid gap-3 sm:grid-cols-2">
-                <label className="space-y-1 text-sm font-semibold text-slate-700">
-                  Ime i prezime
-                  <input value={form.name} onChange={(e) => onChange('name', e.target.value)} className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none ring-[#007AFF]/0 transition focus:border-[#007AFF] focus:ring-4 focus:ring-[#007AFF]/12" required />
+              <div className="field toggle-field">
+                <label className="toggle-label" htmlFor="musician-availability">
+                  Dostupan za angažman
                 </label>
-                <label className="space-y-1 text-sm font-semibold text-slate-700">
-                  Primarni instrument
-                  <input value={form.primaryInstrument} onChange={(e) => onChange('primaryInstrument', e.target.value)} className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none ring-[#007AFF]/0 transition focus:border-[#007AFF] focus:ring-4 focus:ring-[#007AFF]/12" required />
-                </label>
+                <p className="toggle-hint">
+                  Kada je opcija uključena, bendovi vas lakše pronalaze i mogu da vam šalju pozive.
+                </p>
+                <button
+                  type="button"
+                  id="musician-availability"
+                  role="switch"
+                  aria-checked={form.isAvailable}
+                  className={`tips-toggle ${form.isAvailable ? 'on' : ''}`}
+                  onClick={() => onChange('isAvailable', !form.isAvailable)}
+                >
+                  <span className="tips-toggle-knob" />
+                </button>
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-2">
-                <label className="space-y-1 text-sm font-semibold text-slate-700">
-                  Grad
-                  <input value={form.city} onChange={(e) => onChange('city', e.target.value)} className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none ring-[#007AFF]/0 transition focus:border-[#007AFF] focus:ring-4 focus:ring-[#007AFF]/12" required />
-                </label>
-                <label className="space-y-1 text-sm font-semibold text-slate-700">
-                  Žanrovi
-                  <input value={form.genres} onChange={(e) => onChange('genres', e.target.value)} placeholder="Pop, Rock, Narodna" className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none ring-[#007AFF]/0 transition focus:border-[#007AFF] focus:ring-4 focus:ring-[#007AFF]/12" />
-                </label>
+              <div className="grid">
+                <div className="field">
+                  <label>Ime i prezime</label>
+                  <input value={form.name} onChange={(e) => onChange('name', e.target.value)} placeholder="npr. Marko Marković" required />
+                </div>
+                <div className="field">
+                  <label>Primarni instrument</label>
+                  <input value={form.primaryInstrument} onChange={(e) => onChange('primaryInstrument', e.target.value)} placeholder="Gitara, vokal, klavijatura..." required />
+                </div>
+                <div className="field">
+                  <label>Grad</label>
+                  <input value={form.city} onChange={(e) => onChange('city', e.target.value)} placeholder="Beograd" required />
+                </div>
+                <div className="field">
+                  <label>Žanrovi</label>
+                  <input value={form.genres} onChange={(e) => onChange('genres', e.target.value)} placeholder="Pop, Rock, Narodna" />
+                </div>
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-3">
-                <label className="space-y-1 text-sm font-semibold text-slate-700">
-                  Cena od (€)
-                  <input type="number" min="0" value={form.priceFromEur} onChange={(e) => onChange('priceFromEur', e.target.value)} className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none ring-[#007AFF]/0 transition focus:border-[#007AFF] focus:ring-4 focus:ring-[#007AFF]/12" />
-                </label>
-                <label className="space-y-1 text-sm font-semibold text-slate-700">
-                  Cena do (€)
-                  <input type="number" min="0" value={form.priceToEur} onChange={(e) => onChange('priceToEur', e.target.value)} className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none ring-[#007AFF]/0 transition focus:border-[#007AFF] focus:ring-4 focus:ring-[#007AFF]/12" />
-                </label>
-                <label className="space-y-1 text-sm font-semibold text-slate-700">
-                  Iskustvo (god)
-                  <input type="number" min="0" value={form.experienceYears} onChange={(e) => onChange('experienceYears', e.target.value)} className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none ring-[#007AFF]/0 transition focus:border-[#007AFF] focus:ring-4 focus:ring-[#007AFF]/12" />
-                </label>
+              <div className="grid musician-three-grid">
+                <div className="field">
+                  <label>Cena od (€)</label>
+                  <input type="number" min="0" value={form.priceFromEur} onChange={(e) => onChange('priceFromEur', e.target.value)} placeholder="100" />
+                </div>
+                <div className="field">
+                  <label>Cena do (€)</label>
+                  <input type="number" min="0" value={form.priceToEur} onChange={(e) => onChange('priceToEur', e.target.value)} placeholder="300" />
+                </div>
+                <div className="field">
+                  <label>Iskustvo (god)</label>
+                  <input type="number" min="0" value={form.experienceYears} onChange={(e) => onChange('experienceYears', e.target.value)} placeholder="10" />
+                </div>
               </div>
 
-              <label className="space-y-1 text-sm font-semibold text-slate-700 block">
-                Kratka biografija
-                <textarea rows={4} value={form.bio} onChange={(e) => onChange('bio', e.target.value)} className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none ring-[#007AFF]/0 transition focus:border-[#007AFF] focus:ring-4 focus:ring-[#007AFF]/12" />
-              </label>
-
-              <div className="grid gap-3 sm:grid-cols-2">
-                <label className="space-y-1 text-sm font-semibold text-slate-700">
-                  URL slike
-                  <input value={form.img} onChange={(e) => onChange('img', e.target.value)} className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none ring-[#007AFF]/0 transition focus:border-[#007AFF] focus:ring-4 focus:ring-[#007AFF]/12" />
-                </label>
-                <label className="space-y-1 text-sm font-semibold text-slate-700">
-                  URL videa
-                  <input value={form.videoUrl} onChange={(e) => onChange('videoUrl', e.target.value)} placeholder="YouTube/Vimeo/Cloudinary" className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none ring-[#007AFF]/0 transition focus:border-[#007AFF] focus:ring-4 focus:ring-[#007AFF]/12" />
-                </label>
+              <div className="field">
+                <label>Biografija</label>
+                <textarea rows={5} value={form.bio} onChange={(e) => onChange('bio', e.target.value)} placeholder="Kratak opis nastupa, iskustva i repertoara..." />
               </div>
 
-              <label className="inline-flex items-center gap-2 text-sm font-semibold text-slate-700">
-                <input type="checkbox" checked={form.isAvailable} onChange={(e) => onChange('isAvailable', e.target.checked)} className="h-4 w-4 rounded border-slate-300" />
-                Trenutno sam dostupan za angažman
-              </label>
+              <div className="media-grid">
+                <div className="field">
+                  <label>
+                    <ImageIcon size={14} /> URL glavne slike
+                  </label>
+                  <input value={form.img} onChange={(e) => onChange('img', e.target.value)} placeholder="https://..." />
+                  <div className="upload-row">
+                    <input
+                      ref={imageInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleFilePick(e, 'image')}
+                    />
+                    <div
+                      className="drop-zone"
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={(e) => handleDrop(e, 'image')}
+                      onClick={() => imageInputRef.current?.click()}
+                    >
+                      Prevuci sliku ovde ili klikni za upload
+                    </div>
+                    <span>{uploadingImage ? 'Upload slike u toku...' : 'Auto resize: max 1600px, webp'}</span>
+                    {uploadingImage ? (
+                      <div className="progress-wrap">
+                        <div className="progress-bar" style={{ width: `${imageProgress}%` }} />
+                      </div>
+                    ) : null}
+                  </div>
+                  {form.img ? <img src={form.img} alt="Preview" className="preview-image" /> : null}
+                </div>
+                <div className="field">
+                  <label>
+                    <Video size={14} /> URL videa
+                  </label>
+                  <input value={form.videoUrl} onChange={(e) => onChange('videoUrl', e.target.value)} placeholder="https://www.youtube.com/watch?v=..." />
+                  <small className="field-hint">Prihvaćeni su YouTube, Vimeo i Cloudinary video linkovi.</small>
+                  <div className="upload-row">
+                    <input
+                      ref={videoInputRef}
+                      type="file"
+                      accept="video/*"
+                      onChange={(e) => handleFilePick(e, 'video')}
+                    />
+                    <div
+                      className="drop-zone"
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={(e) => handleDrop(e, 'video')}
+                      onClick={() => videoInputRef.current?.click()}
+                    >
+                      Prevuci video ovde ili klikni za upload
+                    </div>
+                    <span>{uploadingVideo ? 'Upload videa u toku...' : 'Auto optimize: quality auto, max 1280p'}</span>
+                    {uploadingVideo ? (
+                      <div className="progress-wrap">
+                        <div className="progress-bar" style={{ width: `${videoProgress}%` }} />
+                      </div>
+                    ) : null}
+                  </div>
+                  {getYouTubeEmbedUrl(form.videoUrl) ? (
+                    <iframe
+                      className="video-preview"
+                      src={getYouTubeEmbedUrl(form.videoUrl)}
+                      title="YouTube preview"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    />
+                  ) : null}
+                  {!getYouTubeEmbedUrl(form.videoUrl) && getVimeoEmbedUrl(form.videoUrl) ? (
+                    <iframe
+                      className="video-preview"
+                      src={getVimeoEmbedUrl(form.videoUrl)}
+                      title="Vimeo preview"
+                      allow="autoplay; fullscreen; picture-in-picture"
+                      allowFullScreen
+                    />
+                  ) : null}
+                  {!getYouTubeEmbedUrl(form.videoUrl) && !getVimeoEmbedUrl(form.videoUrl) && isCloudinaryVideo(form.videoUrl) ? (
+                    <video className="video-preview" controls preload="metadata" src={form.videoUrl}>
+                      Vaš browser ne podržava video preview.
+                    </video>
+                  ) : null}
+                </div>
+              </div>
 
-              <button type="submit" disabled={saving} className="inline-flex items-center justify-center gap-2 rounded-full bg-[#007AFF] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#0069db] disabled:cursor-not-allowed disabled:opacity-60">
-                <Save size={16} /> {saving ? 'Čuvanje...' : 'Sačuvaj profil'}
+              <button type="submit" disabled={saving} className="btn btn-primary save-btn">
+                <Save size={16} /> {saving ? 'Čuvanje...' : 'Sačuvaj izmene'}
               </button>
             </form>
 
-            <aside className="space-y-5">
-              <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                <h2 className="text-base font-black text-slate-900">Kontakt naloga</h2>
-                <p className="mt-2 inline-flex items-center gap-2 text-sm text-slate-600"><Mail size={15} /> {viewer?.email || '—'}</p>
-                <p className="mt-3 text-xs text-slate-500">Javni kontakt bendu se kasnije može proširiti (telefon, društvene mreže).</p>
+            <aside className="musician-sidebar">
+              <section className="profile-card">
+                <h2 className="sidebar-title">Kontakt naloga</h2>
+                <p className="sidebar-row"><Mail size={15} /> {viewer?.email || '—'}</p>
+                <p className="field-hint">Javni kontakt može kasnije da se proširi telefonom i društvenim mrežama.</p>
               </section>
 
-              <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                <h2 className="text-base font-black text-slate-900">Pristigli pozivi bendova</h2>
+              <section className="profile-card">
+                <h2 className="sidebar-title">Pristigli pozivi bendova</h2>
                 {invites.length === 0 ? (
-                  <p className="mt-2 text-sm text-slate-500">Još nema poziva. Kada bend pošalje poziv, pojaviće se ovde.</p>
+                  <p className="field-hint" style={{ marginTop: '0.2rem' }}>Još nema poziva. Kada bend pošalje poziv, pojaviće se ovde.</p>
                 ) : (
-                  <ul className="mt-3 space-y-3">
+                  <ul className="invite-list">
                     {invites.map((inv) => (
-                      <li key={inv.id} className="rounded-xl border border-slate-100 bg-slate-50 p-3">
-                        <p className="font-bold text-slate-900">{inv.band?.name || 'Bend'}</p>
-                        <div className="mt-1 space-y-1 text-xs font-semibold text-slate-500">
-                          {inv.eventDate ? <p className="inline-flex items-center gap-1"><CalendarDays size={13} /> {formatDate(inv.eventDate)}</p> : null}
-                          {inv.location ? <p className="inline-flex items-center gap-1"><MapPin size={13} /> {inv.location}</p> : null}
-                          {inv.feeEur != null ? <p className="inline-flex items-center gap-1"><Euro size={13} /> {inv.feeEur}€</p> : null}
+                      <li key={inv.id} className="invite-card">
+                        <p className="invite-band">{inv.band?.name || 'Bend'}</p>
+                        <div className="invite-meta">
+                          {inv.eventDate ? <p><CalendarDays size={13} /> {formatDate(inv.eventDate)}</p> : null}
+                          {inv.location ? <p><MapPin size={13} /> {inv.location}</p> : null}
+                          {inv.feeEur != null ? <p><Euro size={13} /> {inv.feeEur}€</p> : null}
                         </div>
-                        {inv.message ? <p className="mt-2 text-sm text-slate-700">{inv.message}</p> : null}
-                        <p className="mt-2 text-[11px] font-bold uppercase tracking-wide text-[#007AFF]">Status: {inv.status}</p>
+                        {inv.message ? <p className="invite-message">{inv.message}</p> : null}
+                        <p className="invite-status">Status: {inv.status}</p>
                         {inv.status === 'PENDING' ? (
-                          <div className="mt-2 flex flex-wrap gap-2">
+                          <div className="invite-actions">
                             <button
                               type="button"
                               disabled={inviteMutation === inv.id}
                               onClick={() => handleInviteStatus(inv.id, 'ACCEPTED')}
-                              className="rounded-full bg-emerald-600 px-3 py-1 text-xs font-bold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                              className="btn btn-primary btn-sm"
                             >
                               Prihvati
                             </button>
@@ -290,7 +506,7 @@ export default function MusicianProfileEditorClient() {
                               type="button"
                               disabled={inviteMutation === inv.id}
                               onClick={() => handleInviteStatus(inv.id, 'REJECTED')}
-                              className="rounded-full bg-rose-600 px-3 py-1 text-xs font-bold text-white transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60"
+                              className="btn btn-secondary btn-sm musician-danger-btn"
                             >
                               Odbij
                             </button>
@@ -304,7 +520,312 @@ export default function MusicianProfileEditorClient() {
             </aside>
           </div>
         )}
-      </main>
+      </div>
+
+      <style jsx>{`
+        .profile-wrap { max-width: 920px; margin: 0 auto; }
+        .musician-profile-wrap { width: 100%; }
+        .profile-header h1 { font-size: 2.1rem; font-weight: 900; color: #0f172a; margin-bottom: 0.3rem; }
+        .profile-header p { color: #64748b; }
+        .profile-header p:not(.profile-poster-hint) { margin-bottom: 0.55rem; }
+        .profile-poster-hint { margin: 0 0 1.4rem; }
+        .musician-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.45rem;
+          font-size: 0.88rem;
+          font-weight: 700;
+          color: #0d9488;
+        }
+        .back-link {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.4rem;
+          color: #334155;
+          font-weight: 800;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+          font-size: 0.76rem;
+          margin-bottom: 0.9rem;
+          padding: 0.45rem 0.7rem;
+          border-radius: 999px;
+          border: 1px solid rgba(148, 163, 184, 0.5);
+          background: rgba(255, 255, 255, 0.9);
+          position: relative;
+          z-index: 3;
+          transition: 0.2s ease;
+          text-decoration: none;
+        }
+        .back-link:hover { color: #0f172a; border-color: rgba(100, 116, 139, 0.75); }
+        .musician-layout {
+          display: grid;
+          grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
+          gap: 1.5rem;
+          align-items: start;
+        }
+        .musician-sidebar {
+          display: flex;
+          flex-direction: column;
+          gap: 1.5rem;
+        }
+        .profile-card {
+          background: #fff;
+          border: 1px solid #e2e8f0;
+          border-radius: 20px;
+          padding: 1.4rem;
+          display: flex;
+          flex-direction: column;
+          gap: 1rem;
+        }
+        .grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 1rem;
+        }
+        .musician-three-grid {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+        .media-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 1rem;
+        }
+        .field { display: flex; flex-direction: column; gap: 0.45rem; }
+        .grid > .field,
+        .media-grid > .field,
+        .musician-three-grid > .field {
+          min-width: 0;
+        }
+        .field label {
+          font-size: 0.75rem;
+          font-weight: 800;
+          color: #64748b;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          display: inline-flex;
+          align-items: center;
+          gap: 0.35rem;
+        }
+        .field input, .field textarea {
+          width: 100%;
+          max-width: 100%;
+          box-sizing: border-box;
+          border: 1px solid #cbd5e1;
+          border-radius: 12px;
+          padding: 0.7rem 0.85rem;
+          font-size: 0.93rem;
+          color: #0f172a;
+          outline: none;
+        }
+        .field input:focus, .field textarea:focus {
+          border-color: #007aff;
+          box-shadow: 0 0 0 4px rgba(0,122,255,0.12);
+        }
+        .field-hint {
+          color: #64748b;
+          font-size: 0.75rem;
+          margin-top: -0.1rem;
+        }
+        .toggle-field {
+          padding-bottom: 0.5rem;
+          border-bottom: 1px solid #f1f5f9;
+          margin-bottom: 0.35rem;
+        }
+        .toggle-label {
+          font-size: 0.95rem;
+          font-weight: 800;
+          color: #0f172a;
+          text-transform: none;
+          letter-spacing: 0;
+        }
+        .toggle-hint {
+          font-size: 0.8rem;
+          color: #64748b;
+          line-height: 1.45;
+          margin: 0;
+        }
+        .tips-toggle {
+          width: 52px;
+          height: 28px;
+          border-radius: 999px;
+          border: none;
+          background: #cbd5e1;
+          position: relative;
+          cursor: pointer;
+          transition: background 0.2s;
+          align-self: flex-start;
+        }
+        .tips-toggle.on { background: #22c55e; }
+        .tips-toggle-knob {
+          position: absolute;
+          top: 3px;
+          left: 3px;
+          width: 22px;
+          height: 22px;
+          background: #fff;
+          border-radius: 50%;
+          transition: transform 0.2s;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+        }
+        .tips-toggle.on .tips-toggle-knob { transform: translateX(24px); }
+        .preview-image {
+          margin-top: 0.4rem;
+          width: 100%;
+          max-height: 180px;
+          object-fit: cover;
+          border-radius: 12px;
+          border: 1px solid #e2e8f0;
+        }
+        .upload-row {
+          display: flex;
+          flex-direction: column;
+          gap: 0.5rem;
+          margin-top: 0.35rem;
+          font-size: 0.75rem;
+          color: #64748b;
+        }
+        .upload-row input[type='file'] {
+          display: none;
+        }
+        .drop-zone {
+          border: 1px dashed #94a3b8;
+          border-radius: 12px;
+          padding: 0.9rem 1rem;
+          text-align: center;
+          color: #475569;
+          background: #f8fafc;
+          cursor: pointer;
+          transition: 0.2s ease;
+        }
+        .drop-zone:hover {
+          border-color: #007aff;
+          background: #eff6ff;
+        }
+        .progress-wrap {
+          width: 100%;
+          height: 8px;
+          border-radius: 999px;
+          background: #e2e8f0;
+          overflow: hidden;
+        }
+        .progress-bar {
+          height: 100%;
+          background: linear-gradient(90deg, #007aff, #22c55e);
+          border-radius: 999px;
+          transition: width 0.2s ease;
+        }
+        .video-preview {
+          margin-top: 0.5rem;
+          width: 100%;
+          min-height: 220px;
+          border: 1px solid #e2e8f0;
+          border-radius: 12px;
+          background: #0f172a;
+        }
+        .save-btn { width: fit-content; margin-top: 0.2rem; gap: 0.5rem; }
+        .state-box {
+          border: 1px dashed #cbd5e1;
+          border-radius: 14px;
+          padding: 1.2rem;
+          color: #64748b;
+          background: #f8fafc;
+          font-weight: 600;
+        }
+        .alert {
+          border-radius: 10px;
+          padding: 0.75rem 0.9rem;
+          font-size: 0.84rem;
+          font-weight: 700;
+        }
+        .alert.error { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+        .alert.success { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+        .sidebar-title {
+          font-size: 1.1rem;
+          font-weight: 800;
+          color: #0f172a;
+          margin: 0;
+        }
+        .sidebar-row {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.45rem;
+          font-size: 0.92rem;
+          color: #475569;
+          font-weight: 600;
+          margin: 0;
+        }
+        .invite-list {
+          list-style: none;
+          margin: 0;
+          padding: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 0.9rem;
+        }
+        .invite-card {
+          border: 1px solid #e2e8f0;
+          border-radius: 14px;
+          padding: 1rem 1.1rem;
+          background: #fff;
+        }
+        .invite-band {
+          margin: 0 0 0.45rem;
+          font-weight: 800;
+          color: #0f172a;
+        }
+        .invite-meta {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.4rem 0.8rem;
+          color: #64748b;
+          font-size: 0.8rem;
+          font-weight: 700;
+        }
+        .invite-meta p {
+          margin: 0;
+          display: inline-flex;
+          align-items: center;
+          gap: 0.3rem;
+        }
+        .invite-message {
+          margin: 0.7rem 0 0;
+          white-space: pre-wrap;
+          color: #1e293b;
+          font-size: 0.92rem;
+          line-height: 1.5;
+        }
+        .invite-status {
+          margin: 0.7rem 0 0;
+          color: #1d4ed8;
+          font-size: 0.76rem;
+          font-weight: 800;
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
+        }
+        .invite-actions {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.65rem;
+          margin-top: 0.8rem;
+        }
+        .musician-danger-btn {
+          color: #fff;
+          background: #e11d48;
+          border-color: #e11d48;
+        }
+        .musician-danger-btn:hover {
+          background: #be123c;
+          border-color: #be123c;
+        }
+        @media (max-width: 860px) {
+          .musician-layout,
+          .grid,
+          .media-grid,
+          .musician-three-grid {
+            grid-template-columns: 1fr;
+          }
+        }
+      `}</style>
     </div>
   );
 }
