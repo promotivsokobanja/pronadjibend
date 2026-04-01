@@ -5,6 +5,8 @@ import { getSupabaseAdmin } from '../../../../lib/supabase';
 
 const IMAGE_MAX_BYTES = 10 * 1024 * 1024;
 const VIDEO_MAX_BYTES = 100 * 1024 * 1024;
+const IMAGE_BUCKET = process.env.NEXT_PUBLIC_SUPABASE_IMAGE_BUCKET || 'band-images';
+const VIDEO_BUCKET = process.env.NEXT_PUBLIC_SUPABASE_VIDEO_BUCKET || 'band-videos';
 
 const ALLOWED_IMAGE_MIME = new Set([
   'image/jpeg',
@@ -74,7 +76,7 @@ export async function POST(request) {
       const fileName = `bands/${authUser.userId}-${Date.now()}.webp`;
 
       const { data, error: uploadError } = await supabase.storage
-        .from('media')
+        .from(IMAGE_BUCKET)
         .upload(fileName, optimized, {
           contentType: 'image/webp',
           upsert: true,
@@ -89,7 +91,7 @@ export async function POST(request) {
       }
 
       const { data: urlData } = supabase.storage
-        .from('media')
+        .from(IMAGE_BUCKET)
         .getPublicUrl(fileName);
 
       return NextResponse.json({
@@ -118,7 +120,7 @@ export async function POST(request) {
       const fileName = `bands/${authUser.userId}-${Date.now()}.${ext}`;
 
       const { data, error: uploadError } = await supabase.storage
-        .from('media')
+        .from(VIDEO_BUCKET)
         .upload(fileName, fileBuffer, {
           contentType: mimeType,
           upsert: true,
@@ -133,7 +135,7 @@ export async function POST(request) {
       }
 
       const { data: urlData } = supabase.storage
-        .from('media')
+        .from(VIDEO_BUCKET)
         .getPublicUrl(fileName);
 
       return NextResponse.json({
