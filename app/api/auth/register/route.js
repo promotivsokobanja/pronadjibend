@@ -28,11 +28,32 @@ export async function POST(request) {
     } catch {
       return NextResponse.json({ error: 'Neispravan format zahteva.' }, { status: 400 });
     }
-    const { email, password, name, role } = body || {};
+    const {
+      email,
+      password,
+      name,
+      role,
+      primaryInstrument,
+      city,
+      genres,
+      experienceYears,
+      priceFromEur,
+      priceToEur,
+      bio,
+    } = body || {};
     const normalizedEmail = String(email || '').trim().toLowerCase();
     const normalizedPassword = String(password || '').trim();
-    const normalizedRole = role === 'BAND' ? 'BAND' : 'CLIENT';
+    const normalizedRole = ['BAND', 'CLIENT', 'MUSICIAN'].includes(role)
+      ? role
+      : 'CLIENT';
     const normalizedName = String(name || '').trim();
+    const normalizedInstrument = String(primaryInstrument || '').trim();
+    const normalizedCity = String(city || '').trim();
+    const normalizedGenres = String(genres || '').trim();
+    const normalizedBio = String(bio || '').trim();
+    const normalizedExperience = experienceYears ? Number(experienceYears) : null;
+    const normalizedPriceFrom = priceFromEur ? Number(priceFromEur) : null;
+    const normalizedPriceTo = priceToEur ? Number(priceToEur) : null;
 
     if (!normalizedEmail || !normalizedPassword) {
       return NextResponse.json(
@@ -59,11 +80,26 @@ export async function POST(request) {
       );
     }
 
-    if (normalizedRole === 'BAND' && !normalizedName) {
+    if ((normalizedRole === 'BAND' || normalizedRole === 'MUSICIAN') && !normalizedName) {
       return NextResponse.json(
         { error: 'Naziv benda ili ime je obavezno.' },
         { status: 400 }
       );
+    }
+
+    if (normalizedRole === 'MUSICIAN') {
+      if (!normalizedInstrument) {
+        return NextResponse.json(
+          { error: 'Instrument je obavezan za muzičare.' },
+          { status: 400 }
+        );
+      }
+      if (!normalizedCity) {
+        return NextResponse.json(
+          { error: 'Grad je obavezan za muzičare.' },
+          { status: 400 }
+        );
+      }
     }
 
     if (normalizedName.length > 120) {
@@ -104,6 +140,34 @@ export async function POST(request) {
             }
           }
         }
+      });
+      return NextResponse.json({ success: true, role: newUser.role });
+    } else if (normalizedRole === 'MUSICIAN') {
+      const newUser = await prisma.user.create({
+        data: {
+          ...userData,
+          musicianProfile: {
+            create: {
+              name: normalizedName || 'Novi Muzičar',
+              primaryInstrument: normalizedInstrument,
+              city: normalizedCity,
+              genres: normalizedGenres || null,
+              experienceYears:
+                Number.isFinite(normalizedExperience) && normalizedExperience >= 0
+                  ? normalizedExperience
+                  : null,
+              priceFromEur:
+                Number.isFinite(normalizedPriceFrom) && normalizedPriceFrom >= 0
+                  ? normalizedPriceFrom
+                  : null,
+              priceToEur:
+                Number.isFinite(normalizedPriceTo) && normalizedPriceTo >= 0
+                  ? normalizedPriceTo
+                  : null,
+              bio: normalizedBio || null,
+            },
+          },
+        },
       });
       return NextResponse.json({ success: true, role: newUser.role });
     } else {

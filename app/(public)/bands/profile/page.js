@@ -1,6 +1,6 @@
 'use client';
 
-import { Save, ArrowLeft, Image as ImageIcon, Video, Mail, Phone, MessageSquare, Download } from 'lucide-react';
+import { Save, ArrowLeft, Image as ImageIcon, Video, Mail, Phone, MessageSquare, Download, Lock } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -30,6 +30,12 @@ export default function BandProfilePage() {
   const [confirmedBookings, setConfirmedBookings] = useState([]);
   const imageInputRef = useRef(null);
   const videoInputRef = useRef(null);
+  
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [passwordData, setPasswordData] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+  const [passwordSaving, setPasswordSaving] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordSuccess, setPasswordSuccess] = useState('');
 
   useEffect(() => {
     const load = async () => {
@@ -97,6 +103,45 @@ export default function BandProfilePage() {
 
   const handleChange = (key, value) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handlePasswordChange = async (e) => {
+    e.preventDefault();
+    setPasswordError('');
+    setPasswordSuccess('');
+
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      setPasswordError('Nova lozinka i potvrda se ne poklapaju.');
+      return;
+    }
+
+    if (passwordData.newPassword.length < 6) {
+      setPasswordError('Nova lozinka mora imati najmanje 6 karaktera.');
+      return;
+    }
+
+    setPasswordSaving(true);
+    try {
+      const res = await fetch('/api/auth/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          currentPassword: passwordData.currentPassword,
+          newPassword: passwordData.newPassword,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data?.error || 'Greška pri promeni lozinke.');
+      }
+      setPasswordSuccess('Lozinka je uspešno promenjena.');
+      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      setTimeout(() => setShowPasswordForm(false), 2000);
+    } catch (err) {
+      setPasswordError(err.message || 'Došlo je do greške.');
+    } finally {
+      setPasswordSaving(false);
+    }
   };
 
   const handleSave = async (e) => {
@@ -509,6 +554,88 @@ export default function BandProfilePage() {
               <Save size={16} /> {saving ? 'Čuvanje...' : 'Sačuvaj izmene'}
             </button>
           </form>
+
+          {/* Password Change Section */}
+          <section className="profile-card password-section">
+            <div className="password-header">
+              <div className="password-header-text">
+                <h3><Lock size={18} /> Promena lozinke</h3>
+                <p>Promenite lozinku za pristup vašem nalogu</p>
+              </div>
+              {!showPasswordForm && (
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => {
+                    setShowPasswordForm(true);
+                    setPasswordError('');
+                    setPasswordSuccess('');
+                  }}
+                >
+                  Promeni lozinku
+                </button>
+              )}
+            </div>
+
+            {showPasswordForm && (
+              <form onSubmit={handlePasswordChange} className="password-form">
+                {passwordError && <div className="alert error">{passwordError}</div>}
+                {passwordSuccess && <div className="alert success">{passwordSuccess}</div>}
+
+                <div className="field">
+                  <label>Trenutna lozinka</label>
+                  <input
+                    type="password"
+                    value={passwordData.currentPassword}
+                    onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
+                    placeholder="Unesite trenutnu lozinku"
+                    required
+                  />
+                </div>
+
+                <div className="field">
+                  <label>Nova lozinka</label>
+                  <input
+                    type="password"
+                    value={passwordData.newPassword}
+                    onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
+                    placeholder="Unesite novu lozinku (min. 6 karaktera)"
+                    required
+                    minLength={6}
+                  />
+                </div>
+
+                <div className="field">
+                  <label>Potvrdi novu lozinku</label>
+                  <input
+                    type="password"
+                    value={passwordData.confirmPassword}
+                    onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                    placeholder="Ponovite novu lozinku"
+                    required
+                  />
+                </div>
+
+                <div className="password-actions">
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => {
+                      setShowPasswordForm(false);
+                      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+                      setPasswordError('');
+                      setPasswordSuccess('');
+                    }}
+                  >
+                    Otkaži
+                  </button>
+                  <button type="submit" className="btn btn-primary" disabled={passwordSaving}>
+                    <Lock size={16} /> {passwordSaving ? 'Čuvanje...' : 'Sačuvaj lozinku'}
+                  </button>
+                </div>
+              </form>
+            )}
+          </section>
           </>
         )}
       </div>
@@ -716,6 +843,51 @@ export default function BandProfilePage() {
         }
         .alert.error { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
         .alert.success { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+        
+        .password-section {
+          margin-top: 1.5rem;
+        }
+        .password-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 1rem;
+        }
+        .password-header-text h3 {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          font-size: 1.1rem;
+          font-weight: 800;
+          color: #0f172a;
+          margin: 0 0 0.25rem;
+        }
+        .password-header-text p {
+          margin: 0;
+          color: #64748b;
+          font-size: 0.85rem;
+        }
+        .password-form {
+          display: flex;
+          flex-direction: column;
+          gap: 1rem;
+          margin-top: 1rem;
+          padding-top: 1rem;
+          border-top: 1px solid #e2e8f0;
+        }
+        .password-actions {
+          display: flex;
+          gap: 0.75rem;
+          justify-content: flex-end;
+          margin-top: 0.5rem;
+        }
+        .password-actions .btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.4rem;
+        }
+        
         @media (max-width: 860px) {
           .grid, .media-grid { grid-template-columns: 1fr; }
         }

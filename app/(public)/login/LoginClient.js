@@ -1,5 +1,5 @@
 'use client';
-import { Mail, Lock, User, ArrowRight, Music, Users, Download, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, User, ArrowRight, Music, Users, Download, Eye, EyeOff, MapPin, DollarSign } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
@@ -10,7 +10,14 @@ export default function LoginClient() {
     email: '',
     password: '',
     name: '',
-    role: 'BAND' 
+    role: 'BAND',
+    primaryInstrument: '',
+    city: '',
+    genres: '',
+    experienceYears: '',
+    priceFromEur: '',
+    priceToEur: '',
+    bio: '',
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -82,7 +89,25 @@ export default function LoginClient() {
     const payload = {
       email: emailTrimmed,
       password: passwordTrimmed,
-      ...(isLogin ? {} : { name: String(formData.name || '').trim(), role: formData.role }),
+      ...(isLogin
+        ? {}
+        : {
+            name: String(formData.name || '').trim(),
+            role: formData.role,
+            ...(formData.role === 'MUSICIAN'
+              ? {
+                  primaryInstrument: String(formData.primaryInstrument || '').trim(),
+                  city: String(formData.city || '').trim(),
+                  genres: String(formData.genres || '').trim(),
+                  experienceYears: formData.experienceYears
+                    ? Number(formData.experienceYears)
+                    : undefined,
+                  priceFromEur: formData.priceFromEur ? Number(formData.priceFromEur) : undefined,
+                  priceToEur: formData.priceToEur ? Number(formData.priceToEur) : undefined,
+                  bio: String(formData.bio || '').trim(),
+                }
+              : {}),
+          }),
     };
     
     try {
@@ -167,11 +192,48 @@ export default function LoginClient() {
               <div className="role-selector">
                 <p>Ja sam:</p>
                 <div className="role-cards">
-                  <div className={`role-card ${formData.role === 'BAND' ? 'active' : ''}`} onClick={() => setFormData({...formData, role: 'BAND'})}>
+                  <div
+                    className={`role-card ${formData.role === 'BAND' ? 'active' : ''}`}
+                    onClick={() =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        role: 'BAND',
+                        primaryInstrument: '',
+                        city: '',
+                        genres: '',
+                        experienceYears: '',
+                        priceFromEur: '',
+                        priceToEur: '',
+                        bio: '',
+                      }))
+                    }
+                  >
                     <Music size={20} />
-                    <span>Muzičar</span>
+                    <span>Bend / muzičar bend</span>
                   </div>
-                  <div className={`role-card ${formData.role === 'CLIENT' ? 'active' : ''}`} onClick={() => setFormData({...formData, role: 'CLIENT'})}>
+                  <div
+                    className={`role-card ${formData.role === 'MUSICIAN' ? 'active' : ''}`}
+                    onClick={() => setFormData({ ...formData, role: 'MUSICIAN' })}
+                  >
+                    <Users size={20} />
+                    <span>Solo muzičar</span>
+                  </div>
+                  <div
+                    className={`role-card ${formData.role === 'CLIENT' ? 'active' : ''}`}
+                    onClick={() =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        role: 'CLIENT',
+                        primaryInstrument: '',
+                        city: '',
+                        genres: '',
+                        experienceYears: '',
+                        priceFromEur: '',
+                        priceToEur: '',
+                        bio: '',
+                      }))
+                    }
+                  >
                     <Users size={20} />
                     <span>Klijent</span>
                   </div>
@@ -181,12 +243,92 @@ export default function LoginClient() {
                 <User size={18} className="text-muted" />
                 <input 
                   type="text" 
-                  placeholder={formData.role === 'BAND' ? 'Ime i prezime / Naziv benda' : 'Ime i prezime'}
+                  placeholder={formData.role === 'BAND' ? 'Ime i prezime / Naziv benda' : formData.role === 'MUSICIAN' ? 'Ime i prezime' : 'Ime i prezime'}
                   value={formData.name} 
                   onChange={(e) => setFormData({...formData, name: e.target.value})} 
                   required 
                 />
               </div>
+
+              {formData.role === 'MUSICIAN' && (
+                <div className="musician-extra-fields">
+                  <div className="input-group">
+                    <Music size={18} className="text-muted" />
+                    <input
+                      type="text"
+                      placeholder="Instrument (obavezno)"
+                      value={formData.primaryInstrument}
+                      onChange={(e) => setFormData({ ...formData, primaryInstrument: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="input-group">
+                    <MapPin size={18} className="text-muted" />
+                    <input
+                      type="text"
+                      placeholder="Grad (obavezno)"
+                      value={formData.city}
+                      onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="input-group">
+                    <User size={18} className="text-muted" />
+                    <input
+                      type="text"
+                      placeholder="Žanrovi (opciono)"
+                      value={formData.genres}
+                      onChange={(e) => setFormData({ ...formData, genres: e.target.value })}
+                    />
+                  </div>
+                  <div className="input-group duo">
+                    <div>
+                      <label>Iskustvo (god.)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        placeholder="npr. 5"
+                        value={formData.experienceYears}
+                        onChange={(e) => setFormData({ ...formData, experienceYears: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <label>Cachet (€)</label>
+                      <div className="price-inputs">
+                        <div className="price-input-with-icon">
+                          <DollarSign size={16} />
+                          <input
+                            type="number"
+                            min="0"
+                            placeholder="Od"
+                            value={formData.priceFromEur}
+                            onChange={(e) => setFormData({ ...formData, priceFromEur: e.target.value })}
+                          />
+                        </div>
+                        <span>—</span>
+                        <div className="price-input-with-icon">
+                          <DollarSign size={16} />
+                          <input
+                            type="number"
+                            min="0"
+                            placeholder="Do"
+                            value={formData.priceToEur}
+                            onChange={(e) => setFormData({ ...formData, priceToEur: e.target.value })}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="input-group textarea">
+                    <textarea
+                      placeholder="Kratak opis (opciono)"
+                      value={formData.bio}
+                      onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                      rows={3}
+                    />
+                  </div>
+                </div>
+              )}
             </>
           )}
 
@@ -392,6 +534,74 @@ export default function LoginClient() {
         .role-card.active { border-color: #007aff; background: #eff6ff; }
         .role-card.active span { color: #0f172a; }
         .role-card.active :global(svg) { color: #007aff; }
+
+        .musician-extra-fields {
+          display: flex;
+          flex-direction: column;
+          gap: 0.85rem;
+          margin-bottom: 0.5rem;
+        }
+        .input-group.textarea {
+          align-items: flex-start;
+          flex-direction: column;
+          gap: 0.5rem;
+        }
+        .input-group.textarea textarea {
+          width: 100%;
+          border: 1px solid #dbe1ea;
+          border-radius: 12px;
+          padding: 0.75rem 0.85rem;
+          font-size: 0.9rem;
+          resize: vertical;
+          min-height: 96px;
+        }
+        .input-group.duo {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+          gap: 1rem;
+          padding: 0;
+          border: none;
+          background: transparent;
+        }
+        .input-group.duo > div {
+          background: #ffffff;
+          border: 1px solid #dbe1ea;
+          border-radius: 12px;
+          padding: 0.75rem 1rem;
+          display: flex;
+          flex-direction: column;
+          gap: 0.4rem;
+        }
+        .input-group.duo label {
+          font-size: 0.75rem;
+          font-weight: 700;
+          color: #64748b;
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
+        }
+        .input-group.duo input {
+          border: none;
+          padding: 0;
+          font-size: 0.95rem;
+          outline: none;
+          color: #0f172a;
+        }
+        .price-inputs {
+          display: grid;
+          grid-template-columns: 1fr auto 1fr;
+          gap: 0.45rem;
+          align-items: center;
+        }
+        .price-inputs input {
+          border: 1px solid #dbe1ea;
+          border-radius: 10px;
+          padding: 0.4rem 0.55rem;
+          font-size: 0.9rem;
+        }
+        .price-inputs span {
+          font-weight: 700;
+          color: #94a3b8;
+        }
 
         .input-group { position: relative; display: flex; align-items: center; gap: 0.85rem; padding: 0.75rem 1rem; background: #ffffff; border: 1px solid #dbe1ea; border-radius: 12px; margin-bottom: 0.9rem; transition: 0.2s ease; }
         .input-group:focus-within { border-color: #007aff; box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.12); }
