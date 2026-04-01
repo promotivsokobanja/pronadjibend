@@ -85,7 +85,11 @@ export async function POST(request) {
       if (uploadError) {
         console.error('Supabase upload error:', uploadError);
         return NextResponse.json(
-          { error: 'Greška pri upload-u slike.' },
+          {
+            error: uploadError.message || uploadError.error_description || JSON.stringify(uploadError) || 'Greška pri upload-u slike.',
+            code: uploadError.error,
+            full: uploadError,
+          },
           { status: 500 }
         );
       }
@@ -129,7 +133,11 @@ export async function POST(request) {
       if (uploadError) {
         console.error('Supabase video upload error:', uploadError);
         return NextResponse.json(
-          { error: 'Greška pri upload-u videa.' },
+          {
+            error: uploadError.message || uploadError.error_description || JSON.stringify(uploadError) || 'Greška pri upload-u videa.',
+            code: uploadError.error,
+            full: uploadError,
+          },
           { status: 500 }
         );
       }

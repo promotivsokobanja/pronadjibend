@@ -242,7 +242,8 @@ export default function BandProfilePage() {
               resolve(parsed);
               return;
             }
-            reject(new Error(parsed?.error || 'Upload nije uspeo.'));
+            const msg = parsed?.error || parsed?.full?.message || parsed?.full?.error_description || JSON.stringify(parsed?.full) || 'Upload nije uspeo.';
+            reject(new Error(msg));
           } catch {
             reject(new Error('Upload nije uspeo.'));
           }
