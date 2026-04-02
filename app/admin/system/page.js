@@ -7,7 +7,9 @@ export default function AdminSystemPage() {
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
   const [savingDemo, setSavingDemo] = useState(false);
+  const [savingMaintenance, setSavingMaintenance] = useState(false);
   const [demoMsg, setDemoMsg] = useState('');
+  const [maintenanceMsg, setMaintenanceMsg] = useState('');
 
   const load = useCallback(async () => {
     setError('');
@@ -43,6 +45,27 @@ export default function AdminSystemPage() {
       setDemoMsg(e.message);
     } finally {
       setSavingDemo(false);
+    }
+  };
+
+  const toggleMaintenanceMode = async () => {
+    if (!data) return;
+    setSavingMaintenance(true);
+    setMaintenanceMsg('');
+    try {
+      const r = await adminFetch('/api/admin/system/settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ maintenanceMode: !data.maintenanceMode }),
+      });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error || 'Greška pri čuvanju');
+      setData((prev) => (prev ? { ...prev, maintenanceMode: j.maintenanceMode } : prev));
+      setMaintenanceMsg('Sačuvano.');
+    } catch (e) {
+      setMaintenanceMsg(e.message);
+    } finally {
+      setSavingMaintenance(false);
     }
   };
 
@@ -115,6 +138,44 @@ export default function AdminSystemPage() {
             </p>
           </>
         )}
+      </div>
+
+      <div
+        className="admin-table-wrap"
+        style={{
+          maxWidth: 560,
+          marginBottom: '1.75rem',
+          padding: '1.25rem',
+          borderRadius: 12,
+          border: '1px solid rgba(148, 163, 184, 0.35)',
+          background: 'rgba(15, 23, 42, 0.35)',
+        }}
+      >
+        <h2 style={{ fontSize: '1rem', margin: '0 0 0.5rem', fontWeight: 800 }}>Maintenance Mode (Under Construction)</h2>
+        <p style={{ color: '#94a3b8', fontSize: '0.875rem', margin: '0 0 1rem', lineHeight: 1.5 }}>
+          Kada je uključen, sajt je nevidljiv za sve posetioce osim za admine. Svi ostali će biti
+          preusmereni na "Under Construction" stranicu.
+        </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+          <span style={{ fontWeight: 700, color: data.maintenanceMode ? '#fbbf24' : '#4ade80' }}>
+            {data.maintenanceMode ? 'AKTIVAN (Sajt je zaključan)' : 'NEAKTIVAN (Sajt je javan)'}
+          </span>
+          <button
+            type="button"
+            className="admin-btn"
+            disabled={savingMaintenance}
+            onClick={toggleMaintenanceMode}
+            style={{
+              backgroundColor: data.maintenanceMode ? '#1e293b' : '#7c3aed',
+              borderColor: data.maintenanceMode ? '#475569' : '#8b5cf6',
+            }}
+          >
+            {savingMaintenance ? 'Čuvanje…' : data.maintenanceMode ? 'Onemogući Maintenance' : 'Omogući Maintenance'}
+          </button>
+        </div>
+        {maintenanceMsg ? (
+          <p style={{ margin: '0.75rem 0 0', fontSize: '0.875rem', color: '#94a3b8' }}>{maintenanceMsg}</p>
+        ) : null}
       </div>
 
       <div className="admin-table-wrap" style={{ maxWidth: 560 }}>

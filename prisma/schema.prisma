@@ -227,7 +227,11 @@ model MusicianInvite {
 
 /// Jedan zapis (id = 1): javna podešavanja (admin /sistem)
 model SiteConfig {
-  id            Int      @id @default(1)
-  showDemoBands Boolean  @default(true)
-  updatedAt     DateTime @updatedAt
+  id                    Int      @id @default(1)
+  showDemoBands         Boolean  @default(true)
+  bandProfileMaxImages  Int      @default(5)
+  bandProfileMaxVideos  Int      @default(3)
+  bandProfileMaxLinks   Int      @default(5)
+  maintenanceMode       Boolean  @default(false)
+  updatedAt             DateTime @updatedAt
 }

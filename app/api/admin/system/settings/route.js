@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '../../../../../lib/adminAuth';
-import { getDemoBandsEnvOverrideHint, getShowDemoBands, setShowDemoBands } from '../../../../../lib/siteConfig';
+import { getDemoBandsEnvOverrideHint, getShowDemoBands, setShowDemoBands, getMaintenanceMode, setMaintenanceMode } from '../../../../../lib/siteConfig';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,23 +25,25 @@ export async function PATCH(request) {
     return NextResponse.json({ error: 'Neispravan JSON.' }, { status: 400 });
   }
 
-  if (typeof body.showDemoBands !== 'boolean') {
-    return NextResponse.json({ error: 'Očekuje se showDemoBands: true | false.' }, { status: 400 });
+  if (typeof body.showDemoBands === 'boolean') {
+    try {
+      await setShowDemoBands(body.showDemoBands);
+    } catch (e) {
+      console.error('SiteConfig showDemoBands update:', e);
+      return NextResponse.json({ error: 'Nije moguće sačuvati.' }, { status: 500 });
+    }
   }
 
-  try {
-    await setShowDemoBands(body.showDemoBands);
-  } catch (e) {
-    console.error('SiteConfig update:', e);
-    return NextResponse.json(
-      {
-        error:
-          'Nije moguće sačuvati. Pokrenite migracije baze (npr. npx prisma migrate deploy) da se kreira tabela SiteConfig.',
-      },
-      { status: 500 }
-    );
+  if (typeof body.maintenanceMode === 'boolean') {
+    try {
+      await setMaintenanceMode(body.maintenanceMode);
+    } catch (e) {
+      console.error('SiteConfig maintenanceMode update:', e);
+      return NextResponse.json({ error: 'Nije moguće sačuvati.' }, { status: 500 });
+    }
   }
 
   const showDemoBands = await getShowDemoBands();
-  return NextResponse.json({ ok: true, showDemoBands });
+  const maintenanceMode = await getMaintenanceMode();
+  return NextResponse.json({ ok: true, showDemoBands, maintenanceMode });
 }

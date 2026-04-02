@@ -200,9 +200,64 @@ function applySecurityHeaders(response) {
   }
 }
 
-export function middleware(request) {
+/**
+ * Dekodira JWT payload iz auth-token cookie-ja (bez verifikacije potpisa).
+ * Koristi se samo za brzu proveru role u middleware-u; prava autorizacija
+ * se radi server-side u API rutama.
+ */
+function getAdminRoleFromCookie(request) {
+  const token = request.cookies.get('auth-token')?.value;
+  if (!token) return false;
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return false;
+    const padded = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const payload = JSON.parse(atob(padded));
+    return payload?.role === 'ADMIN';
+  } catch {
+    return false;
+  }
+}
+
+const MAINTENANCE_PATHS = [
+  '/',
+  '/about',
+  '/bands',
+  '/clients',
+  '/faq',
+  '/live',
+  '/muzicari',
+  '/premium',
+  '/privatnost',
+  '/uslovi-koriscenja',
+];
+
+function isMaintenancePath(pathname) {
+  return MAINTENANCE_PATHS.some((p) => pathname === p || pathname.startsWith(p + '/'));
+}
+
+export async function middleware(request) {
   try {
     const { pathname } = request.nextUrl;
+
+    // ── Maintenance mode gate ──────────────────────────────────
+    if (isMaintenancePath(pathname) && !getAdminRoleFromCookie(request)) {
+      try {
+        const statusUrl = new URL('/api/site/maintenance', request.url);
+        const statusRes = await fetch(statusUrl, { cache: 'no-store' });
+        if (statusRes.ok) {
+          const statusData = await statusRes.json();
+          if (statusData?.maintenanceMode) {
+            const maintenanceUrl = new URL('/under-construction', request.url);
+            const redir = NextResponse.redirect(maintenanceUrl);
+            applySecurityHeaders(redir);
+            return redir;
+          }
+        }
+      } catch {
+        // Ako provera ne uspe, pustimo korisnika kroz (fail open)
+      }
+    }
 
     if (pathname.startsWith('/admin')) {
       if (!hasAnyAuthCookie(request)) {
@@ -253,5 +308,25 @@ export const config = {
     '/api/auth/register',
     '/api/bookings',
     '/api/bookings/:path*',
+    // Maintenance mode – javne stranice (osim /login i /under-construction)
+    '/',
+    '/about',
+    '/about/:path*',
+    '/bands',
+    '/bands/:path*',
+    '/clients',
+    '/clients/:path*',
+    '/faq',
+    '/faq/:path*',
+    '/live',
+    '/live/:path*',
+    '/muzicari',
+    '/muzicari/:path*',
+    '/premium',
+    '/premium/:path*',
+    '/privatnost',
+    '/privatnost/:path*',
+    '/uslovi-koriscenja',
+    '/uslovi-koriscenja/:path*',
   ],
 };
