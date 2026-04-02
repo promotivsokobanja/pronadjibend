@@ -154,7 +154,7 @@ export default function AdminSystemPage() {
         <h2 style={{ fontSize: '1rem', margin: '0 0 0.5rem', fontWeight: 800 }}>Maintenance Mode (Under Construction)</h2>
         <p style={{ color: '#94a3b8', fontSize: '0.875rem', margin: '0 0 1rem', lineHeight: 1.5 }}>
           Kada je uključen, sajt je nevidljiv za sve posetioce osim za admine. Svi ostali će biti
-          preusmereni na "Under Construction" stranicu.
+          preusmereni na &ldquo;Under Construction&rdquo; stranicu.
         </p>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
           <span style={{ fontWeight: 700, color: data.maintenanceMode ? '#fbbf24' : '#4ade80' }}>
