@@ -135,6 +135,8 @@ export default function LoginClient() {
           router.push('/admin');
         } else if (data.user.role === 'BAND') {
           router.push('/bands');
+        } else if (data.user.role === 'MUSICIAN') {
+          router.push('/muzicari/profil');
         } else {
           router.push('/clients');
         }

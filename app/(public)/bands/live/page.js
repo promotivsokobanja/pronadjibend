@@ -6,6 +6,7 @@ import LiveDashboard from '../../../../components/LiveDashboard';
 export default function LivePage() {
   const router = useRouter();
   const [bandId, setBandId] = useState(null);
+  const [musicianId, setMusicianId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -20,19 +21,26 @@ export default function LivePage() {
         }
         const body = await r.json();
         const user = body?.user;
-        if (!user?.bandId) {
+        if (user?.bandId) {
           if (!cancelled) {
-            const msg =
-              user?.role === 'ADMIN'
-                ? 'Live režim zahteva bend profil. Kao administrator koristite Admin panel ili MIDI biblioteku, ili se ulogujte kao muzičar sa povezanim bendom.'
-                : 'Live režim je dostupan samo nalozima muzičara sa povezanim bendom.';
-            setError(msg);
+            setBandId(user.bandId);
+            setLoading(false);
+          }
+          return;
+        }
+        if (user?.musicianProfileId) {
+          if (!cancelled) {
+            setMusicianId(user.musicianProfileId);
             setLoading(false);
           }
           return;
         }
         if (!cancelled) {
-          setBandId(user.bandId);
+          const msg =
+            user?.role === 'ADMIN'
+              ? 'Live režim zahteva bend ili muzičar profil.'
+              : 'Live režim je dostupan samo nalozima sa povezanim bendom ili muzičarskim profilom.';
+          setError(msg);
           setLoading(false);
         }
       } catch {
@@ -47,6 +55,8 @@ export default function LivePage() {
     };
   }, [router]);
 
+  const ownerId = bandId || musicianId;
+
   if (loading) {
     return (
       <div className="live-page-wrapper" style={{ padding: '6rem 1rem', color: '#fff', textAlign: 'center' }}>
@@ -55,10 +65,10 @@ export default function LivePage() {
     );
   }
 
-  if (error || !bandId) {
+  if (error || !ownerId) {
     return (
       <div className="live-page-wrapper" style={{ padding: '6rem 1rem', color: '#fca5a5', textAlign: 'center', maxWidth: 520, margin: '0 auto' }}>
-        <p style={{ marginBottom: '1rem' }}>{error || 'Nedostaje ID benda.'}</p>
+        <p style={{ marginBottom: '1rem' }}>{error || 'Nedostaje ID benda ili muzičara.'}</p>
         <a href="/bands" style={{ color: '#38bdf8' }}>
           Nazad na kontrolnu tablu
         </a>
@@ -68,7 +78,7 @@ export default function LivePage() {
 
   return (
     <div className="live-page-wrapper">
-      <LiveDashboard bandId={bandId} />
+      <LiveDashboard bandId={bandId} musicianId={musicianId} />
 
       <style jsx global>{`
         .navbar,

@@ -19,6 +19,7 @@ export default function PesmaricaPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [expandedId, setExpandedId] = useState(null);
   const [bandId, setBandId] = useState(null);
+  const [musicianId, setMusicianId] = useState(null);
   const [addedSongs, setAddedSongs] = useState(new Set());
   const [addingId, setAddingId] = useState(null);
   const searchRef = useRef(null);
@@ -30,6 +31,7 @@ export default function PesmaricaPage() {
         if (!r.ok) { router.replace('/login'); return; }
         const { user } = await r.json();
         if (user?.bandId) setBandId(user.bandId);
+        else if (user?.musicianProfileId) setMusicianId(user.musicianProfileId);
       } catch { /* ignore */ }
     })();
   }, [router]);
@@ -80,21 +82,25 @@ export default function PesmaricaPage() {
     setPage(1);
   };
 
+  const ownerId = bandId || musicianId;
+
   const handleAddToRepertoire = async (song) => {
-    if (!bandId || addingId) return;
+    if (!ownerId || addingId) return;
     setAddingId(song.id);
     try {
+      const body = {
+        title: song.title,
+        artist: song.artist,
+        lyrics: song.lyrics,
+        category: song.category || 'Zabavne',
+        type: 'Standard',
+      };
+      if (bandId) body.bandId = bandId;
+      else body.musicianId = musicianId;
       const resp = await fetch('/api/songs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: song.title,
-          artist: song.artist,
-          lyrics: song.lyrics,
-          category: song.category || 'Zabavne',
-          type: 'Standard',
-          bandId,
-        }),
+        body: JSON.stringify(body),
       });
       if (resp.ok) setAddedSongs(prev => new Set([...prev, song.id]));
     } catch (err) {

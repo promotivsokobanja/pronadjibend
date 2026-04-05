@@ -1,5 +1,6 @@
 import prisma from '../../../lib/prisma';
 import { NextResponse } from 'next/server';
+import { resolveSongOwner } from '../../../lib/songOwner';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,9 +19,10 @@ function normalizeSongCategory(category) {
   return value;
 }
 
-async function createPendingSubmissionIfNeeded(song, bandId) {
-  const normalizedBandId = String(bandId || '').trim();
-  if (!normalizedBandId) return;
+async function createPendingSubmissionIfNeeded(song, owner) {
+  const normalizedBandId = owner?.type === 'band' ? String(owner.id || '').trim() : '';
+  const normalizedMusicianId = owner?.type === 'musician' ? String(owner.id || '').trim() : '';
+  if (!normalizedBandId && !normalizedMusicianId) return;
 
   const existingGlobal = await prisma.song.findFirst({
     where: {
@@ -36,7 +38,8 @@ async function createPendingSubmissionIfNeeded(song, bandId) {
   const existingPending = await prisma.songSubmission.findFirst({
     where: {
       status: 'PENDING',
-      submittedByBandId: normalizedBandId,
+      ...(normalizedBandId ? { submittedByBandId: normalizedBandId } : {}),
+      ...(normalizedMusicianId ? { submittedByMusicianId: normalizedMusicianId } : {}),
       title: { equals: song.title, mode: 'insensitive' },
       artist: { equals: song.artist, mode: 'insensitive' },
     },
@@ -55,7 +58,8 @@ async function createPendingSubmissionIfNeeded(song, bandId) {
       category: song.category,
       type: song.type,
       sourceSongId: song.id,
-      submittedByBandId: normalizedBandId,
+      submittedByBandId: normalizedBandId || null,
+      submittedByMusicianId: normalizedMusicianId || null,
     },
   });
 }
@@ -66,6 +70,7 @@ export async function GET(request) {
     const category = searchParams.get('category');
     const search = searchParams.get('search');
     const bandId = searchParams.get('bandId');
+    const musicianId = searchParams.get('musicianId');
     const limitRaw = searchParams.get('limit');
     const take =
       limitRaw != null && limitRaw !== ''
@@ -73,7 +78,12 @@ export async function GET(request) {
         : undefined;
 
     let where = {};
-    if (bandId) where.bandId = bandId;
+    if (bandId) {
+      where.bandId = bandId;
+    } else if (musicianId) {
+      where.musicianProfileId = musicianId;
+    }
+
     if (category && category !== 'Sve') {
       const allowedCategories = CATEGORY_FILTER_MAP[category];
       where.category = allowedCategories ? { in: allowedCategories } : category;
@@ -99,7 +109,14 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
-    const { title, artist, lyrics, chords, category, type, bandId } = await request.json();
+    const body = await request.json();
+    const { title, artist, lyrics, chords, category, type } = body;
+    const { owner, error } = await resolveSongOwner(request, body || {});
+    if (error) return error;
+
+    if (!owner) {
+      return NextResponse.json({ error: 'Nije pronađen vlasnik pesme.' }, { status: 400 });
+    }
 
     if (!title || !artist) {
       return NextResponse.json({ error: 'Naslov i izvođač su obavezni.' }, { status: 400 });
@@ -131,12 +148,13 @@ export async function POST(request) {
         chords,
         category: normalizeSongCategory(category),
         type,
-        bandId,
+        bandId: owner?.type === 'band' ? owner.id : null,
+        musicianProfileId: owner?.type === 'musician' ? owner.id : null,
       },
     });
 
     try {
-      await createPendingSubmissionIfNeeded(song, bandId);
+      await createPendingSubmissionIfNeeded(song, owner);
     } catch (submissionError) {
       console.error('Song submission queue error:', submissionError);
     }

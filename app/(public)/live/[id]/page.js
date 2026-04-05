@@ -9,7 +9,10 @@ const TIP_PRESETS = [500, 1000, 2000];
  * castiModal: null | menu | voucher | success (samo bakšiš bez pesme, ako allowTips)
  */
 export default function GuestLivePage({ params }) {
-  const bandId = params.id;
+  const rawId = params.id;
+  const [ownerType, setOwnerType] = useState(null); // 'band' | 'musician'
+  const [bandId, setBandId] = useState(null);
+  const [musicianId, setMusicianId] = useState(null);
   const [songs, setSongs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('');
@@ -58,10 +61,52 @@ export default function GuestLivePage({ params }) {
     setCastiModal('menu');
   };
 
+  // Detect owner type (band or musician) from rawId
   useEffect(() => {
+    const detect = async () => {
+      try {
+        const bandResp = await fetch(`/api/bands/${encodeURIComponent(rawId)}`);
+        if (bandResp.ok) {
+          const b = await bandResp.json();
+          if (!b?.error) {
+            setBandId(rawId);
+            setOwnerType('band');
+            if (b?.name) setBandName(String(b.name));
+            setAllowTips(b?.allowTips !== false);
+            return;
+          }
+        }
+        const musicianResp = await fetch(`/api/musicians/${encodeURIComponent(rawId)}`);
+        if (musicianResp.ok) {
+          const m = await musicianResp.json();
+          if (!m?.error) {
+            setMusicianId(rawId);
+            setOwnerType('musician');
+            if (m?.name) setBandName(String(m.name));
+            setAllowTips(true);
+            return;
+          }
+        }
+        setOwnerType('unknown');
+      } catch {
+        setOwnerType('unknown');
+      }
+    };
+    detect();
+  }, [rawId]);
+
+  // Fetch songs once owner type is known
+  useEffect(() => {
+    if (!ownerType || ownerType === 'unknown') {
+      if (ownerType === 'unknown') setLoading(false);
+      return;
+    }
     const fetchSongs = async () => {
       try {
-        const resp = await fetch(`/api/songs?bandId=${encodeURIComponent(bandId)}`);
+        const param = ownerType === 'band'
+          ? `bandId=${encodeURIComponent(rawId)}`
+          : `musicianId=${encodeURIComponent(rawId)}`;
+        const resp = await fetch(`/api/songs?${param}`);
         const data = await resp.json();
         const list = Array.isArray(data) ? data : [];
         setSongs(list);
@@ -76,22 +121,7 @@ export default function GuestLivePage({ params }) {
       }
     };
     fetchSongs();
-  }, [bandId]);
-
-  useEffect(() => {
-    const loadBand = async () => {
-      try {
-        const r = await fetch(`/api/bands/${encodeURIComponent(bandId)}`);
-        if (!r.ok) return;
-        const b = await r.json();
-        if (b?.name) setBandName(String(b.name));
-        setAllowTips(b?.allowTips !== false);
-      } catch {
-        /* ignore */
-      }
-    };
-    loadBand();
-  }, [bandId]);
+  }, [ownerType, rawId]);
 
   const categories = [...new Set(songs.map((s) => s.category || s.type).filter(Boolean))];
 
@@ -116,9 +146,10 @@ export default function GuestLivePage({ params }) {
     try {
       const body = {
         songId: selectedSong.id,
-        bandId,
         tableNum: String(tableNum).trim(),
       };
+      if (ownerType === 'band') body.bandId = rawId;
+      else body.musicianId = rawId;
       if (waiterTipRsd > 0) body.waiterTipRsd = waiterTipRsd;
 
       const resp = await fetch('/api/live-requests', {
@@ -223,15 +254,13 @@ export default function GuestLivePage({ params }) {
 
     setTipSending(true);
     try {
+      const tipBody = { requestType: 'WAITER_TIP', tableNum: t, message };
+      if (ownerType === 'band') tipBody.bandId = rawId;
+      else tipBody.musicianId = rawId;
       const resp = await fetch('/api/live-requests', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          requestType: 'WAITER_TIP',
-          bandId,
-          tableNum: t,
-          message,
-        }),
+        body: JSON.stringify(tipBody),
       });
       const data = await resp.json();
       if (!resp.ok) throw new Error(data.error || 'Slanje nije uspelo.');

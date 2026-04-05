@@ -13,7 +13,14 @@ export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
     const bandId = searchParams.get('bandId');
-    const where = bandId ? { bandId } : {};
+    const musicianId = searchParams.get('musicianId');
+    const where = {};
+
+    if (bandId) {
+      where.bandId = bandId;
+    } else if (musicianId) {
+      where.musicianProfileId = musicianId;
+    }
 
     const counts = await prisma.song.groupBy({
       by: ['category'],

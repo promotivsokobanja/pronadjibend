@@ -136,6 +136,7 @@ export async function GET(request) {
       const dbQuery = {
         where: {
           AND: [
+            { deletedAt: null },
             search
               ? {
                   OR: [

@@ -1,6 +1,6 @@
 'use client';
 
-import { Save, ArrowLeft, Image as ImageIcon, Video, Mail, Phone, MessageSquare, Download, Lock } from 'lucide-react';
+import { Save, ArrowLeft, Image as ImageIcon, Video, Mail, Phone, MessageSquare, Download, Lock, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -36,6 +36,9 @@ export default function BandProfilePage() {
   const [passwordSaving, setPasswordSaving] = useState(false);
   const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -647,6 +650,70 @@ export default function BandProfilePage() {
               </form>
             )}
           </section>
+
+          <section className="profile-card delete-section">
+            <div className="password-header">
+              <div className="password-header-text">
+                <h3 className="danger-title"><Trash2 size={18} /> Brisanje naloga</h3>
+                <p>Trajno brisanje vašeg naloga, profila i svih povezanih podataka.</p>
+              </div>
+              {!showDeleteConfirm && (
+                <button type="button" className="btn btn-danger btn-sm" onClick={() => setShowDeleteConfirm(true)}>
+                  Obriši nalog
+                </button>
+              )}
+            </div>
+            {showDeleteConfirm && (
+              <div className="password-form">
+                <p style={{ color: '#dc2626', fontWeight: 700, fontSize: '0.85rem' }}>
+                  Da li ste sigurni? Ova akcija je nepovratna. Unesite lozinku za potvrdu.
+                </p>
+                <div className="field">
+                  <label>Lozinka za potvrdu</label>
+                  <input
+                    type="password"
+                    placeholder="Vaša lozinka"
+                    value={deletePassword}
+                    onChange={(e) => setDeletePassword(e.target.value)}
+                  />
+                </div>
+                <div className="form-actions">
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    disabled={deleting}
+                    onClick={() => { setShowDeleteConfirm(false); setDeletePassword(''); }}
+                  >
+                    Odustani
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-danger"
+                    disabled={deleting}
+                    onClick={async () => {
+                      setDeleting(true);
+                      setError('');
+                      try {
+                        const res = await fetch('/api/account/self', {
+                          method: 'DELETE',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ password: deletePassword }),
+                        });
+                        const data = await res.json().catch(() => ({}));
+                        if (!res.ok) throw new Error(data?.error || 'Brisanje nije uspelo.');
+                        window.location.href = '/';
+                      } catch (err) {
+                        setError(err?.message || 'Greška pri brisanju naloga.');
+                        setDeleting(false);
+                      }
+                    }}
+                  >
+                    <Trash2 size={16} /> {deleting ? 'Brisanje...' : 'Potvrdi brisanje'}
+                  </button>
+                </div>
+              </div>
+            )}
+          </section>
           </>
         )}
       </div>
@@ -855,6 +922,26 @@ export default function BandProfilePage() {
         .alert.error { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
         .alert.success { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
         
+        .delete-section {
+          margin-top: 1.5rem;
+          border-color: #fecaca;
+          background: #fef2f2;
+        }
+        .danger-title {
+          color: #dc2626 !important;
+        }
+        .btn-danger {
+          background: #e11d48;
+          color: #fff;
+          border-color: #e11d48;
+          display: inline-flex;
+          align-items: center;
+          gap: 0.4rem;
+        }
+        .btn-danger:hover {
+          background: #be123c;
+          border-color: #be123c;
+        }
         .password-section {
           margin-top: 1.5rem;
         }

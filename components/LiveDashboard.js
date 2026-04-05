@@ -3,7 +3,8 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Radio, ListMusic, Eye, EyeOff, MessageSquare, Music, Clock, Settings, ArrowLeft, X, Volume2, VolumeX, Zap, ZapOff, Type, RotateCcw, ChevronDown, Bell, Banknote } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
-export default function LiveDashboard({ bandId }) {
+export default function LiveDashboard({ bandId, musicianId }) {
+  const ownerId = bandId || musicianId;
   const router = useRouter();
   const [isNightMode, setIsNightMode] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
@@ -44,7 +45,7 @@ export default function LiveDashboard({ bandId }) {
   };
 
   const saveMaxPendingRequests = useCallback(async (nextValue) => {
-    if (!bandId) return;
+    if (!bandId) return; // settings only for bands
     try {
       await fetch(`/api/bands/${encodeURIComponent(bandId)}/live-settings`, {
         method: 'PATCH',
@@ -61,7 +62,7 @@ export default function LiveDashboard({ bandId }) {
   const handleMaxRequestsChange = (rawValue) => {
     const nextValue = normalizeMaxRequests(rawValue);
     updateSetting('maxRequests', nextValue);
-    if (!bandId) return;
+    if (!bandId) return; // settings save only for bands
     if (maxRequestsSaveTimerRef.current) {
       clearTimeout(maxRequestsSaveTimerRef.current);
     }
@@ -78,7 +79,7 @@ export default function LiveDashboard({ bandId }) {
   };
 
   useEffect(() => {
-    if (!bandId) return;
+    if (!bandId) return; // live-settings only exist for bands
     let cancelled = false;
 
     const loadLiveSettings = async () => {
@@ -203,9 +204,10 @@ export default function LiveDashboard({ bandId }) {
 
   // Poll live requests from database
   const fetchRequests = useCallback(async () => {
-    if (!bandId) return;
+    if (!ownerId) return;
     try {
-      const resp = await fetch(`/api/live-requests?bandId=${encodeURIComponent(bandId)}`, { cache: 'no-store' });
+      const param = bandId ? `bandId=${encodeURIComponent(bandId)}` : `musicianId=${encodeURIComponent(musicianId)}`;
+      const resp = await fetch(`/api/live-requests?${param}`, { cache: 'no-store' });
       if (!resp.ok) return;
       const data = await resp.json();
       if (!Array.isArray(data)) return;
@@ -273,7 +275,7 @@ export default function LiveDashboard({ bandId }) {
     } catch (err) {
       console.error('Error fetching live requests:', err);
     }
-  }, [bandId, playNotification, playTipNotification]);
+  }, [ownerId, bandId, musicianId, playNotification, playTipNotification]);
 
   const [pollIntervalMs, setPollIntervalMs] = useState(4000);
   useEffect(() => {
@@ -291,9 +293,9 @@ export default function LiveDashboard({ bandId }) {
     return () => clearInterval(interval);
   }, [fetchRequests, pollIntervalMs]);
 
-  // Fetch songs for this band (Live mode mora znati bandId iz prijave)
+  // Fetch songs for this band/musician
   useEffect(() => {
-    if (!bandId) {
+    if (!ownerId) {
       setAllSongs([]);
       setSongLoading(false);
       return;
@@ -301,7 +303,8 @@ export default function LiveDashboard({ bandId }) {
     const fetchSongs = async () => {
       setSongLoading(true);
       try {
-        const resp = await fetch(`/api/songs?bandId=${encodeURIComponent(bandId)}`, {
+        const param = bandId ? `bandId=${encodeURIComponent(bandId)}` : `musicianId=${encodeURIComponent(musicianId)}`;
+        const resp = await fetch(`/api/songs?${param}`, {
           cache: 'no-store',
         });
         const data = await resp.json();
@@ -314,7 +317,7 @@ export default function LiveDashboard({ bandId }) {
       }
     };
     fetchSongs();
-  }, [bandId]);
+  }, [ownerId, bandId, musicianId]);
 
   useEffect(() => {
     const list = Array.isArray(allSongs) ? allSongs : [];

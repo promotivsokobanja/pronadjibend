@@ -12,8 +12,16 @@ export async function GET(request) {
     const page = parseInt(searchParams.get('page') || '1', 10);
     const limit = Math.min(parseInt(searchParams.get('limit') || '50', 10), 200);
     const skip = (page - 1) * limit;
+    const bandId = searchParams.get('bandId');
+    const musicianId = searchParams.get('musicianId');
 
     const where = {};
+
+    if (bandId) {
+      where.bandId = bandId;
+    } else if (musicianId) {
+      where.musicianProfileId = musicianId;
+    }
 
     if (category && category !== 'Sve') {
       where.category = category;
@@ -42,6 +50,9 @@ export async function GET(request) {
           fileName: true,
           fileSize: true,
           fileType: true,
+          uploadedBy: true,
+          bandId: true,
+          musicianProfileId: true,
         },
         orderBy: { title: 'asc' },
         skip,

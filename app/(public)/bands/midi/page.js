@@ -32,6 +32,10 @@ export default function MidiLibraryPage() {
   const [uploadCategory, setUploadCategory] = useState('Zabavna');
   const [uploading, setUploading] = useState(false);
   const [deleting, setDeleting] = useState(null);
+  const [canUpload, setCanUpload] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState(null);
+  const [currentBandId, setCurrentBandId] = useState(null);
+  const [currentMusicianId, setCurrentMusicianId] = useState(null);
 
   useEffect(() => {
     (async () => {
@@ -41,9 +45,22 @@ export default function MidiLibraryPage() {
         const { user } = await r.json();
         setIsPremium(user?.plan === 'PREMIUM' || user?.role === 'ADMIN');
         setIsAdmin(user?.role === 'ADMIN');
+        setCanUpload(user?.role === 'ADMIN' || !!user?.bandId || !!user?.musicianProfileId);
+        setCurrentUserId(user?.id || null);
+        setCurrentBandId(user?.bandId || null);
+        setCurrentMusicianId(user?.musicianProfileId || null);
       } catch {}
     })();
   }, [router]);
+
+  const canDeleteFile = (file) => {
+    if (isAdmin) return true;
+    if (!canUpload) return false;
+    if (file.uploadedBy && file.uploadedBy === currentUserId) return true;
+    if (file.bandId && file.bandId === currentBandId) return true;
+    if (file.musicianProfileId && file.musicianProfileId === currentMusicianId) return true;
+    return false;
+  };
 
   const fetchFiles = useCallback(async (pageToFetch) => {
     setIsLoading(true);
@@ -192,7 +209,7 @@ export default function MidiLibraryPage() {
           {!canAccess && <span className="locked-badge"><Lock size={12} /> Potreban PREMIUM</span>}
         </div>
 
-        {isAdmin && (
+        {canUpload && (
           <div className="admin-bar">
             <button className="upload-toggle-btn" onClick={() => setShowUpload(!showUpload)}>
               <Upload size={16} /> {showUpload ? 'Zatvori upload' : 'Dodaj MIDI / MP3'}
@@ -200,7 +217,7 @@ export default function MidiLibraryPage() {
           </div>
         )}
 
-        {showUpload && isAdmin && (
+        {showUpload && canUpload && (
           <form className="upload-form" onSubmit={handleUpload}>
             <div className="uf-row">
               <label className="file-input-label">
@@ -360,21 +377,21 @@ export default function MidiLibraryPage() {
                   </div>
                   <div className="col-size">{formatSize(file.fileSize)}</div>
                   <div className="col-dl">
-                    {canAccess ? (
-                      <div className="action-btns">
+                    <div className="action-btns">
+                      {canAccess ? (
                         <button className="dl-btn" onClick={() => handleDownload(file)} disabled={downloading === file.id}>
                           <Download size={14} />
                           {downloading === file.id ? '...' : isAudio ? '.mp3' : '.mid'}
                         </button>
-                        {isAdmin && (
-                          <button className="del-btn" onClick={() => handleDelete(file)} disabled={deleting === file.id} title="Obriši">
-                            <Trash2 size={14} />
-                          </button>
-                        )}
-                      </div>
-                    ) : (
-                      <span className="lock-icon"><Lock size={14} /></span>
-                    )}
+                      ) : (
+                        <span className="lock-icon"><Lock size={14} /></span>
+                      )}
+                      {canDeleteFile(file) && (
+                        <button className="del-btn" onClick={() => handleDelete(file)} disabled={deleting === file.id} title="Obriši">
+                          <Trash2 size={14} />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               );

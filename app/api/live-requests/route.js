@@ -15,11 +15,67 @@ function normalizeMaxPendingRequests(value) {
   return normalized;
 }
 
-async function hasPendingCapacity(bandId, maxPendingRequests) {
+function buildOwnerFilter(owner) {
+  return owner.type === 'band' ? { bandId: owner.id } : { musicianProfileId: owner.id };
+}
+
+async function resolveLiveOwner({ bandId, musicianId }) {
+  const normalizedBandId = bandId ? String(bandId).trim() : '';
+  const normalizedMusicianId = musicianId ? String(musicianId).trim() : '';
+
+  if (normalizedBandId) {
+    const band = await prisma.band.findUnique({
+      where: { id: normalizedBandId },
+      select: { id: true, allowTips: true, maxPendingRequests: true },
+    });
+    if (!band) {
+      return {
+        error: NextResponse.json({ error: 'Bend nije pronađen.' }, { status: 404 }),
+      };
+    }
+    return {
+      owner: {
+        type: 'band',
+        id: band.id,
+        allowTips: band.allowTips,
+        maxPendingRequests: band.maxPendingRequests,
+      },
+    };
+  }
+
+  if (normalizedMusicianId) {
+    const musician = await prisma.musicianProfile.findUnique({
+      where: { id: normalizedMusicianId },
+      select: { id: true },
+    });
+    if (!musician) {
+      return {
+        error: NextResponse.json({ error: 'Muzičar nije pronađen.' }, { status: 404 }),
+      };
+    }
+    return {
+      owner: {
+        type: 'musician',
+        id: musician.id,
+        allowTips: true,
+        maxPendingRequests: 10,
+      },
+    };
+  }
+
+  return {
+    error: NextResponse.json(
+      { error: 'bandId ili musicianId su obavezni.' },
+      { status: 400 }
+    ),
+  };
+}
+
+async function hasPendingCapacity(ownerFilter, maxPendingRequests) {
   const max = normalizeMaxPendingRequests(maxPendingRequests);
   if (max === 0) return true;
   const pendingCount = await prisma.liveRequest.count({
-    where: { bandId, status: 'PENDING' },
+    where: { ...ownerFilter, status: 'PENDING' },
   });
   return pendingCount < max;
 }
@@ -27,14 +83,14 @@ async function hasPendingCapacity(bandId, maxPendingRequests) {
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const bandId = searchParams.get('bandId');
-
-    if (!bandId) {
-      return NextResponse.json({ error: 'bandId je obavezan' }, { status: 400 });
-    }
+    const { owner, error } = await resolveLiveOwner({
+      bandId: searchParams.get('bandId'),
+      musicianId: searchParams.get('musicianId'),
+    });
+    if (error) return error;
 
     const requests = await prisma.liveRequest.findMany({
-      where: { bandId },
+      where: buildOwnerFilter(owner),
       include: {
         song: { select: { id: true, title: true, artist: true } },
       },
@@ -78,15 +134,21 @@ export async function POST(request) {
   try {
     const body = await request.json();
     const requestType = String(body?.requestType || 'SONG').toUpperCase();
+    const { owner, error } = await resolveLiveOwner({
+      bandId: body?.bandId,
+      musicianId: body?.musicianId,
+    });
+    if (error) return error;
+
+    const ownerFilter = buildOwnerFilter(owner);
 
     if (requestType === 'WAITER_TIP') {
-      const bandId = body?.bandId;
       const tableNum = body?.tableNum != null ? String(body.tableNum).trim() : '';
       const message = String(body?.message || '').trim();
 
-      if (!bandId || !tableNum) {
+      if (!tableNum) {
         return NextResponse.json(
-          { error: 'bandId i tableNum su obavezni za bakšiš preko konobara.' },
+          { error: 'tableNum je obavezan za bakšiš preko konobara.' },
           { status: 400 }
         );
       }
@@ -98,19 +160,11 @@ export async function POST(request) {
         );
       }
 
-      const band = await prisma.band.findUnique({
-        where: { id: bandId },
-        select: { id: true, maxPendingRequests: true },
-      });
-      if (!band) {
-        return NextResponse.json({ error: 'Bend nije pronađen' }, { status: 404 });
-      }
-
-      const canQueue = await hasPendingCapacity(bandId, band.maxPendingRequests);
+      const canQueue = await hasPendingCapacity(ownerFilter, owner.maxPendingRequests);
       if (!canQueue) {
         return NextResponse.json(
           {
-            error: `Trenutno je dostignut limit zahteva na čekanju (${normalizeMaxPendingRequests(band.maxPendingRequests)}). Sačekajte da bend prihvati neki zahtev.`,
+            error: `Trenutno je dostignut limit zahteva na čekanju (${normalizeMaxPendingRequests(owner.maxPendingRequests)}). Sačekajte da izvođač prihvati neki zahtev.`,
           },
           { status: 429 }
         );
@@ -118,7 +172,7 @@ export async function POST(request) {
 
       const liveRequest = await prisma.liveRequest.create({
         data: {
-          bandId,
+          ...ownerFilter,
           tableNum,
           status: 'PENDING',
           requestType: 'WAITER_TIP',
@@ -138,7 +192,7 @@ export async function POST(request) {
       });
     }
 
-    const { songId, bandId, tableNum } = body;
+    const { songId, tableNum } = body;
     const waiterTipRsdRaw = body?.waiterTipRsd;
     const waiterTipParsed =
       waiterTipRsdRaw === null || waiterTipRsdRaw === undefined || waiterTipRsdRaw === ''
@@ -147,41 +201,40 @@ export async function POST(request) {
     const waiterTipRsd =
       Number.isFinite(waiterTipParsed) && waiterTipParsed > 0 ? Math.floor(waiterTipParsed) : 0;
 
-    if (!songId || !bandId || !tableNum) {
+    if (!songId || !tableNum) {
       return NextResponse.json(
-        { error: 'songId, bandId i tableNum su obavezni' },
+        { error: 'songId i tableNum su obavezni' },
         { status: 400 }
       );
     }
 
-    const band = await prisma.band.findUnique({
-      where: { id: bandId },
-      select: { id: true, allowTips: true, maxPendingRequests: true },
-    });
-    if (!band) {
-      return NextResponse.json({ error: 'Bend nije pronađen' }, { status: 404 });
-    }
-
-    const canQueue = await hasPendingCapacity(bandId, band.maxPendingRequests);
+    const canQueue = await hasPendingCapacity(ownerFilter, owner.maxPendingRequests);
     if (!canQueue) {
       return NextResponse.json(
         {
-          error: `Trenutno je dostignut limit zahteva na čekanju (${normalizeMaxPendingRequests(band.maxPendingRequests)}). Sačekajte da bend prihvati neki zahtev.`,
+          error: `Trenutno je dostignut limit zahteva na čekanju (${normalizeMaxPendingRequests(owner.maxPendingRequests)}). Sačekajte da izvođač prihvati neki zahtev.`,
         },
         { status: 429 }
       );
     }
 
-    if (waiterTipRsd > 0 && !band.allowTips) {
+    if (waiterTipRsd > 0 && owner.type === 'band' && owner.allowTips === false) {
       return NextResponse.json(
-        { error: 'Bend je isključio opciju bakšiša za goste.' },
+        { error: 'Izvođač je isključio opciju bakšiša za goste.' },
         { status: 403 }
       );
     }
 
-    const song = await prisma.song.findUnique({ where: { id: songId } });
+    const song = await prisma.song.findFirst({
+      where: {
+        id: songId,
+        ...(owner.type === 'band'
+          ? { bandId: owner.id }
+          : { musicianProfileId: owner.id }),
+      },
+    });
     if (!song) {
-      return NextResponse.json({ error: 'Pesma nije pronađena' }, { status: 404 });
+      return NextResponse.json({ error: 'Pesma nije pronađena.' }, { status: 404 });
     }
 
     const tNum = String(tableNum).trim();
@@ -193,7 +246,7 @@ export async function POST(request) {
     const liveRequest = await prisma.liveRequest.create({
       data: {
         songId,
-        bandId,
+        ...ownerFilter,
         tableNum: tNum,
         status: 'PENDING',
         requestType: 'SONG',

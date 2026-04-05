@@ -1,15 +1,26 @@
 import prisma from '../../../../lib/prisma';
 import { NextResponse } from 'next/server';
+import { ensureSongOwnership } from '../../../../lib/songOwner';
 
 export const dynamic = 'force-dynamic';
+
+async function loadSongOr404(id) {
+  const song = await prisma.song.findUnique({ where: { id: id.toString() } });
+  if (!song) return null;
+  return song;
+}
 
 export async function GET(request, { params } = {}) {
   const id = params?.id;
   if (!id) return NextResponse.json({ error: 'ID is required' }, { status: 400 });
 
   try {
-    const song = await prisma.song.findUnique({ where: { id: id.toString() } });
+    const song = await loadSongOr404(id);
     if (!song) return NextResponse.json({ error: 'Song not found' }, { status: 404 });
+
+    const { error } = await ensureSongOwnership(request, song);
+    if (error) return error;
+
     return NextResponse.json(song);
   } catch (error) {
     console.error('API Error:', error);
@@ -23,11 +34,24 @@ export async function PATCH(request, { params } = {}) {
 
   try {
     const body = await request.json();
-    const song = await prisma.song.update({
-      where: { id: id.toString() },
-      data: { lyrics: body.lyrics, chords: body.chords, title: body.title, artist: body.artist },
+    const song = await loadSongOr404(id);
+    if (!song) return NextResponse.json({ error: 'Song not found' }, { status: 404 });
+
+    const { error } = await ensureSongOwnership(request, song);
+    if (error) return error;
+
+    const updated = await prisma.song.update({
+      where: { id: song.id },
+      data: {
+        lyrics: body.lyrics,
+        chords: body.chords,
+        title: body.title,
+        artist: body.artist,
+        category: body.category ?? song.category,
+        type: body.type ?? song.type,
+      },
     });
-    return NextResponse.json(song);
+    return NextResponse.json(updated);
   } catch (error) {
     console.error('API Error:', error);
     return NextResponse.json({ error: 'Failed to update song' }, { status: 500 });
@@ -39,20 +63,11 @@ export async function DELETE(request, { params } = {}) {
   if (!id) return NextResponse.json({ error: 'ID is required' }, { status: 400 });
 
   try {
-    const { searchParams } = new URL(request.url);
-    const bandId = searchParams.get('bandId');
+    const song = await loadSongOr404(id);
+    if (!song) return NextResponse.json({ error: 'Song not found' }, { status: 404 });
 
-    const song = await prisma.song.findFirst({
-      where: {
-        id: id.toString(),
-        ...(bandId ? { bandId } : {}),
-      },
-      select: { id: true },
-    });
-
-    if (!song) {
-      return NextResponse.json({ error: 'Song not found' }, { status: 404 });
-    }
+    const { error } = await ensureSongOwnership(request, song);
+    if (error) return error;
 
     await prisma.$transaction([
       prisma.liveRequest.updateMany({

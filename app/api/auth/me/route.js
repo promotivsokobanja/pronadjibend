@@ -24,14 +24,25 @@ export async function GET(request) {
         role: true,
         bandId: true,
         plan: true,
+        deletedAt: true,
+        musicianProfile: { select: { id: true } },
       },
     });
 
-    if (!user) {
+    if (!user || user.deletedAt) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    return NextResponse.json({ user });
+    return NextResponse.json({
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        bandId: user.bandId,
+        plan: user.plan,
+        musicianProfileId: user.musicianProfile?.id || null,
+      },
+    });
   } catch (error) {
     console.error('Auth me error:', error);
     const safe = responseFromDatabaseError(error);

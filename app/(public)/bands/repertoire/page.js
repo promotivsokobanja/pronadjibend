@@ -14,6 +14,8 @@ export default function RepertoirePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [globalMatches, setGlobalMatches] = useState([]);
   const [bandId, setBandId] = useState(null);
+  const [musicianId, setMusicianId] = useState(null);
+  const ownerId = bandId || musicianId;
 
   useEffect(() => {
     (async () => {
@@ -22,6 +24,7 @@ export default function RepertoirePage() {
         if (!r.ok) return;
         const { user } = await r.json();
         if (user?.bandId) setBandId(user.bandId);
+        else if (user?.musicianProfileId) setMusicianId(user.musicianProfileId);
       } catch {
         /* ignore */
       }
@@ -29,18 +32,17 @@ export default function RepertoirePage() {
   }, []);
 
   const fetchData = useCallback(async () => {
-    if (!bandId) {
+    if (!ownerId) {
       setSongs([]);
       setIsLoading(false);
       return;
     }
     setIsLoading(true);
     try {
-      const qs = new URLSearchParams({
-        category: activeTab,
-        search: searchTerm,
-        bandId,
-      }).toString();
+      const params = { category: activeTab, search: searchTerm };
+      if (bandId) params.bandId = bandId;
+      else if (musicianId) params.musicianId = musicianId;
+      const qs = new URLSearchParams(params).toString();
       const resp = await fetch(`/api/songs?${qs}`, { cache: 'no-store' });
       const data = await resp.json();
       setSongs(Array.isArray(data) ? data : []);
@@ -60,32 +62,35 @@ export default function RepertoirePage() {
     } finally {
       setIsLoading(false);
     }
-  }, [bandId, activeTab, searchTerm]);
+  }, [ownerId, bandId, musicianId, activeTab, searchTerm]);
 
   const fetchCounts = useCallback(async () => {
-    if (!bandId) return;
+    if (!ownerId) return;
     try {
-      const resp = await fetch(`/api/songs/counts?bandId=${encodeURIComponent(bandId)}`, { cache: 'no-store' });
+      const countParam = bandId ? `bandId=${encodeURIComponent(bandId)}` : `musicianId=${encodeURIComponent(musicianId)}`;
+      const resp = await fetch(`/api/songs/counts?${countParam}`, { cache: 'no-store' });
       const data = await resp.json();
       setCounts(typeof data === 'object' && data && !data.error ? data : {});
     } catch (err) {
       console.error(err);
     }
-  }, [bandId]);
+  }, [ownerId, bandId, musicianId]);
 
   const handleQuickAdd = async (masterSong) => {
-    if (!bandId) return;
+    if (!ownerId) return;
     try {
+      const body = {
+        title: masterSong.title,
+        artist: masterSong.artist,
+        category: masterSong.type,
+        type: 'Standard',
+      };
+      if (bandId) body.bandId = bandId;
+      else if (musicianId) body.musicianId = musicianId;
       const resp = await fetch('/api/songs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: masterSong.title,
-          artist: masterSong.artist,
-          category: masterSong.type,
-          type: 'Standard',
-          bandId
-        })
+        body: JSON.stringify(body)
       });
       if (resp.ok) {
         fetchData();
@@ -97,8 +102,8 @@ export default function RepertoirePage() {
   };
 
   useEffect(() => {
-    if (bandId) fetchCounts();
-  }, [bandId, fetchCounts]);
+    if (ownerId) fetchCounts();
+  }, [ownerId, fetchCounts]);
 
   useEffect(() => {
     const timer = setTimeout(() => fetchData(), 300);
@@ -114,7 +119,7 @@ export default function RepertoirePage() {
     setSongs((prev) => prev.filter((s) => s.id !== id));
 
     try {
-      const qs = bandId ? `?bandId=${encodeURIComponent(bandId)}` : '';
+      const qs = bandId ? `?bandId=${encodeURIComponent(bandId)}` : musicianId ? `?musicianId=${encodeURIComponent(musicianId)}` : '';
       const resp = await fetch(`/api/songs/${encodeURIComponent(id)}${qs}`, {
         method: 'DELETE',
       });

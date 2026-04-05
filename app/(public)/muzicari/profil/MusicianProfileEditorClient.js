@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, Save, UserRound, Mail, CalendarDays, Euro, MapPin, Music, Video, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, Save, UserRound, Mail, CalendarDays, Euro, MapPin, Music, Video, Image as ImageIcon, ListMusic, Radio, Headphones, Trash2, QrCode } from 'lucide-react';
+import QrModal from '../../../../components/QrModal';
 
 const initialForm = {
   name: '',
@@ -37,6 +38,10 @@ export default function MusicianProfileEditorClient() {
   const [uploadingVideo, setUploadingVideo] = useState(false);
   const [imageProgress, setImageProgress] = useState(0);
   const [videoProgress, setVideoProgress] = useState(0);
+  const [deleting, setDeleting] = useState(false);
+  const [deletePassword, setDeletePassword] = useState('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showQr, setShowQr] = useState(false);
   const imageInputRef = useRef(null);
   const videoInputRef = useRef(null);
 
@@ -282,6 +287,26 @@ export default function MusicianProfileEditorClient() {
     }
   };
 
+  const handleDeleteAccount = async () => {
+    setDeleting(true);
+    setError('');
+    try {
+      const res = await fetch('/api/account/self', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: deletePassword }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data?.error || 'Brisanje nije uspelo.');
+      }
+      window.location.href = '/';
+    } catch (err) {
+      setError(err?.message || 'Greška pri brisanju naloga.');
+      setDeleting(false);
+    }
+  };
+
   return (
     <div className="container" style={{ paddingTop: '9.5rem', paddingBottom: '5rem' }}>
       <div className="profile-wrap musician-profile-wrap">
@@ -471,6 +496,26 @@ export default function MusicianProfileEditorClient() {
 
             <aside className="musician-sidebar">
               <section className="profile-card">
+                <h2 className="sidebar-title">Moj panel</h2>
+                <div className="dash-links">
+                  <Link href="/bands/repertoire" className="dash-link">
+                    <ListMusic size={16} /> Pesmarica
+                  </Link>
+                  <Link href="/bands/live" className="dash-link">
+                    <Radio size={16} /> Live zahtevi
+                  </Link>
+                  <Link href="/bands/midi" className="dash-link">
+                    <Headphones size={16} /> MIDI / Audio
+                  </Link>
+                  {viewer?.musicianProfileId && (
+                    <button type="button" className="dash-link" onClick={() => setShowQr(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', width: '100%', textAlign: 'left', padding: 0 }}>
+                      <QrCode size={16} /> QR za Live
+                    </button>
+                  )}
+                </div>
+              </section>
+
+              <section className="profile-card">
                 <h2 className="sidebar-title">Kontakt naloga</h2>
                 <p className="sidebar-row"><Mail size={15} /> {viewer?.email || '—'}</p>
                 <p className="field-hint">Javni kontakt može kasnije da se proširi telefonom i društvenim mrežama.</p>
@@ -517,10 +562,61 @@ export default function MusicianProfileEditorClient() {
                   </ul>
                 )}
               </section>
+
+              <section className="profile-card delete-section">
+                <h2 className="sidebar-title danger-title"><Trash2 size={16} /> Brisanje naloga</h2>
+                {!showDeleteConfirm ? (
+                  <>
+                    <p className="field-hint">Trajno brisanje vašeg naloga, profila i svih povezanih podataka.</p>
+                    <button
+                      type="button"
+                      className="btn btn-sm musician-danger-btn"
+                      onClick={() => setShowDeleteConfirm(true)}
+                    >
+                      Obriši moj nalog
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <p className="field-hint" style={{ color: '#dc2626' }}>
+                      Da li ste sigurni? Ova akcija je nepovratna. Unesite lozinku za potvrdu.
+                    </p>
+                    <input
+                      type="password"
+                      placeholder="Vaša lozinka"
+                      value={deletePassword}
+                      onChange={(e) => setDeletePassword(e.target.value)}
+                      className="delete-password-input"
+                    />
+                    <div className="invite-actions">
+                      <button
+                        type="button"
+                        className="btn btn-sm musician-danger-btn"
+                        disabled={deleting}
+                        onClick={handleDeleteAccount}
+                      >
+                        {deleting ? 'Brisanje...' : 'Potvrdi brisanje'}
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-secondary btn-sm"
+                        disabled={deleting}
+                        onClick={() => { setShowDeleteConfirm(false); setDeletePassword(''); }}
+                      >
+                        Odustani
+                      </button>
+                    </div>
+                  </>
+                )}
+              </section>
             </aside>
           </div>
         )}
       </div>
+
+      {showQr && viewer?.musicianProfileId && (
+        <QrModal musicianId={viewer.musicianProfileId} onClose={() => setShowQr(false)} />
+      )}
 
       <style jsx>{`
         .profile-wrap { max-width: 920px; margin: 0 auto; }
@@ -807,6 +903,54 @@ export default function MusicianProfileEditorClient() {
           flex-wrap: wrap;
           gap: 0.65rem;
           margin-top: 0.8rem;
+        }
+        .dash-links {
+          display: flex;
+          flex-direction: column;
+          gap: 0.5rem;
+        }
+        .dash-link {
+          display: flex;
+          align-items: center;
+          gap: 0.55rem;
+          padding: 0.65rem 0.85rem;
+          border-radius: 12px;
+          border: 1px solid #e2e8f0;
+          background: #f8fafc;
+          color: #334155;
+          font-weight: 700;
+          font-size: 0.88rem;
+          text-decoration: none;
+          transition: all 0.2s;
+        }
+        .dash-link:hover {
+          background: #eff6ff;
+          border-color: #93c5fd;
+          color: #1d4ed8;
+        }
+        .delete-section {
+          border-color: #fecaca;
+          background: #fef2f2;
+        }
+        .danger-title {
+          color: #dc2626 !important;
+          display: flex;
+          align-items: center;
+          gap: 0.4rem;
+        }
+        .delete-password-input {
+          width: 100%;
+          box-sizing: border-box;
+          border: 1px solid #fca5a5;
+          border-radius: 12px;
+          padding: 0.7rem 0.85rem;
+          font-size: 0.93rem;
+          color: #0f172a;
+          outline: none;
+        }
+        .delete-password-input:focus {
+          border-color: #dc2626;
+          box-shadow: 0 0 0 4px rgba(220,38,38,0.12);
         }
         .musician-danger-btn {
           color: #fff;

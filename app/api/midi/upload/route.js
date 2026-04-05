@@ -1,32 +1,34 @@
 import prisma from '../../../../lib/prisma';
 import { getSupabaseAdmin } from '../../../../lib/supabase';
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import jwt from 'jsonwebtoken';
+import { getAuthUserFromRequest } from '../../../../lib/auth';
 
 export const dynamic = 'force-dynamic';
 
-async function getUser() {
-  try {
-    const cookieStore = cookies();
-    const token = cookieStore.get('token')?.value;
-    if (!token) return null;
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    return await prisma.user.findUnique({ where: { id: decoded.userId } });
-  } catch {
-    return null;
-  }
-}
-
 export async function POST(request) {
   try {
-    const user = await getUser();
+    const auth = await getAuthUserFromRequest(request);
+    if (!auth?.userId) {
+      return NextResponse.json({ error: 'Morate biti prijavljeni.' }, { status: 401 });
+    }
 
-    if (!user || user.role !== 'ADMIN') {
-      return NextResponse.json(
-        { error: 'Samo administrator može dodavati fajlove.' },
-        { status: 403 }
-      );
+    const user = await prisma.user.findUnique({
+      where: { id: auth.userId },
+      select: {
+        id: true,
+        role: true,
+        bandId: true,
+        musicianProfile: { select: { id: true } },
+      },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: 'Nalog ne postoji.' }, { status: 404 });
+    }
+
+    const canUpload = user.role === 'ADMIN' || user.bandId || user.musicianProfile?.id;
+    if (!canUpload) {
+      return NextResponse.json({ error: 'Nemate dozvolu za upload.' }, { status: 403 });
     }
 
     const formData = await request.formData();
@@ -84,6 +86,8 @@ export async function POST(request) {
         fileSize: buffer.length,
         fileType,
         uploadedBy: user.id,
+        bandId: user.bandId || null,
+        musicianProfileId: user.musicianProfile?.id || null,
       },
     });
 
@@ -96,10 +100,23 @@ export async function POST(request) {
 
 export async function DELETE(request) {
   try {
-    const user = await getUser();
+    const auth = await getAuthUserFromRequest(request);
+    if (!auth?.userId) {
+      return NextResponse.json({ error: 'Morate biti prijavljeni.' }, { status: 401 });
+    }
 
-    if (!user || user.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Samo administrator.' }, { status: 403 });
+    const user = await prisma.user.findUnique({
+      where: { id: auth.userId },
+      select: {
+        id: true,
+        role: true,
+        bandId: true,
+        musicianProfile: { select: { id: true } },
+      },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: 'Nalog ne postoji.' }, { status: 404 });
     }
 
     const { searchParams } = new URL(request.url);
@@ -112,6 +129,15 @@ export async function DELETE(request) {
     const file = await prisma.midiFile.findUnique({ where: { id } });
     if (!file) {
       return NextResponse.json({ error: 'Fajl nije pronađen.' }, { status: 404 });
+    }
+
+    const isAdmin = user.role === 'ADMIN';
+    const ownsFile = (file.bandId && file.bandId === user.bandId) || 
+                     (file.musicianProfileId && file.musicianProfileId === user.musicianProfile?.id) ||
+                     (file.uploadedBy === user.id);
+
+    if (!isAdmin && !ownsFile) {
+      return NextResponse.json({ error: 'Nemate dozvolu za brisanje ovog fajla.' }, { status: 403 });
     }
 
     const supabase = getSupabaseAdmin();

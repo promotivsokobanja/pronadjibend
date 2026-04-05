@@ -119,6 +119,7 @@ export async function GET(request) {
       const fromDb = await prisma.musicianProfile.findMany({
         where: {
           AND: [
+            { deletedAt: null },
             search
               ? {
                   OR: [

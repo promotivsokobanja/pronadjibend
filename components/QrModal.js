@@ -48,14 +48,15 @@ const drawCenteredLines = (ctx, text, x, startY, maxWidth, lineHeight) => {
   });
 };
 
-export default function QrModal({ bandId, onClose }) {
+export default function QrModal({ bandId, musicianId, onClose }) {
+  const ownerId = bandId || musicianId;
   const [liveUrl, setLiveUrl] = useState('');
   const [qrDataUrl, setQrDataUrl] = useState('');
   const [shareText, setShareText] = useState('');
   const [isGeneratingFlyer, setIsGeneratingFlyer] = useState(false);
 
   useEffect(() => {
-    const url = `${window.location.origin}/live/${bandId}`;
+    const url = `${window.location.origin}/live/${ownerId}`;
     setLiveUrl(url);
 
     QRCode.toDataURL(url, {
@@ -68,13 +69,13 @@ export default function QrModal({ bandId, onClose }) {
     })
       .then((dataUrl) => setQrDataUrl(dataUrl))
       .catch(() => setQrDataUrl(''));
-  }, [bandId]);
+  }, [ownerId]);
 
   const handleDownloadQr = () => {
     if (!qrDataUrl) return;
     const link = document.createElement('a');
     link.href = qrDataUrl;
-    link.download = `pronadjibend-live-${bandId}.png`;
+    link.download = `pronadjibend-live-${ownerId}.png`;
     link.click();
   };
 
@@ -203,7 +204,7 @@ export default function QrModal({ bandId, onClose }) {
 
       const link = document.createElement('a');
       link.href = canvas.toDataURL('image/png');
-      link.download = `pronadjibend-live-flyer-${bandId}.png`;
+      link.download = `pronadjibend-live-flyer-${ownerId}.png`;
       link.click();
     } finally {
       setIsGeneratingFlyer(false);

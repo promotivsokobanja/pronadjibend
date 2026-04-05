@@ -60,7 +60,7 @@ export async function GET(request, { params } = {}) {
       },
     });
 
-    if (!musician) {
+    if (!musician || musician.deletedAt) {
       const demoFallback = findDemoMusician(id);
       if (demoFallback) return NextResponse.json(demoFallback);
       return NextResponse.json({ error: 'Muzičar nije pronađen.' }, { status: 404 });

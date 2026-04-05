@@ -11,83 +11,90 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  password  String
-  role      String   // "ADMIN", "BAND", "CLIENT"
-  plan      String   @default("BASIC")
-  planUntil DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  band      Band?    @relation(fields: [bandId], references: [id])
-  bandId    String?  @unique
+  id              String           @id @default(cuid())
+  email           String           @unique
+  password        String
+  role            String // "ADMIN", "BAND", "CLIENT"
+  plan            String           @default("BASIC")
+  planUntil       DateTime?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  deletedAt       DateTime?
+  band            Band?            @relation(fields: [bandId], references: [id])
+  bandId          String?          @unique
   musicianProfile MusicianProfile?
 }
 
 model Band {
-  id            String         @id @default(cuid())
-  name          String
-  genre         String
-  location      String
-  priceRange    String?
-  bio           String?
-  videoUrl      String?
-  audioUrl      String?
-  hasEquipment  Boolean        @default(false)
-  rider         String?        // Technical requirements
-  qrToken       String?        @unique // For active session
-  rating        Float          @default(0)
-  img           String?
-  isPaid        Boolean        @default(false)
-  plan          String         @default("FREE")
+  id                 String           @id @default(cuid())
+  name               String
+  genre              String
+  location           String
+  priceRange         String?
+  bio                String?
+  videoUrl           String?
+  audioUrl           String?
+  hasEquipment       Boolean          @default(false)
+  rider              String? // Technical requirements
+  qrToken            String?          @unique // For active session
+  rating             Float            @default(0)
+  img                String?
+  isPaid             Boolean          @default(false)
+  plan               String           @default("FREE")
   /// Gost na live stranici vidi korak bakšiša uz narudžbinu pesme + „Časti bend”
-  allowTips     Boolean        @default(true)
+  allowTips          Boolean          @default(true)
   /// Maksimalan broj live zahteva koji mogu biti na čekanju (PENDING). 0 = bez limita.
-  maxPendingRequests Int       @default(10)
-  songs         Song[]         // Repertoire
-  bookings      Booking[]
-  liveRequests  LiveRequest[]
-  reviews       Review[]
-  busyDates     BusyDate[]
-  musicianInvites MusicianInvite[]
-  user          User?
+  maxPendingRequests Int              @default(10)
+  songs              Song[] // Repertoire
+  bookings           Booking[]
+  liveRequests       LiveRequest[]
+  reviews            Review[]
+  busyDates          BusyDate[]
+  musicianInvites    MusicianInvite[]
+  user               User?
+  deletedAt          DateTime?
+  MidiFile           MidiFile[]
 }
 
 model Song {
-  id           String        @id @default(cuid())
-  title        String
-  artist       String
-  lyrics       String?
-  chords       String?       // Chords with transposition marks
-  key          String?       // Original key
-  category     String?       // e.g., "Muške Zabavne"
-  type         String?       // e.g., "Zabavna", "Narodna"
-  band         Band?         @relation(fields: [bandId], references: [id])
-  bandId       String?
-  liveRequests LiveRequest[]
-}
-
-model SongSubmission {
-  id                String   @id @default(cuid())
+  id                String           @id @default(cuid())
   title             String
   artist            String
   lyrics            String?
-  chords            String?
-  key               String?
-  category          String?
-  type              String?
-  status            String   @default("PENDING") // "PENDING", "APPROVED", "REJECTED", "DUPLICATE"
-  sourceSongId      String?
-  submittedByBandId String?
-  reviewedByUserId  String?
-  approvedSongId    String?
-  rejectReason      String?
-  reviewedAt        DateTime?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  chords            String? // Chords with transposition marks
+  key               String? // Original key
+  category          String? // e.g., "Muške Zabavne"
+  type              String? // e.g., "Zabavna", "Narodna"
+  band              Band?            @relation(fields: [bandId], references: [id])
+  bandId            String?
+  musicianProfile   MusicianProfile? @relation(fields: [musicianProfileId], references: [id])
+  musicianProfileId String?
+  liveRequests      LiveRequest[]
+}
+
+model SongSubmission {
+  id                    String    @id @default(cuid())
+  title                 String
+  artist                String
+  lyrics                String?
+  chords                String?
+  key                   String?
+  category              String?
+  type                  String?
+  status                String    @default("PENDING") // "PENDING", "APPROVED", "REJECTED", "DUPLICATE"
+  sourceSongId          String?
+  submittedByBandId     String?
+  submittedByMusicianId String?
+  reviewedByUserId      String?
+  approvedSongId        String?
+  rejectReason          String?
+  reviewedAt            DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
   @@index([status, createdAt])
   @@index([submittedByBandId, createdAt])
+  @@index([submittedByMusicianId, createdAt])
 }
 
 model Review {
@@ -101,11 +108,11 @@ model Review {
 }
 
 model BusyDate {
-  id        String   @id @default(cuid())
-  date      DateTime
-  reason    String?
-  band      Band     @relation(fields: [bandId], references: [id])
-  bandId    String
+  id     String   @id @default(cuid())
+  date   DateTime
+  reason String?
+  band   Band     @relation(fields: [bandId], references: [id])
+  bandId String
 }
 
 model Booking {
@@ -124,33 +131,39 @@ model Booking {
 }
 
 model LiveRequest {
-  id          String   @id @default(cuid())
-  tableNum    String
-  status      String   @default("PENDING") // "PENDING", "PLAYED", "REJECTED", "ACCEPTED"
-  createdAt   DateTime @default(now())
+  id                String           @id @default(cuid())
+  tableNum          String
+  status            String           @default("PENDING") // "PENDING", "PLAYED", "REJECTED", "ACCEPTED"
+  createdAt         DateTime         @default(now())
   /// SONG = zahtev za pesmu; WAITER_TIP = bakšiš preko konobara (songId opciono)
-  requestType String   @default("SONG")
+  requestType       String           @default("SONG")
   /// Za WAITER_TIP: tekst za bend, npr. „Sto 3 šalje bakšiš preko konobara (500 RSD)”
-  guestNote   String?
+  guestNote         String?
   /// Bakšiš preko konobara uz pesmu (RSD); null = bez bakšiša
-  tipAmountRsd Int?
-  song        Song?    @relation(fields: [songId], references: [id])
-  songId      String?
-  band        Band     @relation(fields: [bandId], references: [id])
-  bandId      String
+  tipAmountRsd      Int?
+  song              Song?            @relation(fields: [songId], references: [id])
+  songId            String?
+  band              Band?            @relation(fields: [bandId], references: [id])
+  bandId            String?
+  musician          MusicianProfile? @relation(fields: [musicianProfileId], references: [id])
+  musicianProfileId String?
 }
 
 model MidiFile {
-  id        String   @id @default(cuid())
-  title     String
-  artist    String
-  category  String   // "Zabavna", "Narodna", "Kola", "Mixevi", "Decije"
-  fileName  String
-  filePath  String   // Path in Supabase storage
-  fileSize  Int      @default(0)
-  fileType  String   @default("midi") // "midi" | "audio"
-  uploadedBy String? // userId of uploader (for user MP3 uploads)
-  createdAt DateTime @default(now())
+  id                String           @id @default(cuid())
+  title             String
+  artist            String
+  category          String // "Zabavna", "Narodna", "Kola", "Mixevi", "Decije"
+  fileName          String
+  filePath          String // Path in Supabase storage
+  fileSize          Int              @default(0)
+  fileType          String           @default("midi") // "midi" | "audio"
+  uploadedBy        String? // userId of uploader (for user MP3 uploads)
+  band              Band?            @relation(fields: [bandId], references: [id])
+  bandId            String?
+  musician          MusicianProfile? @relation(fields: [musicianProfileId], references: [id])
+  musicianProfileId String?
+  createdAt         DateTime         @default(now())
 
   @@index([category])
   @@index([title])
@@ -169,9 +182,9 @@ model BillingEvent {
 }
 
 model MusicianProfile {
-  id                String               @id @default(cuid())
-  user              User?                @relation(fields: [userId], references: [id])
-  userId            String?              @unique
+  id                String                 @id @default(cuid())
+  user              User?                  @relation(fields: [userId], references: [id])
+  userId            String?                @unique
   name              String
   primaryInstrument String
   genres            String?
@@ -182,13 +195,17 @@ model MusicianProfile {
   bio               String?
   img               String?
   videoUrl          String?
-  rating            Float                @default(0)
-  isFeatured        Boolean              @default(false)
-  isAvailable       Boolean              @default(true)
-  createdAt         DateTime             @default(now())
-  updatedAt         DateTime             @updatedAt
+  rating            Float                  @default(0)
+  isFeatured        Boolean                @default(false)
+  isAvailable       Boolean                @default(true)
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
   availabilities    MusicianAvailability[]
   invites           MusicianInvite[]
+  songs             Song[]
+  liveRequests      LiveRequest[]
+  midiFiles         MidiFile[]
+  deletedAt         DateTime?
 
   @@index([city])
   @@index([primaryInstrument])
@@ -196,29 +213,29 @@ model MusicianProfile {
 }
 
 model MusicianAvailability {
-  id         String          @id @default(cuid())
-  date       DateTime
-  isAvailable Boolean        @default(true)
-  note       String?
-  musician   MusicianProfile @relation(fields: [musicianId], references: [id])
-  musicianId String
+  id          String          @id @default(cuid())
+  date        DateTime
+  isAvailable Boolean         @default(true)
+  note        String?
+  musician    MusicianProfile @relation(fields: [musicianId], references: [id])
+  musicianId  String
 
   @@index([musicianId, date])
 }
 
 model MusicianInvite {
-  id           String          @id @default(cuid())
-  status       String          @default("PENDING") // "PENDING", "ACCEPTED", "REJECTED", "CANCELLED"
-  eventDate    DateTime?
-  location     String?
-  feeEur       Int?
-  message      String?
-  createdAt    DateTime        @default(now())
-  updatedAt    DateTime        @updatedAt
-  band         Band            @relation(fields: [bandId], references: [id])
-  bandId       String
-  musician     MusicianProfile @relation(fields: [musicianId], references: [id])
-  musicianId   String
+  id         String          @id @default(cuid())
+  status     String          @default("PENDING") // "PENDING", "ACCEPTED", "REJECTED", "CANCELLED"
+  eventDate  DateTime?
+  location   String?
+  feeEur     Int?
+  message    String?
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+  band       Band            @relation(fields: [bandId], references: [id])
+  bandId     String
+  musician   MusicianProfile @relation(fields: [musicianId], references: [id])
+  musicianId String
 
   @@index([bandId, createdAt])
   @@index([musicianId, createdAt])
@@ -227,11 +244,11 @@ model MusicianInvite {
 
 /// Jedan zapis (id = 1): javna podešavanja (admin /sistem)
 model SiteConfig {
-  id                    Int      @id @default(1)
-  showDemoBands         Boolean  @default(true)
-  bandProfileMaxImages  Int      @default(5)
-  bandProfileMaxVideos  Int      @default(3)
-  bandProfileMaxLinks   Int      @default(5)
-  maintenanceMode       Boolean  @default(false)
-  updatedAt             DateTime @updatedAt
+  id                   Int      @id @default(1)
+  showDemoBands        Boolean  @default(true)
+  bandProfileMaxImages Int      @default(5)
+  bandProfileMaxVideos Int      @default(3)
+  bandProfileMaxLinks  Int      @default(5)
+  maintenanceMode      Boolean  @default(false)
+  updatedAt            DateTime @updatedAt
 }

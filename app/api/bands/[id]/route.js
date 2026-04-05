@@ -39,7 +39,7 @@ export async function GET(request) {
       },
     });
 
-    if (!band) {
+    if (!band || band.deletedAt) {
       return NextResponse.json({ error: 'Band not found' }, { status: 404 });
     }
 

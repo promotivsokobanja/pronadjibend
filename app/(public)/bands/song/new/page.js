@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 export default function NewSongPage() {
   const router = useRouter();
   const [bandId, setBandId] = useState(null);
+  const [musicianId, setMusicianId] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [song, setSong] = useState({
@@ -27,6 +28,7 @@ export default function NewSongPage() {
         }
         const { user } = await r.json();
         if (user?.bandId) setBandId(user.bandId);
+        else if (user?.musicianProfileId) setMusicianId(user.musicianProfileId);
       } catch {
         /* ignore */
       } finally {
@@ -37,16 +39,19 @@ export default function NewSongPage() {
 
   const handleSave = async (e) => {
     e.preventDefault();
-    if (!bandId) {
-      alert('Nalog nije povezan sa bendom.');
+    if (!bandId && !musicianId) {
+      alert('Nalog nije povezan sa bendom ili muzičarskim profilom.');
       return;
     }
     setIsSaving(true);
+    const payload = { ...song };
+    if (bandId) payload.bandId = bandId;
+    else payload.musicianId = musicianId;
     try {
       const resp = await fetch('/api/songs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...song, bandId })
+        body: JSON.stringify(payload)
       });
 
       if (!resp.ok) {

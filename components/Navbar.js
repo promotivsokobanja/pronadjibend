@@ -34,6 +34,7 @@ async function logoutAndRedirect() {
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isMusician, setIsMusician] = useState(false);
   const [sessionUser, setSessionUser] = useState(null);
   const pathname = usePathname();
   const { setIsNavSearchOpen } = useClientSearch();
@@ -88,6 +89,7 @@ export default function Navbar() {
     if (cachedUser) {
       setSessionUser(cachedUser);
       setIsAdmin(cachedUser?.role === 'ADMIN');
+      setIsMusician(cachedUser?.role === 'MUSICIAN');
     }
 
     (async () => {
@@ -98,16 +100,19 @@ export default function Navbar() {
         if (!r.ok || !data?.user) {
           setSessionUser(null);
           setIsAdmin(false);
+          setIsMusician(false);
           clearCachedSession();
           return;
         }
         setSessionUser(data.user || null);
         setIsAdmin(data.user?.role === 'ADMIN');
+        setIsMusician(data.user?.role === 'MUSICIAN');
         writeCachedSession(data.user || null);
       } catch {
         if (cancelled) return;
         setSessionUser(null);
         setIsAdmin(false);
+        setIsMusician(false);
         clearCachedSession();
       }
     })();
@@ -145,7 +150,11 @@ export default function Navbar() {
           <Link href="/muzicari" prefetch={false} className={`nav-link ${isActive('/muzicari') ? 'active' : ''}`}>
             Pretraži Muzičare
           </Link>
-          <Link href="/bands" prefetch={false} className={`nav-link ${isActive('/bands') ? 'active' : ''}`}>Portal za Muzičare</Link>
+          {isMusician ? (
+            <Link href="/muzicari/profil" prefetch={false} className={`nav-link ${isActive('/muzicari/profil') ? 'active' : ''}`}>Moj panel</Link>
+          ) : (
+            <Link href="/bands" prefetch={false} className={`nav-link ${isActive('/bands') ? 'active' : ''}`}>Portal za Muzičare</Link>
+          )}
           <Link href="/about" prefetch={false} className={`nav-link ${isActive('/about') ? 'active' : ''}`}>O nama</Link>
           <Link href="/#vodic" prefetch={false} className="nav-link">
             Vodič
@@ -182,7 +191,11 @@ export default function Navbar() {
           <Link href="/muzicari" className={isActive('/muzicari') ? 'active-mobile' : ''} onClick={() => setIsOpen(false)}>
             Pretraži Muzičare
           </Link>
-          <Link href="/bands" className={isActive('/bands') ? 'active-mobile' : ''} onClick={() => setIsOpen(false)}>Portal za Muzičare</Link>
+          {isMusician ? (
+            <Link href="/muzicari/profil" className={isActive('/muzicari/profil') ? 'active-mobile' : ''} onClick={() => setIsOpen(false)}>Moj panel</Link>
+          ) : (
+            <Link href="/bands" className={isActive('/bands') ? 'active-mobile' : ''} onClick={() => setIsOpen(false)}>Portal za Muzičare</Link>
+          )}
           <Link href="/about" className={isActive('/about') ? 'active-mobile' : ''} onClick={() => setIsOpen(false)}>O nama</Link>
           <Link href="/#vodic" onClick={() => setIsOpen(false)}>
             Vodič
