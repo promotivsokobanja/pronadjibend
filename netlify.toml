@@ -16,7 +16,8 @@
 # Svaki git push na main pokreće build (migrate + next build) i objavu.
 
 [build]
-  # Migracije se pokreću ručno; Netlify samo gradi Next aplikaciju bez diranja baze.
+  # Migracije se sada pokreću ručno (lokalno) da Netlify ne dodiruje produkcionu bazu.
+  # Build radi samo čist next build.
   command = "npm run build:clean"
 
 [build.environment]
