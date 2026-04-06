@@ -27,7 +27,10 @@ export async function GET(request) {
       return NextResponse.json({ error: 'Morate biti prijavljeni.' }, { status: 401 });
     }
 
-    if (user.plan !== 'PREMIUM' && user.role !== 'ADMIN') {
+    const plan = String(user.plan || '').toUpperCase();
+    const hasPremiumAccess = plan.startsWith('PREMIUM');
+
+    if (!hasPremiumAccess && user.role !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Biblioteka je dostupna samo PREMIUM članovima.' },
         { status: 403 }

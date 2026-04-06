@@ -4,6 +4,7 @@ import { Save, ArrowLeft, Image as ImageIcon, Video, Mail, Phone, MessageSquare,
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import SocialShareActions from '../../../../components/SocialShareActions';
 
 export default function BandProfilePage() {
   const router = useRouter();
@@ -39,6 +40,15 @@ export default function BandProfilePage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deletePassword, setDeletePassword] = useState('');
   const [deleting, setDeleting] = useState(false);
+  const [siteOrigin, setSiteOrigin] = useState('');
+  const publicBandProfilePath = bandId ? `/clients/band/${bandId}` : '';
+  const publicBandProfileUrl = publicBandProfilePath ? `${siteOrigin}${publicBandProfilePath}` : '';
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setSiteOrigin(window.location.origin || '');
+    }
+  }, []);
 
   useEffect(() => {
     const load = async () => {
@@ -311,6 +321,15 @@ export default function BandProfilePage() {
             <h1>Moj Profil Benda</h1>
             <p>Ovde uređujete slike, video i opis koji klijenti vide na platformi.</p>
             {!loading && bandId && !adminNoBand ? (
+              <div style={{ margin: '0.8rem 0 0.25rem' }}>
+                <SocialShareActions
+                  url={publicBandProfileUrl || publicBandProfilePath}
+                  title={`${formData.name || 'Bend'} — Profil | Pronađi Bend`}
+                  text="Pogledaj naš javni profil benda na platformi Pronađi Bend."
+                />
+              </div>
+            ) : null}
+            {!loading && bandId && !adminNoBand ? (
               <p className="profile-poster-hint">
                 <a
                   href={`/api/bands/${encodeURIComponent(bandId)}/marketing-poster`}
@@ -396,6 +415,23 @@ export default function BandProfilePage() {
             <form onSubmit={handleSave} className="profile-card">
             {error && <div className="alert error">{error}</div>}
             {success && <div className="alert success">{success}</div>}
+
+            {publicBandProfilePath ? (
+              <div className="field profile-link-field">
+                <label>Javni link profila</label>
+                <div className="profile-link-row">
+                  <input value={publicBandProfileUrl || publicBandProfilePath} readOnly />
+                  <Link href={publicBandProfilePath} target="_blank" className="btn btn-secondary btn-sm">
+                    Otvori profil
+                  </Link>
+                </div>
+                <SocialShareActions
+                  url={publicBandProfileUrl || publicBandProfilePath}
+                  title={`${formData.name || 'Bend'} — Profil | Pronađi Bend`}
+                  text="Pogledaj naš javni profil benda na platformi Pronađi Bend."
+                />
+              </div>
+            ) : null}
 
             <div className="field toggle-field">
               <label className="toggle-label" htmlFor="allow-tips">
@@ -799,6 +835,18 @@ export default function BandProfilePage() {
           color: #64748b;
           font-size: 0.75rem;
           margin-top: -0.1rem;
+        }
+        .profile-link-field {
+          margin-bottom: 0.35rem;
+        }
+        .profile-link-row {
+          display: flex;
+          gap: 0.6rem;
+          flex-wrap: wrap;
+          align-items: center;
+        }
+        .profile-link-row :global(.btn) {
+          min-height: 42px;
         }
         .toggle-field {
           padding-bottom: 0.5rem;

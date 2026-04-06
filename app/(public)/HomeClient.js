@@ -12,6 +12,7 @@ import { pickFeaturedBands } from '../../lib/featuredBands';
 import '../../styles/home.css';
 import HomeBlogGuideSection from '../../components/home/HomeBlogGuideSection';
 import VodicSekcija from '../../components/VodicSekcija';
+import SocialShareActions from '../../components/SocialShareActions';
 
 /* SSR: bez opacity 0 u initial (sadržaj ostaje vidljiv pre nego što FM animira). */
 const scrollFade = {
@@ -196,6 +197,14 @@ export default function HomeClient() {
                   <button type="button" className="btn btn-primary btn-sm" onClick={() => handleBook(band)}>
                     Zakaži nastup
                   </button>
+                </div>
+                <div className="card-share-row" onClick={(e) => e.stopPropagation()}>
+                  <SocialShareActions
+                    compact
+                    url={`/clients/band/${band.id}`}
+                    title={`${band.name} — Pronađi Bend`}
+                    text={`Pogledaj profil benda ${band.name} na platformi Pronađi Bend.`}
+                  />
                 </div>
               </div>
             </motion.div>

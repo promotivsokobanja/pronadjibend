@@ -21,6 +21,44 @@ async function getCurrentUser(request) {
   });
 }
 
+export async function DELETE(request, { params } = {}) {
+  const inviteId = params?.id;
+  if (!inviteId) {
+    return NextResponse.json({ error: 'ID poziva je obavezan.' }, { status: 400 });
+  }
+
+  try {
+    const currentUser = await getCurrentUser(request);
+    if (!currentUser) {
+      return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
+    }
+
+    const existing = await prisma.musicianInvite.findUnique({
+      where: { id: inviteId },
+      select: { id: true, bandId: true, musicianId: true },
+    });
+
+    if (!existing) {
+      return NextResponse.json({ error: 'Poziv nije pronađen.' }, { status: 404 });
+    }
+
+    const isMusicianOwner = currentUser.musicianProfile?.id === existing.musicianId;
+    const isBandOwner = currentUser.bandId === existing.bandId;
+    const isAdmin = currentUser.role === 'ADMIN';
+
+    if (!isMusicianOwner && !isBandOwner && !isAdmin) {
+      return NextResponse.json({ error: 'Nemate dozvolu za brisanje ovog poziva.' }, { status: 403 });
+    }
+
+    await prisma.musicianInvite.delete({ where: { id: inviteId } });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Musician invite DELETE error:', error);
+    return NextResponse.json({ error: 'Greška pri brisanju poziva.' }, { status: 500 });
+  }
+}
+
 export async function PATCH(request, { params } = {}) {
   const inviteId = params?.id;
   if (!inviteId) {

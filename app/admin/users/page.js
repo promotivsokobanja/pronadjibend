@@ -6,6 +6,7 @@ import { adminFetch } from '../../../lib/adminFetch';
 function roleBadgeClass(role) {
   if (role === 'ADMIN') return 'admin-badge admin-badge-admin';
   if (role === 'BAND') return 'admin-badge admin-badge-band';
+  if (role === 'MUSICIAN') return 'admin-badge admin-badge-band';
   return 'admin-badge admin-badge-client';
 }
 
@@ -95,6 +96,7 @@ export default function AdminUsersPage() {
                   <th>Uloga</th>
                   <th>Plan</th>
                   <th>Bend</th>
+                  <th>Muzičar</th>
                   <th>Registrovan</th>
                   <th></th>
                 </tr>
@@ -164,6 +166,7 @@ function UserRow({ u, saving, onSave, roleBadgeClass }) {
         >
           <option value="CLIENT">CLIENT</option>
           <option value="BAND">BAND</option>
+          <option value="MUSICIAN">MUSICIAN</option>
           <option value="ADMIN">ADMIN</option>
         </select>
       </td>
@@ -178,6 +181,11 @@ function UserRow({ u, saving, onSave, roleBadgeClass }) {
         </select>
       </td>
       <td>{u.band?.name || '—'}</td>
+      <td>
+        {u.musicianProfile?.name
+          ? `${u.musicianProfile.name}${u.musicianProfile.primaryInstrument ? ` (${u.musicianProfile.primaryInstrument})` : ''}`
+          : '—'}
+      </td>
       <td style={{ whiteSpace: 'nowrap', fontSize: '0.8rem' }}>
         {new Date(u.createdAt).toLocaleString('sr-RS')}
       </td>

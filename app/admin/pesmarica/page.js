@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { adminFetch } from '../../../lib/adminFetch';
 
 const CATEGORIES = ['Sve', 'Zabavne', 'Narodne', 'Strane'];
@@ -72,6 +72,203 @@ function emptyForm() {
   };
 }
 
+function parseSongMetaFromFileName(fileName = '') {
+  const base = String(fileName || '').replace(/\.[^.]+$/, '').trim();
+  if (!base) return { title: 'Bez naziva', artist: 'Nepoznat' };
+  const parts = base.split(' - ').map((p) => p.trim()).filter(Boolean);
+  if (parts.length >= 2) {
+    const artist = parts[0];
+    const title = parts.slice(1).join(' - ');
+    return {
+      title: title || 'Bez naziva',
+      artist: artist || 'Nepoznat',
+    };
+  }
+  return { title: base, artist: 'Nepoznat' };
+}
+
+function decodeXmlEntities(input = '') {
+  return String(input)
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'");
+}
+
+async function inflateDeflateRaw(bytes) {
+  if (typeof DecompressionStream === 'undefined') {
+    throw new Error('DOCX dekompresija nije podržana u ovom browseru.');
+  }
+  const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+  const buf = await new Response(stream).arrayBuffer();
+  return new Uint8Array(buf);
+}
+
+function readUInt16LE(bytes, offset) {
+  return bytes[offset] | (bytes[offset + 1] << 8);
+}
+
+function readUInt32LE(bytes, offset) {
+  return (
+    bytes[offset] |
+    (bytes[offset + 1] << 8) |
+    (bytes[offset + 2] << 16) |
+    (bytes[offset + 3] << 24)
+  ) >>> 0;
+}
+
+async function extractDocxText(file) {
+  const bytes = new Uint8Array(await file.arrayBuffer());
+
+  let eocdOffset = -1;
+  for (let i = bytes.length - 22; i >= Math.max(0, bytes.length - 66000); i -= 1) {
+    if (
+      bytes[i] === 0x50 &&
+      bytes[i + 1] === 0x4b &&
+      bytes[i + 2] === 0x05 &&
+      bytes[i + 3] === 0x06
+    ) {
+      eocdOffset = i;
+      break;
+    }
+  }
+
+  if (eocdOffset < 0) {
+    throw new Error('DOCX nije validan ZIP fajl.');
+  }
+
+  const centralDirOffset = readUInt32LE(bytes, eocdOffset + 16);
+  const totalEntries = readUInt16LE(bytes, eocdOffset + 10);
+  const decoder = new TextDecoder('utf-8');
+
+  let pointer = centralDirOffset;
+  let docEntry = null;
+
+  for (let idx = 0; idx < totalEntries; idx += 1) {
+    if (
+      bytes[pointer] !== 0x50 ||
+      bytes[pointer + 1] !== 0x4b ||
+      bytes[pointer + 2] !== 0x01 ||
+      bytes[pointer + 3] !== 0x02
+    ) {
+      break;
+    }
+
+    const compression = readUInt16LE(bytes, pointer + 10);
+    const compressedSize = readUInt32LE(bytes, pointer + 20);
+    const fileNameLength = readUInt16LE(bytes, pointer + 28);
+    const extraLength = readUInt16LE(bytes, pointer + 30);
+    const commentLength = readUInt16LE(bytes, pointer + 32);
+    const localHeaderOffset = readUInt32LE(bytes, pointer + 42);
+    const fileName = decoder.decode(bytes.slice(pointer + 46, pointer + 46 + fileNameLength));
+
+    if (fileName === 'word/document.xml') {
+      docEntry = { compression, compressedSize, localHeaderOffset };
+      break;
+    }
+
+    pointer += 46 + fileNameLength + extraLength + commentLength;
+  }
+
+  if (!docEntry) {
+    throw new Error('DOCX nema word/document.xml sadržaj.');
+  }
+
+  const local = docEntry.localHeaderOffset;
+  if (
+    bytes[local] !== 0x50 ||
+    bytes[local + 1] !== 0x4b ||
+    bytes[local + 2] !== 0x03 ||
+    bytes[local + 3] !== 0x04
+  ) {
+    throw new Error('DOCX lokalni header nije ispravan.');
+  }
+
+  const localNameLen = readUInt16LE(bytes, local + 26);
+  const localExtraLen = readUInt16LE(bytes, local + 28);
+  const dataStart = local + 30 + localNameLen + localExtraLen;
+  const compressed = bytes.slice(dataStart, dataStart + docEntry.compressedSize);
+
+  let xmlBytes;
+  if (docEntry.compression === 0) {
+    xmlBytes = compressed;
+  } else if (docEntry.compression === 8) {
+    xmlBytes = await inflateDeflateRaw(compressed);
+  } else {
+    throw new Error('DOCX koristi nepodržan metod kompresije.');
+  }
+
+  const xml = decoder.decode(xmlBytes);
+  const normalized = xml
+    .replace(/<w:tab\s*\/?>/g, '\t')
+    .replace(/<w:br\s*\/?>/g, '\n')
+    .replace(/<\/w:p>/g, '\n');
+
+  const parts = [];
+  const regex = /<w:t[^>]*>([\s\S]*?)<\/w:t>/g;
+  let match = regex.exec(normalized);
+  while (match) {
+    parts.push(decodeXmlEntities(match[1]));
+    match = regex.exec(normalized);
+  }
+
+  return parts.join('').replace(/\n{3,}/g, '\n\n').trim();
+}
+
+function decodePdfEscapes(str = '') {
+  return String(str)
+    .replace(/\\\\/g, '\\')
+    .replace(/\\\(/g, '(')
+    .replace(/\\\)/g, ')')
+    .replace(/\\n/g, '\n')
+    .replace(/\\r/g, '\n')
+    .replace(/\\t/g, '\t')
+    .replace(/\\([0-7]{1,3})/g, (_, oct) => String.fromCharCode(parseInt(oct, 8)));
+}
+
+async function extractPdfText(file) {
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const raw = new TextDecoder('latin1').decode(bytes);
+
+  const chunks = [];
+  const tjRegex = /\(([^()]*(?:\\.[^()]*)*)\)\s*Tj/g;
+  let m = tjRegex.exec(raw);
+  while (m) {
+    chunks.push(decodePdfEscapes(m[1]));
+    m = tjRegex.exec(raw);
+  }
+
+  const tjArrayRegex = /\[(.*?)\]\s*TJ/gs;
+  let am = tjArrayRegex.exec(raw);
+  while (am) {
+    const textPart = am[1];
+    const inner = /\(([^()]*(?:\\.[^()]*)*)\)/g;
+    let im = inner.exec(textPart);
+    while (im) {
+      chunks.push(decodePdfEscapes(im[1]));
+      im = inner.exec(textPart);
+    }
+    am = tjArrayRegex.exec(raw);
+  }
+
+  return chunks.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+}
+
+async function extractTextFromSongFile(file) {
+  const name = String(file?.name || '').toLowerCase();
+  if (name.endsWith('.txt')) {
+    return String(await file.text()).trim();
+  }
+  if (name.endsWith('.docx')) {
+    return extractDocxText(file);
+  }
+  if (name.endsWith('.pdf')) {
+    return extractPdfText(file);
+  }
+  throw new Error('Nepodržan format. Koristite TXT, DOCX ili PDF.');
+}
+
 export default function AdminPesmaricaPage() {
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
@@ -83,6 +280,9 @@ export default function AdminPesmaricaPage() {
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [loadingSong, setLoadingSong] = useState(false);
+  const [bulkImporting, setBulkImporting] = useState(false);
+  const [bulkResult, setBulkResult] = useState('');
+  const bulkFileInputRef = useRef(null);
 
   const load = useCallback(
     async (opts = {}) => {
@@ -170,6 +370,57 @@ export default function AdminPesmaricaPage() {
     };
     reader.readAsText(file, 'UTF-8');
     e.target.value = '';
+  };
+
+  const triggerBulkPicker = () => {
+    if (bulkImporting) return;
+    bulkFileInputRef.current?.click();
+  };
+
+  const onBulkFilesSelect = async (e) => {
+    const selected = Array.from(e.target.files || []);
+    e.target.value = '';
+    if (selected.length === 0) return;
+
+    setBulkImporting(true);
+    setError('');
+    setBulkResult('');
+
+    try {
+      const songs = [];
+      for (const file of selected) {
+        const lyrics = await extractTextFromSongFile(file);
+        if (!lyrics) continue;
+        const meta = parseSongMetaFromFileName(file.name);
+        songs.push({
+          title: meta.title,
+          artist: meta.artist,
+          lyrics,
+          category: category !== 'Sve' ? category : 'Zabavne',
+          type: category !== 'Sve' ? category : null,
+        });
+      }
+
+      if (songs.length === 0) {
+        throw new Error('Nijedan izabrani fajl nema čitljiv tekst za uvoz.');
+      }
+
+      const r = await adminFetch('/api/admin/pesmarica', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ songs }),
+      });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error || 'Greška pri masovnom uvozu.');
+
+      setBulkResult(`Uspešno uvezeno: ${j.created || songs.length} pesama.`);
+      await load({ page: 1, search, category });
+      setPage(1);
+    } catch (err) {
+      setError(err.message || 'Greška pri masovnom uvozu.');
+    } finally {
+      setBulkImporting(false);
+    }
   };
 
   const saveSong = async (e) => {
@@ -260,7 +511,22 @@ export default function AdminPesmaricaPage() {
         <button type="button" className="admin-btn" onClick={openNew}>
           + Nova pesma
         </button>
+        <button type="button" className="admin-btn" onClick={triggerBulkPicker} disabled={bulkImporting}>
+          {bulkImporting ? 'Uvoz…' : '+ Uvezi više tekstova'}
+        </button>
+        <input
+          ref={bulkFileInputRef}
+          type="file"
+          accept=".txt,.docx,.pdf,text/plain,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+          multiple
+          onChange={onBulkFilesSelect}
+          style={{ display: 'none' }}
+        />
       </div>
+
+      {bulkResult ? (
+        <p style={{ color: '#34d399', marginBottom: '1rem', fontSize: '0.875rem', fontWeight: 700 }}>{bulkResult}</p>
+      ) : null}
 
       {error && !modalOpen && (
         <p style={{ color: '#f87171', marginBottom: '1rem' }}>{error}</p>

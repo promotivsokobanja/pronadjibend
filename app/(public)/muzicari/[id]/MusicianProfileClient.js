@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { ArrowLeft, MapPin, Music2, CalendarDays, Star, Euro, Clock3 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import SocialShareActions from '../../../../components/SocialShareActions';
 
 function formatDate(value) {
   const d = new Date(value);
@@ -167,139 +168,140 @@ export default function MusicianProfileClient({ musicianId }) {
 
   if (isLoading) {
     return (
-      <div className="page-below-fixed-nav container py-10">
-        <div className="rounded-2xl border border-slate-200 bg-white p-8 text-slate-500">Učitavanje profila muzičara…</div>
+      <div className="musician-public-page page-below-fixed-nav">
+        <main className="container musician-public-shell">
+          <div className="state-box">Učitavanje profila muzičara…</div>
+        </main>
       </div>
     );
   }
 
   if (error || !musician) {
     return (
-      <div className="page-below-fixed-nav container py-10">
-        <div className="rounded-2xl border border-red-200 bg-red-50 p-8 text-red-700">{error || 'Muzičar nije pronađen.'}</div>
+      <div className="musician-public-page page-below-fixed-nav">
+        <main className="container musician-public-shell">
+          <div className="state-box error">{error || 'Muzičar nije pronađen.'}</div>
+        </main>
       </div>
     );
   }
 
   return (
-    <div className="page-below-fixed-nav min-h-screen bg-white">
-      <main className="container py-8 md:py-10">
-        <Link href="/muzicari" className="mb-5 inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-slate-600 transition hover:border-slate-300 hover:text-slate-900">
+    <div className="musician-public-page page-below-fixed-nav">
+      <main className="container musician-public-shell">
+        <Link href="/muzicari" className="back-link-public">
           <ArrowLeft size={14} /> Nazad na pretragu
         </Link>
 
-        <section className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-            <div className="aspect-[16/10] overflow-hidden rounded-xl bg-slate-100">
+        <section className="musician-public-grid">
+          <article className="profile-main-card">
+            <div className="profile-image-wrap">
               {musician.img ? (
-                <img src={musician.img} alt={musician.name} className="h-full w-full object-cover" />
+                <img src={musician.img} alt={musician.name} className="profile-image" />
               ) : (
-                <div className="flex h-full w-full items-center justify-center text-slate-300">
-                  <Music2 size={48} />
+                <div className="profile-image-fallback">
+                  <Music2 size={52} />
                 </div>
               )}
             </div>
 
-            <div className="mt-4 flex flex-wrap items-start justify-between gap-3">
+            <div className="profile-title-row">
               <div>
-                <h1 className="text-2xl font-black text-slate-900 md:text-3xl">{musician.name}</h1>
-                <p className="mt-1 text-sm font-semibold text-[#007AFF]">{musician.primaryInstrument}</p>
-                {isDemoMusician ? (
-                  <p className="mt-1 inline-flex items-center rounded-full bg-[#007AFF]/10 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-[#007AFF]">
-                    Demo profil
-                  </p>
-                ) : null}
+                <h1 className="profile-name">{musician.name}</h1>
+                <p className="profile-instrument">{musician.primaryInstrument}</p>
+                {isDemoMusician ? <p className="demo-badge">Demo profil</p> : null}
               </div>
-              <span className={`rounded-full px-3 py-1 text-xs font-bold ${musician.isAvailable ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+              <span className={`availability-pill ${musician.isAvailable ? 'ok' : 'busy'}`}>
                 {musician.isAvailable ? 'Dostupan za angažman' : 'Trenutno zauzet'}
               </span>
             </div>
 
-            <div className="mt-4 grid gap-2 text-sm text-slate-600 sm:grid-cols-2">
-              <p className="inline-flex items-center gap-2"><MapPin size={15} /> {musician.city}</p>
-              <p className="inline-flex items-center gap-2"><Star size={15} /> Ocena {Number(musician.rating || 0).toFixed(1)}</p>
-              <p className="inline-flex items-center gap-2"><Euro size={15} />
+            <div className="profile-meta-grid">
+              <p><MapPin size={15} /> {musician.city}</p>
+              <p><Star size={15} /> Ocena {Number(musician.rating || 0).toFixed(1)}</p>
+              <p><Euro size={15} />
                 {musician.priceFromEur != null
                   ? musician.priceToEur != null
                     ? `${musician.priceFromEur}€ - ${musician.priceToEur}€`
                     : `${musician.priceFromEur}€+`
                   : 'Cena po dogovoru'}
               </p>
-              <p className="inline-flex items-center gap-2"><Clock3 size={15} />
+              <p><Clock3 size={15} />
                 {musician.experienceYears != null ? `${musician.experienceYears} godina iskustva` : 'Iskustvo po dogovoru'}
               </p>
             </div>
 
-            <div className="mt-4 rounded-xl border border-slate-100 bg-slate-50 p-4">
-              <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Žanrovi</p>
-              <p className="mt-1 text-sm font-semibold text-slate-800">{musician.genres || 'Nije navedeno'}</p>
+            <div className="genres-block">
+              <p className="block-label">Žanrovi</p>
+              <p className="block-value">{musician.genres || 'Nije navedeno'}</p>
             </div>
 
-            <div className="mt-4">
-              <p className="text-sm leading-7 text-slate-700">{musician.bio || 'Muzičar još nije dodao detaljan opis profila.'}</p>
+            <div className="bio-block">
+              <p>{musician.bio || 'Muzičar još nije dodao detaljan opis profila.'}</p>
               {isDemoMusician ? (
-                <p className="mt-2 text-xs font-semibold text-[#007AFF]">
-                  Ovaj profil je demo prikaz za pregled funkcionalnosti.
-                </p>
+                <p className="demo-note">Ovaj profil je demo prikaz za pregled funkcionalnosti.</p>
               ) : null}
             </div>
-          </div>
 
-          <div className="space-y-6">
-            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-              <h2 className="text-base font-black text-slate-900">Dostupnost (naredni termini)</h2>
+            <div className="share-row">
+              <SocialShareActions
+                url={`/muzicari/${musician.id}`}
+                title={`${musician.name} — Muzičar | Pronađi Bend`}
+                text={`Pogledaj profil muzičara ${musician.name} na platformi Pronađi Bend.`}
+              />
+            </div>
+          </article>
+
+          <aside className="profile-side-stack">
+            <section className="side-card">
+              <h2>Dostupnost (naredni termini)</h2>
               {availabilityPreview.length > 0 ? (
-                <ul className="mt-3 space-y-2">
+                <ul className="availability-list">
                   {availabilityPreview.map((item, idx) => (
-                    <li key={`${item.date}-${idx}`} className="flex items-center justify-between rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 text-sm">
-                      <span className="inline-flex items-center gap-2 text-slate-700"><CalendarDays size={14} /> {formatDate(item.date)}</span>
-                      <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${item.isAvailable ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                    <li key={`${item.date}-${idx}`}>
+                      <span className="date-text"><CalendarDays size={14} /> {formatDate(item.date)}</span>
+                      <span className={`date-status ${item.isAvailable ? 'ok' : 'busy'}`}>
                         {item.isAvailable ? 'Slobodan' : 'Zauzet'}
                       </span>
                     </li>
                   ))}
                 </ul>
               ) : (
-                <p className="mt-3 text-sm text-slate-500">Nema javno unetih termina. Pošaljite upit za proveru dostupnosti.</p>
+                <p className="muted-copy">Nema javno unetih termina. Pošaljite upit za proveru dostupnosti.</p>
               )}
-            </div>
+            </section>
 
             {embeddedVideo && (
-              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-                <h2 className="text-base font-black text-slate-900">Video prezentacija</h2>
+              <section className="side-card">
+                <h2>Video prezentacija</h2>
                 <iframe
                   src={embeddedVideo}
                   title={`${musician.name} video`}
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
-                  className="mt-3 h-56 w-full rounded-xl border border-slate-200 bg-black"
+                  className="video-frame"
                 />
-              </div>
+              </section>
             )}
 
-            <div className="rounded-2xl border border-[#007AFF]/20 bg-[#F5FAFF] p-4 sm:p-5">
-              <h2 className="text-base font-black text-slate-900">Pošalji upit za saradnju</h2>
+            <section className="side-card invite-card">
+              <h2>Pošalji upit za saradnju</h2>
               {!viewer ? (
-                <p className="mt-1 text-sm text-slate-600">Prijavite se kao bend nalog da biste poslali poziv za saradnju.</p>
+                <p className="muted-copy">Prijavite se kao bend nalog da biste poslali poziv za saradnju.</p>
               ) : !viewer.bandId ? (
-                <p className="mt-1 text-sm text-slate-600">Samo bend nalozi mogu slati pozive muzičarima.</p>
+                <p className="muted-copy">Samo bend nalozi mogu slati pozive muzičarima.</p>
               ) : isDemoMusician ? (
-                <p className="mt-1 text-sm text-slate-600">Demo profili ne primaju pozive. Izaberite profil iz baze.</p>
+                <p className="muted-copy">Demo profili ne primaju pozive. Izaberite profil iz baze.</p>
               ) : (
-                <form className="mt-3 space-y-3" onSubmit={handleInviteSubmit}>
-                  {inviteError ? (
-                    <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">{inviteError}</div>
-                  ) : null}
-                  {inviteSuccess ? (
-                    <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700">{inviteSuccess}</div>
-                  ) : null}
+                <form className="invite-form" onSubmit={handleInviteSubmit}>
+                  {inviteError ? <div className="feedback error">{inviteError}</div> : null}
+                  {inviteSuccess ? <div className="feedback success">{inviteSuccess}</div> : null}
 
-                  <div className="grid gap-2 sm:grid-cols-2">
+                  <div className="invite-inline-grid">
                     <input
                       type="date"
                       value={inviteForm.eventDate}
                       onChange={(e) => handleInviteChange('eventDate', e.target.value)}
-                      className="min-h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none ring-[#007AFF]/0 transition focus:border-[#007AFF] focus:ring-4 focus:ring-[#007AFF]/12"
                     />
                     <input
                       type="number"
@@ -307,7 +309,6 @@ export default function MusicianProfileClient({ musicianId }) {
                       placeholder="Honorаr (€)"
                       value={inviteForm.feeEur}
                       onChange={(e) => handleInviteChange('feeEur', e.target.value)}
-                      className="min-h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none ring-[#007AFF]/0 transition focus:border-[#007AFF] focus:ring-4 focus:ring-[#007AFF]/12"
                     />
                   </div>
 
@@ -316,7 +317,6 @@ export default function MusicianProfileClient({ musicianId }) {
                     placeholder="Lokacija nastupa"
                     value={inviteForm.location}
                     onChange={(e) => handleInviteChange('location', e.target.value)}
-                    className="min-h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none ring-[#007AFF]/0 transition focus:border-[#007AFF] focus:ring-4 focus:ring-[#007AFF]/12"
                   />
 
                   <textarea
@@ -324,22 +324,352 @@ export default function MusicianProfileClient({ musicianId }) {
                     placeholder="Poruka muzičaru (termin, uslovi, detalji...)"
                     value={inviteForm.message}
                     onChange={(e) => handleInviteChange('message', e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none ring-[#007AFF]/0 transition focus:border-[#007AFF] focus:ring-4 focus:ring-[#007AFF]/12"
                   />
 
-                  <button
-                    type="submit"
-                    disabled={inviteSending}
-                    className="inline-flex items-center justify-center rounded-full bg-[#007AFF] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#0069db] disabled:cursor-not-allowed disabled:opacity-60"
-                  >
+                  <button type="submit" disabled={inviteSending} className="btn btn-primary invite-submit-btn">
                     {inviteSending ? 'Slanje...' : 'Pošalji poziv'}
                   </button>
                 </form>
               )}
-            </div>
-          </div>
+            </section>
+          </aside>
         </section>
       </main>
+
+      <style jsx>{`
+        .musician-public-page {
+          min-height: 100vh;
+          background: #f8fafc;
+          padding-bottom: 4rem;
+        }
+        .musician-public-shell {
+          padding-top: 8rem;
+          padding-bottom: 2rem;
+        }
+        .state-box {
+          border: 1px dashed #cbd5e1;
+          border-radius: 14px;
+          padding: 1.2rem;
+          color: #64748b;
+          background: #fff;
+          font-weight: 700;
+        }
+        .state-box.error {
+          color: #b91c1c;
+          border-color: #fecaca;
+          background: #fef2f2;
+        }
+        .back-link-public {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.4rem;
+          color: #334155;
+          font-weight: 800;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+          font-size: 0.76rem;
+          margin-bottom: 1rem;
+          padding: 0.45rem 0.7rem;
+          border-radius: 999px;
+          border: 1px solid rgba(148, 163, 184, 0.5);
+          background: rgba(255, 255, 255, 0.9);
+          text-decoration: none;
+        }
+        .musician-public-grid {
+          display: grid;
+          grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
+          gap: 1.5rem;
+          align-items: start;
+        }
+        .profile-main-card,
+        .side-card {
+          background: #fff;
+          border: 1px solid #e2e8f0;
+          border-radius: 20px;
+          padding: 1rem;
+          box-shadow: 0 6px 24px rgba(15, 23, 42, 0.04);
+        }
+        .profile-image-wrap {
+          aspect-ratio: 16 / 10;
+          border-radius: 14px;
+          overflow: hidden;
+          background: #e2e8f0;
+        }
+        .profile-image {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+        .profile-image-fallback {
+          width: 100%;
+          height: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #94a3b8;
+        }
+        .profile-title-row {
+          margin-top: 0.9rem;
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          gap: 0.75rem;
+        }
+        .profile-name {
+          margin: 0;
+          font-size: clamp(1.7rem, 3vw, 2.3rem);
+          font-weight: 900;
+          color: #0f172a;
+          line-height: 1.05;
+        }
+        .profile-instrument {
+          margin: 0.35rem 0 0;
+          font-size: 0.95rem;
+          font-weight: 800;
+          color: #007aff;
+        }
+        .demo-badge {
+          margin: 0.4rem 0 0;
+          display: inline-flex;
+          align-items: center;
+          border-radius: 999px;
+          background: rgba(0, 122, 255, 0.1);
+          color: #007aff;
+          padding: 0.26rem 0.55rem;
+          font-size: 0.68rem;
+          font-weight: 800;
+          text-transform: uppercase;
+        }
+        .availability-pill {
+          border-radius: 999px;
+          padding: 0.34rem 0.7rem;
+          font-size: 0.72rem;
+          font-weight: 800;
+          white-space: nowrap;
+        }
+        .availability-pill.ok {
+          background: rgba(16, 185, 129, 0.12);
+          color: #047857;
+        }
+        .availability-pill.busy {
+          background: rgba(245, 158, 11, 0.12);
+          color: #b45309;
+        }
+        .profile-meta-grid {
+          margin-top: 0.95rem;
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 0.55rem 0.9rem;
+        }
+        .profile-meta-grid p {
+          margin: 0;
+          display: inline-flex;
+          align-items: center;
+          gap: 0.45rem;
+          color: #475569;
+          font-size: 0.86rem;
+          font-weight: 700;
+        }
+        .genres-block {
+          margin-top: 0.95rem;
+          border-radius: 12px;
+          border: 1px solid #e2e8f0;
+          background: #f8fafc;
+          padding: 0.8rem;
+        }
+        .block-label {
+          margin: 0;
+          font-size: 0.68rem;
+          text-transform: uppercase;
+          letter-spacing: 0.06em;
+          font-weight: 800;
+          color: #64748b;
+        }
+        .block-value {
+          margin: 0.35rem 0 0;
+          font-size: 0.92rem;
+          font-weight: 700;
+          color: #0f172a;
+        }
+        .bio-block {
+          margin-top: 0.95rem;
+          border-top: 1px solid #f1f5f9;
+          padding-top: 0.95rem;
+        }
+        .bio-block p {
+          margin: 0;
+          color: #334155;
+          line-height: 1.72;
+          font-size: 1.01rem;
+          white-space: pre-line;
+          overflow-wrap: anywhere;
+        }
+        .demo-note {
+          margin-top: 0.5rem !important;
+          font-size: 0.78rem !important;
+          font-weight: 700;
+          color: #007aff !important;
+        }
+        .share-row {
+          margin-top: 0.95rem;
+          border-top: 1px solid #f1f5f9;
+          padding-top: 0.9rem;
+        }
+        .profile-side-stack {
+          display: flex;
+          flex-direction: column;
+          gap: 1rem;
+        }
+        .side-card h2 {
+          margin: 0;
+          font-size: 1rem;
+          font-weight: 900;
+          color: #0f172a;
+        }
+        .availability-list {
+          list-style: none;
+          margin: 0.75rem 0 0;
+          padding: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 0.5rem;
+        }
+        .availability-list li {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 0.5rem;
+          padding: 0.55rem 0.7rem;
+          border-radius: 10px;
+          border: 1px solid #e2e8f0;
+          background: #f8fafc;
+        }
+        .date-text {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.35rem;
+          font-size: 0.84rem;
+          font-weight: 700;
+          color: #334155;
+        }
+        .date-status {
+          border-radius: 999px;
+          padding: 0.24rem 0.58rem;
+          font-size: 0.66rem;
+          font-weight: 800;
+          text-transform: uppercase;
+        }
+        .date-status.ok {
+          background: rgba(16, 185, 129, 0.12);
+          color: #047857;
+        }
+        .date-status.busy {
+          background: rgba(245, 158, 11, 0.12);
+          color: #b45309;
+        }
+        .muted-copy {
+          margin: 0.68rem 0 0;
+          color: #64748b;
+          font-size: 0.86rem;
+          line-height: 1.5;
+        }
+        .video-frame {
+          margin-top: 0.75rem;
+          width: 100%;
+          min-height: 228px;
+          border-radius: 12px;
+          border: 1px solid #e2e8f0;
+          background: #0f172a;
+        }
+        .invite-card {
+          border-color: rgba(59, 130, 246, 0.18);
+          background: linear-gradient(180deg, #ffffff 0%, #f5faff 100%);
+        }
+        .invite-form {
+          margin-top: 0.75rem;
+          display: flex;
+          flex-direction: column;
+          gap: 0.55rem;
+        }
+        .invite-form input,
+        .invite-form textarea {
+          width: 100%;
+          box-sizing: border-box;
+          border: 1px solid #dbe4ef;
+          border-radius: 12px;
+          background: #fff;
+          color: #0f172a;
+          padding: 0.62rem 0.72rem;
+          font-size: 0.86rem;
+          outline: none;
+        }
+        .invite-form input:focus,
+        .invite-form textarea:focus {
+          border-color: #007aff;
+          box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.12);
+        }
+        .invite-form textarea {
+          resize: vertical;
+          min-height: 5.2rem;
+          line-height: 1.42;
+        }
+        .invite-inline-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 0.55rem;
+        }
+        .feedback {
+          border-radius: 10px;
+          padding: 0.62rem 0.72rem;
+          font-size: 0.78rem;
+          font-weight: 700;
+        }
+        .feedback.error {
+          background: #fef2f2;
+          border: 1px solid #fecaca;
+          color: #b91c1c;
+        }
+        .feedback.success {
+          background: #ecfdf5;
+          border: 1px solid #a7f3d0;
+          color: #047857;
+        }
+        .invite-submit-btn {
+          width: fit-content;
+          min-height: 40px;
+          margin-top: 0.25rem;
+        }
+
+        @media (max-width: 980px) {
+          .musician-public-grid {
+            grid-template-columns: 1fr;
+          }
+          .profile-main-card,
+          .side-card {
+            border-radius: 16px;
+          }
+        }
+
+        @media (max-width: 640px) {
+          .musician-public-shell {
+            padding-top: 7.2rem;
+          }
+          .profile-meta-grid,
+          .invite-inline-grid {
+            grid-template-columns: 1fr;
+          }
+          .profile-name {
+            font-size: 1.75rem;
+          }
+          .availability-pill {
+            font-size: 0.66rem;
+            padding-inline: 0.55rem;
+          }
+          .video-frame {
+            min-height: 190px;
+          }
+        }
+      `}</style>
     </div>
   );
 }

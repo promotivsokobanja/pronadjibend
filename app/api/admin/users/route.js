@@ -39,6 +39,7 @@ export async function GET(request) {
           createdAt: true,
           bandId: true,
           band: { select: { id: true, name: true, location: true } },
+          musicianProfile: { select: { id: true, name: true, primaryInstrument: true } },
         },
       }),
     ]);
@@ -58,7 +59,7 @@ export async function GET(request) {
   }
 }
 
-const ROLES = new Set(['ADMIN', 'BAND', 'CLIENT']);
+const ROLES = new Set(['ADMIN', 'BAND', 'CLIENT', 'MUSICIAN']);
 
 export async function PATCH(request) {
   const gate = await requireAdmin(request);
@@ -119,6 +120,7 @@ export async function PATCH(request) {
         planUntil: true,
         bandId: true,
         band: { select: { id: true, name: true } },
+        musicianProfile: { select: { id: true, name: true, primaryInstrument: true } },
       },
     });
     return NextResponse.json({ user: updated });

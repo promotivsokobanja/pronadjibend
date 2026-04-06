@@ -78,12 +78,12 @@ export default function NewSongPage() {
     );
   }
 
-  if (!bandId) {
+  if (!bandId && !musicianId) {
     return (
       <div className="edit-container container">
         <header className="edit-header" style={{ paddingTop: '8rem' }}>
           <Link href="/bands/repertoire" className="back-link"><ArrowLeft size={16} /> Nazad na Repertoar</Link>
-          <p className="text-muted">Dodavanje pesme je dostupno samo nalozima muzičara sa povezanim bendom.</p>
+          <p className="text-muted">Dodavanje pesme je dostupno samo nalozima sa povezanim bend ili muzičarskim profilom.</p>
         </header>
       </div>
     );

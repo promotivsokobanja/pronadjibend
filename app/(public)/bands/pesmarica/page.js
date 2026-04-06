@@ -204,7 +204,7 @@ export default function PesmaricaPage() {
                     <span className={`cat-badge ${(song.category || '').toLowerCase()}`}>
                       {song.category}
                     </span>
-                    {bandId && (
+                    {ownerId && (
                       <button
                         className={`add-btn ${addedSongs.has(song.id) ? 'added' : ''}`}
                         onClick={(e) => { e.stopPropagation(); if (!addedSongs.has(song.id)) handleAddToRepertoire(song); }}

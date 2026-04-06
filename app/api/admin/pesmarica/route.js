@@ -88,6 +88,42 @@ export async function POST(request) {
 
   try {
     const body = await request.json();
+
+    if (Array.isArray(body.songs)) {
+      const prepared = body.songs
+        .map((row) => {
+          const title = String(row?.title || '').trim();
+          const artist = String(row?.artist || '').trim();
+          const lyrics = row?.lyrics != null ? String(row.lyrics).trim() : '';
+          const chords = row?.chords != null ? String(row.chords).trim() : '';
+          const key = row?.key != null ? String(row.key).trim() : '';
+          const category = row?.category != null ? String(row.category).trim() : '';
+          const type = row?.type != null ? String(row.type).trim() : '';
+          if (!title || !artist || !lyrics) return null;
+          return {
+            title,
+            artist,
+            lyrics,
+            chords: chords || null,
+            key: key || null,
+            category: category || null,
+            type: type || null,
+            bandId: null,
+          };
+        })
+        .filter(Boolean);
+
+      if (prepared.length === 0) {
+        return NextResponse.json(
+          { error: 'Nijedna pesma nije validna. Potrebni su naslov, izvođač i tekst.' },
+          { status: 400 }
+        );
+      }
+
+      await prisma.song.createMany({ data: prepared });
+      return NextResponse.json({ success: true, created: prepared.length });
+    }
+
     const title = String(body.title || '').trim();
     const artist = String(body.artist || '').trim();
     const lyrics = body.lyrics != null ? String(body.lyrics).trim() : '';

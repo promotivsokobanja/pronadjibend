@@ -5,6 +5,7 @@ import { useRef, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { DEFAULT_BAND_COVER, resolveBandCoverImage } from '../lib/bandImages';
 import { nextImageShouldUnoptimize } from '../lib/remoteImage';
+import SocialShareActions from './SocialShareActions';
 
 export default function BandCard({ band, priority = false }) {
   const videoRef = useRef(null);
@@ -115,6 +116,15 @@ export default function BandCard({ band, priority = false }) {
           </div>
         </div>
       </Link>
+
+      <div className="card-share-actions" onClick={(e) => e.stopPropagation()}>
+        <SocialShareActions
+          compact
+          url={`/clients/band/${band.id}`}
+          title={`${band.name} — Pronađi Bend`}
+          text={`Pogledaj profil benda ${band.name} na platformi Pronađi Bend.`}
+        />
+      </div>
 
       <style jsx>{`
         .card-airbnb-container {
@@ -323,6 +333,11 @@ export default function BandCard({ band, priority = false }) {
         }
         .card-airbnb-container:hover {
           transform: translateY(-2px);
+        }
+
+        .card-share-actions {
+          margin-top: 0.4rem;
+          padding-left: 0.25rem;
         }
 
         @media (max-width: 768px) {

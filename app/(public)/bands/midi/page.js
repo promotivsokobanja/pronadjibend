@@ -43,7 +43,9 @@ export default function MidiLibraryPage() {
         const r = await fetch('/api/auth/me', { cache: 'no-store' });
         if (!r.ok) { router.replace('/login'); return; }
         const { user } = await r.json();
-        setIsPremium(user?.plan === 'PREMIUM' || user?.role === 'ADMIN');
+        const plan = String(user?.plan || '').toUpperCase();
+        const hasPremiumAccess = plan.startsWith('PREMIUM');
+        setIsPremium(hasPremiumAccess || user?.role === 'ADMIN');
         setIsAdmin(user?.role === 'ADMIN');
         setCanUpload(user?.role === 'ADMIN' || !!user?.bandId || !!user?.musicianProfileId);
         setCurrentUserId(user?.id || null);

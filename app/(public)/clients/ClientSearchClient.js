@@ -1,7 +1,7 @@
 'use client';
 
 import { Music } from 'lucide-react';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import BandCard from '../../../components/BandCard';
@@ -142,6 +142,13 @@ export default function ClientSearchClient() {
   const startIndex = (currentPage - 1) * bandsPerPage;
   const visibleBands = sortedBands.slice(startIndex, startIndex + bandsPerPage);
 
+  const sortedLabel = useMemo(() => {
+    if (sortBy === 'rating') return 'Najbolje ocenjeni';
+    if (sortBy === 'genre') return 'Aktivni žanr';
+    if (sortBy === 'name') return 'Naziv A-Z';
+    return 'Preporučeni';
+  }, [sortBy]);
+
   useEffect(() => {
     if (currentPage > totalPages) {
       setCurrentPage(totalPages);
@@ -149,29 +156,35 @@ export default function ClientSearchClient() {
   }, [currentPage, totalPages]);
 
   return (
-    <div className="search-page theme-light page-below-fixed-nav min-h-screen bg-white">
-      <main className="container pb-10 pt-6 md:pb-14 md:pt-10">
-        <div className="mb-8 flex flex-col gap-6 border-b border-slate-200/70 pb-8 md:mb-10 md:flex-row md:items-center md:justify-between md:gap-8 md:pb-8">
-          <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:gap-6 md:gap-7">
-            <h1 className="text-[1.65rem] font-black leading-[1.15] tracking-[-0.03em] text-slate-900 sm:text-3xl md:text-4xl">
-              Pronađi <span className="text-[#007AFF]">savršeni bend</span>
-            </h1>
+    <div className="band-search-page page-below-fixed-nav">
+      <main className="container band-search-main">
+        <section className="search-hero-card">
+          <div className="hero-header-row">
+            <div>
+              <h1 className="search-title">
+                Pronađi <span className="text-[#007AFF]">savršeni bend</span>
+              </h1>
+              <p className="search-subtitle">
+                Pogledaj proverene bendove po žanru, lokaciji i dostupnosti termina za tvoj događaj.
+              </p>
+            </div>
+            <span className="results-pill">
+              {genreFilteredBands.length} rezultata · {sortedLabel}
+            </span>
+          </div>
+
+          <div className="hero-actions-row">
             <button
               type="button"
               onClick={() => setIsNavSearchOpen(true)}
-              className="inline-flex max-w-full min-h-11 min-w-[13.5rem] shrink-0 items-center justify-center rounded-full border border-slate-400 bg-[#007AFF] px-5 py-2.5 text-center text-xs font-semibold leading-snug text-white shadow-md shadow-[#007AFF]/25 transition hover:border-slate-500 hover:bg-[#0066d6] hover:shadow-lg hover:shadow-[#007AFF]/30 sm:ml-2 sm:h-10 sm:min-h-0 sm:min-w-[15rem] sm:px-5 sm:text-sm sm:leading-tight sm:py-0"
+              className="open-search-btn"
             >
-              Pretraga
+              Otvori pretragu
             </button>
-          </div>
-          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:gap-3">
-            <span className="inline-flex w-fit items-center rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold tabular-nums text-slate-600">
-              {genreFilteredBands.length} rezultata
-            </span>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="min-h-11 w-full min-w-0 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 shadow-sm outline-none ring-[#007AFF]/0 transition focus:border-[#007AFF] focus:ring-4 focus:ring-[#007AFF]/12 sm:h-10 sm:min-h-0 sm:min-w-[11rem] sm:w-auto sm:py-0"
+              className="sort-select"
             >
               <option value="recommended">Preporučeno</option>
               <option value="genre">Aktivni žanr</option>
@@ -179,17 +192,17 @@ export default function ClientSearchClient() {
               <option value="name">Naziv A-Z</option>
             </select>
           </div>
-        </div>
+        </section>
 
         {isLoading ? (
-          <div className="mt-4 grid grid-cols-1 gap-7 sm:mt-5 sm:grid-cols-2 sm:gap-8 lg:mt-6 lg:grid-cols-3 lg:gap-9">
+          <div className="results-grid">
             {Array.from({ length: 6 }).map((_, i) => (
               <BandCardSkeleton key={i} />
             ))}
           </div>
         ) : bands.length > 0 ? (
           <>
-            <div className="mt-4 grid grid-cols-1 gap-7 sm:mt-5 sm:grid-cols-2 sm:gap-8 lg:mt-6 lg:grid-cols-3 lg:gap-9">
+            <div className="results-grid">
               {visibleBands.map((band, i) => (
                 <motion.div
                   key={`${currentPage}-${band.id}`}
@@ -206,30 +219,30 @@ export default function ClientSearchClient() {
                 </motion.div>
               ))}
             </div>
-            <div className="mt-10 flex flex-col items-stretch gap-4 px-1 sm:flex-row sm:flex-wrap sm:items-center sm:justify-center sm:gap-4">
+            <div className="pagination-row">
               <button
                 type="button"
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                className="min-h-12 rounded-full border border-slate-200 bg-white px-6 py-3 text-sm font-bold text-slate-700 shadow-sm disabled:cursor-not-allowed disabled:opacity-40 sm:min-h-11 sm:px-5 sm:py-2.5"
+                className="page-btn"
               >
                 Prethodna strana
               </button>
-              <span className="order-first text-center text-sm font-semibold text-slate-500 sm:order-none">
+              <span className="page-indicator">
                 Strana {currentPage} od {totalPages}
               </span>
               <button
                 type="button"
                 disabled={currentPage === totalPages}
                 onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                className="min-h-12 rounded-full border border-slate-200 bg-white px-6 py-3 text-sm font-bold text-slate-700 shadow-sm disabled:cursor-not-allowed disabled:opacity-40 sm:min-h-11 sm:px-5 sm:py-2.5"
+                className="page-btn"
               >
                 Sledeća strana
               </button>
             </div>
           </>
         ) : (
-          <div className="flex flex-col items-center justify-center rounded-[24px] border-2 border-dashed border-slate-200 bg-[#F7F7F7] px-6 py-20 text-center">
+          <div className="empty-state">
             <div className="flex h-14 w-14 items-center justify-center rounded-full border border-slate-200 bg-white">
               <Music size={28} className="text-slate-300" />
             </div>
@@ -255,6 +268,173 @@ export default function ClientSearchClient() {
           </div>
         )}
       </main>
+
+      <style jsx>{`
+        .band-search-page {
+          min-height: 100vh;
+          background: #f8fafc;
+          padding-bottom: 4rem;
+        }
+        .band-search-main {
+          padding-top: 8rem;
+          padding-bottom: 1rem;
+        }
+        .search-hero-card {
+          margin-bottom: 1.1rem;
+          border: 1px solid #e2e8f0;
+          background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+          border-radius: 20px;
+          padding: 1rem;
+          box-shadow: 0 6px 24px rgba(15, 23, 42, 0.04);
+          display: flex;
+          flex-direction: column;
+          gap: 0.9rem;
+        }
+        .hero-header-row {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 0.9rem;
+        }
+        .search-title {
+          margin: 0;
+          font-size: clamp(1.8rem, 4vw, 2.6rem);
+          font-weight: 900;
+          line-height: 1.1;
+          letter-spacing: -0.03em;
+          color: #0f172a;
+        }
+        .search-subtitle {
+          margin: 0.45rem 0 0;
+          color: #64748b;
+          font-size: 0.92rem;
+          line-height: 1.55;
+          max-width: 56ch;
+        }
+        .results-pill {
+          display: inline-flex;
+          align-items: center;
+          border-radius: 999px;
+          border: 1px solid #dbe4ef;
+          background: #fff;
+          color: #334155;
+          padding: 0.35rem 0.7rem;
+          font-size: 0.75rem;
+          font-weight: 700;
+          white-space: nowrap;
+        }
+        .hero-actions-row {
+          display: flex;
+          align-items: center;
+          gap: 0.55rem;
+          flex-wrap: wrap;
+        }
+        .open-search-btn {
+          min-height: 44px;
+          border-radius: 999px;
+          border: 1px solid #007aff;
+          background: #007aff;
+          color: #fff;
+          font-size: 0.84rem;
+          font-weight: 800;
+          padding: 0 1rem;
+          transition: background 0.2s ease, border-color 0.2s ease;
+        }
+        .open-search-btn:hover {
+          background: #0066d6;
+          border-color: #0066d6;
+        }
+        .sort-select {
+          min-height: 44px;
+          border-radius: 999px;
+          border: 1px solid #dbe4ef;
+          background: #fff;
+          color: #0f172a;
+          font-size: 0.84rem;
+          font-weight: 700;
+          padding: 0 0.9rem;
+          min-width: 188px;
+          outline: none;
+        }
+        .sort-select:focus {
+          border-color: #007aff;
+          box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.12);
+        }
+        .results-grid {
+          margin-top: 0.8rem;
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 1rem;
+        }
+        .pagination-row {
+          margin-top: 1.2rem;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.65rem;
+          flex-wrap: wrap;
+        }
+        .page-btn {
+          min-height: 42px;
+          border-radius: 999px;
+          border: 1px solid #dbe4ef;
+          background: #fff;
+          color: #334155;
+          font-size: 0.84rem;
+          font-weight: 800;
+          padding: 0 0.95rem;
+        }
+        .page-btn:disabled {
+          opacity: 0.42;
+          cursor: not-allowed;
+        }
+        .page-indicator {
+          font-size: 0.82rem;
+          font-weight: 700;
+          color: #64748b;
+        }
+        .empty-state {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          border-radius: 22px;
+          border: 2px dashed #cbd5e1;
+          background: #f8fafc;
+          padding: 4.2rem 1.25rem;
+          text-align: center;
+          margin-top: 0.8rem;
+        }
+
+        @media (max-width: 1260px) {
+          .results-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+        }
+
+        @media (max-width: 740px) {
+          .band-search-main {
+            padding-top: 7.2rem;
+          }
+          .search-hero-card {
+            border-radius: 16px;
+            padding: 0.9rem;
+          }
+          .hero-header-row {
+            flex-direction: column;
+          }
+          .results-grid {
+            grid-template-columns: 1fr;
+          }
+          .search-title {
+            font-size: 1.65rem;
+          }
+          .sort-select,
+          .open-search-btn {
+            width: 100%;
+          }
+        }
+      `}</style>
     </div>
   );
 }

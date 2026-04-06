@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Music2, MapPin, SlidersHorizontal } from 'lucide-react';
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import SocialShareActions from '../../../components/SocialShareActions';
 
 export default function MusiciansSearchClient() {
   const router = useRouter();
@@ -96,41 +97,41 @@ export default function MusiciansSearchClient() {
   }, [sort]);
 
   return (
-    <div className="search-page theme-light page-below-fixed-nav min-h-screen bg-white">
-      <main className="container pb-10 pt-6 md:pb-14 md:pt-10">
-        <div className="mb-8 flex flex-col gap-6 border-b border-slate-200/70 pb-8 md:mb-10 md:pb-8">
+    <div className="musician-search-page page-below-fixed-nav">
+      <main className="container musician-search-main">
+        <div className="search-hero-card">
           <div className="flex items-start justify-between gap-4 max-md:flex-col">
             <div>
-              <h1 className="text-[1.65rem] font-black leading-[1.15] tracking-[-0.03em] text-slate-900 sm:text-3xl md:text-4xl">
+              <h1 className="search-title">
                 Pronađi <span className="text-[#007AFF]">muzičara</span> za bend
               </h1>
-              <p className="mt-2 text-sm text-slate-500">
+              <p className="search-subtitle">
                 Bubnjar, vokal, gitarista, klavijaturista i drugi profili sa dostupnošću i cenom.
               </p>
             </div>
-            <span className="inline-flex h-fit items-center rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-600">
+            <span className="results-pill">
               {musicians.length} rezultata · {sortedLabel}
             </span>
           </div>
 
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-6">
+          <div className="filters-grid">
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Ime / ključna reč"
-              className="min-h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-800 outline-none ring-[#007AFF]/0 transition focus:border-[#007AFF] focus:ring-4 focus:ring-[#007AFF]/12"
+              className="filter-input"
             />
             <input
               value={instrument}
               onChange={(e) => setInstrument(e.target.value)}
               placeholder="Instrument"
-              className="min-h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-800 outline-none ring-[#007AFF]/0 transition focus:border-[#007AFF] focus:ring-4 focus:ring-[#007AFF]/12"
+              className="filter-input"
             />
             <input
               value={city}
               onChange={(e) => setCity(e.target.value)}
               placeholder="Grad"
-              className="min-h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-800 outline-none ring-[#007AFF]/0 transition focus:border-[#007AFF] focus:ring-4 focus:ring-[#007AFF]/12"
+              className="filter-input"
             />
             <input
               type="number"
@@ -138,20 +139,20 @@ export default function MusiciansSearchClient() {
               value={maxBudget}
               onChange={(e) => setMaxBudget(e.target.value)}
               placeholder="Maks budžet €"
-              className="min-h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-800 outline-none ring-[#007AFF]/0 transition focus:border-[#007AFF] focus:ring-4 focus:ring-[#007AFF]/12"
+              className="filter-input"
             />
             <input
               type="date"
               value={eventDate}
               onChange={(e) => setEventDate(e.target.value)}
-              className="min-h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-800 outline-none ring-[#007AFF]/0 transition focus:border-[#007AFF] focus:ring-4 focus:ring-[#007AFF]/12"
+              className="filter-input"
             />
-            <label className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700">
+            <label className="filter-select-wrap">
               <SlidersHorizontal size={15} />
               <select
                 value={sort}
                 onChange={(e) => setSort(e.target.value)}
-                className="w-full bg-transparent outline-none"
+                className="filter-select"
               >
                 <option value="recommended">Preporučeni</option>
                 <option value="rating">Najbolje ocenjeni</option>
@@ -163,57 +164,68 @@ export default function MusiciansSearchClient() {
         </div>
 
         {isLoading ? (
-          <div className="mt-4 grid grid-cols-1 gap-7 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="results-grid">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="h-72 animate-pulse rounded-2xl border border-slate-200 bg-slate-100" />
+              <div key={i} className="skeleton-card" />
             ))}
           </div>
         ) : musicians.length > 0 ? (
-          <div className="mt-4 grid grid-cols-1 gap-7 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="results-grid">
             {musicians.map((musician) => (
-              <Link key={musician.id} href={`/muzicari/${musician.id}`} className="group rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-                <div className="relative aspect-[1/0.72] overflow-hidden rounded-xl bg-slate-100">
-                  {musician.img ? (
-                    <img src={musician.img} alt={musician.name} className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]" loading="lazy" />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center text-slate-300">
-                      <Music2 size={38} />
-                    </div>
-                  )}
-                  {(musician.source === 'demo' || String(musician.id || '').startsWith('demo-musician-') || musician.demo) ? (
-                    <span className="absolute left-2 top-2 rounded-full bg-[#007AFF] px-2.5 py-1 text-[11px] font-bold text-white shadow-sm">
-                      Demo
+              <article key={musician.id} className="result-card group">
+                <Link href={`/muzicari/${musician.id}`}>
+                  <div className="result-image-wrap relative aspect-[1/0.72] overflow-hidden">
+                    {musician.img ? (
+                      <img src={musician.img} alt={musician.name} className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]" loading="lazy" />
+                    ) : (
+                      <div className="result-image-fallback">
+                        <Music2 size={38} />
+                      </div>
+                    )}
+                    {(musician.source === 'demo' || String(musician.id || '').startsWith('demo-musician-') || musician.demo) ? (
+                      <span className="absolute left-2 top-2 rounded-full bg-[#007AFF] px-2.5 py-1 text-[11px] font-bold text-white shadow-sm">
+                        Demo
+                      </span>
+                    ) : null}
+                  </div>
+
+                  <div className="mt-3 flex items-start justify-between gap-2">
+                    <h3 className="result-name">{musician.name}</h3>
+                    <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${musician.isAvailable ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                      {musician.isAvailable ? 'Dostupan' : 'Zauzet'}
                     </span>
+                  </div>
+
+                  <p className="result-instrument">{musician.primaryInstrument}</p>
+                  <p className="result-meta"><MapPin size={13} /> {musician.city}</p>
+                  <p className="result-bio">{musician.bio || 'Profil bez dodatnog opisa.'}</p>
+
+                  <div className="mt-3 flex items-center justify-between">
+                    <span className="result-rating">Ocena {Number(musician.rating || 0).toFixed(1)}</span>
+                    <span className="result-price">
+                      {musician.priceFromEur != null ? `${musician.priceFromEur}€+` : 'Cena po dogovoru'}
+                    </span>
+                  </div>
+                  {(musician.source === 'demo' || String(musician.id || '').startsWith('demo-musician-') || musician.demo) ? (
+                    <p className="mt-2 text-[11px] font-semibold uppercase tracking-wide text-[#007AFF]">
+                      Demo profil za prikaz
+                    </p>
                   ) : null}
-                </div>
+                </Link>
 
-                <div className="mt-3 flex items-start justify-between gap-2">
-                  <h3 className="text-lg font-black text-slate-900">{musician.name}</h3>
-                  <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${musician.isAvailable ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
-                    {musician.isAvailable ? 'Dostupan' : 'Zauzet'}
-                  </span>
+                <div className="mt-3" onClick={(e) => e.stopPropagation()}>
+                  <SocialShareActions
+                    compact
+                    url={`/muzicari/${musician.id}`}
+                    title={`${musician.name} — Muzičar | Pronađi Bend`}
+                    text={`Pogledaj profil muzičara ${musician.name} na platformi Pronađi Bend.`}
+                  />
                 </div>
-
-                <p className="mt-1 text-sm font-semibold text-[#007AFF]">{musician.primaryInstrument}</p>
-                <p className="mt-1 inline-flex items-center gap-1 text-sm text-slate-500"><MapPin size={13} /> {musician.city}</p>
-                <p className="mt-2 line-clamp-2 text-sm text-slate-600">{musician.bio || 'Profil bez dodatnog opisa.'}</p>
-
-                <div className="mt-3 flex items-center justify-between">
-                  <span className="text-xs font-semibold text-slate-500">Ocena {Number(musician.rating || 0).toFixed(1)}</span>
-                  <span className="text-sm font-black text-slate-900">
-                    {musician.priceFromEur != null ? `${musician.priceFromEur}€+` : 'Cena po dogovoru'}
-                  </span>
-                </div>
-                {(musician.source === 'demo' || String(musician.id || '').startsWith('demo-musician-') || musician.demo) ? (
-                  <p className="mt-2 text-[11px] font-semibold uppercase tracking-wide text-[#007AFF]">
-                    Demo profil za prikaz
-                  </p>
-                ) : null}
-              </Link>
+              </article>
             ))}
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center rounded-[24px] border-2 border-dashed border-slate-200 bg-[#F7F7F7] px-6 py-20 text-center">
+          <div className="empty-state">
             <div className="flex h-14 w-14 items-center justify-center rounded-full border border-slate-200 bg-white">
               <Music2 size={28} className="text-slate-300" />
             </div>
@@ -222,6 +234,218 @@ export default function MusiciansSearchClient() {
           </div>
         )}
       </main>
+
+      <style jsx>{`
+        .musician-search-page {
+          min-height: 100vh;
+          background: #f8fafc;
+          padding-bottom: 4rem;
+        }
+        .musician-search-main {
+          padding-top: 8rem;
+          padding-bottom: 1rem;
+        }
+        .search-hero-card {
+          margin-bottom: 1.1rem;
+          border: 1px solid #e2e8f0;
+          background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+          border-radius: 20px;
+          padding: 1rem;
+          box-shadow: 0 6px 24px rgba(15, 23, 42, 0.04);
+          display: flex;
+          flex-direction: column;
+          gap: 1rem;
+        }
+        .search-title {
+          margin: 0;
+          font-size: clamp(1.8rem, 4vw, 2.6rem);
+          font-weight: 900;
+          line-height: 1.1;
+          letter-spacing: -0.03em;
+          color: #0f172a;
+        }
+        .search-subtitle {
+          margin: 0.45rem 0 0;
+          color: #64748b;
+          font-size: 0.92rem;
+          line-height: 1.55;
+        }
+        .results-pill {
+          display: inline-flex;
+          align-items: center;
+          border-radius: 999px;
+          border: 1px solid #dbe4ef;
+          background: #fff;
+          color: #334155;
+          padding: 0.35rem 0.7rem;
+          font-size: 0.75rem;
+          font-weight: 700;
+        }
+        .filters-grid {
+          display: grid;
+          grid-template-columns: repeat(6, minmax(0, 1fr));
+          gap: 0.55rem;
+        }
+        .filter-input,
+        .filter-select-wrap {
+          min-height: 44px;
+          border-radius: 12px;
+          border: 1px solid #dbe4ef;
+          background: #fff;
+          color: #0f172a;
+          font-size: 0.86rem;
+          font-weight: 600;
+        }
+        .filter-input {
+          padding: 0 0.7rem;
+          outline: none;
+        }
+        .filter-input:focus {
+          border-color: #007aff;
+          box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.12);
+        }
+        .filter-select-wrap {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.45rem;
+          padding: 0 0.7rem;
+          color: #334155;
+        }
+        .filter-select {
+          width: 100%;
+          border: 0;
+          outline: none;
+          background: transparent;
+          font-weight: 700;
+          color: inherit;
+          font-size: 0.84rem;
+        }
+        .results-grid {
+          margin-top: 0.8rem;
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 1rem;
+        }
+        .skeleton-card {
+          height: 285px;
+          border-radius: 18px;
+          border: 1px solid #e2e8f0;
+          background: #f1f5f9;
+          animation: pulse 1.4s ease-in-out infinite;
+        }
+        @keyframes pulse {
+          0%,
+          100% {
+            opacity: 1;
+          }
+          50% {
+            opacity: 0.55;
+          }
+        }
+        .result-card {
+          border-radius: 20px;
+          border: 1px solid #e2e8f0;
+          background: #fff;
+          padding: 0.9rem;
+          box-shadow: 0 6px 24px rgba(15, 23, 42, 0.04);
+          transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .result-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 12px 26px rgba(15, 23, 42, 0.08);
+        }
+        .result-image-wrap {
+          border-radius: 14px;
+          background: #e2e8f0;
+        }
+        .result-image-fallback {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 100%;
+          height: 100%;
+          color: #94a3b8;
+        }
+        .result-name {
+          margin: 0;
+          font-size: 1.08rem;
+          font-weight: 900;
+          color: #0f172a;
+          line-height: 1.2;
+        }
+        .result-instrument {
+          margin: 0.35rem 0 0;
+          font-size: 0.84rem;
+          font-weight: 800;
+          color: #007aff;
+        }
+        .result-meta {
+          margin: 0.25rem 0 0;
+          display: inline-flex;
+          align-items: center;
+          gap: 0.3rem;
+          font-size: 0.82rem;
+          color: #64748b;
+          font-weight: 600;
+        }
+        .result-bio {
+          margin: 0.5rem 0 0;
+          color: #475569;
+          font-size: 0.86rem;
+          line-height: 1.5;
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+        .result-rating {
+          font-size: 0.74rem;
+          font-weight: 700;
+          color: #64748b;
+        }
+        .result-price {
+          font-size: 0.88rem;
+          font-weight: 900;
+          color: #0f172a;
+        }
+        .empty-state {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          border-radius: 22px;
+          border: 2px dashed #cbd5e1;
+          background: #f8fafc;
+          padding: 4.2rem 1.25rem;
+          text-align: center;
+        }
+
+        @media (max-width: 1260px) {
+          .filters-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+          }
+          .results-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+        }
+
+        @media (max-width: 740px) {
+          .musician-search-main {
+            padding-top: 7.2rem;
+          }
+          .filters-grid,
+          .results-grid {
+            grid-template-columns: 1fr;
+          }
+          .search-hero-card {
+            border-radius: 16px;
+            padding: 0.9rem;
+          }
+          .search-title {
+            font-size: 1.65rem;
+          }
+        }
+      `}</style>
     </div>
   );
 }
