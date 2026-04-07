@@ -764,14 +764,14 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
           text={`Pogledaj moj profil muzičara na platformi Pronađi Bend.`}
         />
       ) : null}
-      <Link href={settingsHref} className="btn btn-primary panel-settings-btn" style={{ marginTop: '2cm' }}>
+      <Link href={settingsHref} className="btn btn-primary panel-settings-btn">
         Otvori podešavanja
       </Link>
     </section>
   );
 
   return (
-    <div className="container" style={{ paddingTop: '9.5rem', paddingBottom: '5rem' }}>
+    <div className="container musician-editor-shell">
       <div className="profile-wrap musician-profile-wrap">
         <div className="profile-header">
           <div>
@@ -1052,6 +1052,10 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
       )}
 
       <style jsx>{`
+        .musician-editor-shell {
+          padding-top: 9.5rem;
+          padding-bottom: 5rem;
+        }
         .profile-wrap { max-width: 920px; margin: 0 auto; }
         .musician-profile-wrap { width: 100%; }
         .profile-header h1 { font-size: 2.1rem; font-weight: 900; color: #0f172a; margin-bottom: 0.3rem; }
@@ -1412,7 +1416,7 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
         }
         .panel-settings-btn {
           align-self: flex-start;
-          margin-top: 2cm;
+          margin-top: 1rem;
         }
         .panel-kpi-card {
           padding: 1rem 1.1rem;
@@ -1717,6 +1721,18 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
           border-color: #be123c;
         }
         @media (max-width: 860px) {
+          .musician-editor-shell {
+            padding-top: 8.5rem;
+            padding-bottom: 4rem;
+          }
+          .profile-header h1 {
+            font-size: 1.7rem;
+          }
+          .profile-wrap {
+            max-width: 100%;
+          }
+          .musician-content,
+          .panel-columns,
           .musician-layout,
           .kpi-grid,
           .grid,
@@ -1724,12 +1740,43 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
           .musician-three-grid {
             grid-template-columns: 1fr;
           }
+          .panel-hero {
+            padding: 1.35rem;
+            border-radius: 20px;
+          }
+          .profile-card {
+            padding: 1rem;
+            border-radius: 16px;
+          }
+          .panel-settings-btn {
+            width: 100%;
+            justify-content: center;
+          }
+          .profile-link-row {
+            align-items: stretch;
+          }
+          .profile-link-row :global(.btn) {
+            width: 100%;
+            justify-content: center;
+          }
           .invite-toolbar {
             flex-direction: column;
             align-items: stretch;
           }
           .invite-search {
             width: 100%;
+          }
+        }
+        @media (max-width: 520px) {
+          .musician-editor-shell {
+            padding-top: 7.9rem;
+          }
+          .profile-header h1 {
+            font-size: 1.5rem;
+          }
+          .panel-card {
+            min-height: 132px;
+            padding: 1rem;
           }
         }
       `}</style>
