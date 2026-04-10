@@ -62,6 +62,7 @@ async function main() {
       update: {
         role: 'ADMIN',
         password: hash,
+        deletedAt: null,
       },
     });
     console.log('Admin nalog je spreman:', em);

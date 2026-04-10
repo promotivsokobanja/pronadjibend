@@ -5,12 +5,14 @@ import { useRouter } from 'next/navigation';
 
 export default function LiveDashboard({ bandId, musicianId }) {
   const ownerId = bandId || musicianId;
+  const ownerType = bandId ? 'band' : 'musician';
   const router = useRouter();
   const [isNightMode, setIsNightMode] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
   const [requests, setRequests] = useState([]);
   const [activeTab, setActiveTab] = useState('requests');
   const [requestView, setRequestView] = useState('active');
+  const [showRepertoireBrowser, setShowRepertoireBrowser] = useState(false);
 
   // Song cheatsheet state
   const [allSongs, setAllSongs] = useState([]);
@@ -21,6 +23,48 @@ export default function LiveDashboard({ bandId, musicianId }) {
   const lyricsRef = useRef(null);
   const songComboRef = useRef(null);
 
+  // Set list state — read localStorage synchronously on first render
+  const setListStorageKey = ownerId ? `pb_live_set_lists_${ownerType}_${ownerId}` : '';
+
+  function readSetListsFromStorage(key) {
+    if (typeof window === 'undefined' || !key) return [];
+    try {
+      const raw = window.localStorage.getItem(key);
+      const parsed = raw ? JSON.parse(raw) : [];
+      if (!Array.isArray(parsed)) return [];
+      return parsed
+        .filter((entry) => entry && typeof entry === 'object' && entry.id)
+        .map((entry, index) => ({
+          id: String(entry.id),
+          name: String(entry.name || `Set lista ${index + 1}`).trim() || `Set lista ${index + 1}`,
+          items: Array.isArray(entry.items)
+            ? entry.items
+                .filter((item) => item && typeof item === 'object' && item.songId)
+                .map((item) => ({
+                  id: String(item.id || `${item.songId}-${Math.random().toString(36).slice(2, 8)}`),
+                  songId: String(item.songId),
+                  title: String(item.title || ''),
+                  artist: String(item.artist || ''),
+                }))
+            : [],
+        }));
+    } catch {
+      return [];
+    }
+  }
+
+  const [setLists, setSetLists] = useState(() => readSetListsFromStorage(setListStorageKey));
+  const [selectedSetListId, setSelectedSetListId] = useState(() => {
+    const initial = readSetListsFromStorage(setListStorageKey);
+    return initial[0]?.id || '';
+  });
+  const [setListNameDraft, setSetListNameDraft] = useState('');
+  const setListsRef = useRef(setLists);
+
+  useEffect(() => {
+    setListsRef.current = setLists;
+  }, [setLists]);
+
   // Settings state
   const [settings, setSettings] = useState({
     venueName: 'Kafana "Druga kuća"',
@@ -30,6 +74,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
     autoAccept: false,
     fontSize: 100, // percentage
   });
+  const [notifPermission, setNotifPermission] = useState('default');
 
   const normalizeMaxRequests = useCallback((value) => {
     const parsed = Number(value);
@@ -114,219 +159,99 @@ export default function LiveDashboard({ bandId, musicianId }) {
     };
   }, []);
 
-  const fontScale = settings.fontSize / 100;
-  const settingsRef = useRef(settings);
   useEffect(() => {
-    settingsRef.current = settings;
-  }, [settings]);
-
-  /** Poslednji skup ID-jeva koji su bili PENDING na prethodnom uspešnom fetch-u (za nove redove + notifikacije). */
-  const knownPendingIdsRef = useRef(new Set());
-  /** Broj PENDING posle prethodnog fetch-a — za zvuk kad novi ciklus donese više pending nego prethodni. */
-  const prevPendingCountAfterFetchRef = useRef(0);
-  const liveFetchBaselineDoneRef = useRef(false);
-
-  const [notifPermission, setNotifPermission] = useState(
-    typeof window !== 'undefined' && 'Notification' in window ? Notification.permission : 'unsupported'
-  );
-
-  useEffect(() => {
-    if (typeof window === 'undefined' || !('Notification' in window)) return;
-    if (Notification.permission === 'default') {
-      Notification.requestPermission()
-        .then((p) => setNotifPermission(p))
-        .catch(() => {});
-    } else {
-      setNotifPermission(Notification.permission);
+    if (typeof window === 'undefined') return;
+    if (!('Notification' in window)) {
+      setNotifPermission('unsupported');
+      return;
     }
+    setNotifPermission(Notification.permission || 'default');
   }, []);
 
-  useEffect(() => {
-    const sync = () => {
-      if (typeof window !== 'undefined' && 'Notification' in window) {
-        setNotifPermission(Notification.permission);
-      }
-    };
-    window.addEventListener('focus', sync);
-    return () => window.removeEventListener('focus', sync);
-  }, []);
-
-  const playNotification = useCallback(() => {
-    try {
-      const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      if (!AudioCtx) return;
-      const ctx = new AudioCtx();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.value = 1046;
-      gain.gain.value = 0.0001;
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      const now = ctx.currentTime;
-      gain.gain.exponentialRampToValueAtTime(0.045, now + 0.015);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
-      osc.start(now);
-      osc.stop(now + 0.14);
-      setTimeout(() => ctx.close(), 200);
-    } catch {
-      // Ignore sound errors.
-    }
-  }, []);
-
-  /** Zvuk „kasa / novčići“ za bakšiš preko konobara */
-  const playTipNotification = useCallback(() => {
-    try {
-      const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      if (!AudioCtx) return;
-      const ctx = new AudioCtx();
-      const now = ctx.currentTime;
-      const freqs = [784, 988, 1318];
-      freqs.forEach((freq, i) => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'triangle';
-        osc.frequency.value = freq;
-        gain.gain.value = 0.0001;
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        const t0 = now + i * 0.07;
-        gain.gain.exponentialRampToValueAtTime(0.07, t0 + 0.012);
-        gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.14);
-        osc.start(t0);
-        osc.stop(t0 + 0.15);
-      });
-      setTimeout(() => ctx.close(), 450);
-    } catch {
-      /* ignore */
-    }
-  }, []);
-
-  // Poll live requests from database
-  const fetchRequests = useCallback(async () => {
-    if (!ownerId) return;
-    try {
-      const param = bandId ? `bandId=${encodeURIComponent(bandId)}` : `musicianId=${encodeURIComponent(musicianId)}`;
-      const resp = await fetch(`/api/live-requests?${param}`, { cache: 'no-store' });
-      if (!resp.ok) return;
-      const data = await resp.json();
-      if (!Array.isArray(data)) return;
-
-      const pendingNow = data.filter((r) => r.status === 'pending');
-      const pendingCount = pendingNow.length;
-
-      if (!liveFetchBaselineDoneRef.current) {
-        liveFetchBaselineDoneRef.current = true;
-        knownPendingIdsRef.current = new Set(pendingNow.map((r) => r.id));
-        prevPendingCountAfterFetchRef.current = pendingCount;
-        setRequests(data);
-        return;
-      }
-
-      const newPendingItems = pendingNow.filter((r) => !knownPendingIdsRef.current.has(r.id));
-      knownPendingIdsRef.current = new Set(pendingNow.map((r) => r.id));
-
-      const prevCount = prevPendingCountAfterFetchRef.current;
-      const hasTipNew = newPendingItems.some(
-        (r) => r.requestType === 'waiter_tip' || r.requestType === 'song_with_tip'
-      );
-      if (settingsRef.current.soundEnabled && pendingCount > prevCount) {
-        if (hasTipNew) playTipNotification();
-        else playNotification();
-      }
-      prevPendingCountAfterFetchRef.current = pendingCount;
-
-      if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-        for (const r of newPendingItems) {
-          const sto =
-            r.tableNum != null && r.tableNum !== ''
-              ? String(r.tableNum)
-              : String(r.client || '')
-                  .replace(/^Sto\s*/i, '')
-                  .trim() || '?';
-          try {
-            if (r.requestType === 'waiter_tip' || r.requestType === 'song_with_tip') {
-              const amt = r.tipAmountRsd != null ? `${r.tipAmountRsd} RSD` : '';
-              new Notification(
-                r.requestType === 'song_with_tip' ? 'Pesma + bakšiš (konobar)' : 'Bakšiš preko konobara',
-                {
-                  body:
-                    r.requestType === 'song_with_tip'
-                      ? `Sto ${sto} — ${r.song || 'Pesma'}${amt ? ` · ${amt}` : ''}`
-                      : `Sto ${sto} — ${(r.guestNote || r.song || '').slice(0, 120)}`,
-                  tag: r.id,
-                  silent: true,
-                }
-              );
-            } else {
-              const songTitle = (r.song || 'Nepoznata pesma').toString();
-              new Notification(`Nova pesma: ${songTitle} - Sto ${sto}`, {
-                tag: r.id,
-                silent: true,
-              });
-            }
-          } catch {
-            /* ignore */
-          }
-        }
-      }
-
-      setRequests(data);
-    } catch (err) {
-      console.error('Error fetching live requests:', err);
-    }
-  }, [ownerId, bandId, musicianId, playNotification, playTipNotification]);
-
-  const [pollIntervalMs, setPollIntervalMs] = useState(4000);
-  useEffect(() => {
-    if (typeof window === 'undefined') return undefined;
-    const mq = window.matchMedia('(max-width: 720px)');
-    const apply = () => setPollIntervalMs(mq.matches ? 6000 : 4000);
-    apply();
-    mq.addEventListener('change', apply);
-    return () => mq.removeEventListener('change', apply);
-  }, []);
-
-  useEffect(() => {
-    fetchRequests();
-    const interval = setInterval(fetchRequests, pollIntervalMs);
-    return () => clearInterval(interval);
-  }, [fetchRequests, pollIntervalMs]);
-
-  // Fetch songs for this band/musician
   useEffect(() => {
     if (!ownerId) {
       setAllSongs([]);
       setSongLoading(false);
       return;
     }
-    const fetchSongs = async () => {
+
+    let cancelled = false;
+
+    const loadSongs = async () => {
       setSongLoading(true);
       try {
-        const param = bandId ? `bandId=${encodeURIComponent(bandId)}` : `musicianId=${encodeURIComponent(musicianId)}`;
-        const resp = await fetch(`/api/songs?${param}`, {
+        const params = new URLSearchParams();
+        if (bandId) params.set('bandId', bandId);
+        else if (musicianId) params.set('musicianId', musicianId);
+
+        const resp = await fetch(`/api/songs?${params.toString()}`, {
           cache: 'no-store',
         });
         const data = await resp.json();
-        setAllSongs(Array.isArray(data) ? data : []);
+
+        if (!cancelled) {
+          setAllSongs(Array.isArray(data) ? data : []);
+        }
       } catch (err) {
-        console.error('Error fetching songs:', err);
-        setAllSongs([]);
+        if (!cancelled) {
+          setAllSongs([]);
+        }
+        console.error('Error loading repertoire songs:', err);
       } finally {
-        setSongLoading(false);
+        if (!cancelled) {
+          setSongLoading(false);
+        }
       }
     };
-    fetchSongs();
+
+    loadSongs();
+
+    return () => {
+      cancelled = true;
+    };
   }, [ownerId, bandId, musicianId]);
 
-  useEffect(() => {
-    const list = Array.isArray(allSongs) ? allSongs : [];
-    if (!selectedSong && list.length > 0) {
-      handleSelectSong(list[0]);
-    }
-  }, [allSongs, selectedSong]);
 
-  // Fetch individual song lyrics when selected
+  const persistSetLists = useCallback((nextLists, storageKey = setListStorageKey) => {
+    if (typeof window === 'undefined' || !storageKey) return;
+    try {
+      window.localStorage.setItem(storageKey, JSON.stringify(nextLists));
+    } catch {
+      /* ignore */
+    }
+  }, [setListStorageKey]);
+
+  const updateSetLists = useCallback((updater) => {
+    setSetLists((prev) => {
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+      persistSetLists(next);
+      return next;
+    });
+  }, [persistSetLists]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !setListStorageKey) return;
+    const flushSetLists = () => {
+      persistSetLists(setListsRef.current, setListStorageKey);
+    };
+    window.addEventListener('beforeunload', flushSetLists);
+    return () => {
+      window.removeEventListener('beforeunload', flushSetLists);
+    };
+  }, [persistSetLists, setListStorageKey]);
+
+  const selectedSetList = setLists.find((entry) => entry.id === selectedSetListId) || null;
+
+  useEffect(() => {
+    setSetListNameDraft(selectedSetList?.name || '');
+  }, [selectedSetListId, selectedSetList?.name]);
+
+  const fontScale = settings.fontSize / 100;
+  const settingsRef = useRef(settings);
+  useEffect(() => {
+    settingsRef.current = settings;
+  }, [settings]);
+
   const handleSelectSong = async (song) => {
     if (song.lyrics) {
       setSelectedSong(song);
@@ -345,11 +270,105 @@ export default function LiveDashboard({ bandId, musicianId }) {
     }
   };
 
+  const openSongFromSetListItem = useCallback(async (item) => {
+    const matchedSong = allSongs.find((song) => song.id === item.songId);
+    const fallbackSong = matchedSong || {
+      id: item.songId,
+      title: item.title,
+      artist: item.artist,
+      lyrics: null,
+    };
+    await handleSelectSong(fallbackSong);
+    setActiveTab('cheatsheet');
+  }, [allSongs]);
+
+  const createSetList = useCallback(() => {
+    const nextId = typeof crypto !== 'undefined' && crypto.randomUUID
+      ? crypto.randomUUID()
+      : `setlist-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const next = {
+      id: nextId,
+      name: `Set lista ${setLists.length + 1}`,
+      items: [],
+    };
+    updateSetLists((prev) => [...prev, next]);
+    setSelectedSetListId(nextId);
+  }, [setLists.length, updateSetLists]);
+
+  const renameSelectedSetList = useCallback((nextName) => {
+    const trimmed = String(nextName || '').trim();
+    if (!selectedSetListId || !trimmed) return;
+    updateSetLists((prev) =>
+      prev.map((entry) => (entry.id === selectedSetListId ? { ...entry, name: trimmed } : entry))
+    );
+  }, [selectedSetListId, updateSetLists]);
+
+  const deleteSelectedSetList = useCallback(() => {
+    if (!selectedSetListId) return;
+    updateSetLists((prev) => {
+      const next = prev.filter((entry) => entry.id !== selectedSetListId);
+      setSelectedSetListId(next[0]?.id || '');
+      return next;
+    });
+  }, [selectedSetListId, updateSetLists]);
+
+  const addSongToSelectedSetList = useCallback((song) => {
+    if (!selectedSetListId || !song?.id) return;
+    const nextId = typeof crypto !== 'undefined' && crypto.randomUUID
+      ? crypto.randomUUID()
+      : `setitem-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    updateSetLists((prev) =>
+      prev.map((entry) =>
+        entry.id === selectedSetListId
+          ? {
+              ...entry,
+              items: [
+                ...entry.items,
+                {
+                  id: nextId,
+                  songId: song.id,
+                  title: song.title || 'Bez naziva',
+                  artist: song.artist || '',
+                },
+              ],
+            }
+          : entry
+      )
+    );
+  }, [selectedSetListId, updateSetLists]);
+
+  const removeSetListItem = useCallback((itemId) => {
+    if (!selectedSetListId || !itemId) return;
+    updateSetLists((prev) =>
+      prev.map((entry) =>
+        entry.id === selectedSetListId
+          ? { ...entry, items: entry.items.filter((item) => item.id !== itemId) }
+          : entry
+      )
+    );
+  }, [selectedSetListId, updateSetLists]);
+
+  const moveSetListItem = useCallback((itemId, direction) => {
+    if (!selectedSetListId || !itemId || !direction) return;
+    updateSetLists((prev) =>
+      prev.map((entry) => {
+        if (entry.id !== selectedSetListId) return entry;
+        const currentIndex = entry.items.findIndex((item) => item.id === itemId);
+        if (currentIndex === -1) return entry;
+        const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+        if (targetIndex < 0 || targetIndex >= entry.items.length) return entry;
+        const nextItems = [...entry.items];
+        const [moved] = nextItems.splice(currentIndex, 1);
+        nextItems.splice(targetIndex, 0, moved);
+        return { ...entry, items: nextItems };
+      })
+    );
+  }, [selectedSetListId, updateSetLists]);
+
   const refreshSelectedSong = useCallback(async () => {
     if (!selectedSong?.id) return;
     try {
       const resp = await fetch(`/api/songs/${selectedSong.id}`);
-      if (!resp.ok) return;
       const data = await resp.json();
       setSelectedSong(data);
       setAllSongs((prev) =>
@@ -375,19 +394,16 @@ export default function LiveDashboard({ bandId, musicianId }) {
     );
   });
 
-  useEffect(() => {
-    const onFocus = () => {
-      if (activeTab === 'cheatsheet') {
-        refreshSelectedSong();
-      }
-    };
-    window.addEventListener('focus', onFocus);
-    document.addEventListener('visibilitychange', onFocus);
-    return () => {
-      window.removeEventListener('focus', onFocus);
-      document.removeEventListener('visibilitychange', onFocus);
-    };
-  }, [activeTab, refreshSelectedSong]);
+  const selectedSetListSongIndex = selectedSetList?.items.findIndex(
+    (item) => item.songId === selectedSong?.id
+  ) ?? -1;
+
+  const openAdjacentSetListSong = useCallback(async (direction) => {
+    if (!selectedSetList || selectedSetListSongIndex === -1) return;
+    const targetIndex = direction === 'prev' ? selectedSetListSongIndex - 1 : selectedSetListSongIndex + 1;
+    if (targetIndex < 0 || targetIndex >= selectedSetList.items.length) return;
+    await openSongFromSetListItem(selectedSetList.items[targetIndex]);
+  }, [openSongFromSetListItem, selectedSetList, selectedSetListSongIndex]);
 
   useEffect(() => {
     const onOutsideClick = (e) => {
@@ -437,6 +453,10 @@ export default function LiveDashboard({ bandId, musicianId }) {
     );
     updateRequestStatus(req.id, 'ACCEPTED');
 
+    await openRequestSong(req);
+  };
+
+  const openRequestSong = async (req) => {
     if (req.requestType === 'waiter_tip') {
       return;
     }
@@ -493,6 +513,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
   ).length;
 
   const handleExit = () => {
+    persistSetLists(setListsRef.current);
     // In sub-views, treat exit as "step back".
     if (activeTab === 'cheatsheet' || activeTab === 'repertoire') {
       setActiveTab('requests');
@@ -557,7 +578,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
           </button>
           <button className={`nav-item ${activeTab === 'repertoire' ? 'active' : ''}`} onClick={() => setActiveTab('repertoire')}>
             <ListMusic size={24} />
-            <span className="nav-tooltip">Lista pesama</span>
+            <span className="nav-tooltip">Set liste</span>
           </button>
         </nav>
 
@@ -632,9 +653,14 @@ export default function LiveDashboard({ bandId, musicianId }) {
                           </>
                         )}
                         {req.status === 'accepted' && (
-                          <button className="btn-hud accept" onClick={() => handleMarkPlayed(req)}>
-                            Svirano
-                          </button>
+                          <>
+                            <button className="btn-hud accept" onClick={() => openRequestSong(req)}>
+                              Tekst
+                            </button>
+                            <button className="btn-hud skip" onClick={() => handleMarkPlayed(req)}>
+                              Svirano
+                            </button>
+                          </>
                         )}
                         {(req.status === 'rejected' || req.status === 'played') && (
                           <span className="status-chip">{req.status === 'played' ? 'Svirano' : 'Preskočeno'}</span>
@@ -654,44 +680,141 @@ export default function LiveDashboard({ bandId, musicianId }) {
 
           {activeTab === 'repertoire' && (
             <div className="song-picker">
-              <h2>LISTA PESAMA</h2>
-              <div className="song-search-box">
-                <input
-                  type="text"
-                  placeholder="Pretraži naziv pesme..."
-                  value={songSearch}
-                  onChange={(e) => setSongSearch(e.target.value)}
-                  className="song-search-input"
-                />
+              <h2>SET LISTE</h2>
+
+              <div className="setlists-panel-header">
+                <button type="button" className="setlist-create-btn" onClick={createSetList}>
+                  + Nova set lista
+                </button>
+                {selectedSetListId && (
+                  <button
+                    type="button"
+                    className="setlist-create-btn"
+                    onClick={() => setShowRepertoireBrowser((v) => !v)}
+                  >
+                    {showRepertoireBrowser ? '✕ Zatvori repertoar' : '+ Dodaj pesme'}
+                  </button>
+                )}
               </div>
 
-              {songLoading ? (
-                <div className="song-loading">Učitavanje repertoara...</div>
-              ) : filteredSongs.length === 0 ? (
-                <div className="empty-state">
-                  <Music size={48} />
-                  <p>{songSearch ? 'Nema rezultata' : 'Repertoar je prazan'}</p>
+              {setLists.length === 0 ? (
+                <div className="setlists-empty">
+                  Napravite prvu set listu klikom na dugme iznad.
                 </div>
               ) : (
-                <div className="song-picker-list">
-                  {filteredSongs.map((song) => (
-                    <button
-                      key={song.id}
-                      className={`song-picker-item ${song.lyrics ? 'has-lyrics' : ''}`}
-                      onClick={async () => {
-                        await handleSelectSong(song);
-                        setActiveTab('cheatsheet');
-                      }}
-                    >
-                      <div className="song-picker-info">
-                        <span className="song-picker-title">{song.title}</span>
-                        <span className="song-picker-artist">{song.artist}</span>
+                <>
+                  <div className="setlists-selector">
+                    {setLists.map((entry) => (
+                      <button
+                        key={entry.id}
+                        type="button"
+                        className={`setlist-chip ${entry.id === selectedSetListId ? 'active' : ''}`}
+                        onClick={() => { setSelectedSetListId(entry.id); setShowRepertoireBrowser(false); }}
+                      >
+                        {entry.name}
+                      </button>
+                    ))}
+                  </div>
+
+                  {selectedSetList && (
+                    <div className="setlist-editor">
+                      <div className="setlist-editor-top">
+                        <input
+                          type="text"
+                          value={setListNameDraft}
+                          onChange={(e) => setSetListNameDraft(e.target.value)}
+                          onBlur={() => renameSelectedSetList(setListNameDraft)}
+                          className="setlist-name-input"
+                          placeholder="Naziv set liste"
+                        />
+                        <button type="button" className="setlist-delete-btn" onClick={deleteSelectedSetList}>
+                          Obriši
+                        </button>
                       </div>
-                      <div className="song-picker-meta">
-                        {song.lyrics ? <span className="lyrics-tag">TEKST</span> : <span className="no-lyrics-tag">—</span>}
+
+                      <div className="setlist-items">
+                        {selectedSetList.items.length === 0 ? (
+                          <div className="setlists-empty small">Još nema pesama &mdash; kliknite &ldquo;Dodaj pesme&rdquo; iznad.</div>
+                        ) : (
+                          selectedSetList.items.map((item, index) => (
+                            <div key={item.id} className="setlist-item-row">
+                              <button
+                                type="button"
+                                className="setlist-item-main"
+                                onClick={() => openSongFromSetListItem(item)}
+                              >
+                                <span className="setlist-item-order">{index + 1}.</span>
+                                <span className="setlist-item-copy">
+                                  <span className="setlist-item-title">{item.title}</span>
+                                  <span className="setlist-item-artist">{item.artist}</span>
+                                </span>
+                              </button>
+                              <div className="setlist-item-actions">
+                                <button type="button" onClick={() => moveSetListItem(item.id, 'up')}>↑</button>
+                                <button type="button" onClick={() => moveSetListItem(item.id, 'down')}>↓</button>
+                                <button type="button" onClick={() => removeSetListItem(item.id)}>×</button>
+                              </div>
+                            </div>
+                          ))
+                        )}
                       </div>
-                    </button>
-                  ))}
+                    </div>
+                  )}
+                </>
+              )}
+
+              {showRepertoireBrowser && selectedSetListId && (
+                <div className="repertoire-browser">
+                  <div className="repertoire-browser-head">
+                    <h3>REPERTOAR</h3>
+                  </div>
+                  <div className="song-search-box">
+                    <input
+                      type="text"
+                      placeholder="Pretraži pesmu..."
+                      value={songSearch}
+                      onChange={(e) => setSongSearch(e.target.value)}
+                      className="song-search-input"
+                    />
+                  </div>
+                  {songLoading ? (
+                    <div className="song-loading">Učitavanje repertoara...</div>
+                  ) : filteredSongs.length === 0 ? (
+                    <div className="empty-state">
+                      <Music size={48} />
+                      <p>{songSearch ? 'Nema rezultata' : 'Repertoar je prazan'}</p>
+                    </div>
+                  ) : (
+                    <div className="song-picker-list">
+                      {filteredSongs.map((song) => (
+                        <div key={song.id} className={`song-picker-item ${song.lyrics ? 'has-lyrics' : ''}`}>
+                          <button
+                            type="button"
+                            className="song-picker-open"
+                            onClick={async () => {
+                              await handleSelectSong(song);
+                              setActiveTab('cheatsheet');
+                            }}
+                          >
+                            <div className="song-picker-info">
+                              <span className="song-picker-title">{song.title}</span>
+                              <span className="song-picker-artist">{song.artist}</span>
+                            </div>
+                            <div className="song-picker-meta">
+                              {song.lyrics ? <span className="lyrics-tag">TEKST</span> : <span className="no-lyrics-tag">—</span>}
+                            </div>
+                          </button>
+                          <button
+                            type="button"
+                            className="song-add-to-setlist"
+                            onClick={() => addSongToSelectedSetList(song)}
+                          >
+                            + Dodaj
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -702,6 +825,41 @@ export default function LiveDashboard({ bandId, musicianId }) {
               <div className="song-detail-view">
                 <div className="song-detail-header">
                   <h2 className="detail-title">PODSETNIK — REPERTOAR</h2>
+                  {selectedSetList && (
+                    <div className="active-setlist-strip">
+                      <div className="active-setlist-head">
+                        <span className="active-setlist-name">{selectedSetList.name}</span>
+                        <div className="active-setlist-nav">
+                          <button
+                            type="button"
+                            onClick={() => openAdjacentSetListSong('prev')}
+                            disabled={selectedSetListSongIndex <= 0}
+                          >
+                            Prethodna
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => openAdjacentSetListSong('next')}
+                            disabled={selectedSetListSongIndex === -1 || selectedSetListSongIndex >= selectedSetList.items.length - 1}
+                          >
+                            Sledeća
+                          </button>
+                        </div>
+                      </div>
+                      <div className="active-setlist-items">
+                        {selectedSetList.items.map((item) => (
+                          <button
+                            key={item.id}
+                            type="button"
+                            className={`active-setlist-item ${item.songId === selectedSong?.id ? 'active' : ''}`}
+                            onClick={() => openSongFromSetListItem(item)}
+                          >
+                            {item.title}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                   <div className="song-picker-combo" ref={songComboRef}>
                     <div className="song-search-inline">
                       <input
@@ -974,6 +1132,46 @@ export default function LiveDashboard({ bandId, musicianId }) {
           color: #00ff00;
           text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
         }
+        .night-vision .hud-header,
+        .night-vision .setlists-panel,
+        .night-vision .repertoire-browser,
+        .night-vision .active-setlist-strip,
+        .night-vision .request-card,
+        .night-vision .setlist-item-main,
+        .night-vision .song-picker-item,
+        .night-vision .song-search-box,
+        .night-vision .song-search-inline,
+        .night-vision .song-dropdown-toggle,
+        .night-vision .song-dropdown-list,
+        .night-vision .song-select,
+        .night-vision .settings-panel,
+        .night-vision .setting-group {
+          border-color: rgba(0, 255, 0, 0.18);
+        }
+        .night-vision .setting-hint,
+        .night-vision .setlist-help-text,
+        .night-vision .setlist-item-artist,
+        .night-vision .song-picker-artist,
+        .night-vision .detail-artist,
+        .night-vision .no-lyrics-msg,
+        .night-vision .no-lyrics-msg .hint,
+        .night-vision .song-dropdown-artist,
+        .night-vision .nav-item,
+        .night-vision .hud-content h2 {
+          color: rgba(0, 255, 0, 0.62);
+        }
+        .night-vision .setting-label,
+        .night-vision .settings-header h2,
+        .night-vision .setlists-panel-header h3,
+        .night-vision .active-setlist-name,
+        .night-vision .song-picker-title,
+        .night-vision .setlist-item-title,
+        .night-vision .detail-title,
+        .night-vision .song-dropdown-title,
+        .night-vision .status-indicator,
+        .night-vision .lyrics-display {
+          color: #b7ffb7 !important;
+        }
 
         .hud-header {
           min-height: 52px;
@@ -1043,6 +1241,126 @@ export default function LiveDashboard({ bandId, musicianId }) {
           border-color: #333;
         }
 
+        .settings-overlay {
+          position: fixed;
+          inset: 0;
+          z-index: 120;
+          background: rgba(0, 0, 0, 0.72);
+          backdrop-filter: blur(3px);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 1rem;
+          animation: fade-in 0.18s ease;
+        }
+        .settings-panel {
+          width: min(640px, 100%);
+          max-height: min(84vh, 780px);
+          overflow: hidden;
+          display: flex;
+          flex-direction: column;
+          background: #050505;
+          border: 1px solid #1f2937;
+          border-radius: 16px;
+          box-shadow: 0 24px 60px rgba(0, 0, 0, 0.42);
+          animation: slide-up 0.2s ease;
+        }
+        .settings-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 1rem;
+          padding: 0.95rem 1rem;
+          border-bottom: 1px solid #161616;
+        }
+        .settings-header h2 {
+          margin: 0;
+          font-size: 0.86rem;
+          letter-spacing: 0.12em;
+          color: #e5e7eb;
+          font-weight: 800;
+        }
+        .close-btn {
+          width: 38px;
+          height: 38px;
+          border: 1px solid #242424;
+          border-radius: 10px;
+          background: #0b0b0b;
+          color: #9ca3af;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: all 0.15s ease;
+        }
+        .close-btn:hover {
+          border-color: #ef4444;
+          color: #ef4444;
+        }
+        .night-vision .close-btn {
+          border-color: rgba(0, 255, 0, 0.18);
+          color: #7dff7d;
+        }
+        .night-vision .close-btn:hover {
+          border-color: #00ff00;
+          color: #00ff00;
+        }
+        .settings-body {
+          padding: 0.95rem 1rem 1rem;
+          overflow-y: auto;
+          display: flex;
+          flex-direction: column;
+          gap: 0.75rem;
+        }
+        .setting-group {
+          padding: 0.85rem 0.9rem;
+          border: 1px solid #151515;
+          border-radius: 10px;
+          background: #090909;
+          box-shadow: none;
+        }
+        .setting-label {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.45rem;
+          margin-bottom: 0.55rem;
+          color: #e5e7eb;
+          font-size: 0.76rem;
+          font-weight: 800;
+          letter-spacing: 0.05em;
+        }
+        .setting-hint {
+          margin: 0.45rem 0 0;
+          color: #6b7280;
+          font-size: 0.72rem;
+          line-height: 1.55;
+        }
+        .setting-input {
+          width: 100%;
+          padding: 10px 12px;
+          border: 1px solid #242424;
+          border-radius: 10px;
+          background: #0d0d0d;
+          color: #f3f4f6;
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 0.8rem;
+        }
+
+        @keyframes fade-in {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes slide-up {
+          from {
+            opacity: 0;
+            transform: translateY(10px) scale(0.98);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+
         .notif-permission-btn {
           margin-top: 0.75rem;
           width: 100%;
@@ -1065,6 +1383,11 @@ export default function LiveDashboard({ bandId, musicianId }) {
         .notif-permission-btn:hover:not(:disabled) {
           border-color: #00ff00;
           background: #0f1a0f;
+        }
+        .night-vision .notif-permission-btn {
+          border-color: rgba(0, 255, 0, 0.2);
+          color: #8dff8d;
+          background: rgba(0, 255, 0, 0.05);
         }
 
         .notif-permission-btn:disabled {
@@ -1098,7 +1421,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
         .hud-btn {
           background: #111;
           border: 1px solid #333;
-          color: #888;
+          color: #cbd5e1;
           padding: 6px 12px;
           border-radius: 6px;
           display: flex;
@@ -1113,6 +1436,21 @@ export default function LiveDashboard({ bandId, musicianId }) {
         .hud-btn.active {
           border-color: #00ff00;
           color: #00ff00;
+        }
+        .hud-btn:hover {
+          border-color: #4b5563;
+          color: #f3f4f6;
+        }
+        .night-vision .hud-btn {
+          border-color: rgba(0, 255, 0, 0.18);
+          color: #8dff8d;
+          background: rgba(0, 255, 0, 0.03);
+        }
+        .night-vision .hud-btn:hover,
+        .night-vision .hud-btn.active {
+          border-color: #00ff00;
+          color: #00ff00;
+          background: rgba(0, 255, 0, 0.08);
         }
 
         .exit-btn {
@@ -1137,6 +1475,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
           grid-template-columns: 80px 1fr 240px;
           min-height: 0;
           min-width: 0;
+          gap: 0;
         }
 
         .hud-side-nav {
@@ -1152,7 +1491,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
         .nav-item {
           background: none;
           border: none;
-          color: #444;
+          color: #9ca3af;
           cursor: pointer;
           position: relative;
           transition: color 0.15s ease, transform 0.12s ease;
@@ -1166,6 +1505,11 @@ export default function LiveDashboard({ bandId, musicianId }) {
         }
 
         .nav-item.active { color: #00ff00; }
+        .nav-item:hover { color: #f3f4f6; }
+        .night-vision .nav-item:hover,
+        .night-vision .nav-item.active {
+          color: #00ff00;
+        }
         .nav-item .nav-tooltip {
           position: absolute;
           left: calc(100% + 10px);
@@ -1213,7 +1557,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
         }
 
         .hud-content {
-          padding: 2rem;
+          padding: 1.35rem 1.4rem;
           overflow-y: auto;
           overflow-x: hidden;
           min-width: 0;
@@ -1225,7 +1569,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
           font-size: 0.8rem;
           color: #555;
           text-transform: uppercase;
-          margin-bottom: 2rem;
+          margin-bottom: 1.4rem;
           letter-spacing: 2px;
         }
         .requests-title.night-glow {
@@ -1266,7 +1610,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
         .request-card {
           background: #080808;
           border: 1px solid #1a1a1a;
-          padding: 1.5rem;
+          padding: 1.25rem;
           border-radius: 12px;
         }
 
@@ -1318,6 +1662,10 @@ export default function LiveDashboard({ bandId, musicianId }) {
           color: #fef08a;
           flex-shrink: 0;
         }
+        .night-vision .tip-money-icon {
+          color: #facc15;
+          filter: drop-shadow(0 0 4px rgba(250, 204, 21, 0.35));
+        }
 
         .tip-amount {
           font-weight: 900;
@@ -1328,219 +1676,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
 
         .tip { color: #ffd700; font-weight: 900; }
 
-        .song-title {
-          font-size: 1.5rem;
-          font-weight: 800;
-          margin-bottom: 0.5rem;
-        }
-
-        .client-name { color: #888; font-size: 0.8rem; }
-
-        .req-actions {
-          display: flex;
-          gap: 1rem;
-          margin-top: 1.5rem;
-        }
-
-        .btn-hud {
-          flex: 1;
-          background: #111;
-          border: 1px solid #222;
-          padding: 10px 8px;
-          min-height: 44px;
-          border-radius: 8px;
-          color: #eee;
-          font-size: 0.7rem;
-          font-weight: 700;
-          cursor: pointer;
-        }
-
-        .btn-hud.accept:hover { background: #00ff00; color: #000; }
-        .status-chip {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          padding: 7px 10px;
-          border-radius: 999px;
-          border: 1px solid #2a2a2a;
-          color: #9ca3af;
-          font-size: 0.66rem;
-          font-weight: 800;
-          letter-spacing: 0.04em;
-          text-transform: uppercase;
-        }
-
-        .empty-state {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          gap: 1rem;
-          padding: 4rem 2rem;
-          color: #333;
-        }
-
-        .max-requests-warning {
-          margin-top: 2rem;
-          padding: 1rem;
-          background: rgba(239, 68, 68, 0.1);
-          border: 1px solid rgba(239, 68, 68, 0.3);
-          border-radius: 8px;
-          color: #ef4444;
-          font-size: 0.75rem;
-          font-weight: 700;
-          text-align: center;
-        }
-
-        .hud-metrics {
-          background: #050505;
-          border-left: 1px solid #222;
-          padding: 2rem;
-          display: flex;
-          flex-direction: column;
-          gap: 2rem;
-        }
-
-        .metric-box {
-          border-bottom: 1px solid #111;
-          padding-bottom: 1.5rem;
-        }
-
-        .metric-box .label {
-          font-size: 0.6rem;
-          color: #444;
-          margin-top: 5px;
-        }
-
-        .metric-box .value {
-          font-size: 1.5rem;
-          font-weight: 900;
-          margin-top: 5px;
-        }
-
-        .metric-box .value-sm {
-          font-size: 0.9rem;
-        }
-
-        /* ======= SETTINGS PANEL ======= */
-        .settings-overlay {
-          position: fixed;
-          inset: 0;
-          background: rgba(0, 0, 0, 0.75);
-          backdrop-filter: blur(4px);
-          z-index: 100;
-          animation: fadeIn 0.2s ease;
-        }
-
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-
-        @keyframes slideIn {
-          from { transform: translateX(100%); }
-          to { transform: translateX(0); }
-        }
-
-        .settings-panel {
-          position: absolute;
-          top: 0;
-          right: 0;
-          bottom: 0;
-          width: 420px;
-          max-width: 100vw;
-          background: #0a0a0a;
-          border-left: 1px solid #222;
-          display: flex;
-          flex-direction: column;
-          animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-          font-family: 'JetBrains Mono', monospace;
-          color: #eee;
-          text-shadow: none;
-        }
-
-        .settings-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 1.25rem 1.5rem;
-          border-bottom: 1px solid #1a1a1a;
-          flex-shrink: 0;
-        }
-
-        .settings-header h2 {
-          font-size: 0.75rem;
-          font-weight: 800;
-          letter-spacing: 3px;
-          color: #888;
-          margin: 0;
-        }
-
-        .close-btn {
-          background: none;
-          border: 1px solid #333;
-          color: #888;
-          width: 36px;
-          height: 36px;
-          border-radius: 8px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          transition: all 0.2s ease;
-        }
-        .close-btn:hover {
-          border-color: #ef4444;
-          color: #ef4444;
-        }
-
-        .settings-body {
-          flex: 1;
-          overflow-y: auto;
-          padding: 1.5rem;
-          display: flex;
-          flex-direction: column;
-          gap: 0;
-        }
-
-        .setting-group {
-          padding: 1.25rem 0;
-          border-bottom: 1px solid #111;
-        }
-
-        .setting-group:last-child {
-          border-bottom: none;
-        }
-
-        .setting-label {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          font-size: 0.65rem;
-          font-weight: 800;
-          letter-spacing: 2px;
-          text-transform: uppercase;
-          color: #888;
-          margin-bottom: 0.75rem;
-        }
-
-        .setting-hint {
-          font-size: 0.7rem;
-          color: #444;
-          margin-top: 0.5rem;
-          line-height: 1.4;
-          letter-spacing: 0;
-        }
-
         .setting-input {
-          width: 100%;
-          background: #111;
-          border: 1px solid #222;
-          color: #eee;
-          padding: 10px 14px;
-          border-radius: 8px;
-          font-family: 'JetBrains Mono', monospace;
-          font-size: 0.85rem;
           outline: none;
           transition: border-color 0.2s ease;
         }
@@ -1549,6 +1685,14 @@ export default function LiveDashboard({ bandId, musicianId }) {
         }
         .setting-input::placeholder {
           color: #333;
+        }
+        .night-vision .setting-input {
+          border-color: rgba(0, 255, 0, 0.18);
+          background: rgba(0, 255, 0, 0.03);
+          color: #b7ffb7;
+        }
+        .night-vision .setting-input::placeholder {
+          color: rgba(0, 255, 0, 0.35);
         }
 
         .setting-range-row {
@@ -1684,6 +1828,209 @@ export default function LiveDashboard({ bandId, musicianId }) {
           min-height: 0;
         }
 
+        .repertoire-browser {
+          min-height: 0;
+          border: 1px solid #1a1a1a;
+          border-radius: 12px;
+          background: #050505;
+          padding: 0.95rem;
+          display: flex;
+          flex-direction: column;
+          gap: 0.85rem;
+          margin-top: 0.75rem;
+        }
+        .repertoire-browser-head {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+        }
+        .repertoire-browser-head h3 {
+          margin: 0;
+          font-size: 0.84rem;
+          letter-spacing: 0.08em;
+          color: #9ca3af;
+        }
+        .setlists-panel-header,
+        .setlist-editor-top,
+        .active-setlist-head {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 0.75rem;
+        }
+        .setlists-panel-header h3,
+        .active-setlist-name {
+          margin: 0;
+          font-size: 0.84rem;
+          letter-spacing: 0.08em;
+          color: #9ca3af;
+        }
+        .setlists-selector,
+        .active-setlist-items {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.5rem;
+        }
+        .setlist-chip,
+        .active-setlist-item,
+        .setlist-create-btn,
+        .setlist-delete-btn,
+        .song-add-to-setlist,
+        .active-setlist-nav button,
+        .setlist-item-actions button {
+          border: 1px solid #1f2937;
+          background: #0a0a0a;
+          color: #d1d5db;
+          border-radius: 8px;
+          cursor: pointer;
+          font-family: 'JetBrains Mono', monospace;
+          transition: all 0.15s ease;
+        }
+        .setlist-chip,
+        .active-setlist-item {
+          padding: 0.48rem 0.68rem;
+          font-size: 0.72rem;
+        }
+        .setlist-chip.active,
+        .active-setlist-item.active {
+          border-color: #00ff00;
+          color: #00ff00;
+          background: rgba(0, 255, 0, 0.08);
+        }
+        .night-vision .setlist-chip,
+        .night-vision .active-setlist-item,
+        .night-vision .setlist-create-btn,
+        .night-vision .setlist-delete-btn,
+        .night-vision .song-add-to-setlist,
+        .night-vision .active-setlist-nav button,
+        .night-vision .setlist-item-actions button {
+          border-color: rgba(0, 255, 0, 0.18);
+          color: #8dff8d;
+          background: rgba(0, 255, 0, 0.03);
+        }
+        .setlist-create-btn,
+        .setlist-delete-btn,
+        .song-add-to-setlist,
+        .active-setlist-nav button {
+          padding: 0.52rem 0.72rem;
+          font-size: 0.72rem;
+          font-weight: 700;
+        }
+        .setlist-create-btn:hover,
+        .setlist-delete-btn:hover,
+        .song-add-to-setlist:hover:not(:disabled),
+        .setlist-chip:hover,
+        .active-setlist-item:hover,
+        .active-setlist-nav button:hover:not(:disabled),
+        .setlist-item-actions button:hover {
+          border-color: #00ff00;
+          color: #00ff00;
+        }
+        .song-add-to-setlist:disabled,
+        .active-setlist-nav button:disabled {
+          opacity: 0.45;
+          cursor: not-allowed;
+        }
+        .setlists-empty {
+          border: 1px dashed #1f2937;
+          border-radius: 10px;
+          padding: 1rem;
+          color: #6b7280;
+          font-size: 0.76rem;
+          line-height: 1.55;
+        }
+        .setlists-empty.small {
+          padding: 0.85rem;
+          font-size: 0.72rem;
+        }
+        .setlist-name-input {
+          flex: 1;
+          min-width: 0;
+          border: 1px solid #1f2937;
+          border-radius: 8px;
+          background: #0a0a0a;
+          color: #eee;
+          padding: 0.65rem 0.75rem;
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 0.78rem;
+          outline: none;
+        }
+        .setlist-items {
+          display: flex;
+          flex-direction: column;
+          gap: 0.55rem;
+          min-height: 0;
+          max-height: 320px;
+          overflow-y: auto;
+        }
+        .setlist-item-row {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) auto;
+          gap: 0.5rem;
+          align-items: stretch;
+        }
+        .setlist-item-main,
+        .song-picker-open {
+          width: 100%;
+          border: none;
+          background: transparent;
+          color: inherit;
+          text-align: left;
+          font: inherit;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 0.75rem;
+          padding: 0;
+        }
+        .setlist-item-main {
+          padding: 0.75rem 0.85rem;
+          border: 1px solid #111827;
+          border-radius: 10px;
+          background: #080808;
+        }
+        .setlist-item-order {
+          color: #00ff00;
+          font-size: 0.72rem;
+          min-width: 1.6rem;
+        }
+        .setlist-item-copy {
+          display: flex;
+          flex-direction: column;
+          gap: 0.15rem;
+          min-width: 0;
+        }
+        .setlist-item-title {
+          color: #e5e7eb;
+          font-size: 0.82rem;
+          font-weight: 700;
+        }
+        .setlist-item-artist {
+          color: #6b7280;
+          font-size: 0.68rem;
+        }
+        .setlist-item-actions {
+          display: flex;
+          gap: 0.35rem;
+        }
+        .setlist-item-actions button {
+          width: 34px;
+          min-width: 34px;
+          padding: 0;
+        }
+        .active-setlist-strip {
+          width: 100%;
+          margin-bottom: 0.9rem;
+          padding: 0.85rem;
+          border: 1px solid #1a1a1a;
+          border-radius: 12px;
+          background: #070707;
+          display: flex;
+          flex-direction: column;
+          gap: 0.75rem;
+        }
+
         .song-search-box {
           display: flex;
           align-items: center;
@@ -1692,7 +2039,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
           border: 1px solid #222;
           border-radius: 8px;
           padding: 10px 14px;
-          margin-bottom: 1.5rem;
+          margin-bottom: 1.25rem;
           color: #888;
         }
         .song-search-box-compact {
@@ -1733,6 +2080,11 @@ export default function LiveDashboard({ bandId, musicianId }) {
         .song-dropdown-toggle:hover {
           color: #00ff00;
           background: #121212;
+        }
+        .night-vision .song-dropdown-toggle {
+          color: #8dff8d;
+          border-left-color: rgba(0, 255, 0, 0.18);
+          background: rgba(0, 255, 0, 0.03);
         }
         .song-dropdown-list {
           position: absolute;
@@ -1836,15 +2188,13 @@ export default function LiveDashboard({ bandId, musicianId }) {
 
         .song-picker-item {
           display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 12px 16px;
-          background: #080808;
-          border: 1px solid #111;
-          border-radius: 8px;
-          cursor: pointer;
-          transition: all 0.15s ease;
-          text-align: left;
+          flex-direction: column;
+          align-items: stretch;
+          gap: 0.65rem;
+          border: 1px solid #1a1a1a;
+          border-radius: 12px;
+          padding: 0.8rem;
+          background: #090909;
           color: #ccc;
           font-family: 'JetBrains Mono', monospace;
         }
@@ -1854,6 +2204,9 @@ export default function LiveDashboard({ bandId, musicianId }) {
         }
         .song-picker-item.has-lyrics {
           border-left: 3px solid #00ff00;
+        }
+        .night-vision .song-picker-item.has-lyrics {
+          box-shadow: inset 0 0 0 1px rgba(0, 255, 0, 0.08);
         }
 
         .song-picker-info {
@@ -1895,7 +2248,16 @@ export default function LiveDashboard({ bandId, musicianId }) {
         }
         .no-lyrics-tag {
           font-size: 0.7rem;
-          color: #333;
+          color: #6b7280;
+        }
+        .night-vision .lyrics-tag {
+          color: #0b0b0b;
+          background: #00ff00;
+          border-color: #00ff00;
+          text-shadow: none;
+        }
+        .night-vision .no-lyrics-tag {
+          color: rgba(0, 255, 0, 0.45);
         }
 
         /* Song Detail / Lyrics View */
@@ -2067,6 +2429,9 @@ export default function LiveDashboard({ bandId, musicianId }) {
             padding-top: 1rem;
             gap: 1rem;
           }
+          .setlist-items {
+            max-height: 260px;
+          }
         }
 
         /* Telefon: sadržaj punu širinu, tabovi DOLE palcu */
@@ -2150,7 +2515,18 @@ export default function LiveDashboard({ bandId, musicianId }) {
           .settings-panel {
             width: 100vw;
             max-width: 100vw;
+            max-height: 100dvh;
+            border-radius: 0;
             animation: none;
+          }
+          .settings-body {
+            padding: 0.8rem 0.75rem calc(0.9rem + env(safe-area-inset-bottom, 0px));
+          }
+          .setting-group {
+            padding: 0.75rem;
+          }
+          .setting-toggle-row {
+            align-items: flex-start;
           }
           .feed-grid {
             grid-template-columns: 1fr;
@@ -2171,6 +2547,47 @@ export default function LiveDashboard({ bandId, musicianId }) {
           }
           .song-picker-list {
             max-height: calc(100dvh - 220px);
+          }
+          .setlists-panel,
+          .repertoire-browser {
+            padding: 0.75rem;
+          }
+          .setlists-panel-header,
+          .setlist-editor-top,
+          .active-setlist-head {
+            flex-direction: column;
+            align-items: stretch;
+          }
+          .setlist-create-btn,
+          .setlist-delete-btn,
+          .song-add-to-setlist,
+          .active-setlist-nav button {
+            width: 100%;
+            justify-content: center;
+          }
+          .active-setlist-nav {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            width: 100%;
+          }
+          .setlist-item-row {
+            grid-template-columns: 1fr;
+          }
+          .setlist-item-actions {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+          }
+          .setlist-item-actions button {
+            width: 100%;
+            min-width: 0;
+            min-height: 38px;
+          }
+          .setlist-items {
+            max-height: none;
+          }
+          .song-picker-item {
+            padding: 0.7rem;
           }
           .lyrics-display {
             font-size: 0.95rem;
