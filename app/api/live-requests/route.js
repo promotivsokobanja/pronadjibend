@@ -44,10 +44,16 @@ async function resolveLiveOwner({ bandId, musicianId }) {
   }
 
   if (normalizedMusicianId) {
-    const musician = await prisma.musicianProfile.findUnique({
+    let musician = await prisma.musicianProfile.findUnique({
       where: { id: normalizedMusicianId },
       select: { id: true },
     });
+    if (!musician) {
+      musician = await prisma.musicianProfile.findUnique({
+        where: { userId: normalizedMusicianId },
+        select: { id: true },
+      });
+    }
     if (!musician) {
       return {
         error: NextResponse.json({ error: 'Muzičar nije pronađen.' }, { status: 404 }),
