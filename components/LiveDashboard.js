@@ -212,6 +212,44 @@ export default function LiveDashboard({ bandId, musicianId }) {
     };
   }, [ownerId, bandId, musicianId]);
 
+  useEffect(() => {
+    if (!ownerId) {
+      setRequests([]);
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadRequests = async () => {
+      try {
+        const params = new URLSearchParams();
+        if (bandId) params.set('bandId', bandId);
+        else if (musicianId) params.set('musicianId', musicianId);
+
+        const resp = await fetch(`/api/live-requests?${params.toString()}`, {
+          cache: 'no-store',
+        });
+        const data = await resp.json();
+        if (!cancelled) {
+          setRequests(Array.isArray(data) ? data : []);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setRequests([]);
+        }
+        console.error('Error loading live requests:', err);
+      }
+    };
+
+    loadRequests();
+    const intervalId = setInterval(loadRequests, 2500);
+
+    return () => {
+      cancelled = true;
+      clearInterval(intervalId);
+    };
+  }, [ownerId, bandId, musicianId]);
+
 
   const persistSetLists = useCallback((nextLists, storageKey = setListStorageKey) => {
     if (typeof window === 'undefined' || !storageKey) return;
@@ -1584,6 +1622,21 @@ export default function LiveDashboard({ bandId, musicianId }) {
           min-width: 0;
           -webkit-overflow-scrolling: touch;
           overscroll-behavior-y: contain;
+          scrollbar-width: thin;
+          scrollbar-color: #2a2a2a #0a0a0a;
+        }
+        .hud-content::-webkit-scrollbar {
+          width: 6px;
+        }
+        .hud-content::-webkit-scrollbar-track {
+          background: #0a0a0a;
+        }
+        .hud-content::-webkit-scrollbar-thumb {
+          background: #2a2a2a;
+          border-radius: 3px;
+        }
+        .hud-content::-webkit-scrollbar-thumb:hover {
+          background: #3a3a3a;
         }
 
         .hud-content h2 {
@@ -1696,6 +1749,83 @@ export default function LiveDashboard({ bandId, musicianId }) {
         }
 
         .tip { color: #ffd700; font-weight: 900; }
+
+        .req-actions {
+          display: flex;
+          gap: 0.5rem;
+          margin-top: 1rem;
+        }
+
+        .btn-hud {
+          flex: 1;
+          padding: 0.55rem 0.75rem;
+          border-radius: 8px;
+          font-weight: 800;
+          font-size: 0.78rem;
+          cursor: pointer;
+          border: 1px solid transparent;
+          transition: background 0.15s, transform 0.1s;
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
+        }
+        .btn-hud:active {
+          transform: scale(0.97);
+        }
+
+        .btn-hud.accept {
+          background: rgba(16, 185, 129, 0.15);
+          color: #34d399;
+          border-color: rgba(16, 185, 129, 0.3);
+        }
+        .btn-hud.accept:hover {
+          background: rgba(16, 185, 129, 0.25);
+        }
+
+        .btn-hud.skip {
+          background: transparent;
+          color: #64748b;
+          border-color: #1e293b;
+        }
+        .btn-hud.skip:hover {
+          background: rgba(100, 116, 139, 0.1);
+          color: #94a3b8;
+        }
+
+        .night-vision .btn-hud.accept {
+          background: rgba(0, 255, 0, 0.1);
+          color: #4ade80;
+          border-color: rgba(0, 255, 0, 0.2);
+          box-shadow: none;
+        }
+        .night-vision .btn-hud.accept:hover {
+          background: rgba(0, 255, 0, 0.18);
+        }
+        .night-vision .btn-hud.skip {
+          border-color: rgba(0, 255, 0, 0.12);
+          color: rgba(0, 255, 0, 0.4);
+        }
+        .night-vision .btn-hud.skip:hover {
+          background: rgba(0, 255, 0, 0.06);
+          color: rgba(0, 255, 0, 0.6);
+        }
+
+        .status-chip {
+          display: inline-block;
+          padding: 0.35rem 0.75rem;
+          border-radius: 6px;
+          font-size: 0.7rem;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
+          background: #1a1a1a;
+          color: #666;
+          border: 1px solid #333;
+        }
+        .night-vision .status-chip {
+          background: rgba(0, 255, 0, 0.05);
+          color: rgba(0, 255, 0, 0.4);
+          border-color: rgba(0, 255, 0, 0.12);
+        }
 
         .setting-input {
           outline: none;
@@ -2624,6 +2754,19 @@ export default function LiveDashboard({ bandId, musicianId }) {
           }
           .request-card.waiter-tip {
             box-shadow: none;
+          }
+          .req-actions {
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+          }
+          .btn-hud {
+            padding: 0.6rem 0.5rem;
+            font-size: 0.72rem;
+            min-height: 40px;
+          }
+          .status-chip {
+            font-size: 0.65rem;
+            padding: 0.3rem 0.6rem;
           }
           .song-title {
             font-size: 1.15rem;
