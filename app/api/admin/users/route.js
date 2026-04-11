@@ -134,3 +134,63 @@ export async function PATCH(request) {
     return NextResponse.json({ error: 'Greška pri ažuriranju.' }, { status: 500 });
   }
 }
+
+export async function DELETE(request) {
+  const gate = await requireAdmin(request);
+  if (!gate.ok) return gate.response;
+
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: 'Neispravan JSON.' }, { status: 400 });
+  }
+
+  const id = String(body.id || '').trim();
+  if (!id) {
+    return NextResponse.json({ error: 'Nedostaje id.' }, { status: 400 });
+  }
+
+  if (id === gate.admin.id) {
+    return NextResponse.json({ error: 'Ne možete obrisati sopstveni nalog.' }, { status: 403 });
+  }
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        email: true,
+        bandId: true,
+        musicianProfile: { select: { id: true } },
+      },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: 'Korisnik nije pronađen.' }, { status: 404 });
+    }
+
+    await prisma.$transaction(async (tx) => {
+      // Disconnect musician profile from user (keep profile, remove link)
+      if (user.musicianProfile?.id) {
+        await tx.musicianProfile.update({
+          where: { id: user.musicianProfile.id },
+          data: { userId: null },
+        });
+      }
+
+      // Delete the user
+      await tx.user.delete({ where: { id } });
+    });
+
+    return NextResponse.json({ success: true, deletedEmail: user.email });
+  } catch (error) {
+    if (error?.code === 'P2025') {
+      return NextResponse.json({ error: 'Korisnik nije pronađen.' }, { status: 404 });
+    }
+    console.error('admin/users DELETE', error);
+    const safe = responseFromDatabaseError(error);
+    if (safe) return safe;
+    return NextResponse.json({ error: 'Greška pri brisanju korisnika.' }, { status: 500 });
+  }
+}

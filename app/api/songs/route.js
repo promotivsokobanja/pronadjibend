@@ -122,6 +122,23 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Naslov i izvođač su obavezni.' }, { status: 400 });
     }
 
+    // Prevent duplicates: check if this owner already has this song
+    const duplicateWhere = {
+      title: { equals: title, mode: 'insensitive' },
+      artist: { equals: artist, mode: 'insensitive' },
+    };
+    if (owner.type === 'band') {
+      duplicateWhere.bandId = owner.id;
+    } else {
+      duplicateWhere.musicianProfileId = owner.id;
+    }
+    const existingOwnerSong = await prisma.song.findFirst({
+      where: duplicateWhere,
+    });
+    if (existingOwnerSong) {
+      return NextResponse.json({ success: true, song: existingOwnerSong, duplicate: true });
+    }
+
     let finalLyrics = lyrics || null;
 
     if (!finalLyrics) {

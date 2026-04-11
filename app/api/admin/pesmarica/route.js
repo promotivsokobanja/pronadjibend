@@ -120,8 +120,8 @@ export async function POST(request) {
         );
       }
 
-      await prisma.song.createMany({ data: prepared });
-      return NextResponse.json({ success: true, created: prepared.length });
+      const result = await prisma.song.createMany({ data: prepared, skipDuplicates: true });
+      return NextResponse.json({ success: true, created: result.count });
     }
 
     const title = String(body.title || '').trim();
@@ -140,6 +140,17 @@ export async function POST(request) {
         { error: 'Tekst pesme je obavezan da bi se pojavila u javnoj pesmarici.' },
         { status: 400 }
       );
+    }
+
+    const existingGlobal = await prisma.song.findFirst({
+      where: {
+        bandId: null,
+        title: { equals: title, mode: 'insensitive' },
+        artist: { equals: artist, mode: 'insensitive' },
+      },
+    });
+    if (existingGlobal) {
+      return NextResponse.json({ success: true, song: existingGlobal, duplicate: true });
     }
 
     const song = await prisma.song.create({

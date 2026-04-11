@@ -13,6 +13,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
   const [activeTab, setActiveTab] = useState('requests');
   const [requestView, setRequestView] = useState('active');
   const [showRepertoireBrowser, setShowRepertoireBrowser] = useState(false);
+  const [expandedCheatsheetSetListId, setExpandedCheatsheetSetListId] = useState('');
 
   // Song cheatsheet state
   const [allSongs, setAllSongs] = useState([]);
@@ -721,6 +722,72 @@ export default function LiveDashboard({ bandId, musicianId }) {
             <div className={`song-picker ${showRepertoireBrowser ? 'repertoire-open' : ''}`}>
               <h2>SET LISTE</h2>
 
+              {showRepertoireBrowser && selectedSetListId && (
+                <div className="setlist-song-search">
+                  <div className="song-search-inline">
+                    <input
+                      type="text"
+                      placeholder="Pretraži pesmu za dodavanje..."
+                      value={songSearch}
+                      onChange={(e) => {
+                        setSongSearch(e.target.value);
+                        setShowSetlistSongDropdown(true);
+                      }}
+                      onFocus={() => setShowSetlistSongDropdown(true)}
+                      className="song-search-input"
+                    />
+                    <button
+                      type="button"
+                      className="song-dropdown-toggle"
+                      onClick={() => setShowSetlistSongDropdown((v) => !v)}
+                      aria-label="Prikaži listu pesama za dodavanje"
+                    >
+                      <ChevronDown size={16} />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {showRepertoireBrowser && selectedSetListId && showSetlistSongDropdown && (
+                <div className="repertoire-browser">
+                  <div className="repertoire-browser-head">
+                    <h3>REPERTOAR</h3>
+                  </div>
+                  <div className="repertoire-dropdown-list">
+                    {songLoading ? (
+                      <div className="song-loading compact">Učitavanje repertoara...</div>
+                    ) : filteredSongs.length === 0 ? (
+                      <div className="repertoire-empty">{songSearch ? 'Nema rezultata' : 'Repertoar je prazan'}</div>
+                    ) : (
+                      filteredSongs.slice(0, 32).map((song) => (
+                        <div key={song.id} className="repertoire-dropdown-item">
+                          <button
+                            type="button"
+                            className="repertoire-dropdown-main"
+                            title="Dodaj u set listu"
+                            onClick={() => addSongToSelectedSetList(song)}
+                          >
+                            <span className="song-picker-title">{song.title}</span>
+                            <span className="song-picker-artist">{song.artist}</span>
+                          </button>
+                          <button
+                            type="button"
+                            className="song-add-to-setlist"
+                            title="Otvori tekst pesme"
+                            onClick={async () => {
+                              await handleSelectSong(song);
+                              setActiveTab('cheatsheet');
+                            }}
+                          >
+                            Tekst
+                          </button>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+
               <div className="setlists-panel-header">
                 <button type="button" className="setlist-create-btn" onClick={createSetList}>
                   + Nova set lista
@@ -741,70 +808,6 @@ export default function LiveDashboard({ bandId, musicianId }) {
                   </button>
                 )}
               </div>
-
-              {showRepertoireBrowser && selectedSetListId && (
-                <div className="repertoire-browser">
-                  <div className="repertoire-browser-head">
-                    <h3>REPERTOAR</h3>
-                  </div>
-                  <div className="repertoire-add-combo">
-                    <div className="song-search-inline">
-                      <input
-                        type="text"
-                        placeholder="Pretraži pesmu za dodavanje..."
-                        value={songSearch}
-                        onChange={(e) => {
-                          setSongSearch(e.target.value);
-                          setShowSetlistSongDropdown(true);
-                        }}
-                        onFocus={() => setShowSetlistSongDropdown(true)}
-                        className="song-search-input"
-                      />
-                      <button
-                        type="button"
-                        className="song-dropdown-toggle"
-                        onClick={() => setShowSetlistSongDropdown((v) => !v)}
-                        aria-label="Prikaži listu pesama za dodavanje"
-                      >
-                        <ChevronDown size={16} />
-                      </button>
-                    </div>
-
-                    {showSetlistSongDropdown && (
-                      <div className="repertoire-dropdown-list">
-                        {songLoading ? (
-                          <div className="song-loading compact">Učitavanje repertoara...</div>
-                        ) : filteredSongs.length === 0 ? (
-                          <div className="repertoire-empty">{songSearch ? 'Nema rezultata' : 'Repertoar je prazan'}</div>
-                        ) : (
-                          filteredSongs.slice(0, 32).map((song) => (
-                            <div key={song.id} className="repertoire-dropdown-item">
-                              <button
-                                type="button"
-                                className="repertoire-dropdown-main"
-                                onClick={async () => {
-                                  await handleSelectSong(song);
-                                  setActiveTab('cheatsheet');
-                                }}
-                              >
-                                <span className="song-picker-title">{song.title}</span>
-                                <span className="song-picker-artist">{song.artist}</span>
-                              </button>
-                              <button
-                                type="button"
-                                className="song-add-to-setlist"
-                                onClick={() => addSongToSelectedSetList(song)}
-                              >
-                                + Dodaj
-                              </button>
-                            </div>
-                          ))
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
 
               {setLists.length === 0 ? (
                 <div className="setlists-empty">
@@ -880,45 +883,12 @@ export default function LiveDashboard({ bandId, musicianId }) {
           )}
 
           {activeTab === 'cheatsheet' && (
-            <div className="cheatsheet-view">
+            <div className={`cheatsheet-view ${selectedSong ? 'has-lyrics' : ''}`}>
               <div className="song-detail-view">
-                <div className="song-detail-header">
+                {/* --- Navigator: set lists + search (collapses when lyrics open) --- */}
+                <div className={`cheatsheet-nav ${selectedSong ? 'collapsed' : ''}`}>
                   <h2 className="detail-title">PODSETNIK — REPERTOAR</h2>
-                  {selectedSetList && (
-                    <div className="active-setlist-strip">
-                      <div className="active-setlist-head">
-                        <span className="active-setlist-name">{selectedSetList.name}</span>
-                        <div className="active-setlist-nav">
-                          <button
-                            type="button"
-                            onClick={() => openAdjacentSetListSong('prev')}
-                            disabled={selectedSetListSongIndex <= 0}
-                          >
-                            Prethodna
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => openAdjacentSetListSong('next')}
-                            disabled={selectedSetListSongIndex === -1 || selectedSetListSongIndex >= selectedSetList.items.length - 1}
-                          >
-                            Sledeća
-                          </button>
-                        </div>
-                      </div>
-                      <div className="active-setlist-items">
-                        {selectedSetList.items.map((item) => (
-                          <button
-                            key={item.id}
-                            type="button"
-                            className={`active-setlist-item ${item.songId === selectedSong?.id ? 'active' : ''}`}
-                            onClick={() => openSongFromSetListItem(item)}
-                          >
-                            {item.title}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+
                   <div className="song-picker-combo" ref={songComboRef}>
                     <div className="song-search-inline">
                       <input
@@ -967,29 +937,93 @@ export default function LiveDashboard({ bandId, musicianId }) {
                       {songSearch ? 'Nema rezultata za pretragu.' : 'Repertoar je prazan.'}
                     </p>
                   ) : null}
-                  {selectedSong?.key && <span className="key-badge">Tonalitet: {selectedSong.key}</span>}
-                </div>
 
-                <div className="lyrics-display" ref={lyricsRef} style={{ fontSize: `${fontScale}em` }}>
-                  {selectedSong?.lyrics ? (
-                    renderLyrics(selectedSong.lyrics)
-                  ) : (
-                    <div className="no-lyrics-msg">
-                      <Music size={40} />
-                      <p>Tekst za selektovanu pesmu još nije dodat.</p>
-                      <p className="hint">Kliknite ispod da odmah dodate tekst za ovu pesmu.</p>
-                      {selectedSong?.id && (
-                        <button
-                          type="button"
-                          className="add-lyrics-btn"
-                          onClick={() => router.push(`/bands/song/${selectedSong.id}`)}
-                        >
-                          Dodaj tekst
-                        </button>
-                      )}
+                  {setLists.length > 0 && (
+                    <div className="cheatsheet-setlists">
+                      {setLists.map((entry) => (
+                        <div key={entry.id} className="cheatsheet-setlist-block">
+                          <button
+                            type="button"
+                            className={`cheatsheet-setlist-toggle ${expandedCheatsheetSetListId === entry.id ? 'expanded' : ''}`}
+                            onClick={() =>
+                              setExpandedCheatsheetSetListId((prev) =>
+                                prev === entry.id ? '' : entry.id
+                              )
+                            }
+                          >
+                            <span>{entry.name}</span>
+                            <ChevronDown
+                              size={14}
+                              className={`cheatsheet-chevron ${expandedCheatsheetSetListId === entry.id ? 'open' : ''}`}
+                            />
+                          </button>
+                          {expandedCheatsheetSetListId === entry.id && (
+                            <div className="cheatsheet-setlist-songs">
+                              {entry.items.length === 0 ? (
+                                <div className="cheatsheet-setlist-empty">Nema pesama u ovoj set listi</div>
+                              ) : (
+                                entry.items.map((item, idx) => (
+                                  <button
+                                    key={item.id}
+                                    type="button"
+                                    className={`cheatsheet-song-item ${item.songId === selectedSong?.id ? 'active' : ''}`}
+                                    onClick={() => openSongFromSetListItem(item)}
+                                  >
+                                    <span className="cheatsheet-song-num">{idx + 1}.</span>
+                                    <span className="cheatsheet-song-title">{item.title}</span>
+                                    <span className="cheatsheet-song-artist">{item.artist}</span>
+                                  </button>
+                                ))
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>
+
+                {/* --- Song header + lyrics (visible when song selected) --- */}
+                {selectedSong && (
+                  <div className="cheatsheet-lyrics-section">
+                    <div className="cheatsheet-song-header">
+                      <button
+                        type="button"
+                        className="cheatsheet-back-btn"
+                        onClick={() => setSelectedSong(null)}
+                      >
+                        <ArrowLeft size={14} />
+                        <span>Set liste</span>
+                      </button>
+                      <div className="cheatsheet-song-info">
+                        <h3 className="cheatsheet-now-title">{selectedSong.title}</h3>
+                        <span className="cheatsheet-now-artist">{selectedSong.artist}</span>
+                        {selectedSong.key && <span className="key-badge">Tonalitet: {selectedSong.key}</span>}
+                      </div>
+                    </div>
+
+                    <div className="lyrics-display" ref={lyricsRef} style={{ fontSize: `${fontScale}em` }}>
+                      {selectedSong.lyrics ? (
+                        renderLyrics(selectedSong.lyrics)
+                      ) : (
+                        <div className="no-lyrics-msg">
+                          <Music size={40} />
+                          <p>Tekst za selektovanu pesmu još nije dodat.</p>
+                          <p className="hint">Kliknite ispod da odmah dodate tekst za ovu pesmu.</p>
+                          {selectedSong.id && (
+                            <button
+                              type="button"
+                              className="add-lyrics-btn"
+                              onClick={() => router.push(`/bands/song/${selectedSong.id}`)}
+                            >
+                              Dodaj tekst
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -1193,6 +1227,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
         }
         .night-vision .hud-header,
         .night-vision .setlists-panel,
+        .night-vision .setlist-song-search,
         .night-vision .repertoire-browser,
         .night-vision .active-setlist-strip,
         .night-vision .request-card,
@@ -1780,6 +1815,12 @@ export default function LiveDashboard({ bandId, musicianId }) {
         .btn-hud.accept:hover {
           background: rgba(16, 185, 129, 0.25);
         }
+        .btn-hud.accept:active {
+          background: rgba(16, 185, 129, 0.45);
+          color: #fff;
+          border-color: #34d399;
+          transform: scale(0.95);
+        }
 
         .btn-hud.skip {
           background: transparent;
@@ -1789,6 +1830,12 @@ export default function LiveDashboard({ bandId, musicianId }) {
         .btn-hud.skip:hover {
           background: rgba(100, 116, 139, 0.1);
           color: #94a3b8;
+        }
+        .btn-hud.skip:active {
+          background: rgba(100, 116, 139, 0.25);
+          color: #e2e8f0;
+          border-color: #64748b;
+          transform: scale(0.95);
         }
 
         .night-vision .btn-hud.accept {
@@ -1800,6 +1847,13 @@ export default function LiveDashboard({ bandId, musicianId }) {
         .night-vision .btn-hud.accept:hover {
           background: rgba(0, 255, 0, 0.18);
         }
+        .night-vision .btn-hud.accept:active {
+          background: rgba(0, 255, 0, 0.35);
+          color: #fff;
+          border-color: #00ff00;
+          box-shadow: 0 0 10px rgba(0, 255, 0, 0.25);
+          transform: scale(0.95);
+        }
         .night-vision .btn-hud.skip {
           border-color: rgba(0, 255, 0, 0.12);
           color: rgba(0, 255, 0, 0.4);
@@ -1807,6 +1861,12 @@ export default function LiveDashboard({ bandId, musicianId }) {
         .night-vision .btn-hud.skip:hover {
           background: rgba(0, 255, 0, 0.06);
           color: rgba(0, 255, 0, 0.6);
+        }
+        .night-vision .btn-hud.skip:active {
+          background: rgba(0, 255, 0, 0.15);
+          color: #00ff00;
+          border-color: rgba(0, 255, 0, 0.4);
+          transform: scale(0.95);
         }
 
         .status-chip {
@@ -1992,6 +2052,15 @@ export default function LiveDashboard({ bandId, musicianId }) {
           gap: 0.85rem;
           margin: 0.1rem 0 0.75rem;
         }
+        .setlist-song-search {
+          margin: 0 0 0.4rem;
+          padding: 0;
+          background: none;
+          border: none;
+        }
+        .setlist-song-search .song-search-inline {
+          margin: 0;
+        }
         .repertoire-browser-head {
           display: flex;
           align-items: center;
@@ -2002,10 +2071,6 @@ export default function LiveDashboard({ bandId, musicianId }) {
           font-size: 0.84rem;
           letter-spacing: 0.08em;
           color: #9ca3af;
-        }
-        .repertoire-add-combo {
-          position: relative;
-          width: 100%;
         }
         .repertoire-dropdown-list {
           margin-top: 0.5rem;
@@ -2139,6 +2204,31 @@ export default function LiveDashboard({ bandId, musicianId }) {
           border-color: #00ff00;
           color: #00ff00;
         }
+        .setlist-create-btn:active,
+        .setlist-delete-btn:active,
+        .song-add-to-setlist:active:not(:disabled),
+        .setlist-chip:active,
+        .active-setlist-item:active,
+        .active-setlist-nav button:active:not(:disabled),
+        .setlist-item-actions button:active {
+          background: rgba(0, 255, 0, 0.18);
+          border-color: #00ff00;
+          color: #fff;
+          transform: scale(0.95);
+        }
+        .night-vision .setlist-create-btn:active,
+        .night-vision .setlist-delete-btn:active,
+        .night-vision .song-add-to-setlist:active:not(:disabled),
+        .night-vision .setlist-chip:active,
+        .night-vision .active-setlist-item:active,
+        .night-vision .active-setlist-nav button:active:not(:disabled),
+        .night-vision .setlist-item-actions button:active {
+          background: rgba(0, 255, 0, 0.25);
+          border-color: #00ff00;
+          color: #00ff00;
+          box-shadow: 0 0 8px rgba(0, 255, 0, 0.2);
+          transform: scale(0.95);
+        }
         .song-add-to-setlist:disabled,
         .active-setlist-nav button:disabled {
           opacity: 0.45;
@@ -2202,6 +2292,16 @@ export default function LiveDashboard({ bandId, musicianId }) {
           border: 1px solid #111827;
           border-radius: 10px;
           background: #080808;
+          transition: background 0.15s, border-color 0.15s, transform 0.1s;
+        }
+        .setlist-item-main:hover {
+          border-color: rgba(0, 255, 0, 0.3);
+          background: #0c0c0c;
+        }
+        .setlist-item-main:active {
+          border-color: #00ff00;
+          background: rgba(0, 255, 0, 0.1);
+          transform: scale(0.98);
         }
         .setlist-item-order {
           color: #00ff00;
@@ -2242,6 +2342,138 @@ export default function LiveDashboard({ bandId, musicianId }) {
           display: flex;
           flex-direction: column;
           gap: 0.75rem;
+        }
+
+        .cheatsheet-setlists {
+          display: flex;
+          flex-direction: column;
+          gap: 0.35rem;
+          margin-bottom: 0.9rem;
+          width: 100%;
+        }
+        .cheatsheet-setlist-block {
+          border: 1px solid #1a1a1a;
+          border-radius: 10px;
+          background: #070707;
+          overflow: hidden;
+        }
+        .cheatsheet-setlist-toggle {
+          width: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 0.65rem 0.85rem;
+          background: transparent;
+          border: none;
+          color: #d1d5db;
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 0.78rem;
+          font-weight: 700;
+          cursor: pointer;
+          transition: background 0.15s, color 0.15s;
+        }
+        .cheatsheet-setlist-toggle:hover {
+          background: #0d0d0d;
+          color: #fff;
+        }
+        .cheatsheet-setlist-toggle.expanded {
+          color: #00ff00;
+          border-bottom: 1px solid #1a1a1a;
+        }
+        .cheatsheet-setlist-toggle:active {
+          background: rgba(0, 255, 0, 0.1);
+          transform: scale(0.98);
+        }
+        .cheatsheet-chevron {
+          transition: transform 0.2s ease;
+          color: #555;
+          flex-shrink: 0;
+        }
+        .cheatsheet-chevron.open {
+          transform: rotate(180deg);
+          color: #00ff00;
+        }
+        .cheatsheet-setlist-songs {
+          display: flex;
+          flex-direction: column;
+        }
+        .cheatsheet-setlist-empty {
+          padding: 0.6rem 0.85rem;
+          color: #555;
+          font-size: 0.72rem;
+        }
+        .cheatsheet-song-item {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.55rem 0.85rem;
+          background: transparent;
+          border: none;
+          border-top: 1px solid #111;
+          color: #d1d5db;
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 0.75rem;
+          cursor: pointer;
+          text-align: left;
+          transition: background 0.12s;
+        }
+        .cheatsheet-song-item:first-child {
+          border-top: none;
+        }
+        .cheatsheet-song-item:hover {
+          background: #0c0c0c;
+        }
+        .cheatsheet-song-item:active {
+          background: rgba(0, 255, 0, 0.1);
+        }
+        .cheatsheet-song-item.active {
+          background: rgba(0, 255, 0, 0.08);
+          color: #00ff00;
+        }
+        .cheatsheet-song-num {
+          color: #00ff00;
+          font-size: 0.68rem;
+          min-width: 1.5rem;
+          flex-shrink: 0;
+        }
+        .cheatsheet-song-title {
+          font-weight: 700;
+          flex: 1;
+          min-width: 0;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        .cheatsheet-song-artist {
+          color: #6b7280;
+          font-size: 0.68rem;
+          flex-shrink: 0;
+        }
+        .night-vision .cheatsheet-setlist-block {
+          border-color: rgba(0, 255, 0, 0.12);
+        }
+        .night-vision .cheatsheet-setlist-toggle {
+          color: rgba(0, 255, 0, 0.6);
+        }
+        .night-vision .cheatsheet-setlist-toggle:hover {
+          color: #00ff00;
+          background: rgba(0, 255, 0, 0.04);
+        }
+        .night-vision .cheatsheet-setlist-toggle.expanded {
+          color: #00ff00;
+          border-bottom-color: rgba(0, 255, 0, 0.12);
+        }
+        .night-vision .cheatsheet-song-item {
+          color: rgba(0, 255, 0, 0.6);
+          border-top-color: rgba(0, 255, 0, 0.06);
+        }
+        .night-vision .cheatsheet-song-item:hover {
+          background: rgba(0, 255, 0, 0.04);
+          color: #00ff00;
+        }
+        .night-vision .cheatsheet-song-item.active {
+          background: rgba(0, 255, 0, 0.1);
+          color: #00ff00;
         }
 
         .song-search-box {
@@ -2502,18 +2734,106 @@ export default function LiveDashboard({ bandId, musicianId }) {
         }
         .back-to-list:hover { color: #00ff00; }
 
+        .cheatsheet-nav {
+          padding-bottom: 1rem;
+          border-bottom: 1px solid #1a1a1a;
+          margin-bottom: 0.75rem;
+        }
+        .cheatsheet-nav.collapsed {
+          display: none;
+        }
+        .cheatsheet-lyrics-section {
+          display: flex;
+          flex-direction: column;
+          flex: 1;
+          min-height: 0;
+          overflow: hidden;
+        }
+        .cheatsheet-song-header {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          padding-bottom: 0.65rem;
+          margin-bottom: 0.5rem;
+          border-bottom: 1px solid #1a1a1a;
+          flex-shrink: 0;
+        }
+        .cheatsheet-back-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          background: rgba(0, 255, 0, 0.08);
+          border: 1px solid rgba(0, 255, 0, 0.25);
+          border-radius: 6px;
+          color: #4ade80;
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 0.72rem;
+          font-weight: 800;
+          padding: 0.4rem 0.65rem;
+          cursor: pointer;
+          transition: all 0.15s;
+          flex-shrink: 0;
+          letter-spacing: 0.02em;
+        }
+        .cheatsheet-back-btn:hover {
+          color: #00ff00;
+          background: rgba(0, 255, 0, 0.15);
+          border-color: rgba(0, 255, 0, 0.45);
+        }
+        .cheatsheet-back-btn:active {
+          background: rgba(0, 255, 0, 0.22);
+          transform: scale(0.95);
+        }
+        .cheatsheet-song-info {
+          display: flex;
+          align-items: center;
+          gap: 0.6rem;
+          flex-wrap: wrap;
+          min-width: 0;
+        }
+        .cheatsheet-now-title {
+          font-size: 1rem;
+          font-weight: 900;
+          color: #eee;
+          margin: 0;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .cheatsheet-now-artist {
+          font-size: 0.75rem;
+          color: #6b7280;
+          font-weight: 600;
+        }
+        .night-vision .cheatsheet-back-btn {
+          border-color: rgba(0, 255, 0, 0.15);
+          color: rgba(0, 255, 0, 0.5);
+        }
+        .night-vision .cheatsheet-back-btn:hover {
+          color: #00ff00;
+          border-color: rgba(0, 255, 0, 0.4);
+        }
+        .night-vision .cheatsheet-song-header {
+          border-bottom-color: rgba(0, 255, 0, 0.1);
+        }
+        .night-vision .cheatsheet-now-title {
+          color: #b7ffb7;
+        }
+        .night-vision .cheatsheet-now-artist {
+          color: rgba(0, 255, 0, 0.45);
+        }
         .song-detail-header {
           margin-bottom: 2rem;
           padding-bottom: 1.5rem;
           border-bottom: 1px solid #1a1a1a;
         }
         .detail-title {
-          font-size: 1.8rem !important;
+          font-size: 1.4rem !important;
           font-weight: 900 !important;
           color: #eee !important;
           text-transform: none !important;
           letter-spacing: -0.5px !important;
-          margin-bottom: 0.25rem !important;
+          margin-bottom: 0.5rem !important;
         }
         .detail-artist {
           font-size: 0.85rem;
@@ -2779,6 +3099,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
             max-height: calc(100dvh - 220px);
           }
           .setlists-panel,
+          .setlist-song-search,
           .repertoire-browser {
             padding: 0.75rem;
           }
@@ -2839,6 +3160,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
           .song-picker.repertoire-open .setlist-items {
             max-height: 30dvh;
           }
+          .setlist-song-search,
           .repertoire-browser {
             max-height: 38dvh;
           }
@@ -2855,6 +3177,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
             min-height: 42px;
             flex: 0 0 auto;
           }
+          .song-picker.repertoire-open .setlist-song-search,
           .song-picker.repertoire-open .repertoire-browser {
             flex: 1;
             min-height: 0;
@@ -2871,6 +3194,29 @@ export default function LiveDashboard({ bandId, musicianId }) {
             font-size: 0.95rem;
             line-height: 1.75;
             max-height: calc(100dvh - 200px);
+          }
+          .cheatsheet-view.has-lyrics .cheatsheet-nav {
+            display: none;
+          }
+          .cheatsheet-lyrics-section {
+            flex: 1;
+          }
+          .cheatsheet-song-header {
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            padding-bottom: 0.5rem;
+            margin-bottom: 0.4rem;
+          }
+          .cheatsheet-now-title {
+            font-size: 0.9rem;
+          }
+          .cheatsheet-setlist-toggle {
+            padding: 0.55rem 0.7rem;
+            font-size: 0.72rem;
+          }
+          .cheatsheet-song-item {
+            padding: 0.5rem 0.7rem;
+            font-size: 0.72rem;
           }
           .detail-title {
             font-size: 1.2rem !important;
