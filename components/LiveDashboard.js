@@ -931,6 +931,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
                                     onClick={() => addSongToSelectedSetList(song)}
                                   >
                                     <span className="song-picker-title">{song.title}</span>
+                                    <span className="song-picker-sep">—</span>
                                     <span className="song-picker-artist">{song.artist}</span>
                                     {isAlreadyInSetList ? (
                                       <span className="song-in-setlist-pill">Već dodato</span>
@@ -2190,7 +2191,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
         .setlist-repertoire-stack {
           margin: 0.15rem 0 0.5rem;
         }
-        @media (min-width: 768px) {
+        @media (min-width: 1024px) {
           .setlist-repertoire-stack {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -2237,9 +2238,9 @@ export default function LiveDashboard({ bandId, musicianId }) {
         .repertoire-dropdown-item {
           display: grid;
           grid-template-columns: minmax(0, 1fr) auto;
-          gap: 0.5rem;
+          gap: 0.35rem;
           align-items: center;
-          padding: 0.58rem;
+          padding: 0.4rem 0.5rem;
           border-bottom: 1px solid #161616;
         }
         .repertoire-dropdown-item:last-child {
@@ -2252,19 +2253,21 @@ export default function LiveDashboard({ bandId, musicianId }) {
           text-align: left;
           font: inherit;
           cursor: pointer;
-          padding: 0.45rem 0.5rem;
+          padding: 0.35rem 0.5rem;
           border-radius: 8px;
           display: flex;
-          flex-direction: column;
-          gap: 2px;
+          flex-direction: row;
+          flex-wrap: wrap;
+          align-items: baseline;
+          gap: 0 0.5rem;
           min-width: 0;
         }
         .song-in-setlist-pill {
           display: inline-flex;
           align-items: center;
           width: fit-content;
-          margin-top: 0.35rem;
-          padding: 0.15rem 0.45rem;
+          margin-top: 0;
+          padding: 0.1rem 0.4rem;
           border-radius: 999px;
           border: 1px solid rgba(0, 255, 0, 0.35);
           background: rgba(0, 255, 0, 0.1);
@@ -2282,9 +2285,9 @@ export default function LiveDashboard({ bandId, musicianId }) {
         }
         .song-open-lyrics-btn {
           width: auto;
-          min-width: 72px;
-          min-height: 40px;
-          padding: 0.5rem 0.65rem;
+          min-width: 52px;
+          min-height: 32px;
+          padding: 0.35rem 0.5rem;
           border: 1px solid #1f2937;
           background: #0a0a0a;
           color: #d1d5db;
@@ -2334,14 +2337,15 @@ export default function LiveDashboard({ bandId, musicianId }) {
         .setlists-selector,
         .active-setlist-items {
           display: flex;
-          flex-wrap: wrap;
-          gap: 0.5rem;
+          flex-wrap: nowrap;
+          gap: 0.4rem;
         }
         .setlists-selector {
           overflow-x: auto;
           overflow-y: hidden;
-          padding-bottom: 0.15rem;
+          padding-bottom: 0.25rem;
           scrollbar-width: thin;
+          -webkit-overflow-scrolling: touch;
         }
         .setlist-chip,
         .active-setlist-item,
@@ -2360,8 +2364,10 @@ export default function LiveDashboard({ bandId, musicianId }) {
         }
         .setlist-chip,
         .active-setlist-item {
-          padding: 0.48rem 0.68rem;
-          font-size: 0.72rem;
+          padding: 0.42rem 0.62rem;
+          font-size: 0.7rem;
+          white-space: nowrap;
+          flex-shrink: 0;
         }
         .setlist-chip.active,
         .active-setlist-item.active {
@@ -2827,12 +2833,16 @@ export default function LiveDashboard({ bandId, musicianId }) {
         }
         .song-picker-title {
           color: #f1f5f9;
-          font-size: 0.82rem;
+          font-size: 0.78rem;
           font-weight: 700;
+        }
+        .song-picker-sep {
+          color: #4b5563;
+          font-size: 0.68rem;
         }
         .song-picker-artist {
           color: #94a3b8;
-          font-size: 0.7rem;
+          font-size: 0.72rem;
         }
         .song-search-input {
           flex: 1;
