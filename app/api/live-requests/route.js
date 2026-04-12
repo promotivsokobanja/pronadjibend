@@ -305,6 +305,27 @@ export async function PATCH(request) {
   }
 }
 
+export async function DELETE(request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const { owner, error } = await resolveLiveOwner({
+      bandId: searchParams.get('bandId'),
+      musicianId: searchParams.get('musicianId'),
+    });
+    if (error) return error;
+
+    const ownerFilter = buildOwnerFilter(owner);
+    const deleted = await prisma.liveRequest.deleteMany({
+      where: ownerFilter,
+    });
+
+    return NextResponse.json({ success: true, deleted: deleted.count || 0 });
+  } catch (err) {
+    console.error('LiveRequest DELETE error:', err);
+    return NextResponse.json({ error: 'Greška pri resetovanju sesije' }, { status: 500 });
+  }
+}
+
 function formatTimeAgo(date) {
   const now = new Date();
   const diff = Math.floor((now - new Date(date)) / 1000);

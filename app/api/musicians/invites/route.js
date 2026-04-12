@@ -45,13 +45,24 @@ export async function POST(request) {
       return NextResponse.json({ error: 'ID muzičara je obavezan.' }, { status: 400 });
     }
 
+    if (!eventDateRaw || !location || !message || feeEur == null) {
+      return NextResponse.json(
+        { error: 'Za slanje poziva obavezni su datum, lokacija, honorar i poruka.' },
+        { status: 400 }
+      );
+    }
+
+    if (!Number.isFinite(feeEur) || feeEur <= 0) {
+      return NextResponse.json({ error: 'Honorаr mora biti pozitivan broj.' }, { status: 400 });
+    }
+
     if (message.length > 2000) {
       return NextResponse.json({ error: 'Poruka je predugačka.' }, { status: 400 });
     }
 
     const musician = await prisma.musicianProfile.findUnique({
       where: { id: musicianId },
-      select: { id: true, userId: true },
+      select: { id: true, userId: true, name: true, primaryInstrument: true, city: true },
     });
 
     if (!musician) {
@@ -62,14 +73,35 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Ne možete poslati poziv sopstvenom profilu.' }, { status: 400 });
     }
 
-    let eventDate = null;
-    if (eventDateRaw) {
-      const parsed = new Date(`${eventDateRaw}T00:00:00`);
-      if (Number.isNaN(parsed.getTime())) {
-        return NextResponse.json({ error: 'Datum nije validan.' }, { status: 400 });
-      }
-      eventDate = parsed;
+    const band = await prisma.band.findUnique({
+      where: { id: currentUser.bandId },
+      select: { id: true, name: true, location: true },
+    });
+
+    if (!band || !String(band.name || '').trim() || !String(band.location || '').trim()) {
+      return NextResponse.json(
+        { error: 'Bend profil mora imati popunjene osnovne podatke (naziv i lokacija).' },
+        { status: 400 }
+      );
     }
+
+    if (
+      !String(musician.name || '').trim()
+      || !String(musician.primaryInstrument || '').trim()
+      || !String(musician.city || '').trim()
+    ) {
+      return NextResponse.json(
+        { error: 'Muzičar profil nema popunjena obavezna polja (ime, instrument, grad).' },
+        { status: 400 }
+      );
+    }
+
+    let eventDate = null;
+    const parsed = new Date(`${eventDateRaw}T00:00:00`);
+    if (Number.isNaN(parsed.getTime())) {
+      return NextResponse.json({ error: 'Datum nije validan.' }, { status: 400 });
+    }
+    eventDate = parsed;
 
     const normalizedFee = Number.isFinite(feeEur) ? Math.max(0, Math.floor(feeEur)) : null;
 

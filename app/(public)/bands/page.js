@@ -23,6 +23,7 @@ import { useRouter } from 'next/navigation';
 import QrModal from '../../../components/QrModal';
 import BookingCalendar from '../../../components/BookingCalendar';
 import BusyDateNoteModal from '../../../components/bands/BusyDateNoteModal';
+import ChatThread from '../../../components/ChatThread';
 import { dateToCalendarKeyUTC } from '../../../lib/calendarDate';
 
 /** Postavite na `false` da sakrijete kratke opise ispod dugmadi (brz „undo“ izgleda). */
@@ -818,6 +819,7 @@ export default function BandDashboard() {
                       {invite.status}
                     </span>
                   </div>
+                  <ChatThread inviteId={invite.id} />
                 </div>
               ))
             ) : (

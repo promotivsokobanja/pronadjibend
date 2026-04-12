@@ -23,6 +23,7 @@ model User {
   band            Band?            @relation(fields: [bandId], references: [id])
   bandId          String?          @unique
   musicianProfile MusicianProfile?
+  messages        Message[]
 }
 
 model Band {
@@ -236,10 +237,23 @@ model MusicianInvite {
   bandId     String
   musician   MusicianProfile @relation(fields: [musicianId], references: [id])
   musicianId String
+  messages   Message[]
 
   @@index([bandId, createdAt])
   @@index([musicianId, createdAt])
   @@index([status])
+}
+
+model Message {
+  id        String         @id @default(cuid())
+  body      String
+  invite    MusicianInvite @relation(fields: [inviteId], references: [id])
+  inviteId  String
+  sender    User           @relation(fields: [senderId], references: [id])
+  senderId  String
+  createdAt DateTime       @default(now())
+
+  @@index([inviteId, createdAt])
 }
 
 /// Jedan zapis (id = 1): javna podešavanja (admin /sistem)

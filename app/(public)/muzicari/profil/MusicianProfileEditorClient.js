@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, Save, UserRound, Mail, CalendarDays, Euro, MapPin, Music, Video, Image as ImageIcon, ListMusic, Radio, Headphones, Trash2, QrCode } from 'lucide-react';
 import QrModal from '../../../../components/QrModal';
 import SocialShareActions from '../../../../components/SocialShareActions';
+import ChatThread from '../../../../components/ChatThread';
 
 const initialForm = {
   name: '',
@@ -222,6 +223,7 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
 
   const isSettingsPage = mode === 'settings';
   const isBandAccount = Boolean(viewer?.bandId);
+  const isPremiumVenue = String(viewer?.plan || '').toUpperCase() === 'PREMIUM_VENUE';
 
   const profilePreview = useMemo(() => {
     const instrument = form.primaryInstrument || 'Instrument';
@@ -312,6 +314,10 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
 
   const handleUpload = async (file, kind) => {
     if (!file) return;
+    if (kind === 'video' && !isPremiumVenue) {
+      setError('Upload videa je dostupan samo za Premium Venue članove.');
+      return;
+    }
     const setUploading = kind === 'image' ? setUploadingImage : setUploadingVideo;
     const setProgress = kind === 'image' ? setImageProgress : setVideoProgress;
     setUploading(true);
@@ -684,6 +690,7 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
                     <Trash2 size={14} /> {deleteLoading ? 'Brisanje...' : 'Obriši'}
                   </button>
                 </div>
+                <ChatThread inviteId={inv.id} />
               </li>
             );
           })}
@@ -924,23 +931,40 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
                     <Video size={14} /> URL videa
                   </label>
                   <input value={form.videoUrl} onChange={(e) => onChange('videoUrl', e.target.value)} placeholder="https://www.youtube.com/watch?v=..." />
-                  <small className="field-hint">Prihvaćeni su YouTube, Vimeo i Cloudinary video linkovi.</small>
+                  <small className="field-hint">
+                    {isPremiumVenue
+                      ? 'Prihvaćeni su YouTube, Vimeo i Cloudinary video linkovi.'
+                      : 'Upload videa je dostupan samo za Premium Venue članove.'}
+                  </small>
                   <div className="upload-row">
                     <input
                       ref={videoInputRef}
                       type="file"
                       accept="video/*"
+                      disabled={!isPremiumVenue}
                       onChange={(e) => handleFilePick(e, 'video')}
                     />
                     <div
-                      className="drop-zone"
+                      className={`drop-zone ${!isPremiumVenue ? 'disabled' : ''}`}
                       onDragOver={(e) => e.preventDefault()}
-                      onDrop={(e) => handleDrop(e, 'video')}
-                      onClick={() => videoInputRef.current?.click()}
+                      onDrop={(e) => {
+                        if (!isPremiumVenue) return;
+                        handleDrop(e, 'video');
+                      }}
+                      onClick={() => {
+                        if (!isPremiumVenue) return;
+                        videoInputRef.current?.click();
+                      }}
                     >
-                      Prevuci video ovde ili klikni za upload
+                      {isPremiumVenue ? 'Prevuci video ovde ili klikni za upload' : 'Video upload je zaključan (Premium Venue)'}
                     </div>
-                    <span>{uploadingVideo ? 'Upload videa u toku...' : 'Auto optimize: quality auto, max 1280p'}</span>
+                    <span>
+                      {uploadingVideo
+                        ? 'Upload videa u toku...'
+                        : isPremiumVenue
+                          ? 'Auto optimize: quality auto, max 1280p'
+                          : 'Nadogradite plan na Premium Venue za video upload'}
+                    </span>
                     {uploadingVideo ? (
                       <div className="progress-wrap">
                         <div className="progress-bar" style={{ width: `${videoProgress}%` }} />
@@ -1355,6 +1379,13 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
         .drop-zone:hover {
           border-color: #007aff;
           background: #eff6ff;
+        }
+        .drop-zone.disabled,
+        .drop-zone.disabled:hover {
+          border-color: #cbd5e1;
+          background: #f1f5f9;
+          color: #94a3b8;
+          cursor: not-allowed;
         }
         .progress-wrap {
           width: 100%;

@@ -22,8 +22,12 @@ export default function LiveDashboard({ bandId, musicianId }) {
   const [songLoading, setSongLoading] = useState(false);
   const [showSongDropdown, setShowSongDropdown] = useState(false);
   const [showSetlistSongDropdown, setShowSetlistSongDropdown] = useState(false);
+  const [lastAddedSongId, setLastAddedSongId] = useState('');
   const lyricsRef = useRef(null);
   const songComboRef = useRef(null);
+  const hasLoadedRequestsRef = useRef(false);
+  const knownRequestIdsRef = useRef(new Set());
+  const autoAcceptedRequestIdsRef = useRef(new Set());
 
   // Set list state — read localStorage synchronously on first render
   const setListStorageKey = ownerId ? `pb_live_set_lists_${ownerType}_${ownerId}` : '';
@@ -119,11 +123,85 @@ export default function LiveDashboard({ bandId, musicianId }) {
     }, 220);
   };
 
-  const resetSession = () => {
-    if (confirm('Da li ste sigurni da želite da resetujete sesiju? Svi zahtevi će biti obrisani.')) {
+  const resetSession = async () => {
+    if (!confirm('Da li ste sigurni da želite da resetujete sesiju? Svi zahtevi će biti obrisani.')) {
+      return;
+    }
+    try {
+      const params = new URLSearchParams();
+      if (bandId) params.set('bandId', bandId);
+      else if (musicianId) params.set('musicianId', musicianId);
+
+      const resp = await fetch(`/api/live-requests?${params.toString()}`, {
+        method: 'DELETE',
+      });
+
+      if (!resp.ok) {
+        throw new Error('Reset sesije nije uspeo.');
+      }
+
       setRequests([]);
+      knownRequestIdsRef.current = new Set();
+      autoAcceptedRequestIdsRef.current = new Set();
+    } catch (err) {
+      alert('Greška pri resetovanju sesije. Pokušajte ponovo.');
     }
   };
+
+  const playNewRequestTone = useCallback(() => {
+    if (typeof window === 'undefined') return;
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    try {
+      const audioCtx = new AudioCtx();
+      const now = audioCtx.currentTime;
+      const gain = audioCtx.createGain();
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.12, now + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
+      gain.connect(audioCtx.destination);
+
+      const osc = audioCtx.createOscillator();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(740, now);
+      osc.connect(gain);
+      osc.start(now);
+      osc.stop(now + 0.24);
+
+      const finish = () => {
+        try { audioCtx.close(); } catch { /* ignore */ }
+      };
+      osc.onended = finish;
+      setTimeout(finish, 420);
+    } catch {
+      /* ignore sound errors */
+    }
+  }, []);
+
+  const notifyNewRequests = useCallback((freshRequests) => {
+    if (typeof window === 'undefined' || !Array.isArray(freshRequests) || freshRequests.length === 0) return;
+
+    if (settingsRef.current.soundEnabled) {
+      playNewRequestTone();
+    }
+
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+
+    const first = freshRequests[0];
+    const title = freshRequests.length === 1
+      ? `Novi zahtev: ${first?.song || 'Pesma'}`
+      : `Nova ${freshRequests.length} zahteva`;
+    const body = freshRequests.length === 1
+      ? `${first?.client || 'Gost'} • ${first?.time || 'upravo'}`
+      : 'Otvori Live panel za detalje.';
+
+    try {
+      const notif = new Notification(title, { body, tag: 'pb-live-new-request' });
+      setTimeout(() => notif.close(), 5000);
+    } catch {
+      /* ignore notification errors */
+    }
+  }, [playNewRequestTone]);
 
   useEffect(() => {
     if (!bandId) return; // live-settings only exist for bands
@@ -211,7 +289,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
     return () => {
       cancelled = true;
     };
-  }, [ownerId, bandId, musicianId]);
+  }, [ownerId, bandId, musicianId, notifyNewRequests]);
 
   useEffect(() => {
     if (!ownerId) {
@@ -232,7 +310,39 @@ export default function LiveDashboard({ bandId, musicianId }) {
         });
         const data = await resp.json();
         if (!cancelled) {
-          setRequests(Array.isArray(data) ? data : []);
+          const list = Array.isArray(data) ? data : [];
+
+          const currentKnown = knownRequestIdsRef.current;
+          const newIncoming = list.filter((req) => req?.id && !currentKnown.has(req.id));
+
+          knownRequestIdsRef.current = new Set(list.map((req) => req.id).filter(Boolean));
+
+          if (hasLoadedRequestsRef.current && newIncoming.length > 0) {
+            notifyNewRequests(newIncoming);
+          }
+          hasLoadedRequestsRef.current = true;
+
+          if (settingsRef.current.autoAccept) {
+            const toAutoAccept = list.filter(
+              (req) => req.status === 'pending' && !autoAcceptedRequestIdsRef.current.has(req.id)
+            );
+            toAutoAccept.forEach((req) => {
+              autoAcceptedRequestIdsRef.current.add(req.id);
+              updateRequestStatus(req.id, 'ACCEPTED');
+            });
+          } else {
+            autoAcceptedRequestIdsRef.current = new Set();
+          }
+
+          const normalized = settingsRef.current.autoAccept
+            ? list.map((req) =>
+                req.status === 'pending'
+                  ? { ...req, status: 'accepted' }
+                  : req
+              )
+            : list;
+
+          setRequests(normalized);
         }
       } catch (err) {
         if (!cancelled) {
@@ -249,7 +359,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
       cancelled = true;
       clearInterval(intervalId);
     };
-  }, [ownerId, bandId, musicianId]);
+  }, [ownerId, bandId, musicianId, notifyNewRequests]);
 
 
   const persistSetLists = useCallback((nextLists, storageKey = setListStorageKey) => {
@@ -281,6 +391,12 @@ export default function LiveDashboard({ bandId, musicianId }) {
   }, [persistSetLists, setListStorageKey]);
 
   const selectedSetList = setLists.find((entry) => entry.id === selectedSetListId) || null;
+  const selectedSetListSongCountById = (selectedSetList?.items || []).reduce((acc, item) => {
+    const key = String(item.songId || '');
+    if (!key) return acc;
+    acc[key] = (acc[key] || 0) + 1;
+    return acc;
+  }, {});
 
   useEffect(() => {
     setSetListNameDraft(selectedSetList?.name || '');
@@ -357,25 +473,37 @@ export default function LiveDashboard({ bandId, musicianId }) {
     const nextId = typeof crypto !== 'undefined' && crypto.randomUUID
       ? crypto.randomUUID()
       : `setitem-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    let wasAdded = false;
     updateSetLists((prev) =>
-      prev.map((entry) =>
-        entry.id === selectedSetListId
-          ? {
-              ...entry,
-              items: [
-                ...entry.items,
-                {
-                  id: nextId,
-                  songId: song.id,
-                  title: song.title || 'Bez naziva',
-                  artist: song.artist || '',
-                },
-              ],
-            }
-          : entry
-      )
+      prev.map((entry) => {
+        if (entry.id !== selectedSetListId) return entry;
+        const exists = entry.items.some((item) => String(item.songId) === String(song.id));
+        if (exists) return entry;
+        wasAdded = true;
+        return {
+          ...entry,
+          items: [
+            ...entry.items,
+            {
+              id: nextId,
+              songId: song.id,
+              title: song.title || 'Bez naziva',
+              artist: song.artist || '',
+            },
+          ],
+        };
+      })
     );
+    if (wasAdded) {
+      setLastAddedSongId(String(song.id));
+    }
   }, [selectedSetListId, updateSetLists]);
+
+  useEffect(() => {
+    if (!lastAddedSongId) return;
+    const timer = setTimeout(() => setLastAddedSongId(''), 1800);
+    return () => clearTimeout(timer);
+  }, [lastAddedSongId]);
 
   const removeSetListItem = useCallback((itemId) => {
     if (!selectedSetListId || !itemId) return;
@@ -551,6 +679,11 @@ export default function LiveDashboard({ bandId, musicianId }) {
   const activeCount = requests.filter(
     (r) => r.status === 'pending' || r.status === 'accepted'
   ).length;
+  const filteredRequests = requests.filter((r) =>
+    requestView === 'active'
+      ? r.status === 'pending' || r.status === 'accepted'
+      : r.status === 'rejected' || r.status === 'played'
+  );
 
   const handleExit = () => {
     persistSetLists(setListsRef.current);
@@ -559,8 +692,16 @@ export default function LiveDashboard({ bandId, musicianId }) {
       setActiveTab('requests');
       return;
     }
-    // From main live view, exit to band dashboard.
-    router.push('/bands');
+    // From main live view, exit to owner dashboard.
+    if (bandId) {
+      router.push('/bands');
+      return;
+    }
+    if (musicianId) {
+      router.push('/muzicari/profil');
+      return;
+    }
+    router.push('/');
   };
 
   return (
@@ -641,20 +782,14 @@ export default function LiveDashboard({ bandId, musicianId }) {
                   Istorija
                 </button>
               </div>
-              {requests.length === 0 ? (
+              {filteredRequests.length === 0 ? (
                 <div className="empty-state">
                   <MessageSquare size={48} />
-                  <p>Nema aktivnih zahteva</p>
+                  <p>{requestView === 'active' ? 'Nema aktivnih zahteva' : 'Nema istorije zahteva'}</p>
                 </div>
               ) : (
                 <div className="feed-grid">
-                  {requests
-                    .filter((r) =>
-                      requestView === 'active'
-                        ? r.status === 'pending' || r.status === 'accepted'
-                        : r.status === 'rejected' || r.status === 'played'
-                    )
-                    .map(req => (
+                  {filteredRequests.map(req => (
                     <div
                       key={req.id}
                       className={`request-card ${req.status} ${
@@ -752,6 +887,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
                 <div className="repertoire-browser">
                   <div className="repertoire-browser-head">
                     <h3>REPERTOAR</h3>
+                    <span className="setlist-count-badge">U listi: {selectedSetList?.items.length || 0}</span>
                   </div>
                   <div className="repertoire-dropdown-list">
                     {songLoading ? (
@@ -759,30 +895,38 @@ export default function LiveDashboard({ bandId, musicianId }) {
                     ) : filteredSongs.length === 0 ? (
                       <div className="repertoire-empty">{songSearch ? 'Nema rezultata' : 'Repertoar je prazan'}</div>
                     ) : (
-                      filteredSongs.slice(0, 32).map((song) => (
+                      filteredSongs.slice(0, 32).map((song) => {
+                        const inSetListCount = selectedSetListSongCountById[String(song.id)] || 0;
+                        const isAlreadyInSetList = inSetListCount > 0;
+                        return (
                         <div key={song.id} className="repertoire-dropdown-item">
                           <button
                             type="button"
                             className="repertoire-dropdown-main"
-                            title="Dodaj u set listu"
+                            title={isAlreadyInSetList ? 'Pesma je već u set listi' : 'Dodaj u set listu'}
                             onClick={() => addSongToSelectedSetList(song)}
                           >
                             <span className="song-picker-title">{song.title}</span>
                             <span className="song-picker-artist">{song.artist}</span>
+                            {isAlreadyInSetList ? (
+                              <span className="song-in-setlist-pill">Već dodato</span>
+                            ) : null}
                           </button>
-                          <button
-                            type="button"
-                            className="song-add-to-setlist"
-                            title="Otvori tekst pesme"
-                            onClick={async () => {
-                              await handleSelectSong(song);
-                              setActiveTab('cheatsheet');
-                            }}
-                          >
-                            Tekst
-                          </button>
+                          <div className="repertoire-item-actions">
+                            <button
+                              type="button"
+                              className="song-open-lyrics-btn"
+                              title="Otvori tekst pesme"
+                              onClick={async () => {
+                                await handleSelectSong(song);
+                                setActiveTab('cheatsheet');
+                              }}
+                            >
+                              Tekst
+                            </button>
+                          </div>
                         </div>
-                      ))
+                      )})
                     )}
                   </div>
                 </div>
@@ -848,12 +992,17 @@ export default function LiveDashboard({ bandId, musicianId }) {
                         </button>
                       </div>
 
+                      <div className="setlist-status-row">
+                        <span>Dodato u listu: <strong>{selectedSetList.items.length}</strong></span>
+                        <span>{showRepertoireBrowser ? 'Dodavanje aktivno' : 'Dodavanje zatvoreno'}</span>
+                      </div>
+
                       <div className="setlist-items">
                         {selectedSetList.items.length === 0 ? (
                           <div className="setlists-empty small">Još nema pesama &mdash; kliknite &ldquo;Dodaj pesme&rdquo; iznad.</div>
                         ) : (
                           selectedSetList.items.map((item, index) => (
-                            <div key={item.id} className="setlist-item-row">
+                            <div key={item.id} className={`setlist-item-row ${item.songId === lastAddedSongId ? 'just-added' : ''}`}>
                               <button
                                 type="button"
                                 className="setlist-item-main"
@@ -2043,6 +2192,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
 
         .repertoire-browser {
           min-height: 0;
+          flex-shrink: 0;
           border: 1px solid #1a1a1a;
           border-radius: 12px;
           background: #050505;
@@ -2054,16 +2204,19 @@ export default function LiveDashboard({ bandId, musicianId }) {
         }
         .setlist-song-search {
           margin: 0 0 0.4rem;
-          padding: 0;
-          background: none;
-          border: none;
+          padding: 0.55rem;
+          background: #070707;
+          border: 1px solid #1b1b1b;
+          border-radius: 10px;
         }
         .setlist-song-search .song-search-inline {
           margin: 0;
+          border-color: #262626;
         }
         .repertoire-browser-head {
           display: flex;
           align-items: center;
+          justify-content: space-between;
           gap: 0.75rem;
         }
         .repertoire-browser-head h3 {
@@ -2107,6 +2260,45 @@ export default function LiveDashboard({ bandId, musicianId }) {
           gap: 2px;
           min-width: 0;
         }
+        .song-in-setlist-pill {
+          display: inline-flex;
+          align-items: center;
+          width: fit-content;
+          margin-top: 0.35rem;
+          padding: 0.15rem 0.45rem;
+          border-radius: 999px;
+          border: 1px solid rgba(0, 255, 0, 0.35);
+          background: rgba(0, 255, 0, 0.1);
+          color: #7dff7d;
+          font-size: 0.66rem;
+          font-weight: 700;
+        }
+        .repertoire-dropdown-main:has(.song-in-setlist-pill) {
+          border: 1px dashed rgba(125, 255, 125, 0.35);
+        }
+        .repertoire-item-actions {
+          display: flex;
+          align-items: center;
+          gap: 0.4rem;
+        }
+        .song-open-lyrics-btn {
+          width: auto;
+          min-width: 72px;
+          min-height: 40px;
+          padding: 0.5rem 0.65rem;
+          border: 1px solid #1f2937;
+          background: #0a0a0a;
+          color: #d1d5db;
+          border-radius: 8px;
+          cursor: pointer;
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 0.72rem;
+          font-weight: 700;
+        }
+        .song-open-lyrics-btn:hover {
+          border-color: #38bdf8;
+          color: #38bdf8;
+        }
         .repertoire-dropdown-main:hover {
           background: #121212;
         }
@@ -2115,12 +2307,6 @@ export default function LiveDashboard({ bandId, musicianId }) {
           font-size: 0.75rem;
           padding: 0.9rem;
           text-align: center;
-        }
-        .repertoire-dropdown-item .song-add-to-setlist {
-          width: auto;
-          min-width: 86px;
-          min-height: 40px;
-          padding: 0.5rem 0.72rem;
         }
         .setlists-panel-header,
         .setlist-editor-top,
@@ -2258,6 +2444,33 @@ export default function LiveDashboard({ bandId, musicianId }) {
           font-size: 0.78rem;
           outline: none;
         }
+        .setlist-status-row {
+          margin-top: -0.15rem;
+          margin-bottom: 0.45rem;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 0.65rem;
+          color: #9ca3af;
+          font-size: 0.72rem;
+        }
+        .setlist-status-row strong {
+          color: #e2e8f0;
+        }
+        .setlist-count-badge {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 24px;
+          padding: 0.1rem 0.55rem;
+          border-radius: 999px;
+          border: 1px solid #1f2937;
+          background: #0d0d0d;
+          color: #cbd5e1;
+          font-size: 0.68rem;
+          font-weight: 700;
+          letter-spacing: 0.01em;
+        }
         .setlist-items {
           display: flex;
           flex-direction: column;
@@ -2271,6 +2484,10 @@ export default function LiveDashboard({ bandId, musicianId }) {
           grid-template-columns: minmax(0, 1fr) auto;
           gap: 0.5rem;
           align-items: stretch;
+        }
+        .setlist-item-row.just-added .setlist-item-main {
+          border-color: rgba(0, 255, 0, 0.62);
+          box-shadow: 0 0 0 1px rgba(0, 255, 0, 0.3) inset;
         }
         .setlist-item-main,
         .song-picker-open {
@@ -2500,10 +2717,15 @@ export default function LiveDashboard({ bandId, musicianId }) {
         .song-search-inline {
           display: flex;
           align-items: center;
-          background: #111;
-          border: 1px solid #222;
+          background: #101010;
+          border: 1px solid #2c2c2c;
           border-radius: 8px;
           overflow: hidden;
+          transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .song-search-inline:focus-within {
+          border-color: #3f3f46;
+          box-shadow: 0 0 0 2px rgba(161, 161, 170, 0.18);
         }
         .song-search-inline .song-search-input {
           margin: 0;
@@ -2511,16 +2733,17 @@ export default function LiveDashboard({ bandId, musicianId }) {
           padding: 10px 12px;
         }
         .song-dropdown-toggle {
-          width: 38px;
-          height: 38px;
+          width: 42px;
+          height: 42px;
           border: none;
-          border-left: 1px solid #222;
+          border-left: 1px solid #2c2c2c;
           background: #0d0d0d;
-          color: #9ca3af;
+          color: #cbd5e1;
           display: inline-flex;
           align-items: center;
           justify-content: center;
           cursor: pointer;
+          transition: color 0.2s ease, background 0.2s ease;
         }
         .song-dropdown-toggle:hover {
           color: #00ff00;
@@ -2530,6 +2753,14 @@ export default function LiveDashboard({ bandId, musicianId }) {
           color: #8dff8d;
           border-left-color: rgba(0, 255, 0, 0.18);
           background: rgba(0, 255, 0, 0.03);
+        }
+        .night-vision .song-search-inline {
+          border-color: rgba(0, 255, 0, 0.2);
+          background: rgba(0, 0, 0, 0.72);
+        }
+        .night-vision .song-search-inline:focus-within {
+          border-color: rgba(0, 255, 0, 0.55);
+          box-shadow: 0 0 0 2px rgba(0, 255, 0, 0.14);
         }
         .song-dropdown-list {
           position: absolute;
@@ -2584,16 +2815,31 @@ export default function LiveDashboard({ bandId, musicianId }) {
           font-size: 0.7rem;
           color: #6b7280;
         }
+        .song-picker-title {
+          color: #f1f5f9;
+          font-size: 0.82rem;
+          font-weight: 700;
+        }
+        .song-picker-artist {
+          color: #94a3b8;
+          font-size: 0.7rem;
+        }
         .song-search-input {
           flex: 1;
           background: none;
           border: none;
-          color: #eee;
+          color: #e2e8f0;
           font-family: 'JetBrains Mono', monospace;
           font-size: 0.85rem;
           outline: none;
         }
-        .song-search-input::placeholder { color: #333; }
+        .song-search-input::placeholder { color: #94a3b8; }
+        .night-vision .song-search-input {
+          color: #b7ffb7;
+        }
+        .night-vision .song-search-input::placeholder {
+          color: rgba(141, 255, 141, 0.62);
+        }
 
         .song-loading {
           color: #444;
@@ -3171,21 +3417,16 @@ export default function LiveDashboard({ bandId, musicianId }) {
             grid-template-columns: minmax(0, 1fr) auto;
             padding: 0.5rem;
           }
-          .repertoire-dropdown-item .song-add-to-setlist {
-            width: auto;
-            min-width: 84px;
-            min-height: 42px;
+          .song-picker.repertoire-open .setlist-song-search {
             flex: 0 0 auto;
           }
-          .song-picker.repertoire-open .setlist-song-search,
           .song-picker.repertoire-open .repertoire-browser {
-            flex: 1;
-            min-height: 0;
-            max-height: none;
+            flex: 0 0 auto;
+            min-height: 200px;
+            max-height: min(44dvh, 360px);
           }
-          .song-picker.repertoire-open .song-picker-list {
-            max-height: none;
-            flex: 1;
+          .song-picker.repertoire-open .setlist-items {
+            max-height: min(36dvh, 320px);
           }
           .song-picker-item {
             padding: 0.7rem;
@@ -3231,6 +3472,36 @@ export default function LiveDashboard({ bandId, musicianId }) {
           .song-select,
           .song-search-box-compact {
             max-width: 100%;
+          }
+        }
+
+        @media (max-width: 560px) {
+          .setlist-song-search {
+            padding: 0.5rem;
+          }
+          .setlist-song-search .song-search-inline .song-search-input {
+            font-size: 0.8rem;
+            padding: 0.62rem 0.72rem;
+          }
+          .setlist-song-search .song-dropdown-toggle {
+            width: 40px;
+            height: 40px;
+          }
+          .repertoire-dropdown-item {
+            grid-template-columns: 1fr;
+            gap: 0.4rem;
+          }
+          .repertoire-item-actions {
+            width: 100%;
+            display: flex;
+          }
+          .repertoire-dropdown-item .song-open-lyrics-btn {
+            width: 100%;
+            min-width: 0;
+          }
+          .setlist-status-row {
+            flex-direction: column;
+            align-items: flex-start;
           }
         }
 
