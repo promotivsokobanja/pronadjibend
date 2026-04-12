@@ -2191,7 +2191,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
         .setlist-repertoire-stack {
           margin: 0.15rem 0 0.5rem;
         }
-        @media (min-width: 1024px) {
+        @media (min-width: 1280px) {
           .setlist-repertoire-stack {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -2337,15 +2337,11 @@ export default function LiveDashboard({ bandId, musicianId }) {
         .setlists-selector,
         .active-setlist-items {
           display: flex;
-          flex-wrap: nowrap;
+          flex-wrap: wrap;
           gap: 0.4rem;
         }
         .setlists-selector {
-          overflow-x: auto;
-          overflow-y: hidden;
-          padding-bottom: 0.25rem;
-          scrollbar-width: thin;
-          -webkit-overflow-scrolling: touch;
+          padding-bottom: 0.15rem;
         }
         .setlist-chip,
         .active-setlist-item,
@@ -2367,7 +2363,6 @@ export default function LiveDashboard({ bandId, musicianId }) {
           padding: 0.42rem 0.62rem;
           font-size: 0.7rem;
           white-space: nowrap;
-          flex-shrink: 0;
         }
         .setlist-chip.active,
         .active-setlist-item.active {
