@@ -74,6 +74,7 @@ export async function POST(request) {
 
     const hashToVerify = user?.password ?? BCRYPT_DUMMY_HASH;
     const passwordMatch = await bcrypt.compare(normalizedPassword, hashToVerify);
+
     if (!user || !passwordMatch || user.deletedAt) {
       return NextResponse.json(
         { error: 'Neispravan email ili lozinka.' },

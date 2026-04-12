@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import sharp from 'sharp';
+import prisma from '../../../../lib/prisma';
 import { getAuthUserFromRequest } from '../../../../lib/auth';
 import { getSupabaseAdmin } from '../../../../lib/supabase';
 
@@ -44,6 +45,15 @@ export async function POST(request) {
     const formData = await request.formData();
     const file = formData.get('file');
     const kind = String(formData.get('kind') || 'image');
+
+    const user = await prisma.user.findUnique({
+      where: { id: authUser.userId },
+      select: { id: true, plan: true, deletedAt: true },
+    });
+
+    if (!user || user.deletedAt) {
+      return NextResponse.json({ error: 'Korisnik nije pronađen.' }, { status: 404 });
+    }
 
     if (!file || typeof file === 'string') {
       return NextResponse.json({ error: 'Fajl je obavezan.' }, { status: 400 });
@@ -106,6 +116,12 @@ export async function POST(request) {
     }
 
     if (kind === 'video') {
+      if (String(user.plan || '').toUpperCase() !== 'PREMIUM_VENUE') {
+        return NextResponse.json(
+          { error: 'Upload videa je dostupan samo za Premium Venue članove.' },
+          { status: 403 }
+        );
+      }
       if (!ALLOWED_VIDEO_MIME.has(mimeType)) {
         return NextResponse.json(
           { error: 'Dozvoljeni su samo MP4, WebM ili QuickTime video fajlovi.' },

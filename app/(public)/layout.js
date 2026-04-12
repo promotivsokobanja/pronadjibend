@@ -3,9 +3,6 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { ClientSearchProvider } from '@/components/clients/ClientSearchContext';
 import { getMaintenanceMode } from '@/lib/siteConfig';
-import { getAuthUserFromCookies } from '@/lib/auth';
-import { redirect } from 'next/navigation';
-import { headers } from 'next/headers';
 
 /**
  * Javni deo sajta — potpuno izolovan od admin segmenta.
@@ -15,20 +12,7 @@ import { headers } from 'next/headers';
  * Horizontalno seče `html { overflow-x: clip }` u globals.css.
  */
 export default async function PublicLayout({ children }) {
-  const isMaintenance = await getMaintenanceMode();
-
-  if (isMaintenance) {
-    const headersList = headers();
-    const pathname = headersList.get('x-invoke-path') || '';
-    
-    // Dozvoli pristup login stranici i under-construction (ako bi bila u ovoj grupi)
-    if (!pathname.startsWith('/login')) {
-      const user = await getAuthUserFromCookies();
-      if (user?.role !== 'ADMIN') {
-        redirect('/under-construction');
-      }
-    }
-  }
+  await getMaintenanceMode();
 
   return (
     <ErrorBoundaryClient segment="public">

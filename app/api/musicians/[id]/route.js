@@ -46,7 +46,7 @@ export async function GET(request, { params } = {}) {
   }
 
   try {
-    const musician = await prisma.musicianProfile.findUnique({
+    let musician = await prisma.musicianProfile.findUnique({
       where: { id: String(id) },
       include: {
         availabilities: {
@@ -59,6 +59,22 @@ export async function GET(request, { params } = {}) {
         },
       },
     });
+
+    if (!musician) {
+      musician = await prisma.musicianProfile.findUnique({
+        where: { userId: String(id) },
+        include: {
+          availabilities: {
+            where: {
+              date: { gte: new Date() },
+            },
+            orderBy: { date: 'asc' },
+            take: 30,
+            select: { date: true, isAvailable: true, note: true },
+          },
+        },
+      });
+    }
 
     if (!musician || musician.deletedAt) {
       const demoFallback = findDemoMusician(id);

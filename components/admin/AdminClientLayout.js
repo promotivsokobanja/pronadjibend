@@ -11,6 +11,7 @@ import {
   BookOpen,
   Calendar,
   Star,
+  MessageSquare,
   CreditCard,
   Settings,
 } from 'lucide-react';
@@ -22,6 +23,7 @@ const NAV = [
   { href: '/admin/pesmarica', label: 'Pesmarica', icon: BookOpen },
   { href: '/admin/pesmarica/predlozi', label: 'Predlozi pesama', icon: BookOpen },
   { href: '/admin/bookings', label: 'Rezervacije', icon: Calendar },
+  { href: '/admin/musician-invites', label: 'Chat pozivi', icon: MessageSquare },
   { href: '/admin/reviews', label: 'Recenzije', icon: Star },
   { href: '/admin/billing', label: 'Naplate', icon: CreditCard },
   { href: '/admin/system', label: 'Sistem', icon: Settings },

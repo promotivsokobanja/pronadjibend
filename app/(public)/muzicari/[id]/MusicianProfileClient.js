@@ -121,6 +121,25 @@ export default function MusicianProfileClient({ musicianId }) {
   const embeddedVideo = useMemo(() => extractVideoEmbed(musician?.videoUrl), [musician?.videoUrl]);
   const isDemoMusician = String(musician?.id || '').startsWith('demo-musician-');
   const canInvite = Boolean(viewer?.bandId) && !isDemoMusician;
+  const inviteFormReady =
+    Boolean(inviteForm.eventDate)
+    && Boolean(String(inviteForm.location || '').trim())
+    && Boolean(String(inviteForm.message || '').trim())
+    && Number(inviteForm.feeEur) > 0;
+  const highlightMissing = !inviteFormReady;
+  const missingDate = highlightMissing && !inviteForm.eventDate;
+  const missingFee = highlightMissing && Number(inviteForm.feeEur) <= 0;
+  const missingLocation = highlightMissing && !String(inviteForm.location || '').trim();
+  const missingMessage = highlightMissing && !String(inviteForm.message || '').trim();
+  const inviteMissingField = !inviteForm.eventDate
+    ? 'datum'
+    : Number(inviteForm.feeEur) <= 0
+      ? 'pozitivan honorar'
+      : !String(inviteForm.location || '').trim()
+        ? 'lokacija'
+        : !String(inviteForm.message || '').trim()
+          ? 'poruka'
+          : '';
 
   const handleInviteChange = (key, value) => {
     setInviteForm((prev) => ({ ...prev, [key]: value }));
@@ -296,17 +315,24 @@ export default function MusicianProfileClient({ musicianId }) {
                 <form className="invite-form" onSubmit={handleInviteSubmit}>
                   {inviteError ? <div className="feedback error">{inviteError}</div> : null}
                   {inviteSuccess ? <div className="feedback success">{inviteSuccess}</div> : null}
+                  <p className="muted-copy" style={{ marginTop: 0 }}>
+                    Obavezno: datum, honorar, lokacija i poruka.
+                  </p>
 
                   <div className="invite-inline-grid">
                     <input
                       type="date"
+                      required
+                      className={missingDate ? 'invite-missing' : ''}
                       value={inviteForm.eventDate}
                       onChange={(e) => handleInviteChange('eventDate', e.target.value)}
                     />
                     <input
                       type="number"
-                      min="0"
-                      placeholder="Honorаr (€)"
+                      min="1"
+                      required
+                      className={missingFee ? 'invite-missing' : ''}
+                      placeholder="Honorаr (€) *"
                       value={inviteForm.feeEur}
                       onChange={(e) => handleInviteChange('feeEur', e.target.value)}
                     />
@@ -314,21 +340,28 @@ export default function MusicianProfileClient({ musicianId }) {
 
                   <input
                     type="text"
-                    placeholder="Lokacija nastupa"
+                    required
+                    className={missingLocation ? 'invite-missing' : ''}
+                    placeholder="Lokacija nastupa *"
                     value={inviteForm.location}
                     onChange={(e) => handleInviteChange('location', e.target.value)}
                   />
 
                   <textarea
                     rows={4}
-                    placeholder="Poruka muzičaru (termin, uslovi, detalji...)"
+                    required
+                    className={missingMessage ? 'invite-missing' : ''}
+                    placeholder="Poruka muzičaru (termin, uslovi, detalji...) *"
                     value={inviteForm.message}
                     onChange={(e) => handleInviteChange('message', e.target.value)}
                   />
 
-                  <button type="submit" disabled={inviteSending} className="btn btn-primary invite-submit-btn">
+                  <button type="submit" disabled={inviteSending || !inviteFormReady} className="btn btn-primary invite-submit-btn">
                     {inviteSending ? 'Slanje...' : 'Pošalji poziv'}
                   </button>
+                  {!inviteFormReady ? (
+                    <p className="invite-required-hint">Popunite obavezno polje: {inviteMissingField}.</p>
+                  ) : null}
                 </form>
               )}
             </section>
@@ -638,6 +671,16 @@ export default function MusicianProfileClient({ musicianId }) {
           width: fit-content;
           min-height: 40px;
           margin-top: 0.25rem;
+        }
+        .invite-required-hint {
+          margin: 0;
+          font-size: 0.76rem;
+          color: #b45309;
+          font-weight: 700;
+        }
+        .invite-form .invite-missing {
+          border-color: #dc2626 !important;
+          box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.14);
         }
 
         @media (max-width: 980px) {

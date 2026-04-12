@@ -1,29 +1,23 @@
 import prisma from '../../../../lib/prisma';
 import { getSupabaseAdmin } from '../../../../lib/supabase';
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import jwt from 'jsonwebtoken';
+import { getAuthUserFromRequest } from '../../../../lib/auth';
 
 export const dynamic = 'force-dynamic';
 
-async function getUser() {
-  try {
-    const cookieStore = cookies();
-    const token = cookieStore.get('token')?.value;
-    if (!token) return null;
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await prisma.user.findUnique({ where: { id: decoded.userId } });
-    return user;
-  } catch {
-    return null;
-  }
-}
-
 export async function GET(request) {
   try {
-    const user = await getUser();
+    const auth = await getAuthUserFromRequest(request);
+    if (!auth?.userId) {
+      return NextResponse.json({ error: 'Morate biti prijavljeni.' }, { status: 401 });
+    }
 
-    if (!user) {
+    const user = await prisma.user.findUnique({
+      where: { id: auth.userId },
+      select: { id: true, role: true, plan: true, deletedAt: true },
+    });
+
+    if (!user || user.deletedAt) {
       return NextResponse.json({ error: 'Morate biti prijavljeni.' }, { status: 401 });
     }
 

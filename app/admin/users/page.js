@@ -65,6 +65,26 @@ export default function AdminUsersPage() {
     }
   };
 
+  const deleteUser = async (user) => {
+    if (!confirm(`Da li ste sigurni da želite da obrišete korisnika ${user.email}?`)) return;
+    setSaving(user.id);
+    setError('');
+    try {
+      const r = await adminFetch('/api/admin/users', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: user.id }),
+      });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error || 'Greška');
+      await load();
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setSaving(null);
+    }
+  };
+
   return (
     <>
       <h1>Korisnici</h1>
@@ -108,6 +128,7 @@ export default function AdminUsersPage() {
                     u={u}
                     saving={saving === u.id}
                     onSave={saveUser}
+                    onDelete={deleteUser}
                     roleBadgeClass={roleBadgeClass}
                   />
                 ))}
@@ -141,7 +162,7 @@ export default function AdminUsersPage() {
   );
 }
 
-function UserRow({ u, saving, onSave, roleBadgeClass }) {
+function UserRow({ u, saving, onSave, onDelete, roleBadgeClass }) {
   const [editRole, setEditRole] = useState(u.role);
   const [editPlan, setEditPlan] = useState(u.plan);
   const [editUntil, setEditUntil] = useState(
@@ -190,21 +211,32 @@ function UserRow({ u, saving, onSave, roleBadgeClass }) {
         {new Date(u.createdAt).toLocaleString('sr-RS')}
       </td>
       <td>
-        <button
-          type="button"
-          className="admin-btn"
-          disabled={saving}
-          onClick={() =>
-            onSave({
-              ...u,
-              _editRole: editRole,
-              _editPlan: editPlan,
-              _editPlanUntil: editUntil || null,
-            })
-          }
-        >
-          {saving ? '…' : 'Sačuvaj'}
-        </button>
+        <div style={{ display: 'flex', gap: '0.4rem' }}>
+          <button
+            type="button"
+            className="admin-btn"
+            disabled={saving}
+            onClick={() =>
+              onSave({
+                ...u,
+                _editRole: editRole,
+                _editPlan: editPlan,
+                _editPlanUntil: editUntil || null,
+              })
+            }
+          >
+            {saving ? '…' : 'Sačuvaj'}
+          </button>
+          <button
+            type="button"
+            className="admin-btn"
+            disabled={saving}
+            style={{ background: '#7f1d1d', borderColor: '#991b1b' }}
+            onClick={() => onDelete(u)}
+          >
+            Obriši
+          </button>
+        </div>
       </td>
     </tr>
   );

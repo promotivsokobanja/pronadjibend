@@ -44,10 +44,16 @@ async function resolveLiveOwner({ bandId, musicianId }) {
   }
 
   if (normalizedMusicianId) {
-    const musician = await prisma.musicianProfile.findUnique({
+    let musician = await prisma.musicianProfile.findUnique({
       where: { id: normalizedMusicianId },
       select: { id: true },
     });
+    if (!musician) {
+      musician = await prisma.musicianProfile.findUnique({
+        where: { userId: normalizedMusicianId },
+        select: { id: true },
+      });
+    }
     if (!musician) {
       return {
         error: NextResponse.json({ error: 'Muzičar nije pronađen.' }, { status: 404 }),
@@ -296,6 +302,27 @@ export async function PATCH(request) {
   } catch (err) {
     console.error('LiveRequest PATCH error:', err);
     return NextResponse.json({ error: 'Greška pri ažuriranju zahteva' }, { status: 500 });
+  }
+}
+
+export async function DELETE(request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const { owner, error } = await resolveLiveOwner({
+      bandId: searchParams.get('bandId'),
+      musicianId: searchParams.get('musicianId'),
+    });
+    if (error) return error;
+
+    const ownerFilter = buildOwnerFilter(owner);
+    const deleted = await prisma.liveRequest.deleteMany({
+      where: ownerFilter,
+    });
+
+    return NextResponse.json({ success: true, deleted: deleted.count || 0 });
+  } catch (err) {
+    console.error('LiveRequest DELETE error:', err);
+    return NextResponse.json({ error: 'Greška pri resetovanju sesije' }, { status: 500 });
   }
 }
 

@@ -69,7 +69,7 @@ export default function GuestLivePage({ params }) {
         if (bandResp.ok) {
           const b = await bandResp.json();
           if (!b?.error) {
-            setBandId(rawId);
+            setBandId(String(b.id || rawId));
             setOwnerType('band');
             if (b?.name) setBandName(String(b.name));
             setAllowTips(b?.allowTips !== false);
@@ -80,7 +80,7 @@ export default function GuestLivePage({ params }) {
         if (musicianResp.ok) {
           const m = await musicianResp.json();
           if (!m?.error) {
-            setMusicianId(rawId);
+            setMusicianId(String(m.id || rawId));
             setOwnerType('musician');
             if (m?.name) setBandName(String(m.name));
             setAllowTips(true);
@@ -97,15 +97,17 @@ export default function GuestLivePage({ params }) {
 
   // Fetch songs once owner type is known
   useEffect(() => {
+    const ownerId = ownerType === 'band' ? bandId : musicianId;
     if (!ownerType || ownerType === 'unknown') {
       if (ownerType === 'unknown') setLoading(false);
       return;
     }
+    if (!ownerId) return;
     const fetchSongs = async () => {
       try {
         const param = ownerType === 'band'
-          ? `bandId=${encodeURIComponent(rawId)}`
-          : `musicianId=${encodeURIComponent(rawId)}`;
+          ? `bandId=${encodeURIComponent(ownerId)}`
+          : `musicianId=${encodeURIComponent(ownerId)}`;
         const resp = await fetch(`/api/songs?${param}`);
         const data = await resp.json();
         const list = Array.isArray(data) ? data : [];
@@ -121,7 +123,7 @@ export default function GuestLivePage({ params }) {
       }
     };
     fetchSongs();
-  }, [ownerType, rawId]);
+  }, [ownerType, bandId, musicianId]);
 
   const categories = [...new Set(songs.map((s) => s.category || s.type).filter(Boolean))];
 
@@ -148,8 +150,8 @@ export default function GuestLivePage({ params }) {
         songId: selectedSong.id,
         tableNum: String(tableNum).trim(),
       };
-      if (ownerType === 'band') body.bandId = rawId;
-      else body.musicianId = rawId;
+      if (ownerType === 'band') body.bandId = bandId;
+      else body.musicianId = musicianId;
       if (waiterTipRsd > 0) body.waiterTipRsd = waiterTipRsd;
 
       const resp = await fetch('/api/live-requests', {
@@ -255,8 +257,8 @@ export default function GuestLivePage({ params }) {
     setTipSending(true);
     try {
       const tipBody = { requestType: 'WAITER_TIP', tableNum: t, message };
-      if (ownerType === 'band') tipBody.bandId = rawId;
-      else tipBody.musicianId = rawId;
+      if (ownerType === 'band') tipBody.bandId = bandId;
+      else tipBody.musicianId = musicianId;
       const resp = await fetch('/api/live-requests', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
