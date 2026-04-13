@@ -986,6 +986,18 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
               </div>
             </section>
 
+            <section style={{ ...sCard, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
+              <h2 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 900, color: '#0f172a' }}>Pozivi bendovima</h2>
+              <div style={{ display: 'flex', gap: '0.65rem', flexWrap: 'wrap' }}>
+                <Link href="/clients" className="btn btn-secondary" style={{ borderRadius: '999px', fontWeight: 800 }}>
+                  Pronađi bendove
+                </Link>
+                <Link href="/muzicari" className="btn btn-secondary" style={{ borderRadius: '999px', fontWeight: 800 }}>
+                  Pronađi muzičare
+                </Link>
+              </div>
+            </section>
+
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(340px, 100%), 1fr))', gap: '1.6rem', alignItems: 'start' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.35rem' }}>
                 {panelKpiCard}
