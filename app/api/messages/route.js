@@ -53,6 +53,7 @@ async function verifyInviteAccess(user, inviteId) {
       id: true,
       bandId: true,
       musicianId: true,
+      senderMusicianId: true,
       band: { select: { user: { select: { plan: true } } } },
       musician: { select: { user: { select: { plan: true } } } },
     },
@@ -61,9 +62,10 @@ async function verifyInviteAccess(user, inviteId) {
 
   const isBandOwner = user.bandId && user.bandId === invite.bandId;
   const isMusicianOwner = user.musicianProfile?.id && user.musicianProfile.id === invite.musicianId;
+  const isSenderMusician = user.musicianProfile?.id && user.musicianProfile.id === invite.senderMusicianId;
   const isAdmin = user.role === 'ADMIN';
 
-  if (!isBandOwner && !isMusicianOwner && !isAdmin) return null;
+  if (!isBandOwner && !isMusicianOwner && !isSenderMusician && !isAdmin) return null;
   return invite;
 }
 

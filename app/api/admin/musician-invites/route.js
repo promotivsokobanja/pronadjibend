@@ -46,6 +46,13 @@ export async function GET(request) {
               user: { select: { plan: true } },
             },
           },
+          senderMusician: {
+            select: {
+              id: true,
+              name: true,
+              primaryInstrument: true,
+            },
+          },
         },
       }),
     ]);

@@ -35,7 +35,7 @@ export async function DELETE(request, { params } = {}) {
 
     const existing = await prisma.musicianInvite.findUnique({
       where: { id: inviteId },
-      select: { id: true, bandId: true, musicianId: true },
+      select: { id: true, bandId: true, musicianId: true, senderMusicianId: true },
     });
 
     if (!existing) {
@@ -43,10 +43,11 @@ export async function DELETE(request, { params } = {}) {
     }
 
     const isMusicianOwner = currentUser.musicianProfile?.id === existing.musicianId;
+    const isSenderMusician = currentUser.musicianProfile?.id && currentUser.musicianProfile.id === existing.senderMusicianId;
     const isBandOwner = currentUser.bandId === existing.bandId;
     const isAdmin = currentUser.role === 'ADMIN';
 
-    if (!isMusicianOwner && !isBandOwner && !isAdmin) {
+    if (!isMusicianOwner && !isSenderMusician && !isBandOwner && !isAdmin) {
       return NextResponse.json({ error: 'Nemate dozvolu za brisanje ovog poziva.' }, { status: 403 });
     }
 
@@ -85,6 +86,7 @@ export async function PATCH(request, { params } = {}) {
         status: true,
         bandId: true,
         musicianId: true,
+        senderMusicianId: true,
       },
     });
 
@@ -93,15 +95,20 @@ export async function PATCH(request, { params } = {}) {
     }
 
     const isMusicianOwner = currentUser.musicianProfile?.id === existing.musicianId;
+    const isSenderMusician = currentUser.musicianProfile?.id && currentUser.musicianProfile.id === existing.senderMusicianId;
     const isBandOwner = currentUser.bandId === existing.bandId;
     const isAdmin = currentUser.role === 'ADMIN';
 
-    if (!isMusicianOwner && !isBandOwner && !isAdmin) {
+    if (!isMusicianOwner && !isSenderMusician && !isBandOwner && !isAdmin) {
       return NextResponse.json({ error: 'Nemate dozvolu za izmenu ovog poziva.' }, { status: 403 });
     }
 
-    if (isMusicianOwner && !['ACCEPTED', 'REJECTED'].includes(nextStatus) && !isAdmin) {
+    if (isMusicianOwner && !isSenderMusician && !['ACCEPTED', 'REJECTED'].includes(nextStatus) && !isAdmin) {
       return NextResponse.json({ error: 'Muzičar može prihvatiti ili odbiti poziv.' }, { status: 403 });
+    }
+
+    if (isSenderMusician && nextStatus !== 'CANCELLED' && !isAdmin) {
+      return NextResponse.json({ error: 'Pošiljalac može samo otkazati poziv.' }, { status: 403 });
     }
 
     if (isBandOwner && nextStatus !== 'CANCELLED' && !isAdmin) {

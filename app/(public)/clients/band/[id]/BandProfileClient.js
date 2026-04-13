@@ -34,6 +34,46 @@ export default function BandProfileClient({ params }) {
   const [reviewForm, setReviewForm] = useState({ author: '', rating: 5, comment: '' });
   const [reviewStatus, setReviewStatus] = useState('');
 
+  // Musician invite state
+  const [isMusicianAccount, setIsMusicianAccount] = useState(false);
+  const [inviteForm, setInviteForm] = useState({ message: '', eventDate: '', location: '', feeEur: '' });
+  const [inviteSending, setInviteSending] = useState(false);
+  const [inviteResult, setInviteResult] = useState('');
+
+  useEffect(() => {
+    fetch('/api/auth/me').then(r => r.ok ? r.json() : null).then(data => {
+      if (data?.musicianProfileId) setIsMusicianAccount(true);
+    }).catch(() => {});
+  }, []);
+
+  const handleSendInvite = async (e) => {
+    e.preventDefault();
+    if (!inviteForm.message.trim()) { alert('Poruka je obavezna.'); return; }
+    setInviteSending(true);
+    setInviteResult('');
+    try {
+      const resp = await fetch('/api/musicians/invites', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          bandId: params.id,
+          message: inviteForm.message,
+          eventDate: inviteForm.eventDate || undefined,
+          location: inviteForm.location || undefined,
+          feeEur: inviteForm.feeEur ? Number(inviteForm.feeEur) : undefined,
+        }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error || 'Greška');
+      setInviteResult('success');
+      setInviteForm({ message: '', eventDate: '', location: '', feeEur: '' });
+    } catch (err) {
+      setInviteResult(err.message);
+    } finally {
+      setInviteSending(false);
+    }
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -260,6 +300,43 @@ export default function BandProfileClient({ params }) {
                 )}
               </form>
             </div>
+
+            {isMusicianAccount && (
+              <div className="booking-card glass-card" style={{ marginTop: '1.2rem' }}>
+                <h2>Pošalji poziv bendu</h2>
+                <p style={{ color: '#64748b', fontSize: '0.82rem', marginBottom: '1rem' }}>Kao muzičar, možeš kontaktirati ovaj bend i ponuditi saradnju.</p>
+                {inviteResult === 'success' ? (
+                  <p style={{ color: '#10b981', fontWeight: 700 }}>Poziv je uspešno poslat!</p>
+                ) : (
+                  <form onSubmit={handleSendInvite}>
+                    <div className="input-group input-group-textarea">
+                      <MessageSquare size={18} className="textarea-icon" />
+                      <div className="textarea-wrap">
+                        <textarea rows={3} maxLength={2000} required placeholder="Poruka za bend (obavezno)" value={inviteForm.message} onChange={e => setInviteForm(p => ({ ...p, message: e.target.value }))} />
+                      </div>
+                    </div>
+                    <div className="input-group">
+                      <Calendar size={18} />
+                      <input type="date" placeholder="Datum (opciono)" value={inviteForm.eventDate} onChange={e => setInviteForm(p => ({ ...p, eventDate: e.target.value }))} />
+                    </div>
+                    <div className="input-group">
+                      <MapPin size={18} />
+                      <input type="text" placeholder="Lokacija (opciono)" value={inviteForm.location} onChange={e => setInviteForm(p => ({ ...p, location: e.target.value }))} />
+                    </div>
+                    <div className="input-group">
+                      <span style={{ fontSize: '0.9rem', fontWeight: 800 }}>€</span>
+                      <input type="number" min="0" placeholder="Honorar u EUR (opciono)" value={inviteForm.feeEur} onChange={e => setInviteForm(p => ({ ...p, feeEur: e.target.value }))} />
+                    </div>
+                    {inviteResult && inviteResult !== 'success' && (
+                      <p style={{ color: '#f87171', fontSize: '0.82rem' }}>{inviteResult}</p>
+                    )}
+                    <button className="btn btn-primary btn-full" type="submit" disabled={inviteSending}>
+                      {inviteSending ? 'Slanje...' : 'Pošalji poziv'}
+                    </button>
+                  </form>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </section>

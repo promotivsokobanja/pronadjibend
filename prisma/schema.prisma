@@ -51,7 +51,7 @@ model Band {
   liveRequests       LiveRequest[]
   reviews            Review[]
   busyDates          BusyDate[]
-  musicianInvites    MusicianInvite[]
+  musicianInvites    MusicianInvite[]  // invites where this band is involved
   user               User?
   deletedAt          DateTime?
   MidiFile           MidiFile[]
@@ -202,7 +202,8 @@ model MusicianProfile {
   createdAt         DateTime               @default(now())
   updatedAt         DateTime               @updatedAt
   availabilities    MusicianAvailability[]
-  invites           MusicianInvite[]
+  receivedInvites    MusicianInvite[] @relation("receivedInvites")
+  sentInvites        MusicianInvite[] @relation("sentInvites")
   songs             Song[]
   liveRequests      LiveRequest[]
   midiFiles         MidiFile[]
@@ -225,22 +226,26 @@ model MusicianAvailability {
 }
 
 model MusicianInvite {
-  id         String          @id @default(cuid())
-  status     String          @default("PENDING") // "PENDING", "ACCEPTED", "REJECTED", "CANCELLED"
-  eventDate  DateTime?
-  location   String?
-  feeEur     Int?
-  message    String?
-  createdAt  DateTime        @default(now())
-  updatedAt  DateTime        @updatedAt
-  band       Band            @relation(fields: [bandId], references: [id])
-  bandId     String
-  musician   MusicianProfile @relation(fields: [musicianId], references: [id])
-  musicianId String
-  messages   Message[]
+  id               String           @id @default(cuid())
+  status           String           @default("PENDING") // "PENDING", "ACCEPTED", "REJECTED", "CANCELLED"
+  senderType       String           @default("BAND")    // "BAND" or "MUSICIAN"
+  eventDate        DateTime?
+  location         String?
+  feeEur           Int?
+  message          String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  band             Band?            @relation(fields: [bandId], references: [id])
+  bandId           String?
+  musician         MusicianProfile  @relation("receivedInvites", fields: [musicianId], references: [id])
+  musicianId       String
+  senderMusician   MusicianProfile? @relation("sentInvites", fields: [senderMusicianId], references: [id])
+  senderMusicianId String?
+  messages         Message[]
 
   @@index([bandId, createdAt])
   @@index([musicianId, createdAt])
+  @@index([senderMusicianId, createdAt])
   @@index([status])
 }
 
