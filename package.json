@@ -25,7 +25,7 @@
     "db:down": "docker compose down"
   },
   "dependencies": {
-    "@prisma/client": "^5.10.2",
+    "@prisma/client": "^7.6.0",
     "@supabase/supabase-js": "^2.100.1",
     "@tonejs/midi": "^2.0.28",
     "bcryptjs": "^3.0.3",
