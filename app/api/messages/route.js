@@ -7,6 +7,12 @@ export const dynamic = 'force-dynamic';
 const PREMIUM_PLANS = new Set(['PREMIUM', 'PREMIUM_VENUE']);
 const MESSAGE_MAX = 2000;
 const PAGE_SIZE = 50;
+const DELETED_MESSAGE_BODY = 'Poruka je obrisana';
+
+function toErrorMessage(error, fallback) {
+  if (error instanceof Error && error.message) return error.message;
+  return fallback;
+}
 
 function hasPremiumPlan(plan) {
   return PREMIUM_PLANS.has(String(plan || '').toUpperCase());
@@ -109,7 +115,10 @@ export async function GET(request) {
     return NextResponse.json({ messages, currentUserId: user.id });
   } catch (error) {
     console.error('messages GET', error);
-    return NextResponse.json({ error: 'Greška pri učitavanju poruka.' }, { status: 500 });
+    return NextResponse.json(
+      { error: toErrorMessage(error, 'Greška pri učitavanju poruka.') },
+      { status: 500 }
+    );
   }
 }
 
@@ -174,6 +183,71 @@ export async function POST(request) {
     return NextResponse.json({ success: true, message });
   } catch (error) {
     console.error('messages POST', error);
-    return NextResponse.json({ error: 'Greška pri slanju poruke.' }, { status: 500 });
+    return NextResponse.json(
+      { error: toErrorMessage(error, 'Greška pri slanju poruke.') },
+      { status: 500 }
+    );
+  }
+}
+
+// DELETE /api/messages?messageId=xxx
+export async function DELETE(request) {
+  try {
+    const user = await getAuthenticatedUser(request);
+    if (!user) {
+      return NextResponse.json({ error: 'Niste prijavljeni.' }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const messageId = String(searchParams.get('messageId') || '').trim();
+    if (!messageId) {
+      return NextResponse.json({ error: 'messageId je obavezan.' }, { status: 400 });
+    }
+
+    const message = await prisma.message.findUnique({
+      where: { id: messageId },
+      select: {
+        id: true,
+        senderId: true,
+        inviteId: true,
+      },
+    });
+
+    if (!message) {
+      return NextResponse.json({ error: 'Poruka nije pronađena.' }, { status: 404 });
+    }
+
+    const invite = await verifyInviteAccess(user, message.inviteId);
+    if (!invite) {
+      return NextResponse.json({ error: 'Nemate pristup ovoj poruci.' }, { status: 403 });
+    }
+
+    const isOwner = message.senderId === user.id;
+    const isAdmin = user.role === 'ADMIN';
+    if (!isOwner && !isAdmin) {
+      return NextResponse.json({ error: 'Možete obrisati samo svoje poruke.' }, { status: 403 });
+    }
+
+    const updatedMessage = await prisma.message.update({
+      where: { id: messageId },
+      data: {
+        body: DELETED_MESSAGE_BODY,
+      },
+      select: {
+        id: true,
+        body: true,
+        senderId: true,
+        createdAt: true,
+        sender: { select: { email: true } },
+      },
+    });
+
+    return NextResponse.json({ success: true, message: updatedMessage });
+  } catch (error) {
+    console.error('messages DELETE', error);
+    return NextResponse.json(
+      { error: toErrorMessage(error, 'Greška pri brisanju poruke.') },
+      { status: 500 }
+    );
   }
 }

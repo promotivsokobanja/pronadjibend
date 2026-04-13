@@ -25,6 +25,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
   const [lastAddedSongId, setLastAddedSongId] = useState('');
   const lyricsRef = useRef(null);
   const songComboRef = useRef(null);
+  const setlistSongComboRef = useRef(null);
   const hasLoadedRequestsRef = useRef(false);
   const knownRequestIdsRef = useRef(new Set());
   const autoAcceptedRequestIdsRef = useRef(new Set());
@@ -591,6 +592,9 @@ export default function LiveDashboard({ bandId, musicianId }) {
       if (songComboRef.current && !songComboRef.current.contains(e.target)) {
         setShowSongDropdown(false);
       }
+      if (setlistSongComboRef.current && !setlistSongComboRef.current.contains(e.target)) {
+        setShowSetlistSongDropdown(false);
+      }
     };
     document.addEventListener('mousedown', onOutsideClick);
     return () => document.removeEventListener('mousedown', onOutsideClick);
@@ -692,6 +696,20 @@ export default function LiveDashboard({ bandId, musicianId }) {
   const activeCount = requests.filter(
     (r) => r.status === 'pending' || r.status === 'accepted'
   ).length;
+  const requestHasLyrics = useCallback((req) => {
+    const requestedTitle = String(req?.song || '').trim().toLowerCase();
+    if (!requestedTitle) return false;
+
+    const matched = songsList.find(
+      (song) => (song.title || '').trim().toLowerCase() === requestedTitle
+    );
+    if (matched) return Boolean(matched.lyrics);
+
+    const looseMatched = songsList.find((song) =>
+      (song.title || '').toLowerCase().includes(requestedTitle)
+    );
+    return Boolean(looseMatched?.lyrics);
+  }, [songsList]);
   const filteredRequests = requests.filter((r) =>
     requestView === 'active'
       ? r.status === 'pending' || r.status === 'accepted'
@@ -843,7 +861,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
                         {req.status === 'accepted' && (
                           <>
                             <button className="btn-hud accept" onClick={() => openRequestSong(req)}>
-                              Tekst
+                              {requestHasLyrics(req) ? 'Tekst' : 'Bez teksta'}
                             </button>
                             <button className="btn-hud skip" onClick={() => handleMarkPlayed(req)}>
                               Svirano
@@ -868,8 +886,6 @@ export default function LiveDashboard({ bandId, musicianId }) {
 
           {activeTab === 'repertoire' && (
             <div className={`song-picker ${showRepertoireBrowser ? 'repertoire-open' : ''}`}>
-              <h2>SET LISTE</h2>
-
               <div className="setlists-panel-header">
                 <button type="button" className="setlist-create-btn" onClick={createSetList}>
                   + Nova set lista
@@ -906,59 +922,80 @@ export default function LiveDashboard({ bandId, musicianId }) {
                           <h3>REPERTOAR — dodaj pesmu</h3>
                           <span className="setlist-count-badge">U listi: {selectedSetList?.items.length || 0}</span>
                         </div>
-                        <input
-                          type="text"
-                          placeholder="Pretraži..."
-                          value={songSearch}
-                          onChange={(e) => setSongSearch(e.target.value)}
-                          className="song-search-input repertoire-search-input"
-                        />
-                        <div className="repertoire-dropdown-list">
-                          {songLoading ? (
-                            <div className="song-loading compact">Učitavanje repertoara...</div>
-                          ) : filteredSongs.length === 0 ? (
-                            <div className="repertoire-empty">{songSearch ? 'Nema rezultata' : 'Repertoar je prazan'}</div>
-                          ) : (
-                            filteredSongs.slice(0, 32).map((song) => {
-                              const inSetListCount = selectedSetListSongCountById[String(song.id)] || 0;
-                              const isAlreadyInSetList = inSetListCount > 0;
-                              return (
-                                <div key={song.id} className="repertoire-dropdown-item">
-                                  <button
-                                    type="button"
-                                    className="repertoire-dropdown-main"
-                                    title={isAlreadyInSetList ? 'Pesma je već u set listi' : 'Dodaj u set listu'}
-                                    onClick={() => addSongToSelectedSetList(song)}
-                                  >
-                                    <span className="song-picker-title">{song.title}</span>
-                                    <span className="song-picker-sep">—</span>
-                                    <span className="song-picker-artist">{song.artist}</span>
-                                    {isAlreadyInSetList ? (
-                                      <span className="song-in-setlist-pill">Već dodato</span>
-                                    ) : null}
-                                  </button>
-                                  <div className="repertoire-item-actions">
-                                    <button
-                                      type="button"
-                                      className="song-open-lyrics-btn"
-                                      title="Otvori tekst pesme"
-                                      onClick={async () => {
-                                        await handleSelectSong(song);
-                                        setActiveTab('cheatsheet');
-                                      }}
-                                    >
-                                      Tekst
-                                    </button>
-                                  </div>
-                                </div>
-                              );
-                            })
+                        <div className="repertoire-combo" ref={setlistSongComboRef}>
+                          <button
+                            type="button"
+                            className={`repertoire-combo-toggle ${showSetlistSongDropdown ? 'open' : ''}`}
+                            onClick={() => setShowSetlistSongDropdown((prev) => !prev)}
+                            aria-expanded={showSetlistSongDropdown}
+                            aria-label="Pretraži i dodaj pesmu u set listu"
+                          >
+                            <span>{songSearch ? `Pretraga: ${songSearch}` : 'Pretraži i dodaj pesmu'}</span>
+                            <ChevronDown size={16} />
+                          </button>
+
+                          {showSetlistSongDropdown && (
+                            <div className="repertoire-combo-panel">
+                              <input
+                                type="text"
+                                placeholder="Pretraži pesmu ili izvođača..."
+                                value={songSearch}
+                                onChange={(e) => setSongSearch(e.target.value)}
+                                className="song-search-input repertoire-search-input"
+                                autoFocus
+                              />
+                              <div className="repertoire-dropdown-list">
+                                {songLoading ? (
+                                  <div className="song-loading compact">Učitavanje repertoara...</div>
+                                ) : filteredSongs.length === 0 ? (
+                                  <div className="repertoire-empty">{songSearch ? 'Nema rezultata' : 'Repertoar je prazan'}</div>
+                                ) : (
+                                  filteredSongs.slice(0, 24).map((song) => {
+                                    const inSetListCount = selectedSetListSongCountById[String(song.id)] || 0;
+                                    const isAlreadyInSetList = inSetListCount > 0;
+                                    return (
+                                      <div key={song.id} className="repertoire-dropdown-item">
+                                        <button
+                                          type="button"
+                                          className="repertoire-dropdown-main"
+                                          title={isAlreadyInSetList ? 'Pesma je već u set listi' : 'Dodaj u set listu'}
+                                          onClick={() => {
+                                            addSongToSelectedSetList(song);
+                                          }}
+                                        >
+                                          <span className="song-picker-title">{song.title}</span>
+                                          <span className="song-picker-sep">—</span>
+                                          <span className="song-picker-artist">{song.artist}</span>
+                                          {isAlreadyInSetList ? (
+                                            <span className="song-in-setlist-pill">Već dodato</span>
+                                          ) : null}
+                                        </button>
+                                        <div className="repertoire-item-actions">
+                                          <button
+                                            type="button"
+                                            className="song-open-lyrics-btn"
+                                            title="Otvori tekst pesme"
+                                            onClick={async () => {
+                                              await handleSelectSong(song);
+                                              setShowSetlistSongDropdown(false);
+                                              setActiveTab('cheatsheet');
+                                            }}
+                                          >
+                                            Tekst
+                                          </button>
+                                        </div>
+                                      </div>
+                                    );
+                                  })
+                                )}
+                              </div>
+                            </div>
                           )}
                         </div>
                       </div>
 
-                      {selectedSetList && (
-                        <div className="setlist-editor">
+                      <div className="setlist-editor">
+                        <div className="active-setlist-head">
                           <div className="setlist-editor-top">
                             <input
                               type="text"
@@ -976,35 +1013,35 @@ export default function LiveDashboard({ bandId, musicianId }) {
                           <div className="setlist-status-row">
                             <span>Dodato u listu: <strong>{selectedSetList.items.length}</strong></span>
                           </div>
-
-                          <div className="setlist-items">
-                            {selectedSetList.items.length === 0 ? (
-                              <div className="setlists-empty small">Još nema pesama &mdash; izaberite pesmu iz repertoara.</div>
-                            ) : (
-                              selectedSetList.items.map((item, index) => (
-                                <div key={item.id} className={`setlist-item-row ${item.songId === lastAddedSongId ? 'just-added' : ''}`}>
-                                  <button
-                                    type="button"
-                                    className="setlist-item-main"
-                                    onClick={() => openSongFromSetListItem(item)}
-                                  >
-                                    <span className="setlist-item-order">{index + 1}.</span>
-                                    <span className="setlist-item-copy">
-                                      <span className="setlist-item-title">{item.title}</span>
-                                      <span className="setlist-item-artist">{item.artist}</span>
-                                    </span>
-                                  </button>
-                                  <div className="setlist-item-actions">
-                                    <button type="button" onClick={() => moveSetListItem(item.id, 'up')}>↑</button>
-                                    <button type="button" onClick={() => moveSetListItem(item.id, 'down')}>↓</button>
-                                    <button type="button" onClick={() => removeSetListItem(item.id)}>×</button>
-                                  </div>
-                                </div>
-                              ))
-                            )}
-                          </div>
                         </div>
-                      )}
+
+                        <div className="setlist-items">
+                          {selectedSetList.items.length === 0 ? (
+                            <div className="setlists-empty small">Još nema pesama &mdash; izaberite pesmu iz repertoara.</div>
+                          ) : (
+                            selectedSetList.items.map((item, index) => (
+                              <div key={item.id} className={`setlist-item-row ${item.songId === lastAddedSongId ? 'just-added' : ''}`}>
+                                <button
+                                  type="button"
+                                  className="setlist-item-main"
+                                  onClick={() => openSongFromSetListItem(item)}
+                                >
+                                  <span className="setlist-item-order">{index + 1}.</span>
+                                  <span className="setlist-item-copy">
+                                    <span className="setlist-item-title">{item.title}</span>
+                                    <span className="setlist-item-artist">{item.artist}</span>
+                                  </span>
+                                </button>
+                                <div className="setlist-item-actions">
+                                  <button type="button" onClick={() => moveSetListItem(item.id, 'up')}>↑</button>
+                                  <button type="button" onClick={() => moveSetListItem(item.id, 'down')}>↓</button>
+                                  <button type="button" onClick={() => removeSetListItem(item.id)}>×</button>
+                                </div>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </div>
                     </div>
                   )}
                 </>
@@ -2166,14 +2203,8 @@ export default function LiveDashboard({ bandId, musicianId }) {
         .song-picker {
           display: flex;
           flex-direction: column;
-          height: 100%;
-          min-height: 0;
-          overflow-y: auto;
-          overflow-x: hidden;
-          gap: 0.65rem;
-          padding-bottom: 1rem;
-          scrollbar-width: thin;
-          scrollbar-color: #6a6a6a #151515;
+          gap: 0.45rem;
+          padding-bottom: 0.5rem;
         }
 
         .repertoire-browser {
@@ -2189,7 +2220,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
           margin: 0;
         }
         .setlist-repertoire-stack {
-          margin: 0.15rem 0 0.5rem;
+          margin: 0.05rem 0 0.35rem;
         }
         @media (min-width: 1280px) {
           .setlist-repertoire-stack {
@@ -2225,8 +2256,57 @@ export default function LiveDashboard({ bandId, musicianId }) {
           letter-spacing: 0.08em;
           color: #9ca3af;
         }
+        .repertoire-combo {
+          position: relative;
+          display: flex;
+          flex-direction: column;
+          gap: 0.45rem;
+          z-index: 8;
+        }
+        .repertoire-combo-toggle {
+          width: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 0.75rem;
+          padding: 0.62rem 0.75rem;
+          border: 1px solid #1f2937;
+          border-radius: 10px;
+          background: #0a0a0a;
+          color: #d1d5db;
+          cursor: pointer;
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 0.75rem;
+          font-weight: 700;
+          text-align: left;
+        }
+        .repertoire-combo-toggle.open {
+          border-color: #00ff00;
+          color: #00ff00;
+        }
+        .repertoire-combo-toggle svg {
+          flex-shrink: 0;
+          transition: transform 0.18s ease;
+        }
+        .repertoire-combo-toggle.open svg {
+          transform: rotate(180deg);
+        }
+        .repertoire-combo-panel {
+          position: absolute;
+          top: calc(100% + 0.45rem);
+          left: 0;
+          right: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 0.5rem;
+          padding: 0.7rem;
+          border: 1px solid #1a1a1a;
+          border-radius: 12px;
+          background: #050505;
+          box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+          z-index: 24;
+        }
         .repertoire-dropdown-list {
-          margin-top: 0.5rem;
           border: 1px solid #1f1f1f;
           border-radius: 10px;
           background: #0b0b0b;
@@ -2327,6 +2407,9 @@ export default function LiveDashboard({ bandId, musicianId }) {
           justify-content: space-between;
           gap: 0.75rem;
         }
+        .song-picker .setlists-panel-header {
+          margin: 0;
+        }
         .setlists-panel-header h3,
         .active-setlist-name {
           margin: 0;
@@ -2342,6 +2425,10 @@ export default function LiveDashboard({ bandId, musicianId }) {
         }
         .setlists-selector {
           padding-bottom: 0.15rem;
+          max-height: 5.5rem;
+          overflow-y: auto;
+          scrollbar-width: thin;
+          scrollbar-color: #6a6a6a #151515;
         }
         .setlist-chip,
         .active-setlist-item,
@@ -3353,7 +3440,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
             font-size: 1.15rem;
           }
           .hud-content h2 {
-            margin-bottom: 0.85rem;
+            margin-bottom: 0.55rem;
             letter-spacing: 0.12em;
           }
           .song-picker-list {
@@ -3385,17 +3472,19 @@ export default function LiveDashboard({ bandId, musicianId }) {
           .song-picker .setlist-create-btn {
             width: auto;
             flex: 1;
-            min-height: 40px;
+            min-height: 42px;
           }
           .song-picker .setlists-selector {
             flex-wrap: nowrap;
             gap: 0.4rem;
-            padding-bottom: 0.25rem;
-            margin-bottom: 0.15rem;
+            padding-bottom: 0.15rem;
+            margin-bottom: 0.05rem;
           }
           .song-picker .setlist-chip {
             white-space: nowrap;
             flex: 0 0 auto;
+            min-height: 38px;
+            padding: 0.5rem 0.72rem;
           }
           .active-setlist-nav {
             display: grid;
@@ -3405,15 +3494,17 @@ export default function LiveDashboard({ bandId, musicianId }) {
           }
           .setlist-item-row {
             grid-template-columns: 1fr;
+            gap: 0.45rem;
           }
           .setlist-item-actions {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
+            gap: 0.4rem;
           }
           .setlist-item-actions button {
             width: 100%;
             min-width: 0;
-            min-height: 38px;
+            min-height: 40px;
           }
           .setlist-items {
             max-height: none;
@@ -3425,23 +3516,63 @@ export default function LiveDashboard({ bandId, musicianId }) {
           .repertoire-browser {
             max-height: 38dvh;
           }
+          .repertoire-combo-panel {
+            padding: 0.55rem;
+            top: calc(100% + 0.35rem);
+          }
+          .repertoire-combo-toggle {
+            min-height: 44px;
+            padding: 0.72rem 0.78rem;
+            font-size: 0.78rem;
+          }
           .repertoire-dropdown-list {
-            max-height: 52dvh;
+            max-height: min(46dvh, 320px);
           }
           .repertoire-dropdown-item {
-            grid-template-columns: minmax(0, 1fr) auto;
+            grid-template-columns: 1fr;
             padding: 0.5rem;
+          }
+          .repertoire-dropdown-main {
+            padding: 0.5rem 0.45rem;
+            gap: 0.18rem 0.45rem;
+          }
+          .repertoire-item-actions {
+            width: 100%;
+            justify-content: flex-end;
+          }
+          .song-open-lyrics-btn {
+            width: 100%;
+            min-height: 40px;
           }
           .song-picker.repertoire-open .setlist-song-search {
             flex: 0 0 auto;
           }
           .song-picker.repertoire-open .repertoire-browser {
             flex: 0 0 auto;
-            min-height: 200px;
-            max-height: min(44dvh, 360px);
+            min-height: 0;
+            max-height: none;
           }
           .song-picker.repertoire-open .setlist-items {
             max-height: min(36dvh, 320px);
+          }
+          .song-picker {
+            gap: 0.4rem;
+            padding-bottom: 0.35rem;
+          }
+          .setlist-name-input {
+            min-height: 42px;
+            font-size: 0.82rem;
+          }
+          .setlist-status-row {
+            margin-top: 0;
+            margin-bottom: 0.3rem;
+            gap: 0.15rem;
+          }
+          .setlist-item-main {
+            padding: 0.78rem 0.78rem;
+          }
+          .setlist-item-copy {
+            gap: 0.15rem;
           }
           .song-picker-item {
             padding: 0.7rem;

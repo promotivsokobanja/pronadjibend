@@ -28,6 +28,7 @@ import { dateToCalendarKeyUTC } from '../../../lib/calendarDate';
 
 /** Postavite na `false` da sakrijete kratke opise ispod dugmadi (brz „undo“ izgleda). */
 const SHOW_HEADER_ACTION_HINTS = true;
+const ACTIVE_INVITE_STATUSES = new Set(['PENDING', 'ACCEPTED']);
 
 /** `1` ili prazno = jedan klik kao ranije; `0` = prozor za napomenu. */
 const LS_CALENDAR_QUICK_BUSY = 'pronadjibend_calendar_quick_busy';
@@ -71,6 +72,7 @@ export default function BandDashboard() {
   /** Prve 2 pesme za karticu „Digitalni Repertoar“ (iz baze, ne demo) */
   const [repertoirePreview, setRepertoirePreview] = useState([]);
   const [sentMusicianInvites, setSentMusicianInvites] = useState([]);
+  const [inviteView, setInviteView] = useState('active');
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -455,6 +457,19 @@ export default function BandDashboard() {
     return <div className="loading">Učitavanje...</div>;
   }
 
+  const visibleMusicianInvites = sentMusicianInvites.filter((invite) => {
+    const status = String(invite?.status || '').toUpperCase();
+    return inviteView === 'archive' ? !ACTIVE_INVITE_STATUSES.has(status) : ACTIVE_INVITE_STATUSES.has(status);
+  });
+
+  const activeInviteCount = sentMusicianInvites.filter((invite) =>
+    ACTIVE_INVITE_STATUSES.has(String(invite?.status || '').toUpperCase())
+  ).length;
+
+  const archivedInviteCount = sentMusicianInvites.filter((invite) =>
+    !ACTIVE_INVITE_STATUSES.has(String(invite?.status || '').toUpperCase())
+  ).length;
+
   return (
     <div className="dashboard-container container">
       {profileSavedNotice && (
@@ -802,9 +817,25 @@ export default function BandDashboard() {
             <h3>Pozivi muzičarima</h3>
             <Link href="/muzicari" className="btn btn-secondary btn-sm">Pronađi muzičare</Link>
           </div>
+          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              className={`btn btn-sm ${inviteView === 'active' ? 'btn-primary' : 'btn-secondary'}`}
+              onClick={() => setInviteView('active')}
+            >
+              Aktivni ({activeInviteCount})
+            </button>
+            <button
+              type="button"
+              className={`btn btn-sm ${inviteView === 'archive' ? 'btn-primary' : 'btn-secondary'}`}
+              onClick={() => setInviteView('archive')}
+            >
+              Arhiva ({archivedInviteCount})
+            </button>
+          </div>
           <div className="booking-list">
-            {sentMusicianInvites.length > 0 ? (
-              sentMusicianInvites.slice(0, 12).map((invite) => (
+            {visibleMusicianInvites.length > 0 ? (
+              visibleMusicianInvites.slice(0, 12).map((invite) => (
                 <div key={invite.id} className="booking-item">
                   <div className="booking-item-row">
                     <div style={{ flex: 1, minWidth: 0 }}>
@@ -819,11 +850,16 @@ export default function BandDashboard() {
                       {invite.status}
                     </span>
                   </div>
-                  <ChatThread inviteId={invite.id} />
+                  <details className="invite-chat-panel">
+                    <summary className="invite-chat-toggle">Poruke</summary>
+                    <ChatThread inviteId={invite.id} />
+                  </details>
                 </div>
               ))
             ) : (
-              <div className="no-bookings">Još nema poslatih poziva muzičarima.</div>
+              <div className="no-bookings">
+                {inviteView === 'archive' ? 'Nema arhiviranih poziva muzičarima.' : 'Još nema aktivnih poziva muzičarima.'}
+              </div>
             )}
           </div>
         </section>
@@ -913,6 +949,19 @@ export default function BandDashboard() {
           background: rgba(255,255,255,0.01);
           border: 1px solid var(--border);
           border-radius: var(--radius-md);
+        }
+        .invite-chat-panel {
+          margin-top: 0.15rem;
+        }
+        .invite-chat-toggle {
+          cursor: pointer;
+          font-size: 0.82rem;
+          font-weight: 800;
+          color: var(--text-muted, #94a3b8);
+          list-style: none;
+        }
+        .invite-chat-toggle::-webkit-details-marker {
+          display: none;
         }
         .booking-item-row {
           display: flex;

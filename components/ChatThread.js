@@ -1,13 +1,14 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Send } from 'lucide-react';
+import { Send, Trash2 } from 'lucide-react';
 
 export default function ChatThread({ inviteId }) {
   const [messages, setMessages] = useState([]);
   const [currentUserId, setCurrentUserId] = useState(null);
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
+  const [deletingId, setDeletingId] = useState('');
   const [error, setError] = useState('');
   const [locked, setLocked] = useState(false);
   const messagesRef = useRef(null);
@@ -24,6 +25,11 @@ export default function ChatThread({ inviteId }) {
     try {
       const r = await fetch(`/api/messages?inviteId=${inviteId}`, { cache: 'no-store' });
       const j = await r.json();
+      if (r.status === 401) {
+        setLocked(false);
+        setError(j.error || 'Morate biti prijavljeni.');
+        return;
+      }
       if (r.status === 403) {
         setLocked(true);
         setError(j.error || 'Chat nije dostupan.');
@@ -83,6 +89,27 @@ export default function ChatThread({ inviteId }) {
     }
   };
 
+  const handleDelete = async (messageId) => {
+    if (!messageId || deletingId) return;
+    setDeletingId(messageId);
+    setError('');
+    try {
+      const r = await fetch(`/api/messages?messageId=${messageId}`, {
+        method: 'DELETE',
+      });
+      const j = await r.json();
+      if (!r.ok) {
+        setError(j.error || 'Greška pri brisanju poruke.');
+        return;
+      }
+      setMessages((prev) => prev.map((msg) => (msg.id === messageId ? j.message : msg)));
+    } catch {
+      setError('Greška pri brisanju poruke.');
+    } finally {
+      setDeletingId('');
+    }
+  };
+
   const formatTime = (iso) => {
     const d = new Date(iso);
     const now = new Date();
@@ -91,6 +118,8 @@ export default function ChatThread({ inviteId }) {
     if (isToday) return time;
     return `${d.toLocaleDateString('sr-RS', { day: 'numeric', month: 'short' })} ${time}`;
   };
+
+  const isDeletedMessage = (msg) => msg?.body === 'Poruka je obrisana';
 
   if (locked) {
     return (
@@ -116,12 +145,25 @@ export default function ChatThread({ inviteId }) {
         )}
         {messages.map((msg) => {
           const isMine = msg.senderId === currentUserId;
+          const isDeleted = isDeletedMessage(msg);
           return (
-            <div key={msg.id} className={`chat-bubble ${isMine ? 'mine' : 'theirs'}`}>
+            <div key={msg.id} className={`chat-bubble ${isMine ? 'mine' : 'theirs'} ${isDeleted ? 'deleted' : ''}`}>
               <div className="chat-bubble-body">{msg.body}</div>
               <div className="chat-bubble-meta">
                 {!isMine && <span className="chat-sender">{msg.sender?.email?.split('@')[0]}</span>}
                 <span className="chat-time">{formatTime(msg.createdAt)}</span>
+                {isMine && !isDeleted && (
+                  <button
+                    type="button"
+                    className="chat-delete-btn"
+                    onClick={() => handleDelete(msg.id)}
+                    disabled={deletingId === msg.id}
+                    title="Obriši poruku"
+                    aria-label="Obriši poruku"
+                  >
+                    <Trash2 size={12} />
+                  </button>
+                )}
               </div>
             </div>
           );
@@ -224,6 +266,12 @@ const chatStyles = `
     color: #1e293b;
     border-bottom-left-radius: 4px;
   }
+  .chat-bubble.deleted {
+    background: #f8fafc;
+    color: #94a3b8;
+    border: 1px dashed #cbd5e1;
+    font-style: italic;
+  }
   .chat-bubble-meta {
     display: flex;
     align-items: center;
@@ -241,6 +289,28 @@ const chatStyles = `
   }
   .chat-sender {
     font-weight: 700;
+  }
+  .chat-delete-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border: none;
+    border-radius: 999px;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    opacity: 0.8;
+    transition: background 0.15s ease, opacity 0.15s ease;
+  }
+  .chat-delete-btn:hover:not(:disabled) {
+    background: rgba(15, 23, 42, 0.08);
+    opacity: 1;
+  }
+  .chat-delete-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
   }
   .chat-error {
     padding: 0.4rem 1rem;
