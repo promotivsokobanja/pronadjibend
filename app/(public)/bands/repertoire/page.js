@@ -379,7 +379,7 @@ export default function RepertoirePage() {
 
   return (
     <div className="repertoire-container container">
-      <div className="blob" style={{ top: '10%', right: '-10%' }}></div>
+      <div className="blob" style={{ top: '10%', right: '0' }}></div>
       <header className="page-header">
         <button
           type="button"
@@ -652,7 +652,7 @@ export default function RepertoirePage() {
       )}
 
       <style jsx>{`
-        .repertoire-container { padding-top: 8rem; padding-bottom: 6rem; min-height: 100vh; overflow-x: hidden; box-sizing: border-box; width: 100%; }
+        .repertoire-container { padding-top: 8rem; padding-bottom: 6rem; min-height: 100vh; overflow-x: clip; overflow-y: visible; box-sizing: border-box; width: 100%; position: relative; touch-action: pan-y pinch-zoom; }
         .page-header { margin-bottom: 4rem; position: relative; z-index: 2; }
         .back-link {
           display: inline-flex;

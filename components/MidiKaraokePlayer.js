@@ -695,7 +695,7 @@ export default function MidiKaraokePlayer({ fileUrl, fileName, initialSongId, so
       </div>
 
       <style jsx>{`
-        .karaoke-overlay { position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,0.92); backdrop-filter: blur(20px); display: flex; align-items: center; justify-content: center; animation: fadeIn 0.3s ease; }
+        .karaoke-overlay { position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,0.92); backdrop-filter: blur(20px); display: flex; align-items: center; justify-content: center; animation: fadeIn 0.3s ease; touch-action: pan-y pinch-zoom; overflow: hidden; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .karaoke-player { position: relative; width: 95vw; max-width: 1100px; height: 85vh; max-height: 720px; background: linear-gradient(180deg, #0a0a1a 0%, #0d0d2b 50%, #0a0a1a 100%); border: 1px solid rgba(${isAudioMode ? '52,211,153' : '96,165,250'},0.15); border-radius: 20px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 0 80px rgba(${isAudioMode ? '52,211,153' : '96,165,250'},0.08); }
 

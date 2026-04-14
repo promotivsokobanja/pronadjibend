@@ -112,7 +112,7 @@ export default function PesmaricaPage() {
 
   return (
     <div className="pesmarica-container container">
-      <div className="blob" style={{ top: '10%', right: '-10%' }}></div>
+      <div className="blob" style={{ top: '10%', right: '0' }}></div>
 
       <header className="page-header">
         <button
@@ -239,7 +239,7 @@ export default function PesmaricaPage() {
       </main>
 
       <style jsx>{`
-        .pesmarica-container { padding-top: 8rem; padding-bottom: 6rem; min-height: 100vh; overflow-x: hidden; box-sizing: border-box; width: 100%; }
+        .pesmarica-container { padding-top: 8rem; padding-bottom: 6rem; min-height: 100vh; overflow-x: clip; overflow-y: visible; box-sizing: border-box; width: 100%; position: relative; touch-action: pan-y pinch-zoom; }
 
         .page-header { margin-bottom: 2rem; position: relative; z-index: 2; }
         .back-link {
