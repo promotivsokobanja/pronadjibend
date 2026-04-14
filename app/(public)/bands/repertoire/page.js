@@ -652,7 +652,7 @@ export default function RepertoirePage() {
       )}
 
       <style jsx>{`
-        .repertoire-container { padding-top: 8rem; padding-bottom: 6rem; min-height: 100vh; }
+        .repertoire-container { padding-top: 8rem; padding-bottom: 6rem; min-height: 100vh; overflow-x: hidden; box-sizing: border-box; width: 100%; }
         .page-header { margin-bottom: 4rem; position: relative; z-index: 2; }
         .back-link {
           display: inline-flex;

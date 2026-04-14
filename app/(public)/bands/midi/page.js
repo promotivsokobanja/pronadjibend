@@ -425,7 +425,7 @@ export default function MidiLibraryPage() {
       )}
 
       <style jsx>{`
-        .midi-container { padding-top: 8rem; padding-bottom: 6rem; min-height: 100vh; }
+        .midi-container { padding-top: 8rem; padding-bottom: 6rem; min-height: 100vh; overflow-x: hidden; box-sizing: border-box; width: 100%; }
         .page-header { margin-bottom: 2rem; position: relative; z-index: 2; }
         .back-link {
           display: inline-flex;
@@ -669,15 +669,59 @@ export default function MidiLibraryPage() {
 
         .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; padding: 5rem 2rem; color: #444; }
 
+        @media (max-width: 1024px) {
+          .midi-container { padding-top: 7.5rem; }
+          .title-row h1 { font-size: 2.2rem; }
+          .list-header { grid-template-columns: 40px 2fr 1.2fr 0.8fr 1fr; }
+          .file-row { grid-template-columns: 40px 2fr 1.2fr 0.8fr 1fr; }
+          .col-size { display: none; }
+          .ps-hero { gap: 0.75rem; }
+          .alpha-bar {
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+            padding-bottom: 0.3rem;
+          }
+          .alpha-bar::-webkit-scrollbar { height: 5px; }
+        }
+
         @media (max-width: 768px) {
+          .midi-container { padding-top: 7rem; padding-bottom: 4.5rem; }
           .title-row h1 { font-size: 2rem; }
           .alpha-btn { width: 28px; height: 28px; font-size: 0.65rem; }
           .list-header { display: none; }
-          .file-row { grid-template-columns: 36px 1fr auto; gap: 0.5rem; }
-          .col-artist, .col-cat, .col-size { display: none; }
+          .file-row {
+            grid-template-columns: 36px 1fr;
+            gap: 0.5rem 0.75rem;
+            padding: 0.85rem 1rem;
+          }
+          .col-artist { display: block; font-size: 0.78rem; color: #888; grid-column: 2; margin-top: -0.3rem; }
+          .col-cat { grid-column: 2; }
+          .col-size { display: none; }
+          .col-dl { grid-column: 1 / -1; display: flex; justify-content: flex-end; }
+          .col-play { display: flex; align-items: flex-start; padding-top: 2px; }
           .premium-banner { flex-direction: column; text-align: center; }
           .uf-fields { flex-direction: column; }
           .uf-input, .uf-select { width: 100%; }
+          .search-box { border-radius: 16px; padding: 0.7rem 1rem; }
+          .cat-tabs { gap: 0.4rem; }
+          .cat-tab { padding: 0.55rem 0.85rem; font-size: 0.75rem; }
+          .pagination { flex-direction: column; gap: 0.75rem; }
+          .page-btn { width: 100%; justify-content: center; }
+        }
+
+        @media (max-width: 560px) {
+          .midi-container { padding-top: 6.5rem; }
+          .title-row h1 { font-size: 1.7rem; letter-spacing: -1px; }
+          .title-row { margin-bottom: 1rem; }
+          .ps-hero { flex-direction: column; text-align: center; padding: 0.75rem; }
+          .ps-hero-btn { width: 100%; justify-content: center; font-size: 0.85rem; padding: 10px 20px; }
+          .file-row { padding: 0.8rem 0.85rem; }
+          .file-title { font-size: 0.88rem; }
+          .action-btns { gap: 0.5rem; }
+          .dl-btn { padding: 6px 14px; font-size: 0.7rem; }
+          .upload-form { padding: 1rem; }
         }
       `}</style>
     </div>

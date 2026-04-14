@@ -239,7 +239,7 @@ export default function PesmaricaPage() {
       </main>
 
       <style jsx>{`
-        .pesmarica-container { padding-top: 8rem; padding-bottom: 6rem; min-height: 100vh; }
+        .pesmarica-container { padding-top: 8rem; padding-bottom: 6rem; min-height: 100vh; overflow-x: hidden; box-sizing: border-box; width: 100%; }
 
         .page-header { margin-bottom: 2rem; position: relative; z-index: 2; }
         .back-link {
@@ -368,6 +368,20 @@ export default function PesmaricaPage() {
         .page-info { font-size: 0.8rem; color: #555; font-weight: 700; }
 
         .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; padding: 5rem 2rem; color: #444; }
+
+        @media (max-width: 1024px) {
+          .pesmarica-container { padding-top: 7.5rem; }
+          .title-row h1 { font-size: 2.3rem; }
+          .alpha-bar {
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+            padding-bottom: 0.3rem;
+          }
+          .alpha-bar::-webkit-scrollbar { height: 5px; }
+          .song-header { padding: 0.85rem 1.1rem; }
+        }
 
         @media (max-width: 768px) {
           .pesmarica-container { padding-top: 7.2rem; padding-bottom: 4.5rem; }
