@@ -1008,6 +1008,9 @@ export default function LiveDashboard({ bandId, musicianId }) {
                       <div className="repertoire-browser-head">
                         <h3>REPERTOAR — dodaj pesmu</h3>
                         <span className="setlist-count-badge">U listi: {selectedSetList?.items.length || 0}</span>
+                        <button type="button" className="setlist-delete-btn" onClick={deleteSelectedSetList}>
+                          Obriši listu
+                        </button>
                       </div>
                       <div className="repertoire-combo" ref={setlistSongComboRef}>
                         <button
