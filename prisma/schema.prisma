@@ -55,6 +55,7 @@ model Band {
   user               User?
   deletedAt          DateTime?
   MidiFile           MidiFile[]
+  setLists           SetList[]
 }
 
 model Song {
@@ -71,6 +72,7 @@ model Song {
   musicianProfile   MusicianProfile? @relation(fields: [musicianProfileId], references: [id])
   musicianProfileId String?
   liveRequests      LiveRequest[]
+  setListItems      SetListItem[]
 }
 
 model SongSubmission {
@@ -207,6 +209,7 @@ model MusicianProfile {
   songs             Song[]
   liveRequests      LiveRequest[]
   midiFiles         MidiFile[]
+  setLists          SetList[]
   deletedAt         DateTime?
 
   @@index([city])
@@ -259,6 +262,34 @@ model Message {
   createdAt DateTime       @default(now())
 
   @@index([inviteId, createdAt])
+}
+
+model SetList {
+  id                String           @id @default(cuid())
+  name              String
+  isLive            Boolean          @default(false)
+  band              Band?            @relation(fields: [bandId], references: [id])
+  bandId            String?
+  musicianProfile   MusicianProfile? @relation(fields: [musicianProfileId], references: [id])
+  musicianProfileId String?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  items             SetListItem[]
+
+  @@index([bandId])
+  @@index([musicianProfileId])
+}
+
+model SetListItem {
+  id        String  @id @default(cuid())
+  position  Int     @default(0)
+  setList   SetList @relation(fields: [setListId], references: [id], onDelete: Cascade)
+  setListId String
+  song      Song    @relation(fields: [songId], references: [id])
+  songId    String
+
+  @@index([setListId])
+  @@index([songId])
 }
 
 /// Jedan zapis (id = 1): javna podešavanja (admin /sistem)

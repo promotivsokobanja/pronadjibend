@@ -19,6 +19,7 @@ export default function GuestLivePage({ params }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [allowTips, setAllowTips] = useState(true);
 
+  const [hasLiveSetLists, setHasLiveSetLists] = useState(true);
   const [selectedSong, setSelectedSong] = useState(null);
   const [tableNum, setTableNum] = useState('');
   const [orderFlow, setOrderFlow] = useState(null);
@@ -95,7 +96,7 @@ export default function GuestLivePage({ params }) {
     detect();
   }, [rawId]);
 
-  // Fetch songs once owner type is known
+  // Fetch songs from live setlists first, fallback to full repertoire
   useEffect(() => {
     const ownerId = ownerType === 'band' ? bandId : musicianId;
     if (!ownerType || ownerType === 'unknown') {
@@ -108,16 +109,41 @@ export default function GuestLivePage({ params }) {
         const param = ownerType === 'band'
           ? `bandId=${encodeURIComponent(ownerId)}`
           : `musicianId=${encodeURIComponent(ownerId)}`;
-        const resp = await fetch(`/api/songs?${param}`);
-        const data = await resp.json();
-        const list = Array.isArray(data) ? data : [];
-        setSongs(list);
-        const cats = [...new Set(list.map((s) => s.category || s.type).filter(Boolean))];
-        if (cats.length > 0) {
-          setActiveTab((t) => t || cats[0]);
+
+        // Try live-songs endpoint first
+        const liveResp = await fetch(`/api/live-songs?${param}`);
+        const liveData = await liveResp.json();
+
+        if (liveData.hasLiveSetLists && Array.isArray(liveData.songs) && liveData.songs.length > 0) {
+          setHasLiveSetLists(true);
+          setSongs(liveData.songs);
+          const cats = [...new Set(liveData.songs.map((s) => s.category || s.type).filter(Boolean))];
+          if (cats.length > 0) setActiveTab((t) => t || cats[0]);
+        } else if (liveData.hasLiveSetLists === false) {
+          // No live setlists — fallback to full repertoire
+          setHasLiveSetLists(false);
+          const fallbackResp = await fetch(`/api/songs?${param}`);
+          const fallbackData = await fallbackResp.json();
+          const list = Array.isArray(fallbackData) ? fallbackData : [];
+          setSongs(list);
+          const cats = [...new Set(list.map((s) => s.category || s.type).filter(Boolean))];
+          if (cats.length > 0) setActiveTab((t) => t || cats[0]);
+        } else {
+          // hasLiveSetLists but empty songs
+          setHasLiveSetLists(true);
+          setSongs([]);
         }
       } catch (err) {
         console.error(err);
+        // Fallback to old API on error
+        try {
+          const param = ownerType === 'band'
+            ? `bandId=${encodeURIComponent(ownerId)}`
+            : `musicianId=${encodeURIComponent(ownerId)}`;
+          const resp = await fetch(`/api/songs?${param}`);
+          const data = await resp.json();
+          setSongs(Array.isArray(data) ? data : []);
+        } catch { /* ignore */ }
       } finally {
         setLoading(false);
       }
@@ -327,6 +353,13 @@ export default function GuestLivePage({ params }) {
           </button>
         )}
       </header>
+
+      {!loading && !hasLiveSetLists && (
+        <div className="preparing-banner">
+          <Music size={20} />
+          <p>Muzičari trenutno pripremaju repertoar, naručivanje će biti dostupno uskoro.</p>
+        </div>
+      )}
 
       <main className="song-list">
         {loading ? (
@@ -649,6 +682,22 @@ export default function GuestLivePage({ params }) {
           padding-bottom: 4rem;
           min-height: 100vh;
         }
+        .preparing-banner {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          max-width: 600px;
+          margin: 0 auto 1.5rem;
+          padding: 1rem 1.25rem;
+          border-radius: 16px;
+          border: 1px solid #fbbf24;
+          background: linear-gradient(135deg, rgba(251, 191, 36, 0.08), rgba(245, 158, 11, 0.04));
+          color: #92400e;
+          font-size: 0.9rem;
+          font-weight: 600;
+          line-height: 1.45;
+        }
+        .preparing-banner p { margin: 0; }
         .guest-header {
           text-align: center;
           margin-bottom: 2rem;

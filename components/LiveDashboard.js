@@ -30,47 +30,55 @@ export default function LiveDashboard({ bandId, musicianId }) {
   const knownRequestIdsRef = useRef(new Set());
   const autoAcceptedRequestIdsRef = useRef(new Set());
 
-  // Set list state — read localStorage synchronously on first render
-  const setListStorageKey = ownerId ? `pb_live_set_lists_${ownerType}_${ownerId}` : '';
-
-  function readSetListsFromStorage(key) {
-    if (typeof window === 'undefined' || !key) return [];
-    try {
-      const raw = window.localStorage.getItem(key);
-      const parsed = raw ? JSON.parse(raw) : [];
-      if (!Array.isArray(parsed)) return [];
-      return parsed
-        .filter((entry) => entry && typeof entry === 'object' && entry.id)
-        .map((entry, index) => ({
-          id: String(entry.id),
-          name: String(entry.name || `Set lista ${index + 1}`).trim() || `Set lista ${index + 1}`,
-          items: Array.isArray(entry.items)
-            ? entry.items
-                .filter((item) => item && typeof item === 'object' && item.songId)
-                .map((item) => ({
-                  id: String(item.id || `${item.songId}-${Math.random().toString(36).slice(2, 8)}`),
-                  songId: String(item.songId),
-                  title: String(item.title || ''),
-                  artist: String(item.artist || ''),
-                }))
-            : [],
-        }));
-    } catch {
-      return [];
-    }
-  }
-
-  const [setLists, setSetLists] = useState(() => readSetListsFromStorage(setListStorageKey));
-  const [selectedSetListId, setSelectedSetListId] = useState(() => {
-    const initial = readSetListsFromStorage(setListStorageKey);
-    return initial[0]?.id || '';
-  });
+  // Set list state — loaded from API
+  const [setLists, setSetLists] = useState([]);
+  const [selectedSetListId, setSelectedSetListId] = useState('');
   const [setListNameDraft, setSetListNameDraft] = useState('');
+  const [setListsLoading, setSetListsLoading] = useState(false);
   const setListsRef = useRef(setLists);
 
   useEffect(() => {
     setListsRef.current = setLists;
   }, [setLists]);
+
+  /** Normalize API setlist into local shape */
+  function normalizeSetList(entry) {
+    return {
+      id: entry.id,
+      name: entry.name || 'Set lista',
+      isLive: Boolean(entry.isLive),
+      items: (entry.items || []).map((item) => ({
+        id: item.id,
+        songId: item.song?.id || item.songId,
+        title: item.song?.title || item.title || '',
+        artist: item.song?.artist || item.artist || '',
+      })),
+    };
+  }
+
+  /** Load setlists from API */
+  useEffect(() => {
+    if (!ownerId) return;
+    let cancelled = false;
+    const load = async () => {
+      setSetListsLoading(true);
+      try {
+        const param = bandId ? `bandId=${bandId}` : `musicianId=${musicianId}`;
+        const resp = await fetch(`/api/setlists?${param}`, { cache: 'no-store' });
+        const data = await resp.json();
+        if (cancelled) return;
+        const lists = Array.isArray(data) ? data.map(normalizeSetList) : [];
+        setSetLists(lists);
+        setSelectedSetListId((prev) => prev || lists[0]?.id || '');
+      } catch (err) {
+        console.error('Error loading setlists:', err);
+      } finally {
+        if (!cancelled) setSetListsLoading(false);
+      }
+    };
+    load();
+    return () => { cancelled = true; };
+  }, [ownerId, bandId, musicianId]);
 
   // Settings state
   const [settings, setSettings] = useState({
@@ -363,33 +371,39 @@ export default function LiveDashboard({ bandId, musicianId }) {
   }, [ownerId, bandId, musicianId, notifyNewRequests]);
 
 
-  const persistSetLists = useCallback((nextLists, storageKey = setListStorageKey) => {
-    if (typeof window === 'undefined' || !storageKey) return;
+  /** Sync a single setlist to the API (debounced for items) */
+  const syncSetListToApi = useCallback(async (setListId, patchBody) => {
     try {
-      window.localStorage.setItem(storageKey, JSON.stringify(nextLists));
-    } catch {
-      /* ignore */
+      await fetch(`/api/setlists/${encodeURIComponent(setListId)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(patchBody),
+      });
+    } catch (err) {
+      console.error('Error syncing setlist:', err);
     }
-  }, [setListStorageKey]);
+  }, []);
 
   const updateSetLists = useCallback((updater) => {
     setSetLists((prev) => {
       const next = typeof updater === 'function' ? updater(prev) : updater;
-      persistSetLists(next);
       return next;
     });
-  }, [persistSetLists]);
+  }, []);
 
-  useEffect(() => {
-    if (typeof window === 'undefined' || !setListStorageKey) return;
-    const flushSetLists = () => {
-      persistSetLists(setListsRef.current, setListStorageKey);
-    };
-    window.addEventListener('beforeunload', flushSetLists);
-    return () => {
-      window.removeEventListener('beforeunload', flushSetLists);
-    };
-  }, [persistSetLists, setListStorageKey]);
+  /** Toggle isLive for a setlist */
+  const toggleSetListLive = useCallback(async (setListId) => {
+    setSetLists((prev) =>
+      prev.map((entry) =>
+        entry.id === setListId ? { ...entry, isLive: !entry.isLive } : entry
+      )
+    );
+    const entry = setListsRef.current.find((e) => e.id === setListId);
+    const nextIsLive = entry ? !entry.isLive : true;
+    await syncSetListToApi(setListId, { isLive: nextIsLive });
+  }, [syncSetListToApi]);
+
+  const hasAnyLiveSetList = setLists.some((entry) => entry.isLive);
 
   const selectedSetList = setLists.find((entry) => entry.id === selectedSetListId) || null;
   const selectedSetListSongCountById = (selectedSetList?.items || []).reduce((acc, item) => {
@@ -457,19 +471,24 @@ export default function LiveDashboard({ bandId, musicianId }) {
     setActiveTab('cheatsheet');
   }, [allSongs]);
 
-  const createSetList = useCallback(() => {
-    const nextId = typeof crypto !== 'undefined' && crypto.randomUUID
-      ? crypto.randomUUID()
-      : `setlist-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    const next = {
-      id: nextId,
-      name: `Set lista ${setLists.length + 1}`,
-      items: [],
-    };
-    updateSetLists((prev) => [...prev, next]);
-    setSelectedSetListId(nextId);
-    setShowRepertoireBrowser(true);
-    setShowSetlistSongDropdown(true);
+  const createSetList = useCallback(async () => {
+    const tempName = `Set lista ${setLists.length + 1}`;
+    try {
+      const resp = await fetch('/api/setlists', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: tempName }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error || 'Greška');
+      const normalized = normalizeSetList(data);
+      updateSetLists((prev) => [...prev, normalized]);
+      setSelectedSetListId(normalized.id);
+      setShowRepertoireBrowser(true);
+      setShowSetlistSongDropdown(true);
+    } catch (err) {
+      console.error('Error creating setlist:', err);
+    }
   }, [setLists.length, updateSetLists]);
 
   const renameSelectedSetList = useCallback((nextName) => {
@@ -478,10 +497,16 @@ export default function LiveDashboard({ bandId, musicianId }) {
     updateSetLists((prev) =>
       prev.map((entry) => (entry.id === selectedSetListId ? { ...entry, name: trimmed } : entry))
     );
-  }, [selectedSetListId, updateSetLists]);
+    syncSetListToApi(selectedSetListId, { name: trimmed });
+  }, [selectedSetListId, updateSetLists, syncSetListToApi]);
 
-  const deleteSelectedSetList = useCallback(() => {
+  const deleteSelectedSetList = useCallback(async () => {
     if (!selectedSetListId) return;
+    try {
+      await fetch(`/api/setlists/${encodeURIComponent(selectedSetListId)}`, { method: 'DELETE' });
+    } catch (err) {
+      console.error('Error deleting setlist:', err);
+    }
     updateSetLists((prev) => {
       const next = prev.filter((entry) => entry.id !== selectedSetListId);
       setSelectedSetListId(next[0]?.id || '');
@@ -495,36 +520,49 @@ export default function LiveDashboard({ bandId, musicianId }) {
       ? crypto.randomUUID()
       : `setitem-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     let wasAdded = false;
+    let nextItems = [];
     updateSetLists((prev) =>
       prev.map((entry) => {
         if (entry.id !== selectedSetListId) return entry;
         const exists = entry.items.some((item) => String(item.songId) === String(song.id));
         if (exists) return entry;
         wasAdded = true;
-        return {
-          ...entry,
-          items: [
-            ...entry.items,
-            {
-              id: nextId,
-              songId: song.id,
-              title: song.title || 'Bez naziva',
-              artist: song.artist || '',
-            },
-          ],
-        };
+        nextItems = [
+          ...entry.items,
+          {
+            id: nextId,
+            songId: song.id,
+            title: song.title || 'Bez naziva',
+            artist: song.artist || '',
+          },
+        ];
+        return { ...entry, items: nextItems };
       })
     );
     if (wasAdded) {
       setLastAddedSongId(String(song.id));
+      syncSetListToApi(selectedSetListId, { items: nextItems.map((i) => ({ songId: i.songId })) });
     }
-  }, [selectedSetListId, updateSetLists]);
+  }, [selectedSetListId, updateSetLists, syncSetListToApi]);
 
   useEffect(() => {
     if (!lastAddedSongId) return;
     const timer = setTimeout(() => setLastAddedSongId(''), 1800);
     return () => clearTimeout(timer);
   }, [lastAddedSongId]);
+
+  const syncItemsTimerRef = useRef(null);
+
+  /** Sync items to API with debounce (avoids rapid-fire during reorder) */
+  const syncItemsDebounced = useCallback((setListId) => {
+    if (syncItemsTimerRef.current) clearTimeout(syncItemsTimerRef.current);
+    syncItemsTimerRef.current = setTimeout(() => {
+      const entry = setListsRef.current.find((e) => e.id === setListId);
+      if (entry) {
+        syncSetListToApi(setListId, { items: entry.items.map((i) => ({ songId: i.songId })) });
+      }
+    }, 400);
+  }, [syncSetListToApi]);
 
   const removeSetListItem = useCallback((itemId) => {
     if (!selectedSetListId || !itemId) return;
@@ -535,7 +573,8 @@ export default function LiveDashboard({ bandId, musicianId }) {
           : entry
       )
     );
-  }, [selectedSetListId, updateSetLists]);
+    syncItemsDebounced(selectedSetListId);
+  }, [selectedSetListId, updateSetLists, syncItemsDebounced]);
 
   const moveSetListItem = useCallback((itemId, direction) => {
     if (!selectedSetListId || !itemId || !direction) return;
@@ -552,7 +591,8 @@ export default function LiveDashboard({ bandId, musicianId }) {
         return { ...entry, items: nextItems };
       })
     );
-  }, [selectedSetListId, updateSetLists]);
+    syncItemsDebounced(selectedSetListId);
+  }, [selectedSetListId, updateSetLists, syncItemsDebounced]);
 
   const refreshSelectedSong = useCallback(async () => {
     if (!selectedSong?.id) return;
@@ -724,7 +764,6 @@ export default function LiveDashboard({ bandId, musicianId }) {
   );
 
   const handleExit = () => {
-    persistSetLists(setListsRef.current);
     // In sub-views, treat exit as "step back".
     if (activeTab === 'cheatsheet' || activeTab === 'repertoire' || activeTab === 'addSong') {
       setActiveTab('requests');
@@ -897,6 +936,12 @@ export default function LiveDashboard({ bandId, musicianId }) {
 
           {activeTab === 'repertoire' && (
             <div className="song-picker repertoire-open">
+              {!hasAnyLiveSetList && setLists.length > 0 && (
+                <div className="no-live-warning">
+                  <Radio size={16} />
+                  <span>Nijedna pesma nije dostupna za naručivanje. Aktivirajte barem jednu set listu.</span>
+                </div>
+              )}
               {setLists.length === 0 ? (
                 <div className="setlists-empty">
                   Napravite prvu set listu na <PlusCircle size={14} style={{ verticalAlign: 'middle' }} /> tabu.
@@ -905,16 +950,27 @@ export default function LiveDashboard({ bandId, musicianId }) {
                 <>
                   <div className="setlists-selector">
                     {setLists.map((entry) => (
-                      <button
-                        key={entry.id}
-                        type="button"
-                        className={`setlist-chip ${entry.id === selectedSetListId ? 'active' : ''}`}
-                        onClick={() => {
-                          setSelectedSetListId(entry.id);
-                        }}
-                      >
-                        {entry.name}
-                      </button>
+                      <div key={entry.id} className={`setlist-chip-wrap ${entry.isLive ? 'is-live' : ''}`}>
+                        <button
+                          type="button"
+                          className={`setlist-chip ${entry.id === selectedSetListId ? 'active' : ''}`}
+                          onClick={() => {
+                            setSelectedSetListId(entry.id);
+                          }}
+                        >
+                          {entry.isLive && <span className="live-dot"></span>}
+                          {entry.name}
+                        </button>
+                        <button
+                          type="button"
+                          className={`live-toggle-btn ${entry.isLive ? 'on' : 'off'}`}
+                          onClick={() => toggleSetListLive(entry.id)}
+                          title={entry.isLive ? 'Isključi Live' : 'Uključi Live'}
+                        >
+                          <Radio size={12} />
+                          <span>{entry.isLive ? 'LIVE' : 'Off'}</span>
+                        </button>
+                      </div>
                     ))}
                   </div>
 
@@ -937,7 +993,17 @@ export default function LiveDashboard({ bandId, musicianId }) {
                           </div>
 
                           <div className="setlist-status-row">
-                            <span>Dodato u listu: <strong>{selectedSetList.items.length}</strong></span>
+                            <span>Dodato u listu: <strong>{selectedSetList?.items.length || 0}</strong></span>
+                            {selectedSetList && (
+                              <button
+                                type="button"
+                                className={`live-toggle-btn inline ${selectedSetList.isLive ? 'on' : 'off'}`}
+                                onClick={() => toggleSetListLive(selectedSetListId)}
+                              >
+                                <Radio size={12} />
+                                <span>{selectedSetList.isLive ? 'Dostupno LIVE' : 'Nedostupno'}</span>
+                              </button>
+                            )}
                           </div>
                         </div>
 
@@ -997,14 +1063,16 @@ export default function LiveDashboard({ bandId, musicianId }) {
                 <>
                   <div className="setlists-selector">
                     {setLists.map((entry) => (
-                      <button
-                        key={entry.id}
-                        type="button"
-                        className={`setlist-chip ${entry.id === selectedSetListId ? 'active' : ''}`}
-                        onClick={() => setSelectedSetListId(entry.id)}
-                      >
-                        {entry.name}
-                      </button>
+                      <div key={entry.id} className={`setlist-chip-wrap ${entry.isLive ? 'is-live' : ''}`}>
+                        <button
+                          type="button"
+                          className={`setlist-chip ${entry.id === selectedSetListId ? 'active' : ''}`}
+                          onClick={() => setSelectedSetListId(entry.id)}
+                        >
+                          {entry.isLive && <span className="live-dot"></span>}
+                          {entry.name}
+                        </button>
+                      </div>
                     ))}
                   </div>
 
@@ -2502,6 +2570,99 @@ export default function LiveDashboard({ bandId, musicianId }) {
           background: rgba(0, 255, 0, 0.15);
           box-shadow: 0 0 8px rgba(0, 255, 0, 0.3), inset 0 0 6px rgba(0, 255, 0, 0.1);
           font-weight: 700;
+        }
+
+        .setlist-chip-wrap {
+          display: flex;
+          flex-direction: column;
+          align-items: stretch;
+          gap: 2px;
+        }
+        .setlist-chip-wrap.is-live .setlist-chip {
+          border-color: #ef4444;
+          box-shadow: 0 0 8px rgba(239, 68, 68, 0.25);
+        }
+        .setlist-chip-wrap.is-live .setlist-chip.active {
+          border-color: #ef4444;
+          background: rgba(239, 68, 68, 0.18);
+          color: #fca5a5;
+          box-shadow: 0 0 12px rgba(239, 68, 68, 0.4);
+        }
+        .live-dot {
+          display: inline-block;
+          width: 6px;
+          height: 6px;
+          background: #ef4444;
+          border-radius: 50%;
+          margin-right: 4px;
+          animation: pulse 1s infinite alternate;
+          vertical-align: middle;
+        }
+        .live-toggle-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          padding: 2px 8px;
+          border: 1px solid #333;
+          border-radius: 6px;
+          background: #111;
+          color: #777;
+          font-size: 0.55rem;
+          font-weight: 800;
+          letter-spacing: 0.05em;
+          cursor: pointer;
+          font-family: 'JetBrains Mono', monospace;
+          transition: all 0.15s ease;
+        }
+        .live-toggle-btn.on {
+          border-color: #ef4444;
+          color: #fca5a5;
+          background: rgba(239, 68, 68, 0.15);
+          box-shadow: 0 0 6px rgba(239, 68, 68, 0.3);
+        }
+        .live-toggle-btn.on:hover {
+          background: rgba(239, 68, 68, 0.25);
+        }
+        .live-toggle-btn.off:hover {
+          border-color: #555;
+          color: #aaa;
+        }
+        .live-toggle-btn.inline {
+          padding: 3px 10px;
+          font-size: 0.6rem;
+        }
+        .no-live-warning {
+          display: flex;
+          align-items: center;
+          gap: 0.6rem;
+          padding: 0.7rem 1rem;
+          margin-bottom: 0.75rem;
+          border: 1px solid rgba(239, 68, 68, 0.3);
+          border-radius: 10px;
+          background: rgba(239, 68, 68, 0.08);
+          color: #fca5a5;
+          font-size: 0.72rem;
+          font-weight: 600;
+          line-height: 1.4;
+        }
+        .night-vision .live-toggle-btn.on {
+          border-color: #ff3333;
+          color: #ff6666;
+          background: rgba(255, 51, 51, 0.12);
+        }
+        .night-vision .setlist-chip-wrap.is-live .setlist-chip {
+          border-color: #ff3333;
+          box-shadow: 0 0 8px rgba(255, 51, 51, 0.3);
+        }
+        .night-vision .setlist-chip-wrap.is-live .setlist-chip.active {
+          border-color: #ff3333;
+          color: #ff6666;
+          background: rgba(255, 51, 51, 0.15);
+        }
+        .night-vision .no-live-warning {
+          border-color: rgba(255, 51, 51, 0.3);
+          background: rgba(255, 51, 51, 0.06);
+          color: #ff6666;
         }
         .night-vision .setlist-chip,
         .night-vision .active-setlist-item,
