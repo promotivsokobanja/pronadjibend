@@ -2259,12 +2259,13 @@ export default function LiveDashboard({ bandId, musicianId }) {
         }
         .setlist-repertoire-stack {
           margin: 0.05rem 0 0.35rem;
+          display: flex;
+          flex-direction: column;
+          gap: 0.65rem;
         }
         @media (min-width: 1280px) {
           .setlist-repertoire-stack {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0.65rem;
+            max-width: 720px;
             align-items: start;
           }
         }
@@ -2611,7 +2612,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
           flex-direction: column;
           gap: 0.45rem;
           min-height: 0;
-          max-height: min(35dvh, 300px);
+          max-height: min(60dvh, 520px);
           overflow-y: auto;
           scrollbar-width: thin;
           scrollbar-color: #6a6a6a #151515;
@@ -3354,7 +3355,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
             gap: 1rem;
           }
           .setlist-items {
-            max-height: 260px;
+            max-height: min(50dvh, 400px);
           }
         }
 
@@ -3546,10 +3547,10 @@ export default function LiveDashboard({ bandId, musicianId }) {
             min-height: 40px;
           }
           .setlist-items {
-            max-height: none;
+            max-height: min(55dvh, 420px);
           }
           .song-picker.repertoire-open .setlist-items {
-            max-height: 30dvh;
+            max-height: min(50dvh, 380px);
           }
           .setlist-song-search,
           .repertoire-browser {
@@ -3594,7 +3595,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
             max-height: none;
           }
           .song-picker.repertoire-open .setlist-items {
-            max-height: min(36dvh, 320px);
+            max-height: min(50dvh, 380px);
           }
           .song-picker {
             gap: 0.4rem;
