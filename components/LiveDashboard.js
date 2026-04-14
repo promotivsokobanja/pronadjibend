@@ -897,15 +897,9 @@ export default function LiveDashboard({ bandId, musicianId }) {
 
           {activeTab === 'repertoire' && (
             <div className="song-picker repertoire-open">
-              <div className="setlists-panel-header">
-                <button type="button" className="setlist-create-btn" onClick={createSetList}>
-                  + Nova set lista
-                </button>
-              </div>
-
               {setLists.length === 0 ? (
                 <div className="setlists-empty">
-                  Napravite prvu set listu klikom na dugme iznad.
+                  Napravite prvu set listu na <PlusCircle size={14} style={{ verticalAlign: 'middle' }} /> tabu.
                 </div>
               ) : (
                 <>
@@ -984,9 +978,15 @@ export default function LiveDashboard({ bandId, musicianId }) {
 
           {activeTab === 'addSong' && (
             <div className="song-picker repertoire-open">
+              <div className="setlists-panel-header">
+                <button type="button" className="setlist-create-btn" onClick={createSetList}>
+                  + Nova set lista
+                </button>
+              </div>
+
               {setLists.length === 0 ? (
                 <div className="setlists-empty">
-                  Prvo napravite set listu na <ListMusic size={14} style={{ verticalAlign: 'middle' }} /> tabu.
+                  Kreirajte prvu set listu klikom na dugme iznad.
                 </div>
               ) : (
                 <>
