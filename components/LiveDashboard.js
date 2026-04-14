@@ -2499,7 +2499,9 @@ export default function LiveDashboard({ bandId, musicianId }) {
         .active-setlist-item.active {
           border-color: #00ff00;
           color: #00ff00;
-          background: rgba(0, 255, 0, 0.08);
+          background: rgba(0, 255, 0, 0.15);
+          box-shadow: 0 0 8px rgba(0, 255, 0, 0.3), inset 0 0 6px rgba(0, 255, 0, 0.1);
+          font-weight: 700;
         }
         .night-vision .setlist-chip,
         .night-vision .active-setlist-item,
