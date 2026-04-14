@@ -74,6 +74,9 @@ export async function DELETE(request, { params } = {}) {
         where: { songId: song.id },
         data: { songId: null },
       }),
+      prisma.setListItem.deleteMany({
+        where: { songId: song.id },
+      }),
       prisma.song.delete({ where: { id: song.id } }),
     ]);
 
