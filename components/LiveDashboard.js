@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Radio, ListMusic, Eye, EyeOff, MessageSquare, Music, Clock, Settings, ArrowLeft, X, Volume2, VolumeX, Zap, ZapOff, Type, RotateCcw, ChevronDown, Bell, Banknote } from 'lucide-react';
+import { Radio, ListMusic, Eye, EyeOff, MessageSquare, Music, Clock, Settings, ArrowLeft, X, Volume2, VolumeX, Zap, ZapOff, Type, RotateCcw, ChevronDown, Bell, Banknote, PlusCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 export default function LiveDashboard({ bandId, musicianId }) {
@@ -404,6 +404,14 @@ export default function LiveDashboard({ bandId, musicianId }) {
   }, [selectedSetListId, selectedSetList?.name]);
 
   useEffect(() => {
+    if (activeTab === 'addSong') {
+      if (!selectedSetListId) {
+        setShowSetlistSongDropdown(false);
+        return;
+      }
+      setShowSetlistSongDropdown(true);
+      return;
+    }
     if (activeTab !== 'repertoire') return;
     if (!selectedSetListId) {
       setShowRepertoireBrowser(false);
@@ -411,7 +419,6 @@ export default function LiveDashboard({ bandId, musicianId }) {
       return;
     }
     setShowRepertoireBrowser(true);
-    setShowSetlistSongDropdown(true);
   }, [activeTab, selectedSetListId]);
 
   const fontScale = settings.fontSize / 100;
@@ -719,7 +726,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
   const handleExit = () => {
     persistSetLists(setListsRef.current);
     // In sub-views, treat exit as "step back".
-    if (activeTab === 'cheatsheet' || activeTab === 'repertoire') {
+    if (activeTab === 'cheatsheet' || activeTab === 'repertoire' || activeTab === 'addSong') {
       setActiveTab('requests');
       return;
     }
@@ -791,6 +798,10 @@ export default function LiveDashboard({ bandId, musicianId }) {
           <button className={`nav-item ${activeTab === 'repertoire' ? 'active' : ''}`} onClick={() => setActiveTab('repertoire')}>
             <ListMusic size={24} />
             <span className="nav-tooltip">Set liste</span>
+          </button>
+          <button className={`nav-item ${activeTab === 'addSong' ? 'active' : ''}`} onClick={() => { setActiveTab('addSong'); setShowSetlistSongDropdown(true); }}>
+            <PlusCircle size={24} />
+            <span className="nav-tooltip">Dodaj pesmu</span>
           </button>
         </nav>
 
@@ -885,7 +896,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
           )}
 
           {activeTab === 'repertoire' && (
-            <div className={`song-picker ${showRepertoireBrowser ? 'repertoire-open' : ''}`}>
+            <div className="song-picker repertoire-open">
               <div className="setlists-panel-header">
                 <button type="button" className="setlist-create-btn" onClick={createSetList}>
                   + Nova set lista
@@ -906,8 +917,6 @@ export default function LiveDashboard({ bandId, musicianId }) {
                         className={`setlist-chip ${entry.id === selectedSetListId ? 'active' : ''}`}
                         onClick={() => {
                           setSelectedSetListId(entry.id);
-                          setShowRepertoireBrowser(true);
-                          setShowSetlistSongDropdown(true);
                         }}
                       >
                         {entry.name}
@@ -917,83 +926,6 @@ export default function LiveDashboard({ bandId, musicianId }) {
 
                   {selectedSetListId && (
                     <div className="setlist-repertoire-stack">
-                      <div className="repertoire-browser">
-                        <div className="repertoire-browser-head">
-                          <h3>REPERTOAR — dodaj pesmu</h3>
-                          <span className="setlist-count-badge">U listi: {selectedSetList?.items.length || 0}</span>
-                        </div>
-                        <div className="repertoire-combo" ref={setlistSongComboRef}>
-                          <button
-                            type="button"
-                            className={`repertoire-combo-toggle ${showSetlistSongDropdown ? 'open' : ''}`}
-                            onClick={() => setShowSetlistSongDropdown((prev) => !prev)}
-                            aria-expanded={showSetlistSongDropdown}
-                            aria-label="Pretraži i dodaj pesmu u set listu"
-                          >
-                            <span>{songSearch ? `Pretraga: ${songSearch}` : 'Pretraži i dodaj pesmu'}</span>
-                            <ChevronDown size={16} />
-                          </button>
-
-                          {showSetlistSongDropdown && (
-                            <div className="repertoire-combo-panel">
-                              <input
-                                type="text"
-                                placeholder="Pretraži pesmu ili izvođača..."
-                                value={songSearch}
-                                onChange={(e) => setSongSearch(e.target.value)}
-                                className="song-search-input repertoire-search-input"
-                                autoFocus
-                              />
-                              <div className="repertoire-dropdown-list">
-                                {songLoading ? (
-                                  <div className="song-loading compact">Učitavanje repertoara...</div>
-                                ) : filteredSongs.length === 0 ? (
-                                  <div className="repertoire-empty">{songSearch ? 'Nema rezultata' : 'Repertoar je prazan'}</div>
-                                ) : (
-                                  filteredSongs.slice(0, 24).map((song) => {
-                                    const inSetListCount = selectedSetListSongCountById[String(song.id)] || 0;
-                                    const isAlreadyInSetList = inSetListCount > 0;
-                                    return (
-                                      <div key={song.id} className="repertoire-dropdown-item">
-                                        <button
-                                          type="button"
-                                          className="repertoire-dropdown-main"
-                                          title={isAlreadyInSetList ? 'Pesma je već u set listi' : 'Dodaj u set listu'}
-                                          onClick={() => {
-                                            addSongToSelectedSetList(song);
-                                          }}
-                                        >
-                                          <span className="song-picker-title">{song.title}</span>
-                                          <span className="song-picker-sep">—</span>
-                                          <span className="song-picker-artist">{song.artist}</span>
-                                          {isAlreadyInSetList ? (
-                                            <span className="song-in-setlist-pill">Već dodato</span>
-                                          ) : null}
-                                        </button>
-                                        <div className="repertoire-item-actions">
-                                          <button
-                                            type="button"
-                                            className="song-open-lyrics-btn"
-                                            title="Otvori tekst pesme"
-                                            onClick={async () => {
-                                              await handleSelectSong(song);
-                                              setShowSetlistSongDropdown(false);
-                                              setActiveTab('cheatsheet');
-                                            }}
-                                          >
-                                            Tekst
-                                          </button>
-                                        </div>
-                                      </div>
-                                    );
-                                  })
-                                )}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
                       <div className="setlist-editor">
                         <div className="active-setlist-head">
                           <div className="setlist-editor-top">
@@ -1017,7 +949,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
 
                         <div className="setlist-items">
                           {selectedSetList.items.length === 0 ? (
-                            <div className="setlists-empty small">Još nema pesama &mdash; izaberite pesmu iz repertoara.</div>
+                            <div className="setlists-empty small">Još nema pesama &mdash; dodajte pesmu klikom na <PlusCircle size={14} style={{ verticalAlign: 'middle' }} /> ikonicu.</div>
                           ) : (
                             selectedSetList.items.map((item, index) => (
                               <div key={item.id} className={`setlist-item-row ${item.songId === lastAddedSongId ? 'just-added' : ''}`}>
@@ -1047,6 +979,110 @@ export default function LiveDashboard({ bandId, musicianId }) {
                 </>
               )}
 
+            </div>
+          )}
+
+          {activeTab === 'addSong' && (
+            <div className="song-picker repertoire-open">
+              {setLists.length === 0 ? (
+                <div className="setlists-empty">
+                  Prvo napravite set listu na <ListMusic size={14} style={{ verticalAlign: 'middle' }} /> tabu.
+                </div>
+              ) : (
+                <>
+                  <div className="setlists-selector">
+                    {setLists.map((entry) => (
+                      <button
+                        key={entry.id}
+                        type="button"
+                        className={`setlist-chip ${entry.id === selectedSetListId ? 'active' : ''}`}
+                        onClick={() => setSelectedSetListId(entry.id)}
+                      >
+                        {entry.name}
+                      </button>
+                    ))}
+                  </div>
+
+                  {selectedSetListId && (
+                    <div className="repertoire-browser">
+                      <div className="repertoire-browser-head">
+                        <h3>REPERTOAR — dodaj pesmu</h3>
+                        <span className="setlist-count-badge">U listi: {selectedSetList?.items.length || 0}</span>
+                      </div>
+                      <div className="repertoire-combo" ref={setlistSongComboRef}>
+                        <button
+                          type="button"
+                          className={`repertoire-combo-toggle ${showSetlistSongDropdown ? 'open' : ''}`}
+                          onClick={() => setShowSetlistSongDropdown((prev) => !prev)}
+                          aria-expanded={showSetlistSongDropdown}
+                          aria-label="Pretraži i dodaj pesmu u set listu"
+                        >
+                          <span>{songSearch ? `Pretraga: ${songSearch}` : 'Pretraži i dodaj pesmu'}</span>
+                          <ChevronDown size={16} />
+                        </button>
+
+                        {showSetlistSongDropdown && (
+                          <div className="repertoire-combo-panel">
+                            <input
+                              type="text"
+                              placeholder="Pretraži pesmu ili izvođača..."
+                              value={songSearch}
+                              onChange={(e) => setSongSearch(e.target.value)}
+                              className="song-search-input repertoire-search-input"
+                              autoFocus
+                            />
+                            <div className="repertoire-dropdown-list">
+                              {songLoading ? (
+                                <div className="song-loading compact">Učitavanje repertoara...</div>
+                              ) : filteredSongs.length === 0 ? (
+                                <div className="repertoire-empty">{songSearch ? 'Nema rezultata' : 'Repertoar je prazan'}</div>
+                              ) : (
+                                filteredSongs.slice(0, 24).map((song) => {
+                                  const inSetListCount = selectedSetListSongCountById[String(song.id)] || 0;
+                                  const isAlreadyInSetList = inSetListCount > 0;
+                                  return (
+                                    <div key={song.id} className="repertoire-dropdown-item">
+                                      <button
+                                        type="button"
+                                        className="repertoire-dropdown-main"
+                                        title={isAlreadyInSetList ? 'Pesma je već u set listi' : 'Dodaj u set listu'}
+                                        onClick={() => {
+                                          addSongToSelectedSetList(song);
+                                        }}
+                                      >
+                                        <span className="song-picker-title">{song.title}</span>
+                                        <span className="song-picker-sep">—</span>
+                                        <span className="song-picker-artist">{song.artist}</span>
+                                        {isAlreadyInSetList ? (
+                                          <span className="song-in-setlist-pill">Već dodato</span>
+                                        ) : null}
+                                      </button>
+                                      <div className="repertoire-item-actions">
+                                        <button
+                                          type="button"
+                                          className="song-open-lyrics-btn"
+                                          title="Otvori tekst pesme"
+                                          onClick={async () => {
+                                            await handleSelectSong(song);
+                                            setShowSetlistSongDropdown(false);
+                                            setActiveTab('cheatsheet');
+                                          }}
+                                        >
+                                          Tekst
+                                        </button>
+                                      </div>
+                                    </div>
+                                  );
+                                })
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           )}
 
