@@ -1032,7 +1032,6 @@ export default function LiveDashboard({ bandId, musicianId }) {
                               value={songSearch}
                               onChange={(e) => setSongSearch(e.target.value)}
                               className="song-search-input repertoire-search-input"
-                              autoFocus
                             />
                             <div className="repertoire-dropdown-list">
                               {songLoading ? (
@@ -3557,8 +3556,10 @@ export default function LiveDashboard({ bandId, musicianId }) {
             max-height: 38dvh;
           }
           .repertoire-combo-panel {
+            position: static;
             padding: 0.55rem;
-            top: calc(100% + 0.35rem);
+            border-radius: 8px;
+            box-shadow: none;
           }
           .repertoire-combo-toggle {
             min-height: 44px;
