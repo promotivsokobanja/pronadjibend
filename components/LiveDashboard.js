@@ -2287,7 +2287,8 @@ export default function LiveDashboard({ bandId, musicianId }) {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          gap: 0.75rem;
+          gap: 0.5rem 0.75rem;
+          flex-wrap: wrap;
         }
         .repertoire-browser-head h3 {
           margin: 0;
