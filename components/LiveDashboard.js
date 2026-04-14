@@ -943,7 +943,12 @@ export default function LiveDashboard({ bandId, musicianId }) {
 
                         <div className="setlist-items">
                           {selectedSetList.items.length === 0 ? (
-                            <div className="setlists-empty small">Još nema pesama &mdash; dodajte pesmu klikom na <PlusCircle size={14} style={{ verticalAlign: 'middle' }} /> ikonicu.</div>
+                            <div className="setlists-empty small">
+                              Još nema pesama u ovoj listi.
+                              <button type="button" className="setlist-create-btn" style={{ marginTop: '0.5rem' }} onClick={() => { setActiveTab('addSong'); setShowSetlistSongDropdown(true); }}>
+                                + Dodaj pesmu
+                              </button>
+                            </div>
                           ) : (
                             selectedSetList.items.map((item, index) => (
                               <div key={item.id} className={`setlist-item-row ${item.songId === lastAddedSongId ? 'just-added' : ''}`}>
@@ -2265,8 +2270,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
         }
         @media (min-width: 1280px) {
           .setlist-repertoire-stack {
-            max-width: 720px;
-            align-items: start;
+            align-items: stretch;
           }
         }
         .repertoire-search-input {
