@@ -809,15 +809,132 @@ export default function MidiKaraokePlayer({ fileUrl, fileName, initialSongId, so
         .kp-vol .ctrl-btn { width: 28px; height: 28px; }
         .vol-slider { width: 70px; accent-color: ${accentColor}; cursor: pointer; }
 
+        @media (max-width: 1024px) {
+          .karaoke-player {
+            width: min(100vw - 24px, 980px);
+            height: min(92vh, 820px);
+          }
+          .kp-header {
+            align-items: flex-start;
+            gap: 0.85rem;
+            flex-wrap: wrap;
+          }
+          .kp-title {
+            width: 100%;
+          }
+          .kp-header-actions {
+            width: 100%;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+          }
+          .song-panel {
+            width: 340px;
+          }
+          .kp-lyrics {
+            padding: 1.5rem 1.4rem;
+          }
+        }
+
         @media (max-width: 768px) {
           .karaoke-player { width: 100vw; height: 100vh; max-width: none; max-height: none; border-radius: 0; }
-          .kp-lyrics { padding: 1.5rem 1rem; }
+          .kp-header {
+            padding: 0.75rem 0.9rem;
+          }
+          .kp-title {
+            gap: 0.45rem;
+          }
+          .kp-filename { max-width: 190px; }
+          .kp-header-actions {
+            justify-content: flex-start;
+            gap: 0.45rem;
+          }
+          .songlist-btn,
+          .midi-out-btn,
+          .mode-btn {
+            min-height: 34px;
+          }
+          .kp-lyrics { padding: 1.2rem 0.95rem; }
           .lyric-line { font-size: 1.1rem; }
           .lyric-line.active { font-size: 1.35rem; }
-          .kp-filename { max-width: 120px; }
           .vol-slider { width: 50px; }
-          .song-panel { position: absolute; right: 0; top: 0; bottom: 0; width: 280px; z-index: 20; box-shadow: -8px 0 32px rgba(0,0,0,0.5); }
-          .midi-panel { min-width: 200px; }
+          .song-panel {
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: min(88vw, 360px);
+            z-index: 20;
+            box-shadow: -8px 0 32px rgba(0,0,0,0.5);
+          }
+          .midi-panel { min-width: 200px; right: 0; }
+          .kp-controls {
+            flex-wrap: wrap;
+            justify-content: center;
+            padding: 0.8rem 0.9rem calc(0.9rem + env(safe-area-inset-bottom));
+          }
+          .kp-time {
+            order: 3;
+          }
+          .kp-btns {
+            order: 1;
+            width: 100%;
+            justify-content: center;
+          }
+          .kp-vol {
+            order: 2;
+          }
+        }
+
+        @media (max-width: 560px) {
+          .kp-title {
+            align-items: flex-start;
+            flex-wrap: wrap;
+          }
+          .kp-filename {
+            max-width: 100%;
+            width: 100%;
+          }
+          .kp-header-actions {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            align-items: stretch;
+          }
+          .kp-header-actions > :global(*) {
+            width: 100%;
+          }
+          .close-btn {
+            justify-self: end;
+          }
+          .songlist-btn,
+          .midi-out-btn,
+          .mode-btn {
+            justify-content: center;
+            padding: 0.55rem 0.7rem;
+          }
+          .song-panel {
+            width: 100%;
+            left: 0;
+          }
+          .sp-item {
+            padding: 0.85rem 0.65rem;
+          }
+          .sp-item-title {
+            white-space: normal;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+          }
+          .lyrics-scroll {
+            padding: 1.5rem 0 2rem;
+          }
+          .lyric-line {
+            font-size: 0.98rem;
+            line-height: 1.7;
+          }
+          .lyric-line.active {
+            font-size: 1.16rem;
+            transform: scale(1.02);
+          }
         }
       `}</style>
     </div>

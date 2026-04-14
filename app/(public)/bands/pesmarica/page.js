@@ -290,11 +290,16 @@ export default function PesmaricaPage() {
         .search-icon { color: #555; flex-shrink: 0; }
         .search-box input { background: none; border: none; color: #1a1a1a; width: 100%; outline: none; font-size: 0.95rem; }
         .clear-btn { background: none; border: none; color: #555; cursor: pointer; display: flex; padding: 4px; border-radius: 50%; }
-        .clear-btn:hover { color: #ef4444; }
+          .clear-btn:hover { color: #ef4444; }
 
         /* Alphabet */
         .alpha-bar {
-          display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 0.5rem;
+          display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 4px; margin-bottom: 0.5rem;
+          -webkit-overflow-scrolling: touch;
+          scrollbar-width: thin;
+        }
+        .alpha-bar::-webkit-scrollbar {
+          height: 6px;
         }
         .alpha-btn {
           width: 34px; height: 34px; border-radius: 8px; font-size: 0.75rem; font-weight: 800;
@@ -365,11 +370,76 @@ export default function PesmaricaPage() {
         .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; padding: 5rem 2rem; color: #444; }
 
         @media (max-width: 768px) {
+          .pesmarica-container { padding-top: 7.2rem; padding-bottom: 4.5rem; }
+          .page-header { margin-bottom: 1.4rem; }
           .title-row h1 { font-size: 2rem; }
+          .search-box {
+            padding: 0.7rem 1rem;
+            border-radius: 16px;
+          }
+          .alpha-bar {
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            padding-bottom: 0.35rem;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+          }
+          .alpha-bar::-webkit-scrollbar {
+            height: 6px;
+          }
           .alpha-btn { width: 28px; height: 28px; font-size: 0.65rem; }
-          .song-info { flex-direction: column; align-items: flex-start; gap: 2px; }
+          .songs-list { gap: 0.55rem; }
+          .song-header {
+            align-items: flex-start;
+            flex-direction: column;
+            padding: 0.95rem 1rem;
+            gap: 0.8rem;
+          }
+          .song-info { flex-direction: column; align-items: flex-start; gap: 2px; width: 100%; }
           .song-sep { display: none; }
-          .cat-badge { display: none; }
+          .song-title,
+          .song-artist {
+            white-space: normal;
+            overflow: visible;
+            text-overflow: initial;
+          }
+          .song-actions {
+            width: 100%;
+            justify-content: space-between;
+          }
+          .cat-badge { display: inline-flex; }
+          .lyrics-panel {
+            padding: 1rem;
+            max-height: 52dvh;
+          }
+          .pagination {
+            flex-direction: column;
+            gap: 0.75rem;
+          }
+          .page-btn {
+            width: 100%;
+          }
+        }
+
+        @media (max-width: 560px) {
+          .title-row h1 { font-size: 1.75rem; }
+          .title-row { margin-bottom: 1rem; }
+          .cat-tabs { gap: 0.4rem; }
+          .cat-tab {
+            padding: 0.55rem 0.8rem;
+            font-size: 0.72rem;
+          }
+          .results-info {
+            font-size: 0.74rem;
+            line-height: 1.5;
+          }
+          .song-actions {
+            gap: 0.55rem;
+          }
+          .add-btn {
+            width: 32px;
+            height: 32px;
+          }
         }
       `}</style>
     </div>

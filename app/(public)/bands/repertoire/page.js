@@ -754,14 +754,45 @@ export default function RepertoirePage() {
 
         @media (max-width: 968px) {
           .list-header { display: none; }
-          .song-row { grid-template-columns: 1fr auto; gap: 1rem; padding: 1.5rem; }
-          .col-tonality, .col-genre { display: none; }
+          .song-row {
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+            padding: 1.15rem 1.1rem;
+            align-items: stretch;
+          }
           .title-section h1 { font-size: 2.5rem; }
           .header-actions { gap: 0.9rem; margin-top: 1.8rem; }
+          .header-actions {
+            flex-direction: column;
+            align-items: stretch;
+          }
           .header-cta-group { width: 100%; }
+          .header-cta-group :global(a) { flex: 1 1 220px; }
+          .header-cta-group :global(a > button),
+          .header-cta-group > button {
+            width: 100%;
+            justify-content: center;
+          }
           .bulk-import-grid { grid-template-columns: 1fr; }
           .search-box-wrap,
           .search-box { min-width: 0; max-width: 100%; width: 100%; }
+          .global-dropdown {
+            position: static;
+            margin-top: 0.65rem;
+          }
+          .col-tonality,
+          .col-genre,
+          .col-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+            flex-wrap: wrap;
+          }
+          .col-actions {
+            justify-content: flex-end;
+          }
+          .song-name { font-size: 1.02rem; }
+          .song-artist { margin: 0.2rem 0 0; }
         }
 
         @media (max-width: 560px) {
@@ -793,6 +824,16 @@ export default function RepertoirePage() {
             gap: 0.8rem;
           }
           .song-name { font-size: 1rem; }
+          .song-row .col-actions {
+            justify-content: space-between;
+          }
+          .tonality-pill,
+          .genre-label {
+            font-size: 0.72rem;
+          }
+          .action-btn {
+            padding: 10px;
+          }
         }
       `}</style>
     </div>
