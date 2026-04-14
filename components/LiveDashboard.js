@@ -516,33 +516,31 @@ export default function LiveDashboard({ bandId, musicianId }) {
 
   const addSongToSelectedSetList = useCallback((song) => {
     if (!selectedSetListId || !song?.id) return;
+    // Read current items from ref to avoid closure stale data
+    const current = setListsRef.current.find((e) => e.id === selectedSetListId);
+    if (!current) return;
+    const exists = current.items.some((item) => String(item.songId) === String(song.id));
+    if (exists) return;
+
     const nextId = typeof crypto !== 'undefined' && crypto.randomUUID
       ? crypto.randomUUID()
       : `setitem-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    let wasAdded = false;
-    let nextItems = [];
+    const nextItems = [
+      ...current.items,
+      {
+        id: nextId,
+        songId: song.id,
+        title: song.title || 'Bez naziva',
+        artist: song.artist || '',
+      },
+    ];
     updateSetLists((prev) =>
-      prev.map((entry) => {
-        if (entry.id !== selectedSetListId) return entry;
-        const exists = entry.items.some((item) => String(item.songId) === String(song.id));
-        if (exists) return entry;
-        wasAdded = true;
-        nextItems = [
-          ...entry.items,
-          {
-            id: nextId,
-            songId: song.id,
-            title: song.title || 'Bez naziva',
-            artist: song.artist || '',
-          },
-        ];
-        return { ...entry, items: nextItems };
-      })
+      prev.map((entry) =>
+        entry.id === selectedSetListId ? { ...entry, items: nextItems } : entry
+      )
     );
-    if (wasAdded) {
-      setLastAddedSongId(String(song.id));
-      syncSetListToApi(selectedSetListId, { items: nextItems.map((i) => ({ songId: i.songId })) });
-    }
+    setLastAddedSongId(String(song.id));
+    syncSetListToApi(selectedSetListId, { items: nextItems.map((i) => ({ songId: i.songId })) });
   }, [selectedSetListId, updateSetLists, syncSetListToApi]);
 
   useEffect(() => {
