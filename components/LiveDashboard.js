@@ -2514,6 +2514,14 @@ export default function LiveDashboard({ bandId, musicianId }) {
           color: #8dff8d;
           background: rgba(0, 255, 0, 0.03);
         }
+        .night-vision .setlist-chip.active,
+        .night-vision .active-setlist-item.active {
+          border-color: #00ff00;
+          color: #00ff00;
+          background: rgba(0, 255, 0, 0.18);
+          box-shadow: 0 0 10px rgba(0, 255, 0, 0.35), inset 0 0 6px rgba(0, 255, 0, 0.12);
+          font-weight: 700;
+        }
         .setlist-create-btn,
         .setlist-delete-btn,
         .song-add-to-setlist,
