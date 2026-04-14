@@ -43,7 +43,7 @@ export async function GET(request, context) {
 
   const band = await prisma.band.findUnique({
     where: { id },
-    select: { id: true, name: true },
+    select: { id: true, name: true, genre: true, location: true, img: true },
   });
   if (!band) {
     return NextResponse.json({ error: 'Bend nije pronađen.' }, { status: 404 });
@@ -55,6 +55,9 @@ export async function GET(request, context) {
     const buffer = await renderMarketingPosterPng({
       qrUrl,
       bandDisplayName: band.name,
+      genre: band.genre,
+      location: band.location,
+      imgUrl: band.img,
     });
 
     const ascii = asciiFilename(band.name);
