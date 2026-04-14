@@ -96,7 +96,7 @@ export default function GuestLivePage({ params }) {
     detect();
   }, [rawId]);
 
-  // Fetch songs from live setlists first, fallback to full repertoire
+  // Fetch songs from live setlists first, fallback to full repertoire — polls every 30s
   useEffect(() => {
     const ownerId = ownerType === 'band' ? bandId : musicianId;
     if (!ownerType || ownerType === 'unknown') {
@@ -104,15 +104,16 @@ export default function GuestLivePage({ params }) {
       return;
     }
     if (!ownerId) return;
-    const fetchSongs = async () => {
+    let cancelled = false;
+    const fetchSongs = async (isPolling = false) => {
       try {
         const param = ownerType === 'band'
           ? `bandId=${encodeURIComponent(ownerId)}`
           : `musicianId=${encodeURIComponent(ownerId)}`;
 
-        // Try live-songs endpoint first
-        const liveResp = await fetch(`/api/live-songs?${param}`);
+        const liveResp = await fetch(`/api/live-songs?${param}`, { cache: 'no-store' });
         const liveData = await liveResp.json();
+        if (cancelled) return;
 
         if (liveData.hasLiveSetLists && Array.isArray(liveData.songs) && liveData.songs.length > 0) {
           setHasLiveSetLists(true);
@@ -120,35 +121,40 @@ export default function GuestLivePage({ params }) {
           const cats = [...new Set(liveData.songs.map((s) => s.category || s.type).filter(Boolean))];
           if (cats.length > 0) setActiveTab((t) => t || cats[0]);
         } else if (liveData.hasLiveSetLists === false) {
-          // No live setlists — fallback to full repertoire
           setHasLiveSetLists(false);
-          const fallbackResp = await fetch(`/api/songs?${param}`);
-          const fallbackData = await fallbackResp.json();
-          const list = Array.isArray(fallbackData) ? fallbackData : [];
-          setSongs(list);
-          const cats = [...new Set(list.map((s) => s.category || s.type).filter(Boolean))];
-          if (cats.length > 0) setActiveTab((t) => t || cats[0]);
+          if (!isPolling) {
+            const fallbackResp = await fetch(`/api/songs?${param}`);
+            const fallbackData = await fallbackResp.json();
+            if (cancelled) return;
+            const list = Array.isArray(fallbackData) ? fallbackData : [];
+            setSongs(list);
+            const cats = [...new Set(list.map((s) => s.category || s.type).filter(Boolean))];
+            if (cats.length > 0) setActiveTab((t) => t || cats[0]);
+          }
         } else {
-          // hasLiveSetLists but empty songs
           setHasLiveSetLists(true);
           setSongs([]);
         }
       } catch (err) {
+        if (cancelled) return;
         console.error(err);
-        // Fallback to old API on error
-        try {
-          const param = ownerType === 'band'
-            ? `bandId=${encodeURIComponent(ownerId)}`
-            : `musicianId=${encodeURIComponent(ownerId)}`;
-          const resp = await fetch(`/api/songs?${param}`);
-          const data = await resp.json();
-          setSongs(Array.isArray(data) ? data : []);
-        } catch { /* ignore */ }
+        if (!isPolling) {
+          try {
+            const param = ownerType === 'band'
+              ? `bandId=${encodeURIComponent(ownerId)}`
+              : `musicianId=${encodeURIComponent(ownerId)}`;
+            const resp = await fetch(`/api/songs?${param}`);
+            const data = await resp.json();
+            if (!cancelled) setSongs(Array.isArray(data) ? data : []);
+          } catch { /* ignore */ }
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
-    fetchSongs();
+    fetchSongs(false);
+    const intervalId = setInterval(() => fetchSongs(true), 30000);
+    return () => { cancelled = true; clearInterval(intervalId); };
   }, [ownerType, bandId, musicianId]);
 
   const categories = [...new Set(songs.map((s) => s.category || s.type).filter(Boolean))];
