@@ -28,10 +28,20 @@ export async function GET(request) {
   }
 
   if (search.length >= 2) {
-    where.OR = [
-      { title: { contains: search, mode: 'insensitive' } },
-      { artist: { contains: search, mode: 'insensitive' } },
-    ];
+    const words = search.split(/\s+/).filter((w) => w.length >= 2);
+    if (words.length > 1) {
+      where.AND = words.map((word) => ({
+        OR: [
+          { title: { contains: word, mode: 'insensitive' } },
+          { artist: { contains: word, mode: 'insensitive' } },
+        ],
+      }));
+    } else {
+      where.OR = [
+        { title: { contains: search, mode: 'insensitive' } },
+        { artist: { contains: search, mode: 'insensitive' } },
+      ];
+    }
   }
 
   try {
