@@ -238,26 +238,33 @@ export default function RepertoirePage() {
 
     setBulkImportLoading(true);
     try {
-      const globalResp = await fetch('/api/songs?limit=100', { cache: 'no-store' });
-      const globalData = await globalResp.json();
-      const ownerSongKeySet = new Set(songs.map((song) => buildSongKey(song)));
-      const library = Array.isArray(globalData) ? globalData : [];
+      const resp = await fetch('/api/songs/match-bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lines: entries }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error || 'Greška');
 
       const matches = [];
       const missing = [];
 
-      entries.forEach((line) => {
-        const matched = findBestSongMatch(line, library, ownerSongKeySet);
-        if (!matched) {
-          missing.push(line);
-          return;
+      for (const item of data.results) {
+        if (item.status === 'found' && item.match) {
+          matches.push({
+            input: item.input,
+            song: item.match,
+            alreadyInRepertoire: item.alreadyInRepertoire,
+          });
+        } else {
+          missing.push({
+            input: item.input,
+            cleaned: item.cleaned,
+            parsedTitle: item.parsedTitle,
+            parsedArtist: item.parsedArtist,
+          });
         }
-        matches.push({
-          input: line,
-          song: matched.song,
-          alreadyInRepertoire: matched.alreadyInRepertoire,
-        });
-      });
+      }
 
       setBulkImportMatches(matches);
       setBulkImportMissing(missing);
@@ -269,42 +276,49 @@ export default function RepertoirePage() {
     }
   };
 
-  const handleBulkImportSave = async () => {
-    const pendingSongs = bulkImportMatches.filter((item) => !item.alreadyInRepertoire);
-    if (pendingSongs.length === 0) {
-      alert('Sve pronađene pesme su već u repertoaru.');
+  const handleBulkImportSave = async (includeMissing = false) => {
+    const pendingMatches = bulkImportMatches.filter((item) => !item.alreadyInRepertoire);
+    const missingToAdd = includeMissing ? bulkImportMissing : [];
+
+    if (pendingMatches.length === 0 && missingToAdd.length === 0) {
+      alert('Nema pesama za dodavanje.');
       return;
     }
 
     setBulkImportSaving(true);
     try {
-      await Promise.all(
-        pendingSongs.map(async ({ song }) => {
-          const body = {
-            title: song.title,
-            artist: song.artist,
-            category: song.category || song.type,
-            type: song.type || 'Standard',
-          };
-          if (bandId) body.bandId = bandId;
-          else if (musicianId) body.musicianId = musicianId;
+      const songsToImport = [
+        ...pendingMatches.map(({ song }) => ({
+          title: song.title,
+          artist: song.artist,
+          category: song.category,
+          type: song.type,
+          sourceSongId: song.id,
+        })),
+        ...missingToAdd.map((item) => ({
+          title: item.parsedTitle || item.cleaned,
+          artist: item.parsedArtist || '',
+        })),
+      ];
 
-          const resp = await fetch('/api/songs', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body),
-          });
+      const resp = await fetch('/api/songs/bulk-import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ songs: songsToImport }),
+      });
 
-          if (!resp.ok) {
-            const data = await resp.json().catch(() => ({}));
-            throw new Error(data?.error || `Dodavanje pesme \"${song.title}\" nije uspelo.`);
-          }
-        })
-      );
+      if (!resp.ok) {
+        const data = await resp.json().catch(() => ({}));
+        throw new Error(data?.error || 'Masovni unos nije uspeo.');
+      }
 
+      const result = await resp.json();
       await Promise.all([fetchData(), fetchCounts()]);
       setShowBulkImportModal(false);
       resetBulkImportState();
+      if (result.imported > 0 || result.skipped > 0) {
+        alert(`Uvezeno: ${result.imported}, preskočeno (duplikati): ${result.skipped}`);
+      }
     } catch (err) {
       console.error(err);
       alert(err?.message || 'Masovni unos nije uspeo.');
@@ -605,12 +619,13 @@ export default function RepertoirePage() {
                     {bulkImportMissing.length > 0 && (
                       <div className="bulk-result-card missing">
                         <div className="bulk-result-head">
-                          <span>Nisu pronađene</span>
+                          <span>Nisu pronađene u pesmarici</span>
                           <span>{bulkImportMissing.length}</span>
                         </div>
+                        <p className="bulk-missing-hint">Ove pesme će biti dodate samo sa naslovom (bez teksta) ako kliknete &quot;Dodaj sve&quot;.</p>
                         <div className="bulk-missing-list">
                           {bulkImportMissing.map((item) => (
-                            <span key={item} className="bulk-missing-chip">{item}</span>
+                            <span key={item.input} className="bulk-missing-chip">{item.parsedTitle || item.cleaned}{item.parsedArtist ? ` — ${item.parsedArtist}` : ''}</span>
                           ))}
                         </div>
                       </div>
@@ -622,8 +637,8 @@ export default function RepertoirePage() {
 
             <div className="bulk-import-footer">
               <div className="bulk-import-summary">
-                <span>Za dodavanje: {bulkImportMatches.filter((item) => !item.alreadyInRepertoire).length}</span>
-                <span>Nedostaje: {bulkImportMissing.length}</span>
+                <span>Pronađeno: {bulkImportMatches.filter((item) => !item.alreadyInRepertoire).length}</span>
+                <span>Bez teksta: {bulkImportMissing.length}</span>
               </div>
               <div className="bulk-import-actions">
                 <button
@@ -640,11 +655,21 @@ export default function RepertoirePage() {
                 <button
                   type="button"
                   className="btn btn-primary"
-                  onClick={handleBulkImportSave}
+                  onClick={() => handleBulkImportSave(false)}
                   disabled={bulkImportSaving || bulkImportMatches.filter((item) => !item.alreadyInRepertoire).length === 0}
                 >
                   {bulkImportSaving ? 'Dodajem...' : 'Dodaj pronađene'}
                 </button>
+                {bulkImportMissing.length > 0 && (
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={() => handleBulkImportSave(true)}
+                    disabled={bulkImportSaving}
+                  >
+                    {bulkImportSaving ? 'Dodajem...' : 'Dodaj sve'}
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -745,6 +770,7 @@ export default function RepertoirePage() {
         .bulk-status-pill { flex-shrink: 0; padding: 0.42rem 0.7rem; border-radius: 999px; font-size: 0.72rem; font-weight: 800; }
         .bulk-status-pill.ready { background: rgba(16, 185, 129, 0.12); color: #047857; }
         .bulk-status-pill.existing { background: rgba(148, 163, 184, 0.14); color: #475569; }
+        .bulk-missing-hint { margin: 0; padding: 0.5rem 1rem 0; font-size: 0.78rem; color: #92400e; font-style: italic; }
         .bulk-missing-list { display: flex; flex-wrap: wrap; gap: 0.6rem; padding: 1rem; }
         .bulk-missing-chip { display: inline-flex; align-items: center; padding: 0.45rem 0.7rem; border-radius: 999px; background: rgba(239, 68, 68, 0.08); color: #b91c1c; font-size: 0.8rem; font-weight: 700; }
         .bulk-import-footer { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(226, 232, 240, 0.9); flex-wrap: wrap; }
