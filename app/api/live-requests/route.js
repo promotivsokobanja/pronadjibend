@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { getAuthUserFromRequest } from '@/lib/auth';
 
 /** Ukloni zastareli interni prefiks iz prikaza (stariji zapisi u bazi). */
 function displayWaiterNote(note) {
@@ -281,6 +282,11 @@ export async function POST(request) {
 
 export async function PATCH(request) {
   try {
+    const auth = await getAuthUserFromRequest(request);
+    if (!auth?.userId) {
+      return NextResponse.json({ error: 'Niste prijavljeni.' }, { status: 401 });
+    }
+
     const body = await request.json();
     const { id, status } = body;
 
@@ -291,6 +297,26 @@ export async function PATCH(request) {
     const validStatuses = ['PENDING', 'PLAYED', 'REJECTED', 'ACCEPTED'];
     if (!validStatuses.includes(status.toUpperCase())) {
       return NextResponse.json({ error: 'Nevažeći status' }, { status: 400 });
+    }
+
+    const liveReq = await prisma.liveRequest.findUnique({
+      where: { id },
+      select: { bandId: true, musicianProfileId: true },
+    });
+    if (!liveReq) {
+      return NextResponse.json({ error: 'Zahtev nije pronađen.' }, { status: 404 });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: auth.userId },
+      select: { role: true, bandId: true, musicianProfile: { select: { id: true } } },
+    });
+    const isOwner =
+      user?.role === 'ADMIN' ||
+      (liveReq.bandId && user?.bandId === liveReq.bandId) ||
+      (liveReq.musicianProfileId && user?.musicianProfile?.id === liveReq.musicianProfileId);
+    if (!isOwner) {
+      return NextResponse.json({ error: 'Nemate dozvolu za ovu akciju.' }, { status: 403 });
     }
 
     const updated = await prisma.liveRequest.update({
@@ -307,12 +333,29 @@ export async function PATCH(request) {
 
 export async function DELETE(request) {
   try {
+    const auth = await getAuthUserFromRequest(request);
+    if (!auth?.userId) {
+      return NextResponse.json({ error: 'Niste prijavljeni.' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const { owner, error } = await resolveLiveOwner({
       bandId: searchParams.get('bandId'),
       musicianId: searchParams.get('musicianId'),
     });
     if (error) return error;
+
+    const user = await prisma.user.findUnique({
+      where: { id: auth.userId },
+      select: { role: true, bandId: true, musicianProfile: { select: { id: true } } },
+    });
+    const isOwner =
+      user?.role === 'ADMIN' ||
+      (owner.type === 'band' && user?.bandId === owner.id) ||
+      (owner.type === 'musician' && user?.musicianProfile?.id === owner.id);
+    if (!isOwner) {
+      return NextResponse.json({ error: 'Nemate dozvolu za ovu akciju.' }, { status: 403 });
+    }
 
     const ownerFilter = buildOwnerFilter(owner);
     const deleted = await prisma.liveRequest.deleteMany({

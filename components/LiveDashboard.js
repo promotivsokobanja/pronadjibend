@@ -8,6 +8,8 @@ export default function LiveDashboard({ bandId, musicianId }) {
   const ownerType = bandId ? 'band' : 'musician';
   const router = useRouter();
   const [isNightMode, setIsNightMode] = useState(true);
+  const [sessionElapsed, setSessionElapsed] = useState(0);
+  const sessionStartRef = useRef(Date.now());
   const [showSettings, setShowSettings] = useState(false);
   const [requests, setRequests] = useState([]);
   const [activeTab, setActiveTab] = useState('requests');
@@ -23,6 +25,9 @@ export default function LiveDashboard({ bandId, musicianId }) {
   const [showSongDropdown, setShowSongDropdown] = useState(false);
   const [showSetlistSongDropdown, setShowSetlistSongDropdown] = useState(false);
   const [lastAddedSongId, setLastAddedSongId] = useState('');
+  const [repertoireCategoryFilter, setRepertoireCategoryFilter] = useState('Sve');
+  const REPERTOIRE_CATEGORIES = ['Sve', 'Muške Zabavne', 'Ženske Zabavne', 'Muške Narodne', 'Ženske Narodne', 'Razno', 'Strane Muške', 'Strane Ženske'];
+  const [cheatsheetSearch, setCheatsheetSearch] = useState('');
   const lyricsRef = useRef(null);
   const songComboRef = useRef(null);
   const setlistSongComboRef = useRef(null);
@@ -81,13 +86,28 @@ export default function LiveDashboard({ bandId, musicianId }) {
   }, [ownerId, bandId, musicianId]);
 
   // Settings state
-  const [settings, setSettings] = useState({
-    venueName: 'Kafana "Druga kuća"',
-    maxRequests: 10,
-    showTips: true,
-    soundEnabled: true,
-    autoAccept: false,
-    fontSize: 100, // percentage
+  const LS_SETTINGS_KEY = 'pb-live-settings';
+  const [settings, setSettings] = useState(() => {
+    const defaults = {
+      venueName: 'Kafana "Druga kuća"',
+      maxRequests: 10,
+      showTips: true,
+      soundEnabled: true,
+      autoAccept: false,
+      fontSize: 100,
+    };
+    if (typeof window === 'undefined') return defaults;
+    try {
+      const saved = JSON.parse(localStorage.getItem(LS_SETTINGS_KEY) || '{}');
+      return {
+        ...defaults,
+        venueName: typeof saved.venueName === 'string' ? saved.venueName : defaults.venueName,
+        showTips: typeof saved.showTips === 'boolean' ? saved.showTips : defaults.showTips,
+        soundEnabled: typeof saved.soundEnabled === 'boolean' ? saved.soundEnabled : defaults.soundEnabled,
+        autoAccept: typeof saved.autoAccept === 'boolean' ? saved.autoAccept : defaults.autoAccept,
+        fontSize: typeof saved.fontSize === 'number' ? saved.fontSize : defaults.fontSize,
+      };
+    } catch { return defaults; }
   });
   const [notifPermission, setNotifPermission] = useState('default');
 
@@ -101,7 +121,14 @@ export default function LiveDashboard({ bandId, musicianId }) {
   }, []);
 
   const updateSetting = (key, value) => {
-    setSettings(prev => ({ ...prev, [key]: value }));
+    setSettings(prev => {
+      const next = { ...prev, [key]: value };
+      try {
+        const { maxRequests, ...toSave } = next;
+        localStorage.setItem(LS_SETTINGS_KEY, JSON.stringify(toSave));
+      } catch { /* ignore storage errors */ }
+      return next;
+    });
   };
 
   const saveMaxPendingRequests = useCallback(async (nextValue) => {
@@ -249,6 +276,20 @@ export default function LiveDashboard({ bandId, musicianId }) {
   }, []);
 
   useEffect(() => {
+    const tick = setInterval(() => {
+      setSessionElapsed(Math.floor((Date.now() - sessionStartRef.current) / 1000));
+    }, 1000);
+    return () => clearInterval(tick);
+  }, []);
+
+  const formatElapsed = (totalSec) => {
+    const h = String(Math.floor(totalSec / 3600)).padStart(2, '0');
+    const m = String(Math.floor((totalSec % 3600) / 60)).padStart(2, '0');
+    const s = String(totalSec % 60).padStart(2, '0');
+    return `${h}:${m}:${s}`;
+  };
+
+  useEffect(() => {
     if (typeof window === 'undefined') return;
     if (!('Notification' in window)) {
       setNotifPermission('unsupported');
@@ -298,7 +339,8 @@ export default function LiveDashboard({ bandId, musicianId }) {
     return () => {
       cancelled = true;
     };
-  }, [ownerId, bandId, musicianId, notifyNewRequests]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ownerId, bandId, musicianId]);
 
   useEffect(() => {
     if (!ownerId) {
@@ -502,6 +544,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
 
   const deleteSelectedSetList = useCallback(async () => {
     if (!selectedSetListId) return;
+    if (!confirm('Da li ste sigurni da želite da obrišete ovu set listu?')) return;
     try {
       await fetch(`/api/setlists/${encodeURIComponent(selectedSetListId)}`, { method: 'DELETE' });
     } catch (err) {
@@ -614,7 +657,20 @@ export default function LiveDashboard({ bandId, musicianId }) {
   const songsList = Array.isArray(allSongs) ? allSongs : [];
 
   const filteredSongs = songsList.filter((s) => {
+    if (repertoireCategoryFilter !== 'Sve') {
+      const cat = String(s.category || '').trim();
+      if (cat !== repertoireCategoryFilter) return false;
+    }
     const q = songSearch.toLowerCase();
+    return (
+      (s.title || '').toLowerCase().includes(q) ||
+      (s.artist || '').toLowerCase().includes(q)
+    );
+  });
+
+  const cheatsheetFilteredSongs = songsList.filter((s) => {
+    const q = cheatsheetSearch.toLowerCase();
+    if (!q) return true;
     return (
       (s.title || '').toLowerCase().includes(q) ||
       (s.artist || '').toLowerCase().includes(q)
@@ -1097,20 +1153,36 @@ export default function LiveDashboard({ bandId, musicianId }) {
 
                         {showSetlistSongDropdown && (
                           <div className="repertoire-combo-panel">
-                            <input
-                              type="text"
-                              placeholder="Pretraži pesmu ili izvođača..."
-                              value={songSearch}
-                              onChange={(e) => setSongSearch(e.target.value)}
-                              className="song-search-input repertoire-search-input"
-                            />
+                            <div className="repertoire-combo-sticky-search">
+                              <input
+                                type="text"
+                                placeholder="Pretraži pesmu ili izvođača..."
+                                value={songSearch}
+                                onChange={(e) => setSongSearch(e.target.value)}
+                                className="song-search-input repertoire-search-input"
+                                autoFocus
+                              />
+                              <div className="repertoire-cat-scroll">
+                                {REPERTOIRE_CATEGORIES.map((cat) => (
+                                  <button
+                                    key={cat}
+                                    type="button"
+                                    className={`repertoire-cat-chip ${repertoireCategoryFilter === cat ? 'active' : ''}`}
+                                    onClick={() => setRepertoireCategoryFilter(cat)}
+                                  >
+                                    {cat}
+                                  </button>
+                                ))}
+                              </div>
+                              <span className="repertoire-combo-count">{filteredSongs.length} pesama</span>
+                            </div>
                             <div className="repertoire-dropdown-list">
                               {songLoading ? (
                                 <div className="song-loading compact">Učitavanje repertoara...</div>
                               ) : filteredSongs.length === 0 ? (
                                 <div className="repertoire-empty">{songSearch ? 'Nema rezultata' : 'Repertoar je prazan'}</div>
                               ) : (
-                                filteredSongs.slice(0, 24).map((song) => {
+                                filteredSongs.map((song) => {
                                   const inSetListCount = selectedSetListSongCountById[String(song.id)] || 0;
                                   const isAlreadyInSetList = inSetListCount > 0;
                                   return (
@@ -1171,9 +1243,9 @@ export default function LiveDashboard({ bandId, musicianId }) {
                       <input
                         type="text"
                         placeholder="Pretraži pesmu ili izvođača..."
-                        value={songSearch}
+                        value={cheatsheetSearch}
                         onChange={(e) => {
-                          setSongSearch(e.target.value);
+                          setCheatsheetSearch(e.target.value);
                           setShowSongDropdown(true);
                         }}
                         onFocus={() => setShowSongDropdown(true)}
@@ -1189,9 +1261,9 @@ export default function LiveDashboard({ bandId, musicianId }) {
                       </button>
                     </div>
 
-                    {showSongDropdown && !songLoading && filteredSongs.length > 0 && (
+                    {showSongDropdown && !songLoading && cheatsheetFilteredSongs.length > 0 && (
                       <div className="song-dropdown-list">
-                        {filteredSongs.map((song) => (
+                        {cheatsheetFilteredSongs.map((song) => (
                           <button
                             key={song.id}
                             className="song-dropdown-item"
@@ -1209,9 +1281,9 @@ export default function LiveDashboard({ bandId, musicianId }) {
                   </div>
                   {songLoading ? (
                     <p className="detail-artist">Učitavanje repertoara...</p>
-                  ) : filteredSongs.length === 0 ? (
+                  ) : cheatsheetFilteredSongs.length === 0 ? (
                     <p className="detail-artist">
-                      {songSearch ? 'Nema rezultata za pretragu.' : 'Repertoar je prazan.'}
+                      {cheatsheetSearch ? 'Nema rezultata za pretragu.' : 'Repertoar je prazan.'}
                     </p>
                   ) : null}
 
@@ -1311,7 +1383,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
           <div className="metric-box">
             <Clock size={16} />
             <div className="label">VREME NA BINI</div>
-            <div className="value">02:45:12</div>
+            <div className="value">{formatElapsed(sessionElapsed)}</div>
           </div>
           <div className="metric-box">
             <Radio size={16} />
@@ -2408,22 +2480,73 @@ export default function LiveDashboard({ bandId, musicianId }) {
           right: 0;
           display: flex;
           flex-direction: column;
-          gap: 0.5rem;
-          padding: 0.7rem;
+          gap: 0;
+          padding: 0;
           border: 1px solid #1a1a1a;
           border-radius: 12px;
           background: #050505;
           box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
           z-index: 24;
+          overflow: hidden;
+        }
+        .repertoire-combo-sticky-search {
+          position: sticky;
+          top: 0;
+          z-index: 2;
+          background: #050505;
+          padding: 0.6rem 0.7rem 0.45rem;
+          display: flex;
+          flex-direction: column;
+          gap: 0.3rem;
+          border-bottom: 1px solid #1a1a1a;
+        }
+        .repertoire-cat-scroll {
+          display: flex;
+          gap: 0.3rem;
+          overflow-x: auto;
+          scrollbar-width: none;
+          -webkit-overflow-scrolling: touch;
+          padding: 0.15rem 0;
+        }
+        .repertoire-cat-scroll::-webkit-scrollbar { display: none; }
+        .repertoire-cat-chip {
+          flex-shrink: 0;
+          padding: 0.28rem 0.55rem;
+          border-radius: 999px;
+          border: 1px solid #1f2937;
+          background: transparent;
+          color: #6b7280;
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 0.62rem;
+          font-weight: 700;
+          white-space: nowrap;
+          cursor: pointer;
+          transition: border-color 0.15s, color 0.15s, background 0.15s;
+        }
+        .repertoire-cat-chip:hover {
+          border-color: #374151;
+          color: #9ca3af;
+        }
+        .repertoire-cat-chip.active {
+          border-color: #00ff00;
+          color: #00ff00;
+          background: rgba(0, 255, 0, 0.08);
+        }
+        .repertoire-combo-count {
+          font-size: 0.62rem;
+          font-weight: 700;
+          color: #6b7280;
+          letter-spacing: 0.04em;
         }
         .repertoire-dropdown-list {
-          border: 1px solid #1f1f1f;
-          border-radius: 10px;
+          border: none;
+          border-radius: 0 0 12px 12px;
           background: #0b0b0b;
-          max-height: min(35dvh, 280px);
+          max-height: min(55dvh, 520px);
           overflow-y: auto;
           scrollbar-width: thin;
           scrollbar-color: #6a6a6a #151515;
+          -webkit-overflow-scrolling: touch;
         }
         .repertoire-dropdown-item {
           display: grid;
@@ -3731,9 +3854,17 @@ export default function LiveDashboard({ bandId, musicianId }) {
           }
           .repertoire-combo-panel {
             position: static;
-            padding: 0.55rem;
+            padding: 0;
             border-radius: 8px;
             box-shadow: none;
+          }
+          .repertoire-combo-sticky-search {
+            padding: 0.5rem 0.55rem 0.4rem;
+          }
+          .repertoire-cat-chip {
+            padding: 0.35rem 0.6rem;
+            font-size: 0.65rem;
+            min-height: 32px;
           }
           .repertoire-combo-toggle {
             min-height: 44px;
@@ -3741,7 +3872,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
             font-size: 0.78rem;
           }
           .repertoire-dropdown-list {
-            max-height: min(46dvh, 320px);
+            max-height: min(50dvh, 420px);
           }
           .repertoire-dropdown-item {
             grid-template-columns: 1fr;
