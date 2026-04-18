@@ -608,7 +608,7 @@ export default function RepertoirePage() {
                                 <p>{item.song.artist}</p>
                               </div>
                               <span className={`bulk-status-pill ${item.alreadyInRepertoire ? 'existing' : 'ready'}`}>
-                                {item.alreadyInRepertoire ? 'Već u repertoaru' : item.song.lyrics ? 'Spremno + tekst' : 'Spremno bez teksta'}
+                                {item.alreadyInRepertoire ? 'Već u repertoaru' : item.song.hasLyrics ? 'Spremno + tekst' : 'Spremno bez teksta'}
                               </span>
                             </div>
                           ))}
