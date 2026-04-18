@@ -6,8 +6,12 @@ export const dynamic = 'force-dynamic';
 
 const CATEGORY_FILTER_MAP = {
   'Muške Zabavne': ['Muške Zabavne', 'Zabavne'],
+  'Ženske Zabavne': ['Ženske Zabavne'],
   'Muške Narodne': ['Muške Narodne', 'Narodne'],
-  'Starije Zabavne': ['Starije Zabavne', 'Strane'],
+  'Ženske Narodne': ['Ženske Narodne'],
+  'Razno': ['Razno', 'Starije Zabavne', 'Strane'],
+  'Strane Muške': ['Strane Muške'],
+  'Strane Ženske': ['Strane Ženske'],
 };
 
 function normalizeSongCategory(category) {
@@ -15,7 +19,7 @@ function normalizeSongCategory(category) {
   if (!value) return value;
   if (value === 'Zabavne') return 'Muške Zabavne';
   if (value === 'Narodne') return 'Muške Narodne';
-  if (value === 'Strane') return 'Starije Zabavne';
+  if (value === 'Strane' || value === 'Starije Zabavne') return 'Razno';
   return value;
 }
 
@@ -190,5 +194,49 @@ export async function POST(request) {
   } catch (error) {
     console.error('API Error:', error);
     return NextResponse.json({ error: 'Greška pri dodavanju pesme.' }, { status: 500 });
+  }
+}
+
+export async function DELETE(request) {
+  try {
+    const { owner, error } = await resolveSongOwner(request, {});
+    if (error) return error;
+
+    if (!owner) {
+      return NextResponse.json({ error: 'Nije pronađen vlasnik pesama.' }, { status: 400 });
+    }
+
+    const ownerWhere = owner.type === 'band'
+      ? { bandId: owner.id }
+      : { musicianProfileId: owner.id };
+
+    const ownerSongs = await prisma.song.findMany({
+      where: ownerWhere,
+      select: { id: true },
+    });
+
+    if (ownerSongs.length === 0) {
+      return NextResponse.json({ success: true, deleted: 0 });
+    }
+
+    const songIds = ownerSongs.map((song) => song.id);
+
+    const [, , deleteResult] = await prisma.$transaction([
+      prisma.liveRequest.updateMany({
+        where: { songId: { in: songIds } },
+        data: { songId: null },
+      }),
+      prisma.setListItem.deleteMany({
+        where: { songId: { in: songIds } },
+      }),
+      prisma.song.deleteMany({
+        where: ownerWhere,
+      }),
+    ]);
+
+    return NextResponse.json({ success: true, deleted: deleteResult.count });
+  } catch (error) {
+    console.error('API Error:', error);
+    return NextResponse.json({ error: 'Greška pri brisanju repertoara.' }, { status: 500 });
   }
 }

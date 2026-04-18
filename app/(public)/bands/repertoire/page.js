@@ -104,6 +104,8 @@ export default function RepertoirePage() {
   const [bulkImportMissing, setBulkImportMissing] = useState([]);
   const [bulkImportLoading, setBulkImportLoading] = useState(false);
   const [bulkImportSaving, setBulkImportSaving] = useState(false);
+  const [bulkImportCategory, setBulkImportCategory] = useState('Muške Zabavne');
+  const [isDeletingAllSongs, setIsDeletingAllSongs] = useState(false);
   const ownerId = bandId || musicianId;
   const searchBoxRef = useRef(null);
   const dashboardHref = musicianId ? '/muzicari/profil' : '/bands';
@@ -209,7 +211,8 @@ export default function RepertoirePage() {
     setBulkImportMissing([]);
     setBulkImportLoading(false);
     setBulkImportSaving(false);
-  }, []);
+    setBulkImportCategory(activeTab);
+  }, [activeTab]);
 
   const handleBulkFileChange = async (event) => {
     const file = event.target.files?.[0];
@@ -291,13 +294,14 @@ export default function RepertoirePage() {
         ...pendingMatches.map(({ song }) => ({
           title: song.title,
           artist: song.artist,
-          category: song.category,
+          category: bulkImportCategory,
           type: song.type,
           sourceSongId: song.id,
         })),
         ...missingToAdd.map((item) => ({
           title: item.parsedTitle || item.cleaned,
           artist: item.parsedArtist || '',
+          category: bulkImportCategory,
         })),
       ];
 
@@ -364,7 +368,12 @@ export default function RepertoirePage() {
     })));
   }, [songs, showBulkImportModal]);
 
-  const categories = ['Muške Zabavne', 'Ženske Zabavne', 'Muške Narodne', 'Ženske Narodne', 'Starije Zabavne'];
+  useEffect(() => {
+    if (!showBulkImportModal) return;
+    setBulkImportCategory(activeTab);
+  }, [activeTab, showBulkImportModal]);
+
+  const categories = ['Muške Zabavne', 'Ženske Zabavne', 'Muške Narodne', 'Ženske Narodne', 'Razno', 'Strane Muške', 'Strane Ženske'];
 
   const removeSong = async (id) => {
     if (!confirm('Da li ste sigurni da želite da obrišete ovu pesmu?')) return;
@@ -388,6 +397,40 @@ export default function RepertoirePage() {
       console.error(err);
       setSongs(previousSongs);
       alert(err?.message || 'Greška pri brisanju pesme.');
+    }
+  };
+
+  const removeAllSongs = async () => {
+    if (songs.length === 0) {
+      alert('Lični repertoar je već prazan.');
+      return;
+    }
+
+    if (!confirm('Da li ste sigurni da želite da obrišete ceo lični repertoar? Glavna pesmarica neće biti obrisana.')) {
+      return;
+    }
+
+    if (!confirm('Potvrdite još jednom brisanje cele lične repertoar liste. Ova akcija se ne može vratiti.')) {
+      return;
+    }
+
+    setIsDeletingAllSongs(true);
+    try {
+      const resp = await fetch('/api/songs', {
+        method: 'DELETE',
+      });
+      const data = await resp.json().catch(() => ({}));
+      if (!resp.ok) {
+        throw new Error(data?.error || 'Brisanje cele repertoar liste nije uspelo.');
+      }
+
+      await Promise.all([fetchData(), fetchCounts()]);
+      alert(`Obrisano pesama: ${data.deleted || 0}`);
+    } catch (err) {
+      console.error(err);
+      alert(err?.message || 'Greška pri brisanju repertoara.');
+    } finally {
+      setIsDeletingAllSongs(false);
     }
   };
 
@@ -456,6 +499,14 @@ export default function RepertoirePage() {
             )}
           </div>
           <div className="header-cta-group">
+            <button
+              type="button"
+              className="btn btn-danger-outline"
+              onClick={removeAllSongs}
+              disabled={isDeletingAllSongs || songs.length === 0}
+            >
+              {isDeletingAllSongs ? 'Brišem listu...' : 'Obriši ceo repertoar'}
+            </button>
             <button
               type="button"
               className="btn btn-secondary bulk-add-btn"
@@ -566,6 +617,20 @@ export default function RepertoirePage() {
             <div className="bulk-import-grid">
               <div className="bulk-import-pane">
                 <label className="bulk-import-label">Spisak pesama</label>
+                <div className="bulk-category-field">
+                  <label htmlFor="bulk-category" className="bulk-category-label">Kategorija za unos</label>
+                  <select
+                    id="bulk-category"
+                    className="bulk-category-select"
+                    value={bulkImportCategory}
+                    onChange={(e) => setBulkImportCategory(e.target.value)}
+                    disabled={bulkImportSaving}
+                  >
+                    {categories.map((category) => (
+                      <option key={category} value={category}>{category}</option>
+                    ))}
+                  </select>
+                </div>
                 <textarea
                   className="bulk-import-textarea"
                   placeholder={'Po jedan unos u redu, na primer:\nE draga, draga\nTiho noći - Zdravko Čolić\nLutka - S.A.R.S.'}
@@ -583,7 +648,12 @@ export default function RepertoirePage() {
                     onClick={handleAnalyzeBulkList}
                     disabled={bulkImportLoading}
                   >
-                    {bulkImportLoading ? 'Analiziram...' : 'Analiziraj listu'}
+                    {bulkImportLoading ? (
+                      <>
+                        <span className="btn-spinner" aria-hidden />
+                        Analiziram listu...
+                      </>
+                    ) : 'Analiziraj listu'}
                   </button>
                 </div>
               </div>
@@ -701,6 +771,8 @@ export default function RepertoirePage() {
         .title-section h1 { font-size: 3.5rem; font-weight: 800; margin-bottom: 1.5rem; letter-spacing: -2px; }
         .header-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 3rem; gap: 2rem; flex-wrap: wrap; }
         .header-cta-group { display: flex; align-items: center; gap: 0.85rem; flex-wrap: wrap; }
+        .btn-danger-outline { background: rgba(255, 255, 255, 0.92); color: #b91c1c; border: 1px solid rgba(239, 68, 68, 0.25); box-shadow: 0 10px 25px rgba(239, 68, 68, 0.08); }
+        .btn-danger-outline:disabled { opacity: 0.55; cursor: not-allowed; box-shadow: none; }
         .search-box-wrap { position: relative; flex: 1; min-width: 300px; max-width: 500px; }
         .search-box { flex: 1; min-width: 300px; max-width: 500px; display: flex; align-items: center; gap: 1rem; padding: 0.75rem 1.5rem; background: #fff; border: 1px solid #e2e8f0; border-radius: 100px; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04); }
         .search-box input { background: none; border: none; color: #0f172a; width: 100%; outline: none; font-size: 0.95rem; font-weight: 600; }
@@ -743,8 +815,8 @@ export default function RepertoirePage() {
         .action-btn { color: #555; transition: 0.2s; padding: 8px; border-radius: 6px; }
         .action-btn:hover { color: white; background: rgba(255,255,255,0.05); }
         .action-btn.delete:hover { color: #ef4444; background: rgba(239, 68, 68, 0.1); }
-        .bulk-import-overlay { position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 80; background: rgba(15, 23, 42, 0.32); padding: 2rem; display: flex; align-items: center; justify-content: center; }
-        .bulk-import-modal { width: min(1040px, 100%); max-height: calc(100vh - 4rem); overflow: auto; padding: 1.4rem; border: 1px solid rgba(226, 232, 240, 0.8); background: rgba(255, 255, 255, 0.97); }
+        .bulk-import-overlay { position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 80; background: rgba(15, 23, 42, 0.32); padding: 5.5rem 2rem 2rem; display: flex; align-items: flex-start; justify-content: center; overflow-y: auto; }
+        .bulk-import-modal { width: min(1040px, 100%); max-height: calc(100vh - 7.5rem); overflow: auto; padding: 1.4rem; border: 1px solid rgba(226, 232, 240, 0.8); background: rgba(255, 255, 255, 0.97); margin-top: 0; }
         .bulk-import-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: 1.2rem; }
         .bulk-import-head h2 { margin: 0 0 0.35rem; font-size: 1.45rem; color: #0f172a; }
         .bulk-import-head p { margin: 0; color: #64748b; max-width: 640px; }
@@ -753,6 +825,9 @@ export default function RepertoirePage() {
         .bulk-import-pane { border: 1px solid rgba(226, 232, 240, 0.95); border-radius: 22px; padding: 1rem; background: rgba(248, 250, 252, 0.7); }
         .bulk-import-pane.results { background: rgba(255, 255, 255, 0.88); }
         .bulk-import-label { display: block; margin-bottom: 0.75rem; font-size: 0.8rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: #475569; }
+        .bulk-category-field { display: flex; flex-direction: column; gap: 0.45rem; margin-bottom: 0.85rem; }
+        .bulk-category-label { font-size: 0.82rem; font-weight: 700; color: #475569; }
+        .bulk-category-select { width: 100%; min-height: 44px; border-radius: 14px; border: 1px solid #dbe2ea; padding: 0.75rem 0.9rem; background: #fff; color: #0f172a; outline: none; font-size: 0.92rem; font-weight: 600; }
         .bulk-import-textarea { width: 100%; min-height: 290px; resize: vertical; border-radius: 18px; border: 1px solid #dbe2ea; padding: 1rem; background: #fff; color: #0f172a; outline: none; font-size: 0.95rem; line-height: 1.6; }
         .bulk-import-tools { margin-top: 0.9rem; display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
         .bulk-file-btn { position: relative; overflow: hidden; display: inline-flex; align-items: center; justify-content: center; min-height: 42px; padding: 0.7rem 1rem; border-radius: 14px; background: #fff; border: 1px dashed rgba(99, 102, 241, 0.35); color: #4338ca; font-weight: 700; cursor: pointer; }
@@ -777,6 +852,12 @@ export default function RepertoirePage() {
         .bulk-import-summary { display: flex; gap: 1rem; flex-wrap: wrap; color: #475569; font-size: 0.88rem; font-weight: 700; }
         .bulk-import-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; }
         .btn-ghost { background: rgba(255, 255, 255, 0.92); color: #334155; border: 1px solid rgba(148, 163, 184, 0.35); }
+        .btn-spinner { width: 14px; height: 14px; border-radius: 999px; border: 2px solid rgba(255, 255, 255, 0.35); border-top-color: #fff; display: inline-block; animation: bulk-spin 0.8s linear infinite; }
+
+        @keyframes bulk-spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
 
         @media (max-width: 968px) {
           .list-header { display: none; }
@@ -793,11 +874,14 @@ export default function RepertoirePage() {
             align-items: stretch;
           }
           .header-cta-group { width: 100%; }
-          .header-cta-group :global(a) { flex: 1 1 220px; }
+          .header-cta-group :global(a),
+          .header-cta-group > button { flex: 1 1 calc(50% - 0.5rem); min-width: 0; }
           .header-cta-group :global(a > button),
           .header-cta-group > button {
             width: 100%;
             justify-content: center;
+            min-height: 48px;
+            font-size: 0.85rem;
           }
           .bulk-import-grid { grid-template-columns: 1fr; }
           .search-box-wrap,
@@ -838,8 +922,10 @@ export default function RepertoirePage() {
           .global-dropdown-item { padding: 0.85rem 0.9rem; align-items: flex-start; }
           .global-dropdown-title { font-size: 0.88rem; }
           .global-dropdown-artist { font-size: 0.74rem; }
-          .bulk-import-overlay { padding: 0.75rem; }
-          .bulk-import-modal { padding: 1rem; max-height: calc(100vh - 1.5rem); }
+          .bulk-import-overlay { padding: 4.5rem 0.5rem 0.5rem; }
+          .bulk-import-modal { padding: 0.85rem; max-height: calc(100vh - 5rem); border-radius: 18px; }
+          .bulk-import-textarea { min-height: 200px; }
+          .bulk-category-select { min-height: 42px; font-size: 0.88rem; }
           .bulk-import-head h2 { font-size: 1.15rem; }
           .bulk-import-tools,
           .bulk-import-footer,
@@ -860,6 +946,12 @@ export default function RepertoirePage() {
           .action-btn {
             padding: 10px;
           }
+          .tab-btn {
+            padding: 0.55rem 0.9rem;
+            font-size: 0.7rem;
+          }
+          .header-cta-group :global(a),
+          .header-cta-group > button { flex: 1 1 100%; }
         }
       `}</style>
     </div>

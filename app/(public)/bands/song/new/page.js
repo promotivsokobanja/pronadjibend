@@ -68,7 +68,7 @@ export default function NewSongPage() {
     }
   };
 
-  const categories = ['Muške Zabavne', 'Ženske Zabavne', 'Muške Narodne', 'Ženske Narodne', 'Starije Zabavne'];
+  const categories = ['Muške Zabavne', 'Ženske Zabavne', 'Muške Narodne', 'Ženske Narodne', 'Razno', 'Strane Muške', 'Strane Ženske'];
 
   if (authLoading) {
     return (
@@ -192,7 +192,8 @@ export default function NewSongPage() {
         
         .input-group { margin-bottom: 2rem; }
         .input-group label { display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: #555; margin-bottom: 0.75rem; }
-        .input-group input, .input-group select, .input-group textarea { width: 100%; padding: 1rem; background: rgba(0,0,0,0.2); border: 1px solid var(--border); border-radius: 8px; color: white; font-size: 1rem; outline: none; }
+        .input-group input, .input-group select, .input-group textarea { width: 100%; padding: 1rem; background: #fff; border: 1px solid #cbd5e1; border-radius: 12px; color: #0f172a; font-size: 1rem; outline: none; }
+        .input-group input:focus, .input-group select:focus, .input-group textarea:focus { border-color: #007aff; box-shadow: 0 0 0 4px rgba(0,122,255,0.12); }
         .input-group textarea { font-family: 'Inter', sans-serif; line-height: 1.6; }
         
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
@@ -205,6 +206,15 @@ export default function NewSongPage() {
 
         @media (max-width: 968px) {
           .edit-grid { grid-template-columns: 1fr; }
+          .edit-card { padding: 1.5rem; }
+          .help-section { padding: 1.5rem; position: static; }
+        }
+        @media (max-width: 560px) {
+          .edit-container { padding-top: 7rem; }
+          .form-row { grid-template-columns: 1fr; gap: 0; }
+          .edit-card { padding: 1.15rem; }
+          .help-section { padding: 1.15rem; }
+          .input-group label { font-size: 0.72rem; }
         }
       `}</style>
     </div>

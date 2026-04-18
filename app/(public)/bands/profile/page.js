@@ -1067,6 +1067,19 @@ export default function BandProfilePage() {
         
         @media (max-width: 860px) {
           .grid, .media-grid { grid-template-columns: 1fr; }
+          .profile-card { padding: 1.1rem; }
+          .password-header { flex-direction: column; gap: 0.75rem; }
+          .password-actions { flex-direction: column; align-items: stretch; }
+          .password-actions .btn { width: 100%; justify-content: center; min-height: 46px; }
+        }
+        @media (max-width: 560px) {
+          .profile-wrap { padding: 0 0.15rem; }
+          .profile-header h1 { font-size: 1.6rem; }
+          .profile-card { padding: 0.9rem; border-radius: 16px; }
+          .field input, .field textarea { padding: 0.6rem 0.75rem; font-size: 0.9rem; border-radius: 10px; }
+          .profile-link-row { flex-direction: column; align-items: stretch; }
+          .profile-link-row :global(.btn) { width: 100%; justify-content: center; }
+          .drop-zone { padding: 0.85rem 0.65rem; font-size: 0.78rem; }
         }
         .confirmed-msgs {
           margin-bottom: 1.5rem;

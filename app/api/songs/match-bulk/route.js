@@ -76,7 +76,66 @@ function scoreCandidate(candidate, titleToSearch, artistToSearch, cleaned) {
     else if (candidateArtist.includes(word)) score += 9;
   }
 
+  const titleCompact = normalizedTitle.replace(/\s+/g, '');
+  const candidateTitleCompact = candidateTitle.replace(/\s+/g, '');
+  const artistCompact = normalizedArtist.replace(/\s+/g, '');
+  const candidateArtistCompact = candidateArtist.replace(/\s+/g, '');
+
+  const titleDistance = levenshteinDistance(titleCompact, candidateTitleCompact);
+  const titleSimilarity = titleCompact && candidateTitleCompact
+    ? 1 - (titleDistance / Math.max(titleCompact.length, candidateTitleCompact.length))
+    : 0;
+  if (titleSimilarity >= 0.86) score += 80;
+  else if (titleSimilarity >= 0.72) score += 45;
+  else if (titleSimilarity >= 0.6) score += 20;
+
+  const artistDistance = artistCompact && candidateArtistCompact
+    ? levenshteinDistance(artistCompact, candidateArtistCompact)
+    : 999;
+  const artistSimilarity = artistCompact && candidateArtistCompact
+    ? 1 - (artistDistance / Math.max(artistCompact.length, candidateArtistCompact.length))
+    : 0;
+  if (artistSimilarity >= 0.7) score += 35;
+
   return score;
+}
+
+function levenshteinDistance(a, b) {
+  if (a === b) return 0;
+  if (!a.length) return b.length;
+  if (!b.length) return a.length;
+
+  const matrix = Array.from({ length: a.length + 1 }, () => new Array(b.length + 1).fill(0));
+  for (let i = 0; i <= a.length; i += 1) matrix[i][0] = i;
+  for (let j = 0; j <= b.length; j += 1) matrix[0][j] = j;
+
+  for (let i = 1; i <= a.length; i += 1) {
+    for (let j = 1; j <= b.length; j += 1) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      matrix[i][j] = Math.min(
+        matrix[i - 1][j] + 1,
+        matrix[i][j - 1] + 1,
+        matrix[i - 1][j - 1] + cost
+      );
+    }
+  }
+
+  return matrix[a.length][b.length];
+}
+
+function pickBestCandidate(candidates, titleToSearch, artistToSearch, cleaned, minScore = 45) {
+  let bestCandidate = null;
+  let bestScore = 0;
+
+  for (const candidate of candidates) {
+    const score = scoreCandidate(candidate, titleToSearch, artistToSearch, cleaned);
+    if (score > bestScore) {
+      bestCandidate = candidate;
+      bestScore = score;
+    }
+  }
+
+  return bestCandidate && bestScore >= minScore ? bestCandidate : null;
 }
 
 /**
@@ -159,67 +218,62 @@ export async function POST(request) {
 
       if (!match) {
         for (const variant of buildSearchVariants(titleToSearch)) {
-          const found = await prisma.song.findFirst({
+          const found = await prisma.song.findMany({
             where: {
               bandId: null,
               musicianProfileId: null,
               title: { equals: variant, mode: 'insensitive' },
-              ...(artistToSearch ? { artist: { contains: artistToSearch, mode: 'insensitive' } } : {}),
             },
             select: { id: true, title: true, artist: true, lyrics: true, category: true, type: true },
+            take: 20,
           });
-          if (found) {
-            match = found;
-            break;
-          }
+          match = pickBestCandidate(found, titleToSearch, artistToSearch, cleaned, 35);
+          if (match) break;
         }
       }
 
       if (!match && parts) {
         for (const variant of buildSearchVariants(parts.right)) {
-          const found = await prisma.song.findFirst({
+          const found = await prisma.song.findMany({
             where: {
               bandId: null,
               musicianProfileId: null,
               title: { equals: variant, mode: 'insensitive' },
-              artist: { contains: parts.left, mode: 'insensitive' },
             },
             select: { id: true, title: true, artist: true, lyrics: true, category: true, type: true },
+            take: 20,
           });
-          if (found) {
-            match = found;
-            break;
-          }
+          match = pickBestCandidate(found, parts.right, parts.left, cleaned, 35);
+          if (match) break;
         }
       }
 
       if (!match) {
         if (normalizeText(titleToSearch).length >= 3) {
-          const found = await prisma.song.findFirst({
+          const found = await prisma.song.findMany({
             where: {
               bandId: null,
               musicianProfileId: null,
-              AND: [
-                ...buildWordClauses(titleToSearch, ['title']),
-                ...(artistToSearch ? buildWordClauses(artistToSearch, ['artist']) : []),
-              ],
+              AND: buildWordClauses(titleToSearch, ['title']),
             },
             select: { id: true, title: true, artist: true, lyrics: true, category: true, type: true },
+            take: 40,
           });
-          if (found) match = found;
+          match = pickBestCandidate(found, titleToSearch, artistToSearch, cleaned, 30);
         }
       }
 
       if (!match) {
-        const found = await prisma.song.findFirst({
+        const found = await prisma.song.findMany({
           where: {
             bandId: null,
             musicianProfileId: null,
             AND: buildWordClauses(cleaned, ['title', 'artist']),
           },
           select: { id: true, title: true, artist: true, lyrics: true, category: true, type: true },
+          take: 50,
         });
-        if (found) match = found;
+        match = pickBestCandidate(found, titleToSearch, artistToSearch, cleaned, 30);
       }
 
       if (!match) {
@@ -245,19 +299,7 @@ export async function POST(request) {
             take: 80,
           });
 
-          let bestCandidate = null;
-          let bestScore = 0;
-          for (const candidate of candidates) {
-            const score = scoreCandidate(candidate, titleToSearch, artistToSearch, cleaned);
-            if (score > bestScore) {
-              bestCandidate = candidate;
-              bestScore = score;
-            }
-          }
-
-          if (bestCandidate && bestScore >= 45) {
-            match = bestCandidate;
-          }
+          match = pickBestCandidate(candidates, titleToSearch, artistToSearch, cleaned, 30);
         }
       }
 

@@ -9,7 +9,7 @@ function normalizeSongCategory(category) {
   if (!value) return 'Muške Zabavne';
   if (value === 'Zabavne') return 'Muške Zabavne';
   if (value === 'Narodne') return 'Muške Narodne';
-  if (value === 'Strane') return 'Starije Zabavne';
+  if (value === 'Strane' || value === 'Starije Zabavne') return 'Razno';
   return value;
 }
 

@@ -1111,6 +1111,7 @@ export default function BandDashboard() {
           width: 100%;
           justify-content: center;
           white-space: nowrap;
+          min-height: 46px;
         }
         .action-caption {
           font-size: 0.68rem;
@@ -1142,6 +1143,16 @@ export default function BandDashboard() {
           .dashboard-container { padding-top: 7.5rem; }
           .header-action-item {
             flex: 1 1 100%;
+          }
+          .header-action-item :global(.btn) {
+            white-space: normal;
+            text-align: center;
+            font-size: 0.82rem;
+            min-height: 48px;
+            line-height: 1.3;
+          }
+          .action-caption {
+            font-size: 0.64rem;
           }
         }
         .live-notification { 

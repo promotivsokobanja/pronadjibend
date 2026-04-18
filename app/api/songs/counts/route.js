@@ -6,7 +6,8 @@ export const dynamic = 'force-dynamic';
 const COUNT_ALIAS_TARGET = {
   Zabavne: 'Muške Zabavne',
   Narodne: 'Muške Narodne',
-  Strane: 'Starije Zabavne',
+  Strane: 'Razno',
+  'Starije Zabavne': 'Razno',
 };
 
 export async function GET(request) {
