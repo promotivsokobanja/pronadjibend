@@ -790,7 +790,7 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
                 </button>
               </div>
 
-              {viewer?.plan && viewer.plan.toUpperCase() === 'PREMIUM' && (
+              {viewer?.plan && (viewer.plan.toUpperCase() === 'PREMIUM' || viewer.plan.toUpperCase() === 'PREMIUM_VENUE') && (
                 <>
                   <div className="field toggle-field">
                     <label className="toggle-label" htmlFor="musician-show-repertoire">
