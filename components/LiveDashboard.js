@@ -3628,6 +3628,24 @@ export default function LiveDashboard({ bandId, musicianId }) {
           padding-right: 0.35rem;
           scrollbar-width: thin;
           scrollbar-color: #4a4a4a #0f0f0f;
+          width: 100%;
+          max-width: 760px;
+          margin-left: auto;
+          margin-right: auto;
+          padding-left: 1rem;
+          padding-right: 1rem;
+        }
+        @media (min-width: 1200px) {
+          .lyrics-display {
+            max-width: 860px;
+          }
+        }
+        @media (max-width: 640px) {
+          .lyrics-display {
+            max-width: 100%;
+            padding-left: 0.5rem;
+            padding-right: 0.5rem;
+          }
         }
         .lyrics-display::-webkit-scrollbar {
           width: 8px;
