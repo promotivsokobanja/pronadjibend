@@ -205,6 +205,7 @@ model MusicianProfile {
   rating            Float                  @default(0)
   isFeatured        Boolean                @default(false)
   isAvailable       Boolean                @default(true)
+  allowTips         Boolean                @default(true)
   /// Da li se repertoar muzičara prikazuje javno na profilu (za pretragu)
   showRepertoire     Boolean                @default(false)
   /// Kada je uključeno, gosti mogu da naruče bilo koju pesmu iz repertoara tokom live režima (ne samo one iz aktivnih set listi)

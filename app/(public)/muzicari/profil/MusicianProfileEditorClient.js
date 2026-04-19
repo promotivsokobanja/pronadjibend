@@ -21,6 +21,7 @@ const initialForm = {
   img: '',
   videoUrl: '',
   isAvailable: true,
+  allowTips: true,
   showRepertoire: false,
   allowFullRepertoireLive: false,
 };
@@ -51,6 +52,11 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
   const [deleting, setDeleting] = useState(false);
   const [deletePassword, setDeletePassword] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [passwordData, setPasswordData] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+  const [passwordSaving, setPasswordSaving] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordSuccess, setPasswordSuccess] = useState('');
   const [showQr, setShowQr] = useState(false);
   const [siteOrigin, setSiteOrigin] = useState('');
   const imageInputRef = useRef(null);
@@ -103,6 +109,7 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
             img: p.img || '',
             videoUrl: p.videoUrl || '',
             isAvailable: p.isAvailable !== false,
+            allowTips: p.allowTips !== false,
             showRepertoire: p.showRepertoire || false,
             allowFullRepertoireLive: p.allowFullRepertoireLive || false,
           });
@@ -225,6 +232,42 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
       setError(err?.message || 'Greška pri brisanju poziva.');
     } finally {
       setInviteDeleteId(null);
+    }
+  };
+
+  const handlePasswordChange = async (e) => {
+    e.preventDefault();
+    if (passwordData.newPassword.length < 6) {
+      setPasswordError('Nova lozinka mora imati najmanje 6 karaktera.');
+      return;
+    }
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      setPasswordError('Nova lozinka i potvrda se ne poklapaju.');
+      return;
+    }
+    setPasswordSaving(true);
+    setPasswordError('');
+    setPasswordSuccess('');
+    try {
+      const res = await fetch('/api/auth/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          currentPassword: passwordData.currentPassword,
+          newPassword: passwordData.newPassword,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data?.error || 'Greška pri promeni lozinke.');
+      }
+      setPasswordSuccess('Lozinka je uspešno promenjena.');
+      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      setTimeout(() => setShowPasswordForm(false), 2000);
+    } catch (err) {
+      setPasswordError(err.message || 'Došlo je do greške.');
+    } finally {
+      setPasswordSaving(false);
     }
   };
 
@@ -772,6 +815,25 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
               ) : null}
 
               <div className="field toggle-field">
+                <label className="toggle-label" htmlFor="musician-allow-tips">
+                  Omogući opciju bakšiša za goste
+                </label>
+                <p className="toggle-hint">
+                  Na live stranici gosti mogu da pošalju bakšiš preko konobara uz narudžbinu pesme (ako je uključeno).
+                </p>
+                <button
+                  type="button"
+                  id="musician-allow-tips"
+                  role="switch"
+                  aria-checked={form.allowTips}
+                  className={`tips-toggle ${form.allowTips ? 'on' : ''}`}
+                  onClick={() => onChange('allowTips', !form.allowTips)}
+                >
+                  <span className="tips-toggle-knob" />
+                </button>
+              </div>
+
+              <div className="field toggle-field">
                 <label className="toggle-label" htmlFor="musician-availability">
                   Dostupan za angažman
                 </label>
@@ -982,6 +1044,90 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
                 </button>
               </div>
             </form>
+
+            {/* Password Change Section */}
+            <section style={sCard} className="password-section">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                <div>
+                  <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0, fontSize: '1.05rem', fontWeight: 900, color: '#0f172a' }}>
+                    Promena lozinke
+                  </h3>
+                  <p style={{ margin: '0.25rem 0 0', fontSize: '0.9rem', color: '#64748b' }}>Promenite lozinku za pristup vašem nalogu</p>
+                </div>
+                {!showPasswordForm && (
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => {
+                      setShowPasswordForm(true);
+                      setPasswordError('');
+                      setPasswordSuccess('');
+                    }}
+                  >
+                    Promeni lozinku
+                  </button>
+                )}
+              </div>
+
+              {showPasswordForm && (
+                <form onSubmit={handlePasswordChange} className="password-form">
+                  {passwordError && <div className="alert error">{passwordError}</div>}
+                  {passwordSuccess && <div className="alert success">{passwordSuccess}</div>}
+
+                  <div className="field">
+                    <label>Trenutna lozinka</label>
+                    <input
+                      type="password"
+                      value={passwordData.currentPassword}
+                      onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
+                      placeholder="Unesite trenutnu lozinku"
+                      required
+                    />
+                  </div>
+
+                  <div className="field">
+                    <label>Nova lozinka</label>
+                    <input
+                      type="password"
+                      value={passwordData.newPassword}
+                      onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
+                      placeholder="Unesite novu lozinku (min. 6 karaktera)"
+                      required
+                      minLength={6}
+                    />
+                  </div>
+
+                  <div className="field">
+                    <label>Potvrdi novu lozinku</label>
+                    <input
+                      type="password"
+                      value={passwordData.confirmPassword}
+                      onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                      placeholder="Ponovite novu lozinku"
+                      required
+                    />
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem' }}>
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={() => {
+                        setShowPasswordForm(false);
+                        setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+                        setPasswordError('');
+                        setPasswordSuccess('');
+                      }}
+                    >
+                      Otkaži
+                    </button>
+                    <button type="submit" className="btn btn-primary" disabled={passwordSaving}>
+                      {passwordSaving ? 'Čuvanje...' : 'Sačuvaj lozinku'}
+                    </button>
+                  </div>
+                </form>
+              )}
+            </section>
 
             <aside style={{ display: 'flex', flexDirection: 'column', gap: '1.35rem' }}>
               {contactCard}
