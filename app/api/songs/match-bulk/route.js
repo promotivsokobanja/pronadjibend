@@ -204,11 +204,10 @@ export async function POST(request) {
       existingSongs.map((s) => `${s.title.toLowerCase()}|||${s.artist.toLowerCase()}`)
     );
 
-    const results = [];
-
-    for (const rawLine of lines) {
+    // Process lines in parallel to avoid serverless timeout
+    const processLine = async (rawLine) => {
       const cleaned = stripLeadingNumber(rawLine);
-      if (!cleaned) continue;
+      if (!cleaned) return null;
 
       const parts = splitTitleArtist(cleaned);
       const titleToSearch = parts ? parts.left : cleaned;
@@ -276,38 +275,11 @@ export async function POST(request) {
         match = pickBestCandidate(found, titleToSearch, artistToSearch, cleaned, 30);
       }
 
-      if (!match) {
-        const broadWords = Array.from(
-          new Set(
-            normalizeText(cleaned)
-              .split(/\s+/)
-              .filter((word) => word.length >= 3 && word !== '-')
-          )
-        ).slice(0, 4);
-
-        if (broadWords.length > 0) {
-          const candidates = await prisma.song.findMany({
-            where: {
-              bandId: null,
-              musicianProfileId: null,
-              OR: broadWords.flatMap((word) => ([
-                { title: { contains: word, mode: 'insensitive' } },
-                { artist: { contains: word, mode: 'insensitive' } },
-              ])),
-            },
-            select: { id: true, title: true, artist: true, lyrics: true, category: true, type: true },
-            take: 80,
-          });
-
-          match = pickBestCandidate(candidates, titleToSearch, artistToSearch, cleaned, 30);
-        }
-      }
-
       const alreadyInRepertoire = match
         ? existingSet.has(`${match.title.toLowerCase()}|||${match.artist.toLowerCase()}`)
         : false;
 
-      results.push({
+      return {
         input: rawLine,
         cleaned,
         parsedTitle: parts ? parts.left : cleaned,
@@ -325,7 +297,16 @@ export async function POST(request) {
               type: match.type,
             }
           : null,
-      });
+      };
+    };
+
+    // Process in chunks of 5 to balance parallelism vs DB load
+    const CHUNK_SIZE = 5;
+    const results = [];
+    for (let i = 0; i < lines.length; i += CHUNK_SIZE) {
+      const chunk = lines.slice(i, i + CHUNK_SIZE);
+      const chunkResults = await Promise.all(chunk.map(processLine));
+      results.push(...chunkResults.filter(Boolean));
     }
 
     return NextResponse.json({ results });
