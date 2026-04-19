@@ -48,6 +48,8 @@ model Band {
   maxPendingRequests Int              @default(10)
   /// Da li se repertoar benda prikazuje javno na profilu (za pretragu)
   showRepertoire     Boolean          @default(false)
+  /// Kada je uključeno, gosti mogu da naruče bilo koju pesmu iz repertoara tokom live režima (ne samo one iz aktivnih set listi)
+  allowFullRepertoireLive Boolean     @default(false)
   songs              Song[] // Repertoire
   bookings           Booking[]
   liveRequests       LiveRequest[]
@@ -205,6 +207,8 @@ model MusicianProfile {
   isAvailable       Boolean                @default(true)
   /// Da li se repertoar muzičara prikazuje javno na profilu (za pretragu)
   showRepertoire     Boolean                @default(false)
+  /// Kada je uključeno, gosti mogu da naruče bilo koju pesmu iz repertoara tokom live režima (ne samo one iz aktivnih set listi)
+  allowFullRepertoireLive Boolean           @default(false)
   createdAt         DateTime               @default(now())
   updatedAt         DateTime               @updatedAt
   availabilities    MusicianAvailability[]

@@ -88,6 +88,10 @@ export async function PUT(request) {
     const priceRange = String(body?.priceRange || '').trim();
     const allowTips =
       body?.allowTips === undefined ? undefined : Boolean(body.allowTips);
+    const showRepertoire =
+      body?.showRepertoire === undefined ? undefined : Boolean(body.showRepertoire);
+    const allowFullRepertoireLive =
+      body?.allowFullRepertoireLive === undefined ? undefined : Boolean(body.allowFullRepertoireLive);
 
     if (!name) {
       return NextResponse.json({ error: 'Naziv benda je obavezan.' }, { status: 400 });
@@ -119,6 +123,8 @@ export async function PUT(request) {
         videoUrl: videoUrl || null,
         priceRange: priceRange || null,
         ...(allowTips !== undefined ? { allowTips } : {}),
+        ...(showRepertoire !== undefined ? { showRepertoire } : {}),
+        ...(allowFullRepertoireLive !== undefined ? { allowFullRepertoireLive } : {}),
       },
       create: {
         id,

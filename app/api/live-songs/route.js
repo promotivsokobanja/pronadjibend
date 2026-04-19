@@ -11,14 +11,33 @@ export async function GET(request) {
     const bandId = searchParams.get('bandId');
     const musicianId = searchParams.get('musicianId');
 
-    const where = { isLive: true };
-    if (bandId) where.bandId = bandId;
-    else if (musicianId) where.musicianProfileId = musicianId;
-    else return NextResponse.json({ error: 'bandId ili musicianId je obavezan.' }, { status: 400 });
+    if (!bandId && !musicianId) {
+      return NextResponse.json({ error: 'bandId ili musicianId je obavezan.' }, { status: 400 });
+    }
+
+    // Check if owner has allowFullRepertoireLive enabled
+    let allowFullRepertoireLive = false;
+    if (bandId) {
+      const band = await prisma.band.findUnique({
+        where: { id: bandId },
+        select: { allowFullRepertoireLive: true },
+      });
+      allowFullRepertoireLive = Boolean(band?.allowFullRepertoireLive);
+    } else if (musicianId) {
+      const musician = await prisma.musicianProfile.findUnique({
+        where: { id: musicianId },
+        select: { allowFullRepertoireLive: true },
+      });
+      allowFullRepertoireLive = Boolean(musician?.allowFullRepertoireLive);
+    }
+
+    const setlistWhere = { isLive: true };
+    if (bandId) setlistWhere.bandId = bandId;
+    else setlistWhere.musicianProfileId = musicianId;
 
     // Find all live setlists with their song items
     const liveSetLists = await prisma.setList.findMany({
-      where,
+      where: setlistWhere,
       include: {
         items: {
           orderBy: { position: 'asc' },
@@ -47,11 +66,31 @@ export async function GET(request) {
       }
     }
 
+    // If allowFullRepertoireLive is true, include entire repertoire
+    if (allowFullRepertoireLive) {
+      const songsWhere = bandId ? { bandId } : { musicianProfileId: musicianId };
+      const allSongs = await prisma.song.findMany({
+        where: songsWhere,
+        select: {
+          id: true,
+          title: true,
+          artist: true,
+          category: true,
+          type: true,
+        },
+        orderBy: { title: 'asc' },
+      });
+      for (const s of allSongs) {
+        if (!songMap.has(s.id)) songMap.set(s.id, s);
+      }
+    }
+
     const songs = Array.from(songMap.values());
 
     return NextResponse.json({
       songs,
-      hasLiveSetLists: liveSetLists.length > 0,
+      hasLiveSetLists: liveSetLists.length > 0 || allowFullRepertoireLive,
+      allowFullRepertoireLive,
     });
   } catch (err) {
     console.error('GET /api/live-songs error:', err);

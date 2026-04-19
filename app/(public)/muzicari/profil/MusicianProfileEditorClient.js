@@ -22,6 +22,7 @@ const initialForm = {
   videoUrl: '',
   isAvailable: true,
   showRepertoire: false,
+  allowFullRepertoireLive: false,
 };
 
 function formatDate(value) {
@@ -103,6 +104,7 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
             videoUrl: p.videoUrl || '',
             isAvailable: p.isAvailable !== false,
             showRepertoire: p.showRepertoire || false,
+            allowFullRepertoireLive: p.allowFullRepertoireLive || false,
           });
         }
 
@@ -789,24 +791,45 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
               </div>
 
               {viewer?.plan && viewer.plan.toUpperCase() === 'PREMIUM' && (
-                <div className="field toggle-field">
-                  <label className="toggle-label" htmlFor="musician-show-repertoire">
-                    Prikaži repertoar javno
-                  </label>
-                  <p className="toggle-hint">
-                    Omogućava drugima da vide tvoj repertoar kada pretražuju muzičare (samo za premium korisnike).
-                  </p>
-                  <button
-                    type="button"
-                    id="musician-show-repertoire"
-                    role="switch"
-                    aria-checked={form.showRepertoire}
-                    className={`tips-toggle ${form.showRepertoire ? 'on' : ''}`}
-                    onClick={() => onChange('showRepertoire', !form.showRepertoire)}
-                  >
-                    <span className="tips-toggle-knob" />
-                  </button>
-                </div>
+                <>
+                  <div className="field toggle-field">
+                    <label className="toggle-label" htmlFor="musician-show-repertoire">
+                      Prikaži repertoar javno
+                    </label>
+                    <p className="toggle-hint">
+                      Omogućava drugima da vide tvoj repertoar kada pretražuju muzičare (samo za premium korisnike).
+                    </p>
+                    <button
+                      type="button"
+                      id="musician-show-repertoire"
+                      role="switch"
+                      aria-checked={form.showRepertoire}
+                      className={`tips-toggle ${form.showRepertoire ? 'on' : ''}`}
+                      onClick={() => onChange('showRepertoire', !form.showRepertoire)}
+                    >
+                      <span className="tips-toggle-knob" />
+                    </button>
+                  </div>
+
+                  <div className="field toggle-field">
+                    <label className="toggle-label" htmlFor="musician-allow-full-repertoire-live">
+                      Dozvoli ceo repertoar za live narudžbine
+                    </label>
+                    <p className="toggle-hint">
+                      Kada je uključeno, gosti na live stranici mogu da naruče bilo koju pesmu iz tvog repertoara, nezavisno od set liste (samo za premium korisnike).
+                    </p>
+                    <button
+                      type="button"
+                      id="musician-allow-full-repertoire-live"
+                      role="switch"
+                      aria-checked={form.allowFullRepertoireLive}
+                      className={`tips-toggle ${form.allowFullRepertoireLive ? 'on' : ''}`}
+                      onClick={() => onChange('allowFullRepertoireLive', !form.allowFullRepertoireLive)}
+                    >
+                      <span className="tips-toggle-knob" />
+                    </button>
+                  </div>
+                </>
               )}
 
               <div className="grid">

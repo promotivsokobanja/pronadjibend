@@ -46,6 +46,8 @@ function normalizeBody(body) {
     priceToEur: Number.isFinite(priceToEur) ? Math.max(0, Math.floor(priceToEur)) : null,
     experienceYears: Number.isFinite(experienceYears) ? Math.max(0, Math.floor(experienceYears)) : null,
     isAvailable: body?.isAvailable !== false,
+    showRepertoire: body?.showRepertoire === undefined ? undefined : Boolean(body.showRepertoire),
+    allowFullRepertoireLive: body?.allowFullRepertoireLive === undefined ? undefined : Boolean(body.allowFullRepertoireLive),
   };
 }
 
@@ -76,6 +78,8 @@ async function resolveCurrentUser(request) {
           rating: true,
           isFeatured: true,
           isAvailable: true,
+          showRepertoire: true,
+          allowFullRepertoireLive: true,
           createdAt: true,
           updatedAt: true,
         },
@@ -159,6 +163,8 @@ export async function PUT(request) {
         img: payload.img || null,
         videoUrl: payload.videoUrl || null,
         isAvailable: payload.isAvailable,
+        ...(payload.showRepertoire !== undefined ? { showRepertoire: payload.showRepertoire } : {}),
+        ...(payload.allowFullRepertoireLive !== undefined ? { allowFullRepertoireLive: payload.allowFullRepertoireLive } : {}),
       },
       create: {
         userId: user.id,
@@ -173,6 +179,8 @@ export async function PUT(request) {
         img: payload.img || null,
         videoUrl: payload.videoUrl || null,
         isAvailable: payload.isAvailable,
+        showRepertoire: payload.showRepertoire === true,
+        allowFullRepertoireLive: payload.allowFullRepertoireLive === true,
       },
     });
 
