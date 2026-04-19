@@ -110,6 +110,7 @@ export async function GET(request) {
   const eventDate = (searchParams.get('eventDate') || '').trim();
   const sort = (searchParams.get('sort') || 'recommended').trim();
   const maxBudget = toNumber(searchParams.get('maxBudget'));
+  const includeRepertoire = searchParams.get('includeRepertoire') === '1' || searchParams.get('includeRepertoire') === 'true';
 
   const hasFilters = Boolean(search || instrument || city || eventDate || maxBudget != null || sort !== 'recommended');
 
@@ -155,10 +156,28 @@ export async function GET(request) {
                 select: { date: true, isAvailable: true },
               }
             : false,
+          songs: includeRepertoire && !eventDate
+            ? {
+                select: {
+                  id: true,
+                  title: true,
+                  artist: true,
+                  category: true,
+                },
+                orderBy: { title: 'asc' },
+              }
+            : false,
         },
       });
 
-      dbMusicians = fromDb.map((item) => normalizeMusician({ ...item, source: 'db' }));
+      dbMusicians = fromDb.map((item) => {
+        const normalized = normalizeMusician({ ...item, source: 'db' });
+        // Filter songs: only include for premium musicians with showRepertoire enabled
+        if (includeRepertoire) {
+          normalized.songs = (item.plan === 'PREMIUM' && item.showRepertoire) ? item.songs || [] : [];
+        }
+        return normalized;
+      });
     } catch (dbError) {
       console.error('Musicians DB read error:', dbError);
     }

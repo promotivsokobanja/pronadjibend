@@ -21,6 +21,7 @@ const initialForm = {
   img: '',
   videoUrl: '',
   isAvailable: true,
+  showRepertoire: false,
 };
 
 function formatDate(value) {
@@ -101,6 +102,7 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
             img: p.img || '',
             videoUrl: p.videoUrl || '',
             isAvailable: p.isAvailable !== false,
+            showRepertoire: p.showRepertoire || false,
           });
         }
 
@@ -785,6 +787,27 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
                   <span className="tips-toggle-knob" />
                 </button>
               </div>
+
+              {viewer?.plan && viewer.plan.toUpperCase() === 'PREMIUM' && (
+                <div className="field toggle-field">
+                  <label className="toggle-label" htmlFor="musician-show-repertoire">
+                    Prikaži repertoar javno
+                  </label>
+                  <p className="toggle-hint">
+                    Omogućava drugima da vide tvoj repertoar kada pretražuju muzičare (samo za premium korisnike).
+                  </p>
+                  <button
+                    type="button"
+                    id="musician-show-repertoire"
+                    role="switch"
+                    aria-checked={form.showRepertoire}
+                    className={`tips-toggle ${form.showRepertoire ? 'on' : ''}`}
+                    onClick={() => onChange('showRepertoire', !form.showRepertoire)}
+                  >
+                    <span className="tips-toggle-knob" />
+                  </button>
+                </div>
+              )}
 
               <div className="grid">
                 <div className="field">

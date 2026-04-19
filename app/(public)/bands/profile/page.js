@@ -22,6 +22,7 @@ export default function BandProfilePage() {
     img: '',
     videoUrl: '',
     allowTips: true,
+    showRepertoire: false,
   });
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadingVideo, setUploadingVideo] = useState(false);
@@ -107,6 +108,7 @@ export default function BandProfilePage() {
           img: band.img || '',
           videoUrl: band.videoUrl || '',
           allowTips: band.allowTips !== false,
+          showRepertoire: band.showRepertoire || false,
         });
       } catch (err) {
         setError('Ne mogu da učitam profil benda.');
@@ -458,6 +460,27 @@ export default function BandProfilePage() {
                 <span className="tips-toggle-knob" />
               </button>
             </div>
+
+            {viewerPlan && viewerPlan.toUpperCase() === 'PREMIUM' && (
+              <div className="field toggle-field">
+                <label className="toggle-label" htmlFor="show-repertoire">
+                  Prikaži repertoar javno
+                </label>
+                <p className="toggle-hint">
+                  Omogućava drugima da vide tvoj repertoar kada pretražuju bendove (samo za premium korisnike).
+                </p>
+                <button
+                  type="button"
+                  id="show-repertoire"
+                  role="switch"
+                  aria-checked={formData.showRepertoire}
+                  className={`tips-toggle ${formData.showRepertoire ? 'on' : ''}`}
+                  onClick={() => handleChange('showRepertoire', !formData.showRepertoire)}
+                >
+                  <span className="tips-toggle-knob" />
+                </button>
+              </div>
+            )}
 
             <div className="grid">
               <div className="field">

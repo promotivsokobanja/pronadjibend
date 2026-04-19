@@ -46,6 +46,8 @@ model Band {
   allowTips          Boolean          @default(true)
   /// Maksimalan broj live zahteva koji mogu biti na čekanju (PENDING). 0 = bez limita.
   maxPendingRequests Int              @default(10)
+  /// Da li se repertoar benda prikazuje javno na profilu (za pretragu)
+  showRepertoire     Boolean          @default(false)
   songs              Song[] // Repertoire
   bookings           Booking[]
   liveRequests       LiveRequest[]
@@ -201,6 +203,8 @@ model MusicianProfile {
   rating            Float                  @default(0)
   isFeatured        Boolean                @default(false)
   isAvailable       Boolean                @default(true)
+  /// Da li se repertoar muzičara prikazuje javno na profilu (za pretragu)
+  showRepertoire     Boolean                @default(false)
   createdAt         DateTime               @default(now())
   updatedAt         DateTime               @updatedAt
   availabilities    MusicianAvailability[]

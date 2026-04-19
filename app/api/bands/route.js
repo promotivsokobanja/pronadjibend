@@ -118,6 +118,7 @@ export async function GET(request) {
   const eventDate = searchParams.get('eventDate');
   const equipmentParam = searchParams.get('equipment');
   const equipment = equipmentParam === '1' || equipmentParam === 'true';
+  const includeRepertoire = searchParams.get('includeRepertoire') === '1' || searchParams.get('includeRepertoire') === 'true';
 
   const hasFilters =
     Boolean(search?.trim()) ||
@@ -158,10 +159,30 @@ export async function GET(request) {
 
       if (eventDate) {
         dbQuery.include = { busyDates: { select: { date: true } } };
+      } else if (includeRepertoire) {
+        dbQuery.include = {
+          songs: {
+            select: {
+              id: true,
+              title: true,
+              artist: true,
+              category: true,
+            },
+            orderBy: { title: 'asc' },
+          },
+        };
       }
 
       dbBands = await prisma.band.findMany(dbQuery);
       dbBands = applyAdvancedFilters(dbBands, { eventType, budget, eventDate });
+
+      // Filter songs: only include for premium bands with showRepertoire enabled
+      if (includeRepertoire) {
+        dbBands = dbBands.map(band => ({
+          ...band,
+          songs: (band.plan === 'PREMIUM' && band.showRepertoire) ? band.songs : []
+        }));
+      }
     } catch (dbErr) {
       console.error('DB Error (falling back to demos only):', dbErr);
     }
