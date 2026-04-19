@@ -21,7 +21,7 @@ export async function GET(request, { params } = {}) {
       where: { id },
       include: {
         reviews: true,
-        busyDates: true
+        busyDates: true,
       }
     });
 
@@ -29,7 +29,18 @@ export async function GET(request, { params } = {}) {
       return NextResponse.json({ error: 'Band not found' }, { status: 404 });
     }
 
-    return NextResponse.json(band);
+    // Attach repertoire only if premium + showRepertoire enabled
+    let songs = [];
+    const planUpper = String(band.plan || '').toUpperCase();
+    if ((planUpper === 'PREMIUM' || planUpper === 'PREMIUM_VENUE') && band.showRepertoire) {
+      songs = await prisma.song.findMany({
+        where: { bandId: id },
+        select: { id: true, title: true, artist: true, category: true, type: true },
+        orderBy: [{ category: 'asc' }, { title: 'asc' }],
+      });
+    }
+
+    return NextResponse.json({ ...band, songs });
   } catch (error) {
     console.error('API Error:', error);
     return NextResponse.json({ error: 'Failed to fetch band' }, { status: 500 });

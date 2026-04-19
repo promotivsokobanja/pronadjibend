@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { ArrowLeft, MapPin, Music2, CalendarDays, Star, Euro, Clock3 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import SocialShareActions from '../../../../components/SocialShareActions';
+import PublicRepertoire from '../../../../components/PublicRepertoire';
 
 function formatDate(value) {
   const d = new Date(value);
@@ -370,6 +371,12 @@ export default function MusicianProfileClient({ musicianId }) {
             </section>
           </aside>
         </section>
+
+        {Array.isArray(musician.songs) && musician.songs.length > 0 && (
+          <section className="musician-repertoire-wrap">
+            <PublicRepertoire songs={musician.songs} />
+          </section>
+        )}
       </main>
 
       <style jsx>{`

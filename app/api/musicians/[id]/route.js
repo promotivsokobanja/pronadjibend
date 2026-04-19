@@ -21,6 +21,7 @@ function normalizeMusician(raw) {
     isFeatured: Boolean(raw.isFeatured),
     isAvailable: raw.isAvailable !== false,
     availabilities: Array.isArray(raw.availabilities) ? raw.availabilities : [],
+    songs: Array.isArray(raw.songs) ? raw.songs : [],
     source: raw.source || 'db',
   };
 }
@@ -82,7 +83,24 @@ export async function GET(request, { params } = {}) {
       return NextResponse.json({ error: 'Muzičar nije pronađen.' }, { status: 404 });
     }
 
-    return NextResponse.json(normalizeMusician({ ...musician, source: 'db' }));
+    // Attach repertoire only if premium user + showRepertoire enabled
+    let songs = [];
+    if (musician.showRepertoire && musician.userId) {
+      const user = await prisma.user.findUnique({
+        where: { id: musician.userId },
+        select: { plan: true },
+      });
+      const planUpper = String(user?.plan || '').toUpperCase();
+      if (planUpper === 'PREMIUM' || planUpper === 'PREMIUM_VENUE') {
+        songs = await prisma.song.findMany({
+          where: { musicianProfileId: musician.id },
+          select: { id: true, title: true, artist: true, category: true, type: true },
+          orderBy: [{ category: 'asc' }, { title: 'asc' }],
+        });
+      }
+    }
+
+    return NextResponse.json(normalizeMusician({ ...musician, songs, source: 'db' }));
   } catch (error) {
     console.error('Musician detail API error:', error);
     return NextResponse.json({ error: 'Greška pri učitavanju muzičara.' }, { status: 500 });

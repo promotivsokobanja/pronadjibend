@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import BookingCalendar from '../../../../../components/BookingCalendar';
 import SocialShareActions from '../../../../../components/SocialShareActions';
+import PublicRepertoire from '../../../../../components/PublicRepertoire';
 
 const BOOKING_MESSAGE_MAX = 500;
 const MAX_BOOKING_DATES = 14;
@@ -361,6 +362,12 @@ export default function BandProfileClient({ params }) {
           )}
         </div>
       </section>
+
+      {Array.isArray(band.songs) && band.songs.length > 0 && (
+        <section className="repertoire-section container">
+          <PublicRepertoire songs={band.songs} />
+        </section>
+      )}
 
       <section className="reviews-section container">
         <div className="section-header">
