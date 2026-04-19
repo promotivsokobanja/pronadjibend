@@ -184,6 +184,29 @@ export async function POST(request) {
       },
     });
 
+    // Update main pesmarica category if song exists there and user provided category
+    if (category && category !== 'Razno') {
+      try {
+        const globalSong = await prisma.song.findFirst({
+          where: {
+            bandId: null,
+            title: { equals: title, mode: 'insensitive' },
+            artist: { equals: artist, mode: 'insensitive' },
+          },
+          select: { id: true, category: true },
+        });
+
+        if (globalSong && globalSong.category === 'Razno') {
+          await prisma.song.update({
+            where: { id: globalSong.id },
+            data: { category: normalizeSongCategory(category) },
+          });
+        }
+      } catch (updateError) {
+        console.error('Error updating main pesmarica category:', updateError);
+      }
+    }
+
     try {
       await createPendingSubmissionIfNeeded(song, owner);
     } catch (submissionError) {
