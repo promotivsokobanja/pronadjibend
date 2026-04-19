@@ -1,11 +1,16 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, Save, UserRound, Mail, CalendarDays, Euro, MapPin, Music, Video, Image as ImageIcon, ListMusic, Radio, Headphones, Trash2, QrCode } from 'lucide-react';
 import QrModal from '../../../../components/QrModal';
 import SocialShareActions from '../../../../components/SocialShareActions';
 import ChatThread from '../../../../components/ChatThread';
+import BookingCalendar from '../../../../components/BookingCalendar';
+import BusyDateNoteModal from '../../../../components/bands/BusyDateNoteModal';
+import { dateToCalendarKeyUTC } from '../../../../lib/calendarDate';
+
+const LS_MUSICIAN_CAL_QUICK = 'pronadjibend_musician_calendar_quick_busy';
 
 const ACTIVE_INVITE_STATUSES = new Set(['PENDING', 'ACCEPTED']);
 
@@ -59,6 +64,11 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
   const [passwordSuccess, setPasswordSuccess] = useState('');
   const [showQr, setShowQr] = useState(false);
   const [siteOrigin, setSiteOrigin] = useState('');
+  const [busyDates, setBusyDates] = useState([]);
+  const [manualBusyKeys, setManualBusyKeys] = useState([]);
+  const [busyDateRecords, setBusyDateRecords] = useState([]);
+  const [calendarQuickBusy, setCalendarQuickBusy] = useState(true);
+  const [busyModal, setBusyModal] = useState({ open: false, mode: 'add', dateKey: null, loading: false });
   const imageInputRef = useRef(null);
   const videoInputRef = useRef(null);
 
@@ -182,6 +192,140 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
       cancelled = true;
     };
   }, [viewer?.musicianProfileId]);
+
+  useEffect(() => {
+    try {
+      if (typeof window !== 'undefined' && localStorage.getItem(LS_MUSICIAN_CAL_QUICK) === '0') {
+        setCalendarQuickBusy(false);
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  const applyCalendarData = useCallback((calData) => {
+    setBusyDates(calData?.allBusy || []);
+    setManualBusyKeys((calData?.busyDates || []).map((b) => dateToCalendarKeyUTC(b.date)));
+    setBusyDateRecords(Array.isArray(calData?.busyDates) ? calData.busyDates : []);
+  }, []);
+
+  const refreshCalendarOnly = useCallback(async () => {
+    const ownerId = viewer?.musicianProfileId;
+    if (!ownerId) return;
+    try {
+      const resp = await fetch(`/api/musicians/calendar?musicianId=${encodeURIComponent(ownerId)}`, { cache: 'no-store' });
+      const data = await resp.json().catch(() => ({}));
+      applyCalendarData(data);
+    } catch {
+      /* ignore */
+    }
+  }, [viewer?.musicianProfileId, applyCalendarData]);
+
+  useEffect(() => {
+    const ownerId = viewer?.musicianProfileId;
+    if (!ownerId) {
+      setBusyDates([]);
+      setManualBusyKeys([]);
+      setBusyDateRecords([]);
+      return;
+    }
+    refreshCalendarOnly();
+  }, [viewer?.musicianProfileId, refreshCalendarOnly]);
+
+  const calendarToggleRequest = useCallback(async (date, reason) => {
+    const ownerId = viewer?.musicianProfileId;
+    if (!ownerId) return { ok: false };
+    const payload = { musicianId: ownerId, date, action: 'TOGGLE' };
+    if (reason !== undefined) payload.reason = reason;
+    const resp = await fetch('/api/musicians/calendar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await resp.json().catch(() => ({}));
+    if (!resp.ok) return { ok: false, error: data?.error };
+    await refreshCalendarOnly();
+    return { ok: true };
+  }, [viewer?.musicianProfileId, refreshCalendarOnly]);
+
+  const calendarUpdateNoteRequest = useCallback(async (date, reason) => {
+    const ownerId = viewer?.musicianProfileId;
+    if (!ownerId) return { ok: false };
+    const resp = await fetch('/api/musicians/calendar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ musicianId: ownerId, date, action: 'UPDATE_NOTE', reason }),
+    });
+    const data = await resp.json().catch(() => ({}));
+    if (!resp.ok) return { ok: false, error: data?.error };
+    await refreshCalendarOnly();
+    return { ok: true };
+  }, [viewer?.musicianProfileId, refreshCalendarOnly]);
+
+  const busyReasonByKey = useMemo(() => {
+    const m = {};
+    for (const b of busyDateRecords) {
+      m[dateToCalendarKeyUTC(b.date)] = b.reason || '';
+    }
+    return m;
+  }, [busyDateRecords]);
+
+  const handleCalendarDayClick = (date) => {
+    const ownerId = viewer?.musicianProfileId;
+    if (!ownerId || !date) return;
+    if (calendarQuickBusy) {
+      calendarToggleRequest(date, undefined);
+      return;
+    }
+    const isManual = manualBusyKeys.includes(date);
+    setBusyModal({ open: true, mode: isManual ? 'edit' : 'add', dateKey: date, loading: false });
+  };
+
+  const setCalendarQuickBusyPersist = (value) => {
+    setCalendarQuickBusy(value);
+    try {
+      localStorage.setItem(LS_MUSICIAN_CAL_QUICK, value ? '1' : '0');
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const formatBusyModalDate = (key) => {
+    if (!key) return '';
+    const [y, m, d] = key.split('-').map(Number);
+    if (!y || !m || !d) return key;
+    return `${String(d).padStart(2, '0')}.${String(m).padStart(2, '0')}.${y}`;
+  };
+
+  const closeBusyModal = () => setBusyModal({ open: false, mode: 'add', dateKey: null, loading: false });
+
+  const handleBusyModalSave = async (note) => {
+    const { dateKey, mode } = busyModal;
+    if (!dateKey) return;
+    setBusyModal((s) => ({ ...s, loading: true }));
+    try {
+      const r = mode === 'add'
+        ? await calendarToggleRequest(dateKey, note)
+        : await calendarUpdateNoteRequest(dateKey, note);
+      if (r.ok) closeBusyModal();
+      else setBusyModal((s) => ({ ...s, loading: false }));
+    } catch {
+      setBusyModal((s) => ({ ...s, loading: false }));
+    }
+  };
+
+  const handleBusyModalRemove = async () => {
+    const { dateKey } = busyModal;
+    if (!dateKey) return;
+    setBusyModal((s) => ({ ...s, loading: true }));
+    try {
+      const r = await calendarToggleRequest(dateKey, undefined);
+      if (r.ok) closeBusyModal();
+      else setBusyModal((s) => ({ ...s, loading: false }));
+    } catch {
+      setBusyModal((s) => ({ ...s, loading: false }));
+    }
+  };
 
   const handleInviteStatus = async (inviteId, status) => {
     if (!inviteId) return;
@@ -1202,6 +1346,51 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
                 {invitesCard}
               </aside>
             </div>
+
+            <section style={{ ...sCard, marginTop: '1.6rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap', paddingBottom: '0.85rem', borderBottom: '1.5px solid #f1f5f9' }}>
+                <div>
+                  <h2 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 900, color: '#0f172a', display: 'inline-flex', alignItems: 'center', gap: '0.45rem' }}>
+                    <CalendarDays size={16} /> Kalendar zauzetosti
+                  </h2>
+                  <p style={{ margin: '0.3rem 0 0', fontSize: '0.8rem', color: '#64748b', lineHeight: 1.45 }}>
+                    {calendarQuickBusy
+                      ? 'Kliknite na datum da ga označite kao zauzet ili slobodan (jedan klik).'
+                      : 'Kliknite na datum da dodate zauzeće i napomenu.'}
+                  </p>
+                </div>
+                <label className="calendar-quick-row" htmlFor="musician-calendar-quick-cb" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.8rem', color: '#475569', cursor: 'pointer' }}>
+                  <input
+                    id="musician-calendar-quick-cb"
+                    type="checkbox"
+                    checked={calendarQuickBusy}
+                    onChange={(e) => setCalendarQuickBusyPersist(e.target.checked)}
+                  />
+                  <span>Označi bez dodatnog komentara</span>
+                </label>
+              </div>
+              {viewer?.musicianProfileId ? (
+                <BookingCalendar
+                  bandId={viewer.musicianProfileId}
+                  busyDates={busyDates}
+                  manualBusyDateKeys={manualBusyKeys}
+                  busyReasonByKey={busyReasonByKey}
+                  onDateSelect={handleCalendarDayClick}
+                />
+              ) : (
+                <p style={{ color: '#64748b', fontSize: '0.85rem' }}>Učitavanje kalendara...</p>
+              )}
+              <BusyDateNoteModal
+                open={busyModal.open}
+                mode={busyModal.mode}
+                dateLabel={busyModal.dateKey ? formatBusyModalDate(busyModal.dateKey) : ''}
+                initialNote={busyModal.dateKey ? (busyReasonByKey[busyModal.dateKey] || '') : ''}
+                loading={busyModal.loading}
+                onClose={closeBusyModal}
+                onSave={handleBusyModalSave}
+                onRemove={busyModal.mode === 'edit' ? handleBusyModalRemove : undefined}
+              />
+            </section>
           </>
         )}
       </div>
