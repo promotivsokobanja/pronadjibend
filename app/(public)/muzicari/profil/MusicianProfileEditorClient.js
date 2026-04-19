@@ -792,7 +792,8 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
             </div>
           </div>
         ) : isSettingsPage ? (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(340px, 100%), 1fr))', gap: '1.6rem', alignItems: 'start' }}>
+          <div className="musician-settings-grid">
+            <div className="musician-settings-main">
             <form onSubmit={onSubmit} className="profile-editor" style={sCard}>
               {error ? <div className="alert error">{error}</div> : null}
               {success ? <div className="alert success">{success}</div> : null}
@@ -1128,8 +1129,9 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
                 </form>
               )}
             </section>
+            </div>
 
-            <aside style={{ display: 'flex', flexDirection: 'column', gap: '1.35rem' }}>
+            <aside className="musician-settings-aside">
               {contactCard}
               {deleteCard}
             </aside>
@@ -1452,6 +1454,42 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
         @media (max-width: 900px) {
           .musician-content {
             grid-template-columns: 1fr;
+          }
+        }
+        .musician-settings-grid {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+          gap: 1.6rem;
+          align-items: start;
+        }
+        .musician-settings-main {
+          display: flex;
+          flex-direction: column;
+          gap: 1.35rem;
+          min-width: 0;
+        }
+        .musician-settings-aside {
+          display: flex;
+          flex-direction: column;
+          gap: 1.35rem;
+          position: sticky;
+          top: 7rem;
+        }
+        @media (max-width: 900px) {
+          .musician-settings-grid {
+            grid-template-columns: 1fr;
+          }
+          .musician-settings-aside {
+            position: static;
+          }
+        }
+        @media (max-width: 640px) {
+          .musician-settings-grid {
+            gap: 1.1rem;
+          }
+          .musician-settings-main,
+          .musician-settings-aside {
+            gap: 1rem;
           }
         }
         .panel-columns {
