@@ -455,7 +455,7 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
         throw new Error(data?.error || 'Čuvanje nije uspelo.');
       }
 
-      setSuccess('Profil muzičara je uspešno sačuvan.');
+      window.location.href = '/muzicari?saved=1';
     } catch (err) {
       setError(err?.message || 'Greška pri čuvanju profila.');
     } finally {
