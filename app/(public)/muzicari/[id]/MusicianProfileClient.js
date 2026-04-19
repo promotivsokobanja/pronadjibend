@@ -280,20 +280,31 @@ export default function MusicianProfileClient({ musicianId }) {
           <aside className="profile-side-stack">
             <section className="side-card">
               <h2>Dostupnost (naredni termini)</h2>
-              {availabilityPreview.length > 0 ? (
-                <ul className="availability-list">
-                  {availabilityPreview.map((item, idx) => (
-                    <li key={`${item.date}-${idx}`}>
-                      <span className="date-text"><CalendarDays size={14} /> {formatDate(item.date)}</span>
-                      <span className={`date-status ${item.isAvailable ? 'ok' : 'busy'}`}>
-                        {item.isAvailable ? 'Slobodan' : 'Zauzet'}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="muted-copy">Nema javno unetih termina. Pošaljite upit za proveru dostupnosti.</p>
-              )}
+              {(() => {
+                const busyOnly = availabilityPreview.filter((item) => item.isAvailable === false);
+                if (busyOnly.length > 0) {
+                  return (
+                    <>
+                      <p className="muted-copy" style={{ marginBottom: '0.5rem' }}>
+                        Muzičar je generalno dostupan, osim na sledećim datumima:
+                      </p>
+                      <ul className="availability-list">
+                        {busyOnly.map((item, idx) => (
+                          <li key={`${item.date}-${idx}`}>
+                            <span className="date-text"><CalendarDays size={14} /> {formatDate(item.date)}</span>
+                            <span className="date-status busy">Zauzet</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  );
+                }
+                return (
+                  <p className="muted-copy">
+                    Muzičar je trenutno dostupan. Pošaljite upit za proveru konkretnog termina.
+                  </p>
+                );
+              })()}
             </section>
 
             {embeddedVideo && (
