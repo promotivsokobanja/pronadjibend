@@ -3,7 +3,7 @@ import { Search, BookOpen, ChevronDown, ChevronUp, Plus, Check, X, ArrowLeft } f
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 
-const CATEGORIES = ['Sve', 'Zabavne', 'Narodne', 'Strane'];
+const CATEGORIES = ['Sve', 'Zabavne', 'Narodne', 'Strane', 'Razno'];
 const ALPHABET = 'ABCČĆDĐEFGHIJKLMNOPRSTUVZŽ'.split('');
 
 export default function PesmaricaPage() {
