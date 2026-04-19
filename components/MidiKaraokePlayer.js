@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { Play, Pause, Square, X, Volume2, VolumeX, Music, SkipBack, Headphones, Usb, ListMusic, Search } from 'lucide-react';
+import { Play, Pause, Square, X, Volume2, VolumeX, Music, SkipBack, Headphones, Usb, ListMusic, Search, Minus, Plus } from 'lucide-react';
 
 function isAudioFile(name) {
   return /\.(mp3|wav|ogg|aac|flac|m4a|wma)$/i.test(name || '');
@@ -115,6 +115,15 @@ export default function MidiKaraokePlayer({ fileUrl, fileName, initialSongId, so
   const [currentLineIdx, setCurrentLineIdx] = useState(-1);
   const [currentWordIdx, setCurrentWordIdx] = useState(-1);
   const [volume, setVolume] = useState(0.7);
+  const volumeRef = useRef(0.7);
+  useEffect(() => { volumeRef.current = volume; }, [volume]);
+  const [transpose, setTranspose] = useState(0);
+  const transposeRef = useRef(0);
+  useEffect(() => { transposeRef.current = transpose; }, [transpose]);
+  const [tempo, setTempo] = useState(1.0);
+  const tempoRef = useRef(1.0);
+  const [isSeeking, setIsSeeking] = useState(false);
+  const [seekPreview, setSeekPreview] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
   const [hasLyrics, setHasLyrics] = useState(false);
   const [mode, setMode] = useState('full');
@@ -150,6 +159,7 @@ export default function MidiKaraokePlayer({ fileUrl, fileName, initialSongId, so
   const animRef = useRef(null);
   const lyricsRef = useRef(null);
   const programChangesRef = useRef(new Map());
+  const lastSentProgramRef = useRef(new Map());
   const midiAccessRef = useRef(null);
   const midiOutputRef = useRef(null);
 
@@ -176,7 +186,13 @@ export default function MidiKaraokePlayer({ fileUrl, fileName, initialSongId, so
   const sendProgramChanges = useCallback(() => {
     const out = midiOutputRef.current;
     if (!out) return;
-    programChangesRef.current.forEach((prog, ch) => { if (ch !== 9) out.send([0xC0 | ch, prog]); });
+    lastSentProgramRef.current = new Map();
+    programChangesRef.current.forEach((prog, ch) => {
+      if (ch !== 9) {
+        out.send([0xC0 | ch, prog & 0x7F]);
+        lastSentProgramRef.current.set(ch, prog);
+      }
+    });
   }, []);
 
   const selectMidiOutput = useCallback((outputId) => {
@@ -229,7 +245,7 @@ export default function MidiKaraokePlayer({ fileUrl, fileName, initialSongId, so
       const audio = new Audio();
       audioRef.current = audio;
       audio.crossOrigin = 'anonymous';
-      audio.volume = volume;
+      audio.volume = volumeRef.current;
       audio.preload = 'auto';
       await new Promise((resolve, reject) => {
         audio.oncanplaythrough = resolve;
@@ -243,7 +259,7 @@ export default function MidiKaraokePlayer({ fileUrl, fileName, initialSongId, so
       setStatus('error');
       setErrorMsg(err.message);
     }
-  }, [volume]);
+  }, []);
 
   // ===== MIDI with CACHED GM SoundFont =====
   const loadMidi = useCallback(async (url) => {
@@ -268,7 +284,7 @@ export default function MidiKaraokePlayer({ fileUrl, fileName, initialSongId, so
         ac = new (window.AudioContext || window.webkitAudioContext)();
         audioContextRef.current = ac;
         const masterGain = ac.createGain();
-        masterGain.gain.value = volume;
+        masterGain.gain.value = volumeRef.current;
         masterGain.connect(ac.destination);
         gainNodeRef.current = masterGain;
         const noiseBuf = ac.createBuffer(1, ac.sampleRate, ac.sampleRate);
@@ -279,12 +295,63 @@ export default function MidiKaraokePlayer({ fileUrl, fileName, initialSongId, so
         await ac.resume();
       }
 
+      // Parse raw MIDI events for mid-track program changes
+      const { parseMidi } = await import('midi-file');
+      const rawMidi = parseMidi(new Uint8Array(buffer));
+      const ppq = rawMidi.header.ticksPerBeat || 480;
+      // Build tempo map (sorted by tick) → convert ticks to seconds
+      const tempoMap = [{ tick: 0, usPerBeat: 500000 }]; // default 120 BPM
+      rawMidi.tracks.forEach(trackEvents => {
+        let tick = 0;
+        trackEvents.forEach(ev => {
+          tick += ev.deltaTime || 0;
+          if (ev.type === 'setTempo') tempoMap.push({ tick, usPerBeat: ev.microsecondsPerBeat });
+        });
+      });
+      tempoMap.sort((a, b) => a.tick - b.tick);
+      const tickToSec = (targetTick) => {
+        let sec = 0;
+        for (let i = 0; i < tempoMap.length; i++) {
+          const curr = tempoMap[i];
+          const next = tempoMap[i + 1];
+          const endTick = next ? Math.min(next.tick, targetTick) : targetTick;
+          if (endTick > curr.tick) sec += ((endTick - curr.tick) * curr.usPerBeat) / (ppq * 1e6);
+          if (!next || next.tick >= targetTick) break;
+        }
+        return sec;
+      };
+      // Per-channel program timeline
+      const progTimeline = new Map(); // channel -> [{time, program}]
+      rawMidi.tracks.forEach(trackEvents => {
+        let tick = 0;
+        trackEvents.forEach(ev => {
+          tick += ev.deltaTime || 0;
+          if (ev.type === 'programChange' && ev.channel != null) {
+            const ch = ev.channel;
+            if (!progTimeline.has(ch)) progTimeline.set(ch, []);
+            progTimeline.get(ch).push({ time: tickToSec(tick), program: ev.programNumber });
+          }
+        });
+      });
+      progTimeline.forEach(arr => arr.sort((a, b) => a.time - b.time));
+      const programAt = (channel, time) => {
+        const arr = progTimeline.get(channel);
+        if (!arr || arr.length === 0) return null;
+        let prog = arr[0].program;
+        for (const entry of arr) { if (entry.time <= time + 1e-6) prog = entry.program; else break; }
+        return prog;
+      };
+
       const neededPrograms = new Set();
       const progChanges = new Map();
       midi.tracks.forEach(track => {
         if (track.notes.length === 0 || track.channel === 9) return;
+        // Add initial program from @tonejs/midi + all programs from timeline
         neededPrograms.add(track.instrument.number);
-        progChanges.set(track.channel, track.instrument.number);
+        const initialProg = programAt(track.channel, 0) ?? track.instrument.number;
+        progChanges.set(track.channel, initialProg);
+        const chTimeline = progTimeline.get(track.channel);
+        if (chTimeline) chTimeline.forEach(e => neededPrograms.add(e.program));
       });
       programChangesRef.current = progChanges;
 
@@ -321,8 +388,10 @@ export default function MidiKaraokePlayer({ fileUrl, fileName, initialSongId, so
       const schedule = [];
       midi.tracks.forEach(track => {
         if (track.notes.length === 0) return;
+        const isDrum = track.channel === 9;
         track.notes.forEach(note => {
-          schedule.push({ time: note.time, midiNote: note.midi, duration: note.duration, velocity: note.velocity, programNumber: track.instrument.number, isDrum: track.channel === 9, channel: track.channel });
+          const resolvedProgram = isDrum ? 0 : (programAt(track.channel, note.time) ?? track.instrument.number);
+          schedule.push({ time: note.time, midiNote: note.midi, duration: note.duration, velocity: note.velocity, programNumber: resolvedProgram, isDrum, channel: track.channel });
         });
       });
       schedule.sort((a, b) => a.time - b.time);
@@ -336,7 +405,7 @@ export default function MidiKaraokePlayer({ fileUrl, fileName, initialSongId, so
       setStatus('error');
       setErrorMsg(err.message || 'Greška');
     }
-  }, [volume]);
+  }, []);
 
   // ===== INITIAL LOAD =====
   useEffect(() => {
@@ -415,9 +484,34 @@ export default function MidiKaraokePlayer({ fileUrl, fileName, initialSongId, so
   useEffect(() => {
     if (fileType === 'audio' && audioRef.current) { audioRef.current.volume = isMuted ? 0 : volume; audioRef.current.muted = isMuted; }
     if (fileType === 'midi' && gainNodeRef.current) {
-      gainNodeRef.current.gain.value = (mode === 'lyrics-only' || !internalSoundEnabled) ? 0 : (isMuted ? 0 : volume);
+      gainNodeRef.current.gain.value = !internalSoundEnabled ? 0 : (isMuted ? 0 : volume);
     }
-  }, [volume, isMuted, fileType, mode, internalSoundEnabled]);
+  }, [volume, isMuted, fileType, internalSoundEnabled]);
+
+  // ===== TEMPO =====
+  // Change tempo mid-play: shift startRealTime/positionAtStart so current position stays, then scale
+  const applyTempo = useCallback((newTempo) => {
+    const pb = playbackRef.current; const ac = audioContextRef.current;
+    if (pb && ac && pb.isPlaying) {
+      const realElapsed = ac.currentTime - pb.startRealTime;
+      const curPos = realElapsed * tempoRef.current + pb.positionAtStart;
+      pb.positionAtStart = curPos;
+      pb.startRealTime = ac.currentTime;
+      // stop sustained notes so re-schedule doesn't overlap stretched ones
+      stopAllSoundsRef.current?.();
+      if (pb.schedulerTimer) { clearTimeout(pb.schedulerTimer); pb.schedulerTimer = null; }
+      pb.nextNoteIndex = findNoteIndex(noteScheduleRef.current, curPos);
+    }
+    tempoRef.current = newTempo;
+    setTempo(newTempo);
+    if (fileType === 'audio' && audioRef.current) {
+      audioRef.current.playbackRate = newTempo;
+      try { audioRef.current.preservesPitch = true; } catch {}
+    }
+    if (pb && ac && pb.isPlaying) startSchedulerRef.current?.();
+  }, [fileType]);
+  const stopAllSoundsRef = useRef(null);
+  const startSchedulerRef = useRef(null);
 
   // ===== SCHEDULER =====
   const scheduleNotes = useCallback(() => {
@@ -425,8 +519,9 @@ export default function MidiKaraokePlayer({ fileUrl, fileName, initialSongId, so
     const ac = audioContextRef.current;
     if (!pb || !ac || !pb.isPlaying) return;
     const now = ac.currentTime;
-    const curPos = now - pb.startRealTime + pb.positionAtStart;
-    const endPos = curPos + LOOKAHEAD;
+    const speed = tempoRef.current || 1;
+    const curPos = (now - pb.startRealTime) * speed + pb.positionAtStart;
+    const endPos = curPos + LOOKAHEAD * speed;
     const schedule = noteScheduleRef.current;
     const extOut = midiOutputRef.current;
     const perfNow = performance.now();
@@ -434,15 +529,23 @@ export default function MidiKaraokePlayer({ fileUrl, fileName, initialSongId, so
     while (pb.nextNoteIndex < schedule.length) {
       const n = schedule[pb.nextNoteIndex];
       if (n.time > endPos) break;
-      if (n.time >= curPos - 0.05) {
-        const offset = n.time - curPos;
-        const when = Math.max(now, pb.startRealTime + n.time - pb.positionAtStart);
+      if (n.time >= curPos - 0.05 * speed) {
+        const offset = (n.time - curPos) / speed;
+        const when = Math.max(now, pb.startRealTime + (n.time - pb.positionAtStart) / speed);
+        const playedNote = n.isDrum ? n.midiNote : Math.max(0, Math.min(127, n.midiNote + transposeRef.current));
         if (n.isDrum) { playDrumHit(ac, gainNodeRef.current, noiseBufferRef.current, n.midiNote, when, n.velocity); }
-        else { const inst = instrumentsRef.current.get(n.programNumber); if (inst) { try { inst.play(n.midiNote, when, { duration: Math.min(n.duration, 5), gain: n.velocity }); } catch {} } }
+        else { const inst = instrumentsRef.current.get(n.programNumber); if (inst) { try { inst.play(playedNote, when, { duration: Math.min(n.duration, 5), gain: n.velocity }); } catch {} } }
         if (extOut) {
           const midiTs = perfNow + Math.max(0, offset) * 1000;
-          extOut.send([0x90 | n.channel, n.midiNote, Math.min(127, Math.max(1, Math.round(n.velocity * 127)))], midiTs);
-          extOut.send([0x80 | n.channel, n.midiNote, 0], midiTs + n.duration * 1000);
+          if (!n.isDrum) {
+            const sent = lastSentProgramRef.current;
+            if (sent.get(n.channel) !== n.programNumber) {
+              extOut.send([0xC0 | n.channel, n.programNumber & 0x7F], midiTs);
+              sent.set(n.channel, n.programNumber);
+            }
+          }
+          extOut.send([0x90 | n.channel, playedNote, Math.min(127, Math.max(1, Math.round(n.velocity * 127)))], midiTs);
+          extOut.send([0x80 | n.channel, playedNote, 0], midiTs + (n.duration * 1000) / speed);
         }
       }
       pb.nextNoteIndex++;
@@ -453,6 +556,7 @@ export default function MidiKaraokePlayer({ fileUrl, fileName, initialSongId, so
     const tick = () => { scheduleNotes(); const pb = playbackRef.current; if (pb?.isPlaying) pb.schedulerTimer = setTimeout(tick, SCHED_MS); };
     tick();
   }, [scheduleNotes]);
+  useEffect(() => { startSchedulerRef.current = startScheduler; }, [startScheduler]);
 
   // ===== SYNC =====
   const stopAllSounds = useCallback(() => {
@@ -460,6 +564,7 @@ export default function MidiKaraokePlayer({ fileUrl, fileName, initialSongId, so
     if (ac) instrumentsRef.current.forEach(inst => { try { inst.stop(ac.currentTime); } catch {} });
     sendAllNotesOff();
   }, [sendAllNotesOff]);
+  useEffect(() => { stopAllSoundsRef.current = stopAllSounds; }, [stopAllSounds]);
 
   const handleStopInternal = useCallback(() => {
     const pb = playbackRef.current;
@@ -477,7 +582,8 @@ export default function MidiKaraokePlayer({ fileUrl, fileName, initialSongId, so
         if (audioRef.current.ended) { setStatus('ready'); setCurrentTime(0); if (animRef.current) cancelAnimationFrame(animRef.current); return; }
       } else if (fileType === 'midi') {
         const pb = playbackRef.current; const ac = audioContextRef.current;
-        if (pb && ac && pb.isPlaying) { t = ac.currentTime - pb.startRealTime + pb.positionAtStart; if (t >= duration + 0.5) { handleStopInternal(); return; } }
+        const speed = tempoRef.current || 1;
+        if (pb && ac && pb.isPlaying) { t = (ac.currentTime - pb.startRealTime) * speed + pb.positionAtStart; if (t >= duration + 0.5) { handleStopInternal(); return; } }
         else if (pb) t = pb.positionAtStart;
       }
       setCurrentTime(t);
@@ -495,18 +601,18 @@ export default function MidiKaraokePlayer({ fileUrl, fileName, initialSongId, so
 
   // ===== CONTROLS =====
   const handlePlay = async () => {
-    if (fileType === 'audio') { if (audioRef.current) { await audioRef.current.play(); setStatus('playing'); startSync(); } return; }
+    if (fileType === 'audio') { if (audioRef.current) { audioRef.current.playbackRate = tempoRef.current || 1; try { audioRef.current.preservesPitch = true; } catch {} await audioRef.current.play(); setStatus('playing'); startSync(); } return; }
     const ac = audioContextRef.current; if (!ac) return;
     if (ac.state === 'suspended') await ac.resume();
     if (midiOutputRef.current) sendProgramChanges();
     const pb = playbackRef.current; pb.startRealTime = ac.currentTime; pb.isPlaying = true;
-    if (gainNodeRef.current) gainNodeRef.current.gain.value = (mode === 'lyrics-only' || !internalSoundEnabled) ? 0 : (isMuted ? 0 : volume);
+    if (gainNodeRef.current) gainNodeRef.current.gain.value = !internalSoundEnabled ? 0 : (isMuted ? 0 : volume);
     setStatus('playing'); startScheduler(); startSync();
   };
 
   const handlePause = () => {
     if (fileType === 'audio' && audioRef.current) audioRef.current.pause();
-    if (fileType === 'midi') { const pb = playbackRef.current; const ac = audioContextRef.current; if (pb && ac) { pb.positionAtStart = ac.currentTime - pb.startRealTime + pb.positionAtStart; pb.isPlaying = false; if (pb.schedulerTimer) { clearTimeout(pb.schedulerTimer); pb.schedulerTimer = null; } stopAllSounds(); } }
+    if (fileType === 'midi') { const pb = playbackRef.current; const ac = audioContextRef.current; if (pb && ac) { const speed = tempoRef.current || 1; pb.positionAtStart = (ac.currentTime - pb.startRealTime) * speed + pb.positionAtStart; pb.isPlaying = false; if (pb.schedulerTimer) { clearTimeout(pb.schedulerTimer); pb.schedulerTimer = null; } stopAllSounds(); } }
     if (animRef.current) cancelAnimationFrame(animRef.current);
     setStatus('paused');
   };
@@ -516,10 +622,7 @@ export default function MidiKaraokePlayer({ fileUrl, fileName, initialSongId, so
     else if (fileType === 'midi') handleStopInternal();
   };
 
-  const handleSeek = (e) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-    const newTime = pct * duration;
+  const applySeek = useCallback((newTime) => {
     if (fileType === 'audio' && audioRef.current) audioRef.current.currentTime = newTime;
     if (fileType === 'midi') {
       const pb = playbackRef.current; const ac = audioContextRef.current;
@@ -528,16 +631,46 @@ export default function MidiKaraokePlayer({ fileUrl, fileName, initialSongId, so
       }
     }
     setCurrentTime(newTime);
+  }, [fileType, stopAllSounds, startScheduler, sendProgramChanges]);
+
+  const progressRef = useRef(null);
+  const timeFromEvent = useCallback((clientX) => {
+    const el = progressRef.current; if (!el) return 0;
+    const rect = el.getBoundingClientRect();
+    const pct = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    return pct * duration;
+  }, [duration]);
+
+  const handleProgressPointerDown = (e) => {
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+    setIsSeeking(true);
+    const t = timeFromEvent(e.clientX);
+    setSeekPreview(t);
+  };
+  const handleProgressPointerMove = (e) => {
+    if (!isSeeking) return;
+    const t = timeFromEvent(e.clientX);
+    setSeekPreview(t);
+  };
+  const handleProgressPointerUp = (e) => {
+    if (!isSeeking) return;
+    const t = timeFromEvent(e.clientX);
+    setIsSeeking(false);
+    applySeek(t);
+  };
+  const handleSeek = (e) => {
+    if (isSeeking) return;
+    applySeek(timeFromEvent(e.clientX));
   };
 
   const handleRestart = () => { handleStop(); setTimeout(() => handlePlay(), 100); };
   const formatTime = (s) => { const m = Math.floor(s / 60); const sec = Math.floor(s % 60); return `${m}:${sec.toString().padStart(2, '0')}`; };
 
   useEffect(() => {
-    if (currentLineIdx < 0 || !lyricsRef.current) return;
+    if (currentLineIdx < 0 || !lyricsRef.current || mode === 'lyrics-only') return;
     const el = lyricsRef.current.querySelector(`[data-line="${currentLineIdx}"]`);
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }, [currentLineIdx]);
+  }, [currentLineIdx, mode]);
 
   const handleClose = () => { cleanup(); onClose?.(); };
 
@@ -591,8 +724,8 @@ export default function MidiKaraokePlayer({ fileUrl, fileName, initialSongId, so
             )}
 
             {hasLyrics && fileType === 'midi' && (
-              <button className={`mode-btn ${mode === 'lyrics-only' ? 'active' : ''}`} onClick={() => setMode(mode === 'full' ? 'lyrics-only' : 'full')}>
-                {mode === 'full' ? '\u266A+Tekst' : '\uD83D\uDCDD Tekst'}
+              <button className={`mode-btn ${mode === 'lyrics-only' ? 'active' : ''}`} onClick={() => setMode(mode === 'full' ? 'lyrics-only' : 'full')} title={mode === 'full' ? 'Zamrzni tekst' : 'Odmrzni tekst'}>
+                {mode === 'full' ? '🔓 Tekst' : '🔒 Tekst'}
               </button>
             )}
             <button className="close-btn" onClick={handleClose}><X size={22} /></button>
@@ -671,11 +804,36 @@ export default function MidiKaraokePlayer({ fileUrl, fileName, initialSongId, so
           )}
         </div>
 
-        <div className="kp-progress" onClick={handleSeek}>
-          <div className="kp-progress-bar" style={{ width: `${duration > 0 ? (currentTime / duration) * 100 : 0}%` }}></div>
+        <div
+          className="kp-progress"
+          ref={progressRef}
+          onClick={handleSeek}
+          onPointerDown={handleProgressPointerDown}
+          onPointerMove={handleProgressPointerMove}
+          onPointerUp={handleProgressPointerUp}
+          onPointerCancel={handleProgressPointerUp}
+        >
+          <div className="kp-progress-bar" style={{ width: `${duration > 0 ? ((isSeeking ? seekPreview : currentTime) / duration) * 100 : 0}%` }}></div>
         </div>
 
         <footer className="kp-controls">
+          <div className="kp-vol">
+            <button className="ctrl-btn" onClick={() => setIsMuted(!isMuted)}>{isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}</button>
+            <input type="range" min="0" max="1" step="0.05" value={isMuted ? 0 : volume} onChange={(e) => { setVolume(parseFloat(e.target.value)); setIsMuted(false); }} className="vol-slider" />
+          </div>
+          <div className="kp-transpose kp-tempo" title="Tempo (brzina) — klik na broj za reset">
+            <button className="ctrl-btn sm" onClick={() => applyTempo(Math.max(0.5, Math.round((tempo - 0.05) * 100) / 100))} disabled={tempo <= 0.5}><Minus size={14} /></button>
+            <button
+              type="button"
+              className={`tr-val ${tempo !== 1 ? 'active' : ''}`}
+              onClick={() => applyTempo(1)}
+              title={tempo !== 1 ? 'Klik za reset (1.0x)' : 'Tempo'}
+              disabled={tempo === 1}
+            >
+              {tempo.toFixed(2)}x
+            </button>
+            <button className="ctrl-btn sm" onClick={() => applyTempo(Math.min(2.0, Math.round((tempo + 0.05) * 100) / 100))} disabled={tempo >= 2}><Plus size={14} /></button>
+          </div>
           <div className="kp-time">{formatTime(currentTime)}</div>
           <div className="kp-btns">
             <button className="ctrl-btn" onClick={handleRestart} title="Od početka"><SkipBack size={18} /></button>
@@ -686,11 +844,22 @@ export default function MidiKaraokePlayer({ fileUrl, fileName, initialSongId, so
             )}
             <button className="ctrl-btn" onClick={handleStop} title="Stop"><Square size={18} /></button>
           </div>
-          <div className="kp-vol">
-            <button className="ctrl-btn" onClick={() => setIsMuted(!isMuted)}>{isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}</button>
-            <input type="range" min="0" max="1" step="0.05" value={isMuted ? 0 : volume} onChange={(e) => { setVolume(parseFloat(e.target.value)); setIsMuted(false); }} className="vol-slider" />
-          </div>
-          <div className="kp-time">{formatTime(duration)}</div>
+          <div className="kp-time kp-time-right">{formatTime(duration)}</div>
+          {!isAudioMode && (
+            <div className="kp-transpose" title="Transponovanje (polutonovi) — klik na broj za reset">
+              <button className="ctrl-btn sm" onClick={() => setTranspose((t) => Math.max(-12, t - 1))} disabled={transpose <= -12}><Minus size={14} /></button>
+              <button
+                type="button"
+                className={`tr-val ${transpose !== 0 ? 'active' : ''}`}
+                onClick={() => setTranspose(0)}
+                title={transpose !== 0 ? 'Klik za reset (0)' : 'Transpose'}
+                disabled={transpose === 0}
+              >
+                {transpose > 0 ? `+${transpose}` : transpose}
+              </button>
+              <button className="ctrl-btn sm" onClick={() => setTranspose((t) => Math.min(12, t + 1))} disabled={transpose >= 12}><Plus size={14} /></button>
+            </div>
+          )}
         </footer>
       </div>
 
@@ -791,15 +960,26 @@ export default function MidiKaraokePlayer({ fileUrl, fileName, initialSongId, so
         .sp-load-more:disabled { opacity: 0.5; cursor: wait; }
         .sp-loading-more { text-align: center; padding: 0.5rem; font-size: 0.7rem; color: #64748b; }
 
-        .kp-progress { height: 4px; background: rgba(255,255,255,0.06); cursor: pointer; position: relative; flex-shrink: 0; }
-        .kp-progress:hover { height: 6px; }
-        .kp-progress-bar { height: 100%; background: linear-gradient(90deg, ${accentColor}, #a78bfa); border-radius: 2px; transition: width 0.1s linear; position: relative; }
-        .kp-progress-bar::after { content: ''; position: absolute; right: -4px; top: 50%; transform: translateY(-50%); width: 10px; height: 10px; border-radius: 50%; background: ${accentColor}; opacity: 0; transition: opacity 0.2s; }
-        .kp-progress:hover .kp-progress-bar::after { opacity: 1; }
+        .kp-progress { height: 10px; background: transparent; cursor: pointer; position: relative; flex-shrink: 0; touch-action: none; display: flex; align-items: center; padding: 0 2px; }
+        .kp-progress::before { content: ''; position: absolute; left: 2px; right: 2px; top: 50%; transform: translateY(-50%); height: 4px; background: rgba(255,255,255,0.06); border-radius: 2px; transition: height 0.15s; }
+        .kp-progress:hover::before, .kp-progress:active::before { height: 6px; }
+        .kp-progress-bar { height: 4px; background: linear-gradient(90deg, ${accentColor}, #a78bfa); border-radius: 2px; transition: width 0.1s linear, height 0.15s; position: relative; z-index: 1; }
+        .kp-progress:hover .kp-progress-bar, .kp-progress:active .kp-progress-bar { height: 6px; }
+        .kp-progress-bar::after { content: ''; position: absolute; right: -6px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; border-radius: 50%; background: ${accentColor}; box-shadow: 0 2px 8px rgba(0,0,0,0.4); opacity: 0; transition: opacity 0.2s, transform 0.15s; pointer-events: none; }
+        .kp-progress:hover .kp-progress-bar::after, .kp-progress:active .kp-progress-bar::after { opacity: 1; }
+        .kp-progress:active .kp-progress-bar::after { transform: translateY(-50%) scale(1.15); }
+        .kp-transpose { display: flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 100px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); }
+        .kp-tempo .tr-val { min-width: 44px; }
+        .kp-transpose .ctrl-btn.sm { width: 24px; height: 24px; padding: 0; color: #94a3b8; }
+        .kp-transpose .ctrl-btn.sm:hover:not(:disabled) { color: ${accentColor}; background: rgba(255,255,255,0.06); }
+        .tr-val { font-size: 0.72rem; font-weight: 800; font-variant-numeric: tabular-nums; color: #e2e8f0; min-width: 28px; text-align: center; background: transparent; border: none; padding: 2px 0; cursor: default; transition: color 0.15s; }
+        .tr-val.active { color: #f59e0b; cursor: pointer; }
+        .tr-val.active:hover { color: #fbbf24; }
 
-        .kp-controls { display: flex; align-items: center; gap: 0.75rem; padding: 0.8rem 1.25rem; border-top: 1px solid rgba(255,255,255,0.06); background: rgba(0,0,0,0.3); flex-shrink: 0; }
+        .kp-controls { display: flex; align-items: center; gap: 0.75rem; padding: 0.8rem 1.25rem; border-top: 1px solid rgba(255,255,255,0.06); background: rgba(0,0,0,0.3); flex-shrink: 0; position: relative; }
         .kp-time { font-size: 0.7rem; color: #64748b; font-weight: 700; font-variant-numeric: tabular-nums; min-width: 32px; }
-        .kp-btns { display: flex; align-items: center; gap: 0.4rem; margin: 0 auto; }
+        .kp-time-right { margin-left: auto; }
+        .kp-btns { display: flex; align-items: center; gap: 0.4rem; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }
         .ctrl-btn { display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); color: #94a3b8; cursor: pointer; transition: all 0.2s; }
         .ctrl-btn:hover:not(:disabled) { background: rgba(${isAudioMode ? '52,211,153' : '96,165,250'},0.15); color: ${accentColor}; border-color: rgba(${isAudioMode ? '52,211,153' : '96,165,250'},0.3); }
         .ctrl-btn:disabled { opacity: 0.3; cursor: not-allowed; }
@@ -856,7 +1036,9 @@ export default function MidiKaraokePlayer({ fileUrl, fileName, initialSongId, so
           .kp-lyrics { padding: 1.2rem 0.95rem; }
           .lyric-line { font-size: 1.1rem; }
           .lyric-line.active { font-size: 1.35rem; }
-          .vol-slider { width: 50px; }
+          .vol-slider { width: 60px; }
+          .kp-progress { height: 14px; }
+          .kp-progress-bar::after { width: 18px; height: 18px; right: -9px; opacity: 1; }
           .song-panel {
             position: absolute;
             right: 0;
@@ -868,21 +1050,30 @@ export default function MidiKaraokePlayer({ fileUrl, fileName, initialSongId, so
           }
           .midi-panel { min-width: 200px; right: 0; }
           .kp-controls {
-            flex-wrap: wrap;
-            justify-content: center;
-            padding: 0.8rem 0.9rem calc(0.9rem + env(safe-area-inset-bottom));
-          }
-          .kp-time {
-            order: 3;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            grid-template-areas:
+              "btns btns btns"
+              "vol tempo transpose"
+              "time time timeRight";
+            row-gap: 0.5rem;
+            column-gap: 0.5rem;
+            justify-content: stretch;
+            align-items: center;
+            padding: 0.75rem 0.9rem calc(0.9rem + env(safe-area-inset-bottom));
+            position: static;
           }
           .kp-btns {
-            order: 1;
-            width: 100%;
-            justify-content: center;
+            position: static;
+            transform: none;
+            grid-area: btns;
+            justify-self: center;
           }
-          .kp-vol {
-            order: 2;
-          }
+          .kp-vol { grid-area: vol; justify-self: start; }
+          .kp-controls > .kp-tempo { grid-area: tempo; justify-self: center; }
+          .kp-controls > :not(.kp-tempo).kp-transpose { grid-area: transpose; justify-self: end; }
+          .kp-controls > .kp-time:not(.kp-time-right) { grid-area: time; justify-self: start; }
+          .kp-time-right { grid-area: timeRight; justify-self: end; margin-left: 0; }
         }
 
         @media (max-width: 560px) {
@@ -935,6 +1126,13 @@ export default function MidiKaraokePlayer({ fileUrl, fileName, initialSongId, so
             font-size: 1.16rem;
             transform: scale(1.02);
           }
+          .vol-slider { width: 48px; }
+          .kp-vol .ctrl-btn { width: 26px; height: 26px; }
+          .kp-transpose { padding: 2px 5px; gap: 2px; }
+          .kp-transpose .ctrl-btn.sm { width: 22px; height: 22px; }
+          .tr-val { min-width: 24px; font-size: 0.68rem; }
+          .ctrl-btn { width: 34px; height: 34px; }
+          .ctrl-btn.play-btn { width: 42px; height: 42px; }
         }
       `}</style>
     </div>

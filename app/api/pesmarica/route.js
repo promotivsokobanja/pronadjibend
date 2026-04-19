@@ -1,5 +1,6 @@
 import prisma from '../../../lib/prisma';
 import { NextResponse } from 'next/server';
+import { cleanLyrics } from '../../../lib/cleanLyrics';
 
 export const dynamic = 'force-dynamic';
 
@@ -74,8 +75,10 @@ export async function GET(request) {
     }
     counts['Sve'] = totalAll;
 
+    const cleanedSongs = songs.map((s) => ({ ...s, lyrics: cleanLyrics(s.lyrics) }));
+
     return NextResponse.json({
-      songs,
+      songs: cleanedSongs,
       total,
       page,
       pages: Math.ceil(total / limit),

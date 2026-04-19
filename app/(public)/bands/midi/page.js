@@ -197,7 +197,7 @@ export default function MidiLibraryPage() {
             if (window.history.length > 1) {
               router.back();
             } else {
-              router.push('/bands');
+              router.push(currentMusicianId ? '/muzicari/profil' : '/bands');
             }
           }}
         >

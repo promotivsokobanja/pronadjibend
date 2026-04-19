@@ -122,7 +122,7 @@ export default function PesmaricaPage() {
             if (window.history.length > 1) {
               router.back();
             } else {
-              router.push('/bands');
+              router.push(musicianId ? '/muzicari/profil' : '/bands');
             }
           }}
         >

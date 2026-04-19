@@ -1754,6 +1754,23 @@ export default function LiveDashboard({ bandId, musicianId }) {
           display: flex;
           flex-direction: column;
           gap: 0.75rem;
+          scrollbar-width: thin;
+          scrollbar-color: #4a4a4a #0f0f0f;
+        }
+        .settings-body::-webkit-scrollbar {
+          width: 8px;
+        }
+        .settings-body::-webkit-scrollbar-track {
+          background: #0f0f0f;
+          border-radius: 4px;
+        }
+        .settings-body::-webkit-scrollbar-thumb {
+          background: #4a4a4a;
+          border-radius: 4px;
+        }
+        .settings-body::-webkit-scrollbar-thumb:hover {
+          background: #5a5a5a;
+        }
         }
         .setting-group {
           padding: 0.85rem 0.9rem;
@@ -2007,20 +2024,21 @@ export default function LiveDashboard({ bandId, musicianId }) {
           -webkit-overflow-scrolling: touch;
           overscroll-behavior-y: contain;
           scrollbar-width: thin;
-          scrollbar-color: #2a2a2a #0a0a0a;
+          scrollbar-color: #4a4a4a #0f0f0f;
         }
         .hud-content::-webkit-scrollbar {
-          width: 6px;
+          width: 8px;
         }
         .hud-content::-webkit-scrollbar-track {
-          background: #0a0a0a;
+          background: #0f0f0f;
+          border-radius: 4px;
         }
         .hud-content::-webkit-scrollbar-thumb {
-          background: #2a2a2a;
-          border-radius: 3px;
+          background: #4a4a4a;
+          border-radius: 4px;
         }
         .hud-content::-webkit-scrollbar-thumb:hover {
-          background: #3a3a3a;
+          background: #5a5a5a;
         }
 
         .hud-content h2 {
@@ -2545,8 +2563,22 @@ export default function LiveDashboard({ bandId, musicianId }) {
           max-height: min(55dvh, 520px);
           overflow-y: auto;
           scrollbar-width: thin;
-          scrollbar-color: #6a6a6a #151515;
+          scrollbar-color: #4a4a4a #0f0f0f;
           -webkit-overflow-scrolling: touch;
+        }
+        .repertoire-dropdown-item::-webkit-scrollbar {
+          width: 8px;
+        }
+        .repertoire-dropdown-item::-webkit-scrollbar-track {
+          background: #0f0f0f;
+          border-radius: 4px;
+        }
+        .repertoire-dropdown-item::-webkit-scrollbar-thumb {
+          background: #4a4a4a;
+          border-radius: 4px;
+        }
+        .repertoire-dropdown-item::-webkit-scrollbar-thumb:hover {
+          background: #5a5a5a;
         }
         .repertoire-dropdown-item {
           display: grid;
@@ -2661,7 +2693,25 @@ export default function LiveDashboard({ bandId, musicianId }) {
           max-height: 5.5rem;
           overflow-y: auto;
           scrollbar-width: thin;
-          scrollbar-color: #6a6a6a #151515;
+          scrollbar-color: #4a4a4a #0f0f0f;
+        }
+        .setlist-chip::-webkit-scrollbar,
+        .active-setlist-item::-webkit-scrollbar {
+          width: 8px;
+        }
+        .setlist-chip::-webkit-scrollbar-track,
+        .active-setlist-item::-webkit-scrollbar-track {
+          background: #0f0f0f;
+          border-radius: 4px;
+        }
+        .setlist-chip::-webkit-scrollbar-thumb,
+        .active-setlist-item::-webkit-scrollbar-thumb {
+          background: #4a4a4a;
+          border-radius: 4px;
+        }
+        .setlist-chip::-webkit-scrollbar-thumb:hover,
+        .active-setlist-item::-webkit-scrollbar-thumb:hover {
+          background: #5a5a5a;
         }
         .setlist-chip,
         .active-setlist-item,
@@ -2911,7 +2961,21 @@ export default function LiveDashboard({ bandId, musicianId }) {
           max-height: min(60dvh, 520px);
           overflow-y: auto;
           scrollbar-width: thin;
-          scrollbar-color: #6a6a6a #151515;
+          scrollbar-color: #4a4a4a #0f0f0f;
+        }
+        .setlist-items-scroll::-webkit-scrollbar {
+          width: 8px;
+        }
+        .setlist-items-scroll::-webkit-scrollbar-track {
+          background: #0f0f0f;
+          border-radius: 4px;
+        }
+        .setlist-items-scroll::-webkit-scrollbar-thumb {
+          background: #4a4a4a;
+          border-radius: 4px;
+        }
+        .setlist-items-scroll::-webkit-scrollbar-thumb:hover {
+          background: #5a5a5a;
         }
         .setlist-item-row {
           display: grid;
@@ -3208,23 +3272,22 @@ export default function LiveDashboard({ bandId, musicianId }) {
           border-radius: 8px;
           z-index: 35;
           box-shadow: 0 14px 26px rgba(0, 0, 0, 0.35);
-          scrollbar-width: auto;
-          scrollbar-color: #6a6a6a #151515;
+          scrollbar-width: thin;
+          scrollbar-color: #4a4a4a #0f0f0f;
         }
         .song-dropdown-list::-webkit-scrollbar {
-          width: 15px;
+          width: 8px;
         }
         .song-dropdown-list::-webkit-scrollbar-track {
-          background: #151515;
-          border-radius: 8px;
+          background: #0f0f0f;
+          border-radius: 4px;
         }
         .song-dropdown-list::-webkit-scrollbar-thumb {
-          background: #6a6a6a;
-          border-radius: 8px;
-          border: 1px solid #202020;
+          background: #4a4a4a;
+          border-radius: 4px;
         }
         .song-dropdown-list::-webkit-scrollbar-thumb:hover {
-          background: #7a7a7a;
+          background: #5a5a5a;
         }
         .song-dropdown-item {
           width: 100%;
@@ -3301,22 +3364,21 @@ export default function LiveDashboard({ bandId, musicianId }) {
           flex-direction: column;
           gap: 2px;
           scrollbar-width: thin;
-          scrollbar-color: #6a6a6a #151515;
+          scrollbar-color: #4a4a4a #0f0f0f;
         }
         .song-picker-list::-webkit-scrollbar {
-          width: 15px;
+          width: 8px;
         }
         .song-picker-list::-webkit-scrollbar-track {
-          background: #151515;
-          border-radius: 8px;
+          background: #0f0f0f;
+          border-radius: 4px;
         }
         .song-picker-list::-webkit-scrollbar-thumb {
-          background: #6a6a6a;
-          border-radius: 8px;
-          border: 1px solid #202020;
+          background: #4a4a4a;
+          border-radius: 4px;
         }
         .song-picker-list::-webkit-scrollbar-thumb:hover {
-          background: #7a7a7a;
+          background: #5a5a5a;
         }
 
         .song-picker-item {
@@ -3565,22 +3627,21 @@ export default function LiveDashboard({ bandId, musicianId }) {
           white-space: pre-wrap;
           padding-right: 0.35rem;
           scrollbar-width: thin;
-          scrollbar-color: #6a6a6a #151515;
+          scrollbar-color: #4a4a4a #0f0f0f;
         }
         .lyrics-display::-webkit-scrollbar {
-          width: 15px;
+          width: 8px;
         }
         .lyrics-display::-webkit-scrollbar-track {
-          background: #151515;
-          border-radius: 8px;
+          background: #0f0f0f;
+          border-radius: 4px;
         }
         .lyrics-display::-webkit-scrollbar-thumb {
-          background: #6a6a6a;
-          border-radius: 8px;
-          border: 1px solid #202020;
+          background: #4a4a4a;
+          border-radius: 4px;
         }
         .lyrics-display::-webkit-scrollbar-thumb:hover {
-          background: #7a7a7a;
+          background: #5a5a5a;
         }
         .lyrics-line {
           margin-bottom: 2px;
