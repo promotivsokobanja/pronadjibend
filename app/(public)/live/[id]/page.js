@@ -2,7 +2,7 @@
 import { Search, Music, CheckCircle2, AlertCircle, Wallet, ArrowLeft } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 
-const TIP_PRESETS = [500, 1000, 2000];
+const TIP_PRESETS = [1000, 2000, 5000];
 
 /**
  * orderFlow: null | table | tip_choice | tip_amount | song_voucher | song_success_brief
