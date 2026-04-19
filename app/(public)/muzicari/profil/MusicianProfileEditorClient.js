@@ -1214,6 +1214,12 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
           padding-bottom: 5.5rem;
           min-height: 100vh;
         }
+        @media (max-width: 640px) {
+          .musician-editor-shell {
+            padding-top: 7.5rem;
+            padding-bottom: 3rem;
+          }
+        }
         .profile-wrap {
           max-width: 1180px;
           margin: 0 auto;
@@ -1230,6 +1236,13 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
           box-shadow: 0 22px 48px rgba(99, 102, 241, 0.08);
           position: relative;
           overflow: hidden;
+        }
+        @media (max-width: 640px) {
+          .profile-header {
+            padding: 1.5rem 1.2rem;
+            border-radius: 24px;
+            margin-bottom: 1.5rem;
+          }
         }
         .profile-header h1 {
           font-size: clamp(2.3rem, 4vw, 3.6rem);
@@ -1284,6 +1297,11 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
         }
         .back-link:hover { color: #0f172a; border-color: rgba(100, 116, 139, 0.75); }
         .musician-panel { margin-bottom: 2rem; }
+        @media (max-width: 640px) {
+          .musician-panel {
+            margin-bottom: 1.5rem;
+          }
+        }
         .panel-hero {
           background: linear-gradient(135deg, #4f46e5, #7c3aed);
           border-radius: 34px;
@@ -1294,6 +1312,12 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
           overflow: hidden;
           border: 1px solid rgba(255,255,255,0.12);
         }
+        @media (max-width: 640px) {
+          .panel-hero {
+            padding: 1.5rem 1.2rem;
+            border-radius: 24px;
+          }
+        }
         .panel-eyebrow {
           text-transform: uppercase;
           letter-spacing: 0.35em;
@@ -1302,15 +1326,31 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
           opacity: 0.85;
           margin-bottom: 0.6rem;
         }
+        @media (max-width: 640px) {
+          .panel-eyebrow {
+            font-size: 0.55rem;
+          }
+        }
         .panel-hero h2 {
           font-size: clamp(1.8rem, 3.2vw, 2.7rem);
           font-weight: 900;
           margin-bottom: 0.4rem;
         }
+        @media (max-width: 640px) {
+          .panel-hero h2 {
+            font-size: 1.6rem;
+          }
+        }
         .panel-hero p {
           color: rgba(226, 232, 240, 0.9);
           margin-bottom: 1.4rem;
           max-width: 620px;
+        }
+        @media (max-width: 640px) {
+          .panel-hero p {
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+          }
         }
         .panel-grid {
           display: grid;
@@ -1318,6 +1358,17 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
           gap: 1.05rem;
           position: relative;
           z-index: 1;
+        }
+        @media (max-width: 640px) {
+          .panel-grid {
+            grid-template-columns: 1fr;
+            gap: 0.85rem;
+          }
+        }
+        @media (min-width: 641px) and (max-width: 900px) {
+          .panel-grid {
+            grid-template-columns: repeat(2, 1fr);
+          }
         }
         .panel-link {
           all: unset;
@@ -1334,6 +1385,12 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
           gap: 0.72rem;
           transition: transform 0.2s, border-color 0.2s, background 0.2s;
         }
+        @media (max-width: 640px) {
+          .panel-card {
+            min-height: 140px;
+            padding: 1rem;
+          }
+        }
         .panel-card:hover {
           transform: translateY(-4px);
           border-color: rgba(255, 255, 255, 0.5);
@@ -1343,30 +1400,48 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
           width: 46px;
           height: 46px;
           border-radius: 16px;
-          background: rgba(255, 255, 255, 0.15);
-          display: flex;
+          display: inline-flex;
           align-items: center;
           justify-content: center;
+          background: rgba(255, 255, 255, 0.15);
+          color: #a5b4fc;
+        }
+        @media (max-width: 640px) {
+          .panel-icon {
+            width: 40px;
+            height: 40px;
+          }
         }
         .panel-card h3 {
           margin: 0;
           font-size: 1.05rem;
           font-weight: 800;
           color: #fff;
+          line-height: 1.2;
+        }
+        @media (max-width: 640px) {
+          .panel-card h3 {
+            font-size: 0.95rem;
+          }
         }
         .panel-card p {
           margin: 0;
-          color: rgba(226, 232, 240, 0.95);
-          font-size: 0.9rem;
-          line-height: 1.45;
+          font-size: 0.85rem;
+          color: rgba(226, 232, 240, 0.85);
+          line-height: 1.4;
+        }
+        @media (max-width: 640px) {
+          .panel-card p {
+            font-size: 0.8rem;
+          }
         }
         .panel-cta {
           margin-top: auto;
-          font-size: 0.78rem;
-          font-weight: 800;
-          letter-spacing: 0.2em;
+          font-size: 0.75rem;
+          font-weight: 700;
           text-transform: uppercase;
-          color: rgba(248, 250, 252, 0.9);
+          letter-spacing: 0.08em;
+          color: #a5b4fc;
         }
         .musician-content {
           display: grid;
@@ -1374,18 +1449,38 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
           gap: 1.6rem;
           align-items: start;
         }
+        @media (max-width: 900px) {
+          .musician-content {
+            grid-template-columns: 1fr;
+          }
+        }
         .panel-columns {
           gap: 1.6rem;
+        }
+        @media (max-width: 900px) {
+          .panel-columns {
+            gap: 1.2rem;
+          }
         }
         .panel-stack {
           display: flex;
           flex-direction: column;
           gap: 1.35rem;
         }
+        @media (max-width: 640px) {
+          .panel-stack {
+            gap: 1rem;
+          }
+        }
         .musician-sidebar {
           display: flex;
           flex-direction: column;
           gap: 1.35rem;
+        }
+        @media (max-width: 640px) {
+          .musician-sidebar {
+            gap: 1rem;
+          }
         }
         .profile-card {
           background: #ffffff;
@@ -1397,6 +1492,12 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
           gap: 0.85rem;
           box-shadow: 0 4px 16px rgba(15, 23, 42, 0.07), 0 1px 3px rgba(15, 23, 42, 0.04);
         }
+        @media (max-width: 640px) {
+          .profile-card {
+            padding: 1.1rem 1.2rem;
+            border-radius: 18px;
+          }
+        }
         .profile-editor { position: relative; }
         .sidebar-title {
           margin: 0;
@@ -1407,6 +1508,12 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
           padding-bottom: 0.65rem;
           border-bottom: 1.5px solid #f1f5f9;
         }
+        @media (max-width: 640px) {
+          .sidebar-title {
+            font-size: 0.9rem;
+            padding-bottom: 0.5rem;
+          }
+        }
         .sidebar-row {
           margin: 0;
           display: inline-flex;
@@ -1415,6 +1522,11 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
           font-weight: 700;
           color: #334155;
           font-size: 0.9rem;
+        }
+        @media (max-width: 640px) {
+          .sidebar-row {
+            font-size: 0.85rem;
+          }
         }
         .save-bar {
           margin-top: 1.1rem;
@@ -1425,29 +1537,68 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
           justify-content: space-between;
           gap: 1rem;
         }
+        @media (max-width: 640px) {
+          .save-bar {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.75rem;
+          }
+        }
         .save-bar h3 {
           margin: 0;
           font-size: 1.05rem;
           font-weight: 800;
           color: #0f172a;
         }
+        @media (max-width: 640px) {
+          .save-bar h3 {
+            font-size: 1rem;
+          }
+        }
         .save-bar p {
           margin: 0.15rem 0 0;
           color: #94a3b8;
           font-size: 0.83rem;
+        }
+        @media (max-width: 640px) {
+          .save-bar p {
+            font-size: 0.8rem;
+          }
         }
         .grid {
           display: grid;
           grid-template-columns: 1fr 1fr;
           gap: 1rem;
         }
+        @media (max-width: 640px) {
+          .grid {
+            grid-template-columns: 1fr;
+            gap: 0.85rem;
+          }
+        }
         .musician-three-grid {
           grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+        @media (max-width: 640px) {
+          .musician-three-grid {
+            grid-template-columns: 1fr;
+          }
+        }
+        @media (min-width: 641px) and (max-width: 900px) {
+          .musician-three-grid {
+            grid-template-columns: repeat(2, 1fr);
+          }
         }
         .media-grid {
           display: grid;
           grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
           gap: 1.3rem;
+        }
+        @media (max-width: 640px) {
+          .media-grid {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+          }
         }
         .field { display: flex; flex-direction: column; gap: 0.45rem; }
         .grid > .field,
