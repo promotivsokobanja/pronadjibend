@@ -33,6 +33,8 @@ export default function MidiLibraryPage() {
   const [uploading, setUploading] = useState(false);
   const [deleting, setDeleting] = useState(null);
   const [canUpload, setCanUpload] = useState(false);
+  const [canUploadMidi, setCanUploadMidi] = useState(false);
+  const [canUploadAudio, setCanUploadAudio] = useState(false);
   const [currentUserId, setCurrentUserId] = useState(null);
   const [currentBandId, setCurrentBandId] = useState(null);
   const [currentMusicianId, setCurrentMusicianId] = useState(null);
@@ -45,9 +47,16 @@ export default function MidiLibraryPage() {
         const { user } = await r.json();
         const plan = String(user?.plan || '').toUpperCase();
         const hasPremiumAccess = plan.startsWith('PREMIUM');
-        setIsPremium(hasPremiumAccess || user?.role === 'ADMIN');
-        setIsAdmin(user?.role === 'ADMIN');
-        setCanUpload(user?.role === 'ADMIN' || !!user?.bandId || !!user?.musicianProfileId);
+        const isAdminUser = user?.role === 'ADMIN';
+        const hasProfile = !!user?.bandId || !!user?.musicianProfileId;
+        const isPremiumPlan = plan === 'PREMIUM' || plan === 'PREMIUM_VENUE';
+        const isPremiumVenuePlan = plan === 'PREMIUM_VENUE';
+
+        setIsPremium(hasPremiumAccess || isAdminUser);
+        setIsAdmin(isAdminUser);
+        setCanUploadMidi(isAdminUser || (hasProfile && isPremiumPlan));
+        setCanUploadAudio(isAdminUser || (hasProfile && isPremiumVenuePlan));
+        setCanUpload(isAdminUser || (hasProfile && isPremiumPlan));
         setCurrentUserId(user?.id || null);
         setCurrentBandId(user?.bandId || null);
         setCurrentMusicianId(user?.musicianProfileId || null);
@@ -211,21 +220,36 @@ export default function MidiLibraryPage() {
           {!canAccess && <span className="locked-badge"><Lock size={12} /> Potreban PREMIUM</span>}
         </div>
 
-        {canUpload && (
+        {(canUploadMidi || canUploadAudio) && (
           <div className="admin-bar">
             <button className="upload-toggle-btn" onClick={() => setShowUpload(!showUpload)}>
-              <Upload size={16} /> {showUpload ? 'Zatvori upload' : 'Dodaj MIDI / MP3'}
+              <Upload size={16} /> {showUpload
+                ? 'Zatvori upload'
+                : canUploadAudio
+                  ? 'Dodaj MIDI / MP3'
+                  : 'Dodaj MIDI'}
             </button>
+            {!isAdmin && (
+              <span className="upload-hint" style={{ marginLeft: '0.6rem', fontSize: '0.8rem', color: '#64748b' }}>
+                {canUploadAudio
+                  ? 'Premium Venue: dozvoljen upload MIDI i audio fajlova.'
+                  : 'Premium: dozvoljen samo MIDI upload (za MP3 nadogradi na Premium Venue).'}
+              </span>
+            )}
           </div>
         )}
 
-        {showUpload && canUpload && (
+        {showUpload && (canUploadMidi || canUploadAudio) && (
           <form className="upload-form" onSubmit={handleUpload}>
             <div className="uf-row">
               <label className="file-input-label">
-                <input type="file" accept=".mid,.kar,.mp3,.wav,.ogg,.aac,.flac,.m4a" onChange={onFileSelect} />
+                <input
+                  type="file"
+                  accept={canUploadAudio ? '.mid,.kar,.mp3,.wav,.ogg,.aac,.flac,.m4a' : '.mid,.kar'}
+                  onChange={onFileSelect}
+                />
                 <Upload size={16} />
-                {uploadFile ? uploadFile.name : 'Izaberi fajl (.mid, .kar, .mp3, .wav...)'}
+                {uploadFile ? uploadFile.name : (canUploadAudio ? 'Izaberi fajl (.mid, .kar, .mp3, .wav...)' : 'Izaberi MIDI fajl (.mid, .kar)')}
               </label>
             </div>
             <div className="uf-row uf-fields">

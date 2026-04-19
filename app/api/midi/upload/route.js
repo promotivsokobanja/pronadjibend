@@ -17,6 +17,7 @@ export async function POST(request) {
       select: {
         id: true,
         role: true,
+        plan: true,
         bandId: true,
         musicianProfile: { select: { id: true } },
       },
@@ -26,8 +27,9 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Nalog ne postoji.' }, { status: 404 });
     }
 
-    const canUpload = user.role === 'ADMIN' || user.bandId || user.musicianProfile?.id;
-    if (!canUpload) {
+    const isAdmin = user.role === 'ADMIN';
+    const hasProfile = Boolean(user.bandId || user.musicianProfile?.id);
+    if (!isAdmin && !hasProfile) {
       return NextResponse.json({ error: 'Nemate dozvolu za upload.' }, { status: 403 });
     }
 
@@ -50,6 +52,26 @@ export async function POST(request) {
         { error: 'Dozvoljeni formati: .mid, .kar, .mp3, .wav, .ogg, .aac, .flac, .m4a' },
         { status: 400 }
       );
+    }
+
+    // Plan-based gating: MIDI → PREMIUM+, MP3/Audio → PREMIUM_VENUE only
+    const plan = String(user.plan || '').toUpperCase();
+    const isPremium = plan === 'PREMIUM' || plan === 'PREMIUM_VENUE';
+    const isPremiumVenue = plan === 'PREMIUM_VENUE';
+
+    if (!isAdmin) {
+      if (isMidi && !isPremium) {
+        return NextResponse.json(
+          { error: 'MIDI upload zahteva PREMIUM plan.' },
+          { status: 403 }
+        );
+      }
+      if (isAudio && !isPremiumVenue) {
+        return NextResponse.json(
+          { error: 'Audio (MP3) upload zahteva PREMIUM VENUE plan.' },
+          { status: 403 }
+        );
+      }
     }
 
     const fileType = isMidi ? 'midi' : 'audio';
