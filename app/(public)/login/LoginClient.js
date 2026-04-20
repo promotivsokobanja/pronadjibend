@@ -445,13 +445,17 @@ export default function LoginClient() {
       <style jsx>{`
         .login-container {
           min-height: 100vh;
+          min-height: 100dvh;
           display: flex;
-          align-items: center;
+          align-items: flex-start;
           justify-content: center;
-          padding: 2rem 1rem;
+          padding: calc(var(--navbar-height, 4.75rem) + 1.5rem) 1rem 2rem;
           position: relative;
           overflow: hidden;
           background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+        }
+        @media (min-height: 820px) {
+          .login-container { align-items: center; }
         }
         .login-box {
           width: 100%;
@@ -710,13 +714,13 @@ export default function LoginClient() {
 
         /* Tablet */
         @media (max-width: 768px) {
-          .login-container { padding: 1.5rem 1rem; }
+          .login-container { padding: calc(var(--navbar-height, 4.75rem) + 1.25rem) 1rem 2rem; }
           .login-box { max-width: 460px; margin: 0 auto; }
         }
 
         /* Mobile */
         @media (max-width: 640px) {
-          .login-container { padding: 1.25rem 0.75rem; }
+          .login-container { padding: calc(var(--navbar-height, 4rem) + 1rem) 0.75rem 1.5rem; }
           .login-box { padding: 1.4rem 1rem; border-radius: 18px; max-width: 100%; margin: 0 auto; }
           .login-logo { width: 116px; }
           .title { font-size: 1.65rem; }
@@ -732,7 +736,7 @@ export default function LoginClient() {
 
         /* Small mobile */
         @media (max-width: 480px) {
-          .login-container { padding: 1rem 0.5rem; }
+          .login-container { padding: calc(var(--navbar-height, 4rem) + 0.75rem) 0.5rem 1rem; }
           .login-box { padding: 1.1rem 0.85rem; }
           .title { font-size: 1.4rem; }
           .subtitle { margin-bottom: 1.2rem; font-size: 0.82rem; }
