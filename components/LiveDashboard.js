@@ -5109,6 +5109,255 @@ export default function LiveDashboard({ bandId, musicianId }) {
           color: inherit;
         }
 
+        /* Repertoire browser / Dodaj pesmu panel — glass style */
+        .live-dashboard:not(.night-vision) .song-picker,
+        .live-dashboard:not(.night-vision) .setlists-panel,
+        .live-dashboard:not(.night-vision) .setlist-song-search,
+        .live-dashboard:not(.night-vision) .repertoire-browser,
+        .live-dashboard:not(.night-vision) .active-setlist-strip {
+          background: rgba(255, 255, 255, 0.85);
+          backdrop-filter: blur(10px);
+          -webkit-backdrop-filter: blur(10px);
+          border: 1px solid rgba(148, 163, 184, 0.22);
+          border-radius: 14px;
+          color: #0f172a;
+          box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+        }
+        .live-dashboard:not(.night-vision) .setlists-panel-header h3,
+        .live-dashboard:not(.night-vision) .repertoire-browser-head h3,
+        .live-dashboard:not(.night-vision) .active-setlist-name {
+          color: #0f172a;
+        }
+        .live-dashboard:not(.night-vision) .setlist-help-text {
+          color: #64748b;
+        }
+        .live-dashboard:not(.night-vision) .setlist-status-row {
+          color: #475569;
+        }
+        .live-dashboard:not(.night-vision) .setlist-status-row strong {
+          color: #0f172a;
+        }
+        .live-dashboard:not(.night-vision) .setlist-count-badge {
+          background: rgba(139, 92, 246, 0.12);
+          color: #6d28d9;
+          border: 1px solid rgba(139, 92, 246, 0.25);
+        }
+        .live-dashboard:not(.night-vision) .setlist-chip,
+        .live-dashboard:not(.night-vision) .active-setlist-item,
+        .live-dashboard:not(.night-vision) .setlist-create-btn,
+        .live-dashboard:not(.night-vision) .setlist-delete-btn,
+        .live-dashboard:not(.night-vision) .song-add-to-setlist,
+        .live-dashboard:not(.night-vision) .active-setlist-nav button,
+        .live-dashboard:not(.night-vision) .setlist-item-actions button {
+          background: rgba(255, 255, 255, 0.95);
+          border: 1px solid rgba(148, 163, 184, 0.3);
+          color: #475569;
+        }
+        .live-dashboard:not(.night-vision) .setlist-chip:hover,
+        .live-dashboard:not(.night-vision) .active-setlist-item:hover,
+        .live-dashboard:not(.night-vision) .setlist-create-btn:hover,
+        .live-dashboard:not(.night-vision) .setlist-delete-btn:hover,
+        .live-dashboard:not(.night-vision) .song-add-to-setlist:hover:not(:disabled),
+        .live-dashboard:not(.night-vision) .active-setlist-nav button:hover,
+        .live-dashboard:not(.night-vision) .setlist-item-actions button:hover {
+          border-color: rgba(139, 92, 246, 0.5);
+          color: #7c3aed;
+          background: rgba(139, 92, 246, 0.06);
+        }
+        .live-dashboard:not(.night-vision) .setlist-chip.active {
+          background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+          color: #ffffff;
+          border-color: transparent;
+          box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+        }
+
+        /* Repertoire combo (dropdown search inside Dodaj pesmu) */
+        .live-dashboard:not(.night-vision) .repertoire-combo-toggle {
+          background: rgba(255, 255, 255, 0.95);
+          border: 1px solid rgba(148, 163, 184, 0.3);
+          color: #334155;
+          border-radius: 10px;
+        }
+        .live-dashboard:not(.night-vision) .repertoire-combo-toggle:hover {
+          border-color: rgba(139, 92, 246, 0.4);
+          color: #7c3aed;
+        }
+        .live-dashboard:not(.night-vision) .repertoire-combo-toggle.open {
+          border-color: #8b5cf6;
+          color: #7c3aed;
+          background: rgba(139, 92, 246, 0.06);
+        }
+        .live-dashboard:not(.night-vision) .repertoire-combo-panel {
+          background: rgba(255, 255, 255, 0.98);
+          backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
+          border: 1px solid rgba(148, 163, 184, 0.25);
+          box-shadow: 0 20px 60px rgba(139, 92, 246, 0.15), 0 8px 24px rgba(15, 23, 42, 0.08);
+        }
+        .live-dashboard:not(.night-vision) .repertoire-combo-sticky-search {
+          background: rgba(255, 255, 255, 0.95);
+          border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+        }
+        .live-dashboard:not(.night-vision) .repertoire-combo-sticky-search input {
+          background: #ffffff;
+          border: 1px solid rgba(148, 163, 184, 0.35);
+          color: #0f172a;
+        }
+        .live-dashboard:not(.night-vision) .repertoire-combo-sticky-search input:focus {
+          border-color: #8b5cf6;
+        }
+        .live-dashboard:not(.night-vision) .repertoire-combo-sticky-search input::placeholder {
+          color: #94a3b8;
+        }
+        .live-dashboard:not(.night-vision) .repertoire-combo-count {
+          color: #64748b;
+        }
+        .live-dashboard:not(.night-vision) .repertoire-cat-chip {
+          background: #f8fafc;
+          border: 1px solid rgba(148, 163, 184, 0.25);
+          color: #475569;
+        }
+        .live-dashboard:not(.night-vision) .repertoire-cat-chip:hover {
+          border-color: rgba(139, 92, 246, 0.4);
+          color: #7c3aed;
+        }
+        .live-dashboard:not(.night-vision) .repertoire-cat-chip.active {
+          background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+          color: #ffffff;
+          border-color: transparent;
+          box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+        }
+        .live-dashboard:not(.night-vision) .repertoire-dropdown-list {
+          background: rgba(255, 255, 255, 0.98);
+          scrollbar-color: #cbd5e1 #f1f5f9;
+        }
+        .live-dashboard:not(.night-vision) .repertoire-dropdown-list::-webkit-scrollbar-track {
+          background: #f1f5f9;
+        }
+        .live-dashboard:not(.night-vision) .repertoire-dropdown-list::-webkit-scrollbar-thumb {
+          background: #cbd5e1;
+        }
+        .live-dashboard:not(.night-vision) .repertoire-dropdown-item {
+          border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+        }
+        .live-dashboard:not(.night-vision) .repertoire-dropdown-main {
+          color: #0f172a;
+        }
+        .live-dashboard:not(.night-vision) .repertoire-dropdown-main:hover {
+          background: rgba(139, 92, 246, 0.06);
+        }
+        .live-dashboard:not(.night-vision) .repertoire-dropdown-main .song-title {
+          color: #0f172a;
+        }
+        .live-dashboard:not(.night-vision) .repertoire-dropdown-main .song-artist {
+          color: #64748b;
+        }
+        .live-dashboard:not(.night-vision) .song-in-setlist-pill {
+          background: rgba(34, 197, 94, 0.1);
+          color: #15803d;
+          border-color: rgba(34, 197, 94, 0.3);
+        }
+        .live-dashboard:not(.night-vision) .repertoire-dropdown-main:has(.song-in-setlist-pill) {
+          border: 1px dashed rgba(139, 92, 246, 0.35);
+        }
+        .live-dashboard:not(.night-vision) .song-open-lyrics-btn {
+          background: rgba(255, 255, 255, 0.95);
+          border: 1px solid rgba(148, 163, 184, 0.3);
+          color: #475569;
+        }
+        .live-dashboard:not(.night-vision) .song-open-lyrics-btn:hover {
+          border-color: #8b5cf6;
+          color: #7c3aed;
+          background: rgba(139, 92, 246, 0.06);
+        }
+        .live-dashboard:not(.night-vision) .repertoire-empty {
+          color: #94a3b8;
+        }
+
+        /* Setlist items */
+        .live-dashboard:not(.night-vision) .setlist-item-main,
+        .live-dashboard:not(.night-vision) .song-picker-item {
+          background: rgba(255, 255, 255, 0.95);
+          border: 1px solid rgba(148, 163, 184, 0.22);
+          color: #0f172a;
+        }
+        .live-dashboard:not(.night-vision) .setlist-item-main:hover,
+        .live-dashboard:not(.night-vision) .song-picker-item:hover {
+          border-color: rgba(139, 92, 246, 0.35);
+          background: rgba(255, 255, 255, 1);
+        }
+        .live-dashboard:not(.night-vision) .setlist-item-title,
+        .live-dashboard:not(.night-vision) .song-picker-title {
+          color: #0f172a;
+        }
+        .live-dashboard:not(.night-vision) .setlist-item-artist,
+        .live-dashboard:not(.night-vision) .song-picker-artist {
+          color: #64748b;
+        }
+        .live-dashboard:not(.night-vision) .setlist-name-input {
+          background: #ffffff;
+          border: 1px solid rgba(148, 163, 184, 0.35);
+          color: #0f172a;
+        }
+        .live-dashboard:not(.night-vision) .setlist-name-input:focus {
+          border-color: #8b5cf6;
+        }
+
+        /* Cheatsheet song dropdown (PODSETNIK tab) */
+        .live-dashboard:not(.night-vision) .song-search-inline {
+          background: rgba(255, 255, 255, 0.95);
+          border: 1px solid rgba(148, 163, 184, 0.3);
+          border-radius: 10px;
+        }
+        .live-dashboard:not(.night-vision) .song-search-inline input {
+          background: transparent;
+          color: #0f172a;
+        }
+        .live-dashboard:not(.night-vision) .song-search-inline input::placeholder {
+          color: #94a3b8;
+        }
+        .live-dashboard:not(.night-vision) .song-dropdown-toggle {
+          background: transparent;
+          color: #64748b;
+        }
+        .live-dashboard:not(.night-vision) .song-dropdown-toggle:hover {
+          color: #7c3aed;
+        }
+        .live-dashboard:not(.night-vision) .song-dropdown-list {
+          background: rgba(255, 255, 255, 0.98);
+          backdrop-filter: blur(14px);
+          border: 1px solid rgba(148, 163, 184, 0.25);
+          box-shadow: 0 16px 40px rgba(139, 92, 246, 0.12), 0 4px 12px rgba(15, 23, 42, 0.05);
+        }
+        .live-dashboard:not(.night-vision) .song-dropdown-item {
+          color: #0f172a;
+          border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+        }
+        .live-dashboard:not(.night-vision) .song-dropdown-item:hover {
+          background: rgba(139, 92, 246, 0.06);
+        }
+        .live-dashboard:not(.night-vision) .song-dropdown-title {
+          color: #0f172a;
+        }
+        .live-dashboard:not(.night-vision) .song-dropdown-artist {
+          color: #64748b;
+        }
+        .live-dashboard:not(.night-vision) .song-search-box {
+          background: rgba(255, 255, 255, 0.95);
+          border: 1px solid rgba(148, 163, 184, 0.3);
+          color: #0f172a;
+        }
+
+        /* Cheatsheet setlist expander */
+        .live-dashboard:not(.night-vision) .cheatsheet-setlists {
+          gap: 0.5rem;
+        }
+        .live-dashboard:not(.night-vision) .cheatsheet-setlist-block {
+          background: rgba(255, 255, 255, 0.85);
+          border: 1px solid rgba(148, 163, 184, 0.22);
+          border-radius: 12px;
+        }
+
         /* Mobile: ensure responsive light mode remains visible */
         @media (max-width: 720px) {
           .live-dashboard:not(.night-vision) .hud-side-nav {
