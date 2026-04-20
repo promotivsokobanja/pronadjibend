@@ -819,12 +819,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
   );
 
   const handleExit = () => {
-    // In sub-views, treat exit as "step back".
-    if (activeTab === 'cheatsheet' || activeTab === 'repertoire' || activeTab === 'addSong') {
-      setActiveTab('requests');
-      return;
-    }
-    // From main live view, exit to owner dashboard.
+    // Always exit Live view to owner's control panel.
     if (bandId) {
       router.push('/bands');
       return;
@@ -841,13 +836,6 @@ export default function LiveDashboard({ bandId, musicianId }) {
       {/* HUD Header */}
       <header className="hud-header">
         <div className="hud-left">
-          <button 
-            className="hud-btn exit-btn" 
-            onClick={handleExit}
-          >
-            <ArrowLeft size={20} />
-            <span>IZLAZ</span>
-          </button>
           <div className="status-indicator">
             <div className="pulse-dot"></div>
             <span>LIVE: {settings.venueName}</span>
@@ -877,10 +865,20 @@ export default function LiveDashboard({ bandId, musicianId }) {
             <HelpCircle size={20} />
           </button>
           <button 
-            className={`hud-btn exit-btn ${showSettings ? 'settings-active' : ''}`}
+            className={`hud-btn ${showSettings ? 'settings-active' : ''}`}
             onClick={() => setShowSettings(!showSettings)}
+            aria-label="Podešavanja"
+            title="Podešavanja"
           >
             <Settings size={20} />
+          </button>
+          <button
+            className="hud-btn exit-btn hud-exit-x"
+            onClick={handleExit}
+            aria-label="Izlaz iz Live panela"
+            title="Izlaz"
+          >
+            <X size={20} />
           </button>
         </div>
       </header>
@@ -3855,6 +3853,9 @@ export default function LiveDashboard({ bandId, musicianId }) {
           .hud-btn span {
             display: none;
           }
+          .hud-exit-x {
+            min-width: 44px;
+          }
           .status-indicator {
             font-size: 0.62rem;
             min-width: 0;
@@ -4151,6 +4152,20 @@ export default function LiveDashboard({ bandId, musicianId }) {
           .song-select,
           .song-search-box-compact {
             max-width: 100%;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .hud-controls {
+            gap: 0.25rem;
+          }
+          .hud-btn {
+            padding: 6px 8px;
+            min-height: 40px;
+            min-width: 40px;
+          }
+          .status-indicator span {
+            max-width: min(34vw, 7.5rem);
           }
         }
 
