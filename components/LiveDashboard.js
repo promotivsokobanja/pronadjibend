@@ -4571,42 +4571,53 @@ export default function LiveDashboard({ bandId, musicianId }) {
         }
 
         /* =====================================================
-           LIGHT MODE (Night Vision OFF) — dedicated overrides.
-           Activates with .live-dashboard:not(.night-vision).
+           LIGHT MODE (Night Vision OFF) — brand-consistent theme.
+           Uses same palette as rest of site: soft white/slate bg,
+           glass-card surfaces, purple (#8b5cf6) accents.
            ===================================================== */
         .live-dashboard:not(.night-vision) {
-          background: #ffffff;
+          background:
+            radial-gradient(1200px 600px at 15% -10%, rgba(139, 92, 246, 0.08), transparent 55%),
+            radial-gradient(900px 500px at 100% 100%, rgba(99, 102, 241, 0.06), transparent 60%),
+            linear-gradient(180deg, #fafbff 0%, #f4f6fb 100%);
           color: #0f172a;
-          font-family: 'Inter', 'JetBrains Mono', monospace;
+          font-family: 'Inter', system-ui, sans-serif;
           text-shadow: none;
         }
         .live-dashboard:not(.night-vision) .hud-header {
-          background: #ffffff;
-          border-bottom-color: #e5e7eb;
+          background: rgba(255, 255, 255, 0.78);
+          backdrop-filter: blur(14px);
+          -webkit-backdrop-filter: blur(14px);
+          border-bottom-color: rgba(148, 163, 184, 0.22);
+          box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
         }
         .live-dashboard:not(.night-vision) .status-indicator {
-          color: #0f172a;
-          background: rgba(124, 58, 237, 0.08);
-          border-color: rgba(124, 58, 237, 0.25);
+          color: #334155;
+          background: rgba(139, 92, 246, 0.07);
+          border: 1px solid rgba(139, 92, 246, 0.18);
+          border-radius: 999px;
         }
         .live-dashboard:not(.night-vision) .status-indicator .pulse-dot {
-          background: #7c3aed;
-          box-shadow: 0 0 10px rgba(124, 58, 237, 0.55);
+          background: #8b5cf6;
+          box-shadow: 0 0 10px rgba(139, 92, 246, 0.55);
         }
         .live-dashboard:not(.night-vision) .hud-btn {
-          background: #ffffff;
-          border-color: #e5e7eb;
+          background: rgba(255, 255, 255, 0.85);
+          backdrop-filter: blur(8px);
+          border-color: rgba(148, 163, 184, 0.25);
           color: #475569;
+          border-radius: 10px;
         }
         .live-dashboard:not(.night-vision) .hud-btn:hover {
-          border-color: #7c3aed;
-          color: #7c3aed;
-          background: rgba(124, 58, 237, 0.05);
+          border-color: rgba(139, 92, 246, 0.45);
+          color: #8b5cf6;
+          background: rgba(139, 92, 246, 0.06);
+          box-shadow: 0 4px 14px rgba(139, 92, 246, 0.1);
         }
         .live-dashboard:not(.night-vision) .hud-btn.active {
-          border-color: #7c3aed;
-          color: #7c3aed;
-          background: rgba(124, 58, 237, 0.08);
+          border-color: rgba(139, 92, 246, 0.55);
+          color: #8b5cf6;
+          background: rgba(139, 92, 246, 0.1);
         }
         .live-dashboard:not(.night-vision) .hud-btn.settings-active {
           background: #ef4444 !important;
@@ -4614,55 +4625,61 @@ export default function LiveDashboard({ bandId, musicianId }) {
           border-color: #ef4444 !important;
         }
         .live-dashboard:not(.night-vision) .exit-btn {
-          border-color: #ef4444;
-          color: #ef4444;
-          background: #ffffff;
+          border-color: rgba(239, 68, 68, 0.45);
+          color: #dc2626;
+          background: rgba(255, 255, 255, 0.85);
         }
         .live-dashboard:not(.night-vision) .exit-btn:hover {
           background: #ef4444;
           color: #fff;
+          border-color: #ef4444;
         }
         .live-dashboard:not(.night-vision) .hud-pending-orbit {
-          background: #fee2e2;
-          border-color: #fca5a5;
+          background: rgba(254, 226, 226, 0.7);
+          border-color: rgba(252, 165, 165, 0.6);
         }
         .live-dashboard:not(.night-vision) .hud-pending-orbit-num {
           color: #b91c1c;
         }
         .live-dashboard:not(.night-vision) .hud-pending-orbit.has-pending {
-          background: #fecaca;
+          background: linear-gradient(135deg, #fecaca, #fca5a5);
           border-color: #ef4444;
         }
 
         /* Sidebar nav */
         .live-dashboard:not(.night-vision) .hud-side-nav {
-          background: #f8fafc;
-          border-right-color: #e5e7eb;
+          background: rgba(255, 255, 255, 0.7);
+          backdrop-filter: blur(12px);
+          border-right: 1px solid rgba(148, 163, 184, 0.22);
         }
         .live-dashboard:not(.night-vision) .nav-item {
           color: #64748b;
           background: transparent;
+          border-radius: 10px;
         }
         .live-dashboard:not(.night-vision) .nav-item:hover {
-          background: rgba(124, 58, 237, 0.06);
-          color: #7c3aed;
+          background: rgba(139, 92, 246, 0.07);
+          color: #8b5cf6;
         }
         .live-dashboard:not(.night-vision) .nav-item.active {
-          background: rgba(124, 58, 237, 0.1);
+          background: linear-gradient(135deg, rgba(139, 92, 246, 0.14), rgba(99, 102, 241, 0.1));
           color: #7c3aed;
+          box-shadow: inset 0 0 0 1px rgba(139, 92, 246, 0.22);
         }
         .live-dashboard:not(.night-vision) .nav-item .badge {
           background: #ef4444;
           color: #fff;
+          box-shadow: 0 2px 6px rgba(239, 68, 68, 0.35);
         }
         .live-dashboard:not(.night-vision) .nav-tooltip {
           background: #0f172a;
           color: #ffffff;
+          box-shadow: 0 8px 24px rgba(15, 23, 42, 0.15);
         }
 
         /* Main content */
         .live-dashboard:not(.night-vision) .hud-content {
-          background: #ffffff;
+          background: transparent;
           color: #0f172a;
         }
         .live-dashboard:not(.night-vision) .hud-content h2,
@@ -4679,16 +4696,25 @@ export default function LiveDashboard({ bandId, musicianId }) {
           color: #64748b;
         }
 
-        /* Request cards */
+        /* Request cards — glass style matching site */
         .live-dashboard:not(.night-vision) .request-card {
-          background: #ffffff;
-          border-color: #e5e7eb;
+          background: rgba(255, 255, 255, 0.9);
+          backdrop-filter: blur(10px);
+          -webkit-backdrop-filter: blur(10px);
+          border: 1px solid rgba(148, 163, 184, 0.22);
+          border-radius: 16px;
           color: #0f172a;
-          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+          box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 4px 16px rgba(139, 92, 246, 0.04);
+          transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .live-dashboard:not(.night-vision) .request-card:hover {
+          border-color: rgba(139, 92, 246, 0.3);
+          box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05), 0 12px 32px rgba(139, 92, 246, 0.08);
+          transform: translateY(-1px);
         }
         .live-dashboard:not(.night-vision) .request-card.waiter-tip {
-          background: linear-gradient(135deg, #fffbeb, #fef3c7);
-          border-color: #fbbf24;
+          background: linear-gradient(135deg, rgba(255, 251, 235, 0.95), rgba(254, 243, 199, 0.85));
+          border-color: rgba(251, 191, 36, 0.5);
         }
         .live-dashboard:not(.night-vision) .req-header .time {
           color: #64748b;
@@ -4722,60 +4748,72 @@ export default function LiveDashboard({ bandId, musicianId }) {
 
         /* Action buttons */
         .live-dashboard:not(.night-vision) .btn-hud {
-          background: #ffffff;
-          border: 1px solid #e5e7eb;
+          background: rgba(255, 255, 255, 0.85);
+          border: 1px solid rgba(148, 163, 184, 0.25);
           color: #475569;
+          border-radius: 10px;
+          font-weight: 700;
         }
         .live-dashboard:not(.night-vision) .btn-hud:hover {
-          border-color: #cbd5e1;
-          background: #f8fafc;
+          border-color: rgba(148, 163, 184, 0.5);
+          background: rgba(248, 250, 252, 0.95);
         }
         .live-dashboard:not(.night-vision) .btn-hud.accept {
-          background: #16a34a;
+          background: linear-gradient(135deg, #22c55e, #16a34a);
           color: #ffffff;
-          border-color: #16a34a;
+          border-color: transparent;
+          box-shadow: 0 4px 12px rgba(22, 163, 74, 0.25);
         }
         .live-dashboard:not(.night-vision) .btn-hud.accept:hover {
-          background: #15803d;
-          border-color: #15803d;
+          background: linear-gradient(135deg, #16a34a, #15803d);
+          box-shadow: 0 6px 18px rgba(22, 163, 74, 0.35);
         }
         .live-dashboard:not(.night-vision) .btn-hud.reject {
-          background: #ffffff;
-          color: #ef4444;
-          border-color: #fca5a5;
+          background: rgba(255, 255, 255, 0.9);
+          color: #dc2626;
+          border-color: rgba(239, 68, 68, 0.4);
         }
         .live-dashboard:not(.night-vision) .btn-hud.reject:hover {
           background: #ef4444;
           color: #ffffff;
+          border-color: #ef4444;
         }
         .live-dashboard:not(.night-vision) .btn-hud.played {
-          background: #7c3aed;
+          background: linear-gradient(135deg, #8b5cf6, #7c3aed);
           color: #ffffff;
-          border-color: #7c3aed;
+          border-color: transparent;
+          box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
         }
         .live-dashboard:not(.night-vision) .btn-hud.played:hover {
-          background: #6d28d9;
+          background: linear-gradient(135deg, #7c3aed, #6d28d9);
+          box-shadow: 0 6px 18px rgba(139, 92, 246, 0.4);
         }
         .live-dashboard:not(.night-vision) .request-view-toggle button {
-          background: #ffffff;
-          border: 1px solid #e5e7eb;
+          background: rgba(255, 255, 255, 0.8);
+          border: 1px solid rgba(148, 163, 184, 0.22);
           color: #64748b;
+          border-radius: 999px;
         }
         .live-dashboard:not(.night-vision) .request-view-toggle button.active {
-          background: #7c3aed;
+          background: linear-gradient(135deg, #8b5cf6, #7c3aed);
           color: #ffffff;
-          border-color: #7c3aed;
+          border-color: transparent;
+          box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
         }
 
-        /* Right metrics */
+        /* Right metrics panel */
         .live-dashboard:not(.night-vision) .hud-metrics {
-          background: #f8fafc;
-          border-left: 1px solid #e5e7eb;
+          background: rgba(255, 255, 255, 0.55);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+          border-left: 1px solid rgba(148, 163, 184, 0.22);
         }
         .live-dashboard:not(.night-vision) .metric-box {
-          background: #ffffff;
-          border-color: #e5e7eb;
+          background: rgba(255, 255, 255, 0.9);
+          border: 1px solid rgba(148, 163, 184, 0.22);
+          border-radius: 14px;
           color: #0f172a;
+          box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
         }
         .live-dashboard:not(.night-vision) .metric-box .label {
           color: #64748b;
@@ -4986,12 +5024,16 @@ export default function LiveDashboard({ bandId, musicianId }) {
 
         /* Settings panel */
         .live-dashboard:not(.night-vision) .settings-overlay {
-          background: rgba(15, 23, 42, 0.5);
+          background: rgba(15, 23, 42, 0.45);
+          backdrop-filter: blur(6px);
+          -webkit-backdrop-filter: blur(6px);
         }
         .live-dashboard:not(.night-vision) .settings-panel {
-          background: #ffffff;
+          background: rgba(255, 255, 255, 0.98);
+          backdrop-filter: blur(20px);
           color: #0f172a;
-          border-color: #e5e7eb;
+          border: 1px solid rgba(148, 163, 184, 0.2);
+          box-shadow: 0 20px 60px rgba(139, 92, 246, 0.15), 0 8px 24px rgba(15, 23, 42, 0.08);
         }
         .live-dashboard:not(.night-vision) .settings-header {
           border-bottom-color: #e5e7eb;
@@ -5010,8 +5052,9 @@ export default function LiveDashboard({ bandId, musicianId }) {
           border-color: #ef4444;
         }
         .live-dashboard:not(.night-vision) .setting-group {
-          background: #f8fafc;
-          border-color: #e5e7eb;
+          background: rgba(248, 250, 252, 0.8);
+          border: 1px solid rgba(148, 163, 184, 0.18);
+          border-radius: 12px;
         }
         .live-dashboard:not(.night-vision) .setting-label {
           color: #0f172a;
@@ -5042,8 +5085,9 @@ export default function LiveDashboard({ bandId, musicianId }) {
 
         /* Help modal (Live) */
         .live-dashboard:not(.night-vision) .help-section {
-          background: #f8fafc;
-          border-color: #e5e7eb;
+          background: rgba(248, 250, 252, 0.85);
+          border: 1px solid rgba(148, 163, 184, 0.2);
+          border-radius: 12px;
         }
         .live-dashboard:not(.night-vision) .help-section h3 {
           color: #7c3aed;
@@ -5068,9 +5112,14 @@ export default function LiveDashboard({ bandId, musicianId }) {
         /* Mobile: ensure responsive light mode remains visible */
         @media (max-width: 720px) {
           .live-dashboard:not(.night-vision) .hud-side-nav {
-            background: #ffffff;
-            border-top-color: #e5e7eb;
-            box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.04);
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(14px);
+            border-top: 1px solid rgba(148, 163, 184, 0.22);
+            border-right: none;
+            box-shadow: 0 -4px 20px rgba(15, 23, 42, 0.05);
+          }
+          .live-dashboard:not(.night-vision) .hud-header {
+            background: rgba(255, 255, 255, 0.9);
           }
         }
       `}</style>
