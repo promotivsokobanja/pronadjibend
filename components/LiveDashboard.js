@@ -3209,8 +3209,11 @@ export default function LiveDashboard({ bandId, musicianId }) {
         .song-picker-combo {
           width: 100%;
           max-width: 560px;
-          margin-bottom: 0.9rem;
+          margin: 0 auto 0.9rem;
           position: relative;
+        }
+        .cheatsheet-nav .detail-title {
+          text-align: center;
         }
         .song-search-inline {
           display: flex;
@@ -3857,6 +3860,18 @@ export default function LiveDashboard({ bandId, musicianId }) {
           .hud-content h2 {
             margin-bottom: 0.55rem;
             letter-spacing: 0.12em;
+            text-align: center;
+          }
+          .request-view-toggle {
+            justify-content: center;
+          }
+          .song-picker .setlists-selector {
+            justify-content: flex-start;
+            padding: 0 0.1rem 0.25rem;
+          }
+          .repertoire-browser-head {
+            justify-content: center;
+            text-align: center;
           }
           .song-picker-list {
             max-height: calc(100dvh - 220px);

@@ -268,28 +268,47 @@ export default function QrModal({ bandId, musicianId, onClose }) {
           position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
           background: rgba(0,0,0,0.9); backdrop-filter: blur(8px);
           display: flex; align-items: center; justify-content: center; z-index: 2000;
+          padding: 1rem;
+          overflow-y: auto;
+          -webkit-overflow-scrolling: touch;
         }
-        .modal { width: 90%; max-width: 450px; text-align: center; position: relative; padding: 3rem 2rem; }
-        .close-btn { position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: #555; cursor: pointer; }
+        .modal {
+          width: 100%;
+          max-width: 450px;
+          text-align: center;
+          position: relative;
+          padding: 2.5rem 1.75rem 1.75rem;
+          max-height: calc(100dvh - 2rem);
+          overflow-y: auto;
+          box-sizing: border-box;
+        }
+        .close-btn { position: absolute; top: 0.85rem; right: 0.85rem; background: none; border: none; color: #555; cursor: pointer; padding: 0.35rem; z-index: 2; }
         
         h2 { margin-bottom: 0.5rem; }
-        .qr-container { padding: 3rem 0; display: flex; flex-direction: column; align-items: center; gap: 1.5rem; }
+        .qr-container { padding: 1.5rem 0 1rem; display: flex; flex-direction: column; align-items: center; gap: 1rem; }
         
         .qr-box { 
-          width: 240px; height: 240px; background: white; padding: 20px; 
+          width: 240px;
+          height: 240px;
+          max-width: 100%;
+          aspect-ratio: 1 / 1;
+          background: white; padding: 20px; 
           border-radius: 20px; display: flex; justify-content: center; align-items: center;
           position: relative; overflow: hidden; color: #000;
+          box-sizing: border-box;
         }
 
         .qr-image {
-          width: 190px;
-          height: 190px;
+          width: 100%;
+          height: 100%;
+          max-width: 190px;
+          max-height: 190px;
           object-fit: contain;
         }
         
-        .url-text { font-size: 0.8rem; color: #64748b; font-weight: 600; word-break: break-all; }
+        .url-text { font-size: 0.8rem; color: #64748b; font-weight: 600; word-break: break-all; max-width: 100%; overflow-wrap: anywhere; padding: 0 0.25rem; }
         .share-text { font-size: 0.75rem; color: #10b981; font-weight: 700; }
-        .qr-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.75rem; margin-top: 1rem; }
+        .qr-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.6rem; margin-top: 1rem; }
         
         .qr-actions .btn {
           min-height: 46px;
@@ -316,13 +335,21 @@ export default function QrModal({ bandId, musicianId, onClose }) {
         }
 
         @media (max-width: 560px) {
+          .modal { padding: 2rem 1rem 1rem; border-radius: 18px; }
+          .close-btn { top: 0.5rem; right: 0.5rem; }
+          h2 { font-size: 1.2rem; }
+          .qr-container { padding: 1rem 0 0.5rem; gap: 0.8rem; }
+          .qr-box { width: 220px; height: 220px; padding: 14px; }
+          .url-text { font-size: 0.72rem; }
           .qr-actions {
             grid-template-columns: 1fr;
+            gap: 0.5rem;
           }
+          .qr-actions .btn { font-size: 0.85rem; min-height: 44px; }
+        }
 
-          .qr-actions .btn {
-            font-size: 0.9rem;
-          }
+        @media (max-width: 380px) {
+          .qr-box { width: 190px; height: 190px; padding: 12px; }
         }
 
         .btn:disabled { opacity: 0.55; cursor: not-allowed; }
