@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Radio, ListMusic, Eye, EyeOff, MessageSquare, Music, Clock, Settings, ArrowLeft, X, Volume2, VolumeX, Zap, ZapOff, Type, RotateCcw, ChevronDown, Bell, Banknote, PlusCircle, HelpCircle } from 'lucide-react';
+import { Radio, ListMusic, Eye, EyeOff, MessageSquare, Music, Clock, Settings, ArrowLeft, X, Volume2, VolumeX, Zap, ZapOff, Type, RotateCcw, ChevronDown, Bell, Banknote, PlusCircle, HelpCircle, Play, Pause, Edit2, Check } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 export default function LiveDashboard({ bandId, musicianId }) {
@@ -29,6 +29,13 @@ export default function LiveDashboard({ bandId, musicianId }) {
   const [repertoireCategoryFilter, setRepertoireCategoryFilter] = useState('Sve');
   const REPERTOIRE_CATEGORIES = ['Sve', 'Muške Zabavne', 'Ženske Zabavne', 'Muške Narodne', 'Ženske Narodne', 'Razno', 'Strane Muške', 'Strane Ženske'];
   const [cheatsheetSearch, setCheatsheetSearch] = useState('');
+  // Cheatsheet per-song controls (transpose / edit / auto-scroll)
+  const [liveKeyOffset, setLiveKeyOffset] = useState(0);
+  const [liveIsEditing, setLiveIsEditing] = useState(false);
+  const [liveEditContent, setLiveEditContent] = useState('');
+  const [liveIsScrolling, setLiveIsScrolling] = useState(false);
+  const [liveScrollSpeed, setLiveScrollSpeed] = useState(1);
+  const [liveSaving, setLiveSaving] = useState(false);
   const lyricsRef = useRef(null);
   const songComboRef = useRef(null);
   const setlistSongComboRef = useRef(null);
@@ -704,7 +711,24 @@ export default function LiveDashboard({ bandId, musicianId }) {
 
   // Transpose chords
   const keys = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-  const renderLyrics = (text) => {
+  const transposeChord = (chord, offset) => {
+    if (!offset) return chord;
+    const match = chord.match(/^([A-G][#b]?)(.*)$/);
+    if (!match) return chord;
+    const root = match[1];
+    const suffix = match[2] || '';
+    const normRoot = root === 'Db' ? 'C#'
+      : root === 'Eb' ? 'D#'
+      : root === 'Gb' ? 'F#'
+      : root === 'Ab' ? 'G#'
+      : root === 'Bb' ? 'A#'
+      : root;
+    const idx = keys.indexOf(normRoot);
+    if (idx === -1) return chord;
+    const newRoot = keys[(idx + offset + 12) % 12];
+    return newRoot + suffix;
+  };
+  const renderLyrics = (text, offset = 0) => {
     if (!text) return null;
     const normalized = text.replace(/\r/g, '');
     return normalized.split('\n').map((line, i) => (
@@ -712,7 +736,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
         {line
           ? line.split(/(\[[A-G][#b]?(?:m|maj|min|sus|dim|aug)?[0-9]?\])/g).map((part, j) =>
               part.match(/^\[/) ? (
-                <span key={j} className="chord-inline">{part.slice(1, -1)}</span>
+                <span key={j} className="chord-inline">{transposeChord(part.slice(1, -1), offset)}</span>
               ) : (
                 <span key={j}>{part}</span>
               )
@@ -720,6 +744,51 @@ export default function LiveDashboard({ bandId, musicianId }) {
           : <span className="empty-line">&nbsp;</span>}
       </div>
     ));
+  };
+
+  // Reset per-song controls when switching songs
+  useEffect(() => {
+    setLiveKeyOffset(0);
+    setLiveIsEditing(false);
+    setLiveEditContent(selectedSong?.lyrics || '');
+    setLiveIsScrolling(false);
+  }, [selectedSong?.id]);
+
+  // Auto-scroll effect for cheatsheet lyrics
+  useEffect(() => {
+    if (!liveIsScrolling) return;
+    const interval = setInterval(() => {
+      if (lyricsRef.current) {
+        const el = lyricsRef.current;
+        if (el.scrollTop + el.clientHeight >= el.scrollHeight - 1) {
+          setLiveIsScrolling(false);
+          return;
+        }
+        el.scrollTop += 1;
+      }
+    }, Math.max(10, Math.round(50 / liveScrollSpeed)));
+    return () => clearInterval(interval);
+  }, [liveIsScrolling, liveScrollSpeed]);
+
+  const handleLiveSaveLyrics = async () => {
+    if (!selectedSong?.id || liveSaving) return;
+    setLiveSaving(true);
+    try {
+      const resp = await fetch(`/api/songs/${selectedSong.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lyrics: liveEditContent }),
+      });
+      if (!resp.ok) throw new Error('save failed');
+      const updated = { ...selectedSong, lyrics: liveEditContent };
+      setSelectedSong(updated);
+      setAllSongs((prev) => Array.isArray(prev) ? prev.map((s) => s.id === updated.id ? updated : s) : []);
+      setLiveIsEditing(false);
+    } catch (err) {
+      alert('Greška pri čuvanju teksta.');
+    } finally {
+      setLiveSaving(false);
+    }
   };
 
   const updateRequestStatus = async (id, status) => {
@@ -1353,30 +1422,82 @@ export default function LiveDashboard({ bandId, musicianId }) {
                       <div className="cheatsheet-song-info">
                         <h3 className="cheatsheet-now-title">{selectedSong.title}</h3>
                         <span className="cheatsheet-now-artist">{selectedSong.artist}</span>
-                        {selectedSong.key && <span className="key-badge">Tonalitet: {selectedSong.key}</span>}
                       </div>
-                    </div>
-
-                    <div className="lyrics-display" ref={lyricsRef} style={{ fontSize: `${fontScale}em` }}>
-                      {selectedSong.lyrics ? (
-                        renderLyrics(selectedSong.lyrics)
-                      ) : (
-                        <div className="no-lyrics-msg">
-                          <Music size={40} />
-                          <p>Tekst za selektovanu pesmu još nije dodat.</p>
-                          <p className="hint">Kliknite ispod da odmah dodate tekst za ovu pesmu.</p>
-                          {selectedSong.id && (
-                            <button
-                              type="button"
-                              className="add-lyrics-btn"
-                              onClick={() => router.push(`/bands/song/${selectedSong.id}`)}
-                            >
-                              Dodaj tekst
-                            </button>
+                      {selectedSong.lyrics !== null && selectedSong.id && (
+                        <div className="cheatsheet-tools">
+                          <button
+                            type="button"
+                            className={`cheat-tool-btn ${liveIsEditing ? 'active' : ''}`}
+                            onClick={() => liveIsEditing ? handleLiveSaveLyrics() : setLiveIsEditing(true)}
+                            disabled={liveSaving}
+                            title={liveIsEditing ? 'Sačuvaj' : 'Izmeni tekst'}
+                          >
+                            {liveIsEditing ? <Check size={14} /> : <Edit2 size={14} />}
+                            <span className="cheat-tool-label">{liveIsEditing ? (liveSaving ? 'ČUVAM...' : 'SAČUVAJ') : 'IZMENI'}</span>
+                          </button>
+                          {!liveIsEditing && (
+                            <div className="cheat-transpose">
+                              <button type="button" onClick={() => setLiveKeyOffset((o) => o - 1)} title="Snizi za pola koraka">-b</button>
+                              <span className="cheat-key">{keys[(keys.indexOf(selectedSong.key || 'C') + liveKeyOffset + 12) % 12]}</span>
+                              <button type="button" onClick={() => setLiveKeyOffset((o) => o + 1)} title="Podigni za pola koraka">+#</button>
+                            </div>
                           )}
                         </div>
                       )}
                     </div>
+
+                    {liveIsEditing ? (
+                      <textarea
+                        className="cheat-edit-area"
+                        value={liveEditContent}
+                        onChange={(e) => setLiveEditContent(e.target.value)}
+                        placeholder="Nalepi tekst i akorde (koristi [G] format za akorde)..."
+                      />
+                    ) : (
+                      <div className="lyrics-display" ref={lyricsRef} style={{ fontSize: `${fontScale}em` }}>
+                        {selectedSong.lyrics ? (
+                          renderLyrics(selectedSong.lyrics, liveKeyOffset)
+                        ) : (
+                          <div className="no-lyrics-msg">
+                            <Music size={40} />
+                            <p>Tekst za selektovanu pesmu još nije dodat.</p>
+                            <p className="hint">Kliknite ispod da odmah dodate tekst za ovu pesmu.</p>
+                            {selectedSong.id && (
+                              <button
+                                type="button"
+                                className="add-lyrics-btn"
+                                onClick={() => setLiveIsEditing(true)}
+                              >
+                                Dodaj tekst
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {!liveIsEditing && selectedSong.lyrics && (
+                      <div className="cheat-footer">
+                        <div className="cheat-speed">
+                          <button type="button" className={liveScrollSpeed === 1 ? 'active' : ''} onClick={() => setLiveScrollSpeed(1)}>x1</button>
+                          <button type="button" className={liveScrollSpeed === 1.5 ? 'active' : ''} onClick={() => setLiveScrollSpeed(1.5)}>x1.5</button>
+                          <button type="button" className={liveScrollSpeed === 2 ? 'active' : ''} onClick={() => setLiveScrollSpeed(2)}>x2</button>
+                        </div>
+                        <button
+                          type="button"
+                          className="cheat-play-btn"
+                          onClick={() => setLiveIsScrolling((s) => !s)}
+                          aria-label={liveIsScrolling ? 'Pauziraj auto-skrol' : 'Pokreni auto-skrol'}
+                          title={liveIsScrolling ? 'Pauza' : 'Start'}
+                        >
+                          {liveIsScrolling ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" />}
+                        </button>
+                        <div className="cheat-status">
+                          <span>{liveIsScrolling ? 'SKROL' : 'PAUZA'}</span>
+                          <span>KEY {liveKeyOffset > 0 ? `+${liveKeyOffset}` : liveKeyOffset}</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -3761,6 +3882,190 @@ export default function LiveDashboard({ bandId, musicianId }) {
           white-space: pre-wrap;
           word-break: break-word;
         }
+        .cheatsheet-tools {
+          margin-left: auto;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          flex-wrap: wrap;
+        }
+        .cheat-tool-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.35rem;
+          background: #0a0a0a;
+          border: 1px solid #2a2a2a;
+          color: #cbd5e1;
+          padding: 0.4rem 0.65rem;
+          border-radius: 8px;
+          font-weight: 800;
+          font-size: 0.7rem;
+          letter-spacing: 0.06em;
+          text-transform: uppercase;
+          cursor: pointer;
+          transition: 0.18s ease;
+          min-height: 34px;
+        }
+        .cheat-tool-btn:hover {
+          border-color: #00ff00;
+          color: #00ff00;
+        }
+        .cheat-tool-btn.active {
+          background: rgba(0, 255, 0, 0.08);
+          border-color: #00ff00;
+          color: #00ff00;
+        }
+        .cheat-tool-btn:disabled {
+          opacity: 0.55;
+          cursor: not-allowed;
+        }
+        .cheat-transpose {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.35rem;
+          background: #0a0a0a;
+          border: 1px solid #2a2a2a;
+          border-radius: 8px;
+          padding: 0.2rem 0.35rem;
+        }
+        .cheat-transpose button {
+          background: transparent;
+          border: none;
+          color: #cbd5e1;
+          font-weight: 900;
+          font-size: 0.78rem;
+          cursor: pointer;
+          padding: 0.25rem 0.45rem;
+          border-radius: 6px;
+          min-width: 30px;
+          min-height: 28px;
+          transition: 0.15s ease;
+        }
+        .cheat-transpose button:hover {
+          background: rgba(0, 255, 0, 0.1);
+          color: #00ff00;
+        }
+        .cheat-key {
+          color: #00ff00;
+          font-weight: 950;
+          font-size: 0.88rem;
+          min-width: 22px;
+          text-align: center;
+          padding: 0 0.25rem;
+        }
+        .cheat-edit-area {
+          flex: 1;
+          width: 100%;
+          background: #050505;
+          border: 1px dashed #333;
+          color: #e2e8f0;
+          font-family: 'Courier New', monospace;
+          font-size: 0.95rem;
+          line-height: 1.6;
+          padding: 1rem;
+          outline: none;
+          resize: none;
+          border-radius: 8px;
+          overflow-y: auto;
+          scrollbar-width: thin;
+          scrollbar-color: rgba(0, 255, 0, 0.4) transparent;
+        }
+        .cheat-edit-area:focus { border-color: #00ff00; }
+        .cheat-edit-area::-webkit-scrollbar { width: 8px; }
+        .cheat-edit-area::-webkit-scrollbar-thumb {
+          background: rgba(0, 255, 0, 0.35);
+          border-radius: 999px;
+        }
+        .cheat-footer {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 0.75rem;
+          padding: 0.6rem 0.2rem 0;
+          margin-top: 0.4rem;
+          border-top: 1px solid #1a1a1a;
+          flex-shrink: 0;
+        }
+        .cheat-speed {
+          display: flex;
+          gap: 0.3rem;
+        }
+        .cheat-speed button {
+          background: #0a0a0a;
+          border: 1px solid #2a2a2a;
+          color: #64748b;
+          padding: 0.35rem 0.65rem;
+          border-radius: 6px;
+          font-weight: 800;
+          font-size: 0.7rem;
+          cursor: pointer;
+          transition: 0.15s ease;
+          min-height: 32px;
+        }
+        .cheat-speed button:hover {
+          border-color: #00ff00;
+          color: #00ff00;
+        }
+        .cheat-speed button.active {
+          background: #00ff00;
+          color: #000;
+          border-color: #00ff00;
+        }
+        .cheat-play-btn {
+          background: #00ff00;
+          color: #000;
+          border: none;
+          width: 44px;
+          height: 44px;
+          border-radius: 50%;
+          cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          transition: 0.18s ease;
+          box-shadow: 0 0 18px rgba(0, 255, 0, 0.35);
+        }
+        .cheat-play-btn:hover { transform: scale(1.06); }
+        .cheat-play-btn:active { transform: scale(0.97); }
+        .cheat-status {
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+          text-align: right;
+          font-size: 0.6rem;
+          font-weight: 900;
+          color: #4b5563;
+          letter-spacing: 0.08em;
+        }
+        .cheat-status span:first-child { color: #00ff00; }
+        @media (max-width: 640px) {
+          .cheatsheet-tools {
+            width: 100%;
+            justify-content: flex-start;
+            margin-left: 0;
+          }
+          .cheat-tool-label {
+            display: none;
+          }
+          .cheat-tool-btn {
+            padding: 0.4rem 0.55rem;
+          }
+          .cheat-footer {
+            padding: 0.5rem 0 0;
+          }
+          .cheat-play-btn {
+            width: 40px;
+            height: 40px;
+          }
+          .cheat-speed button {
+            padding: 0.3rem 0.5rem;
+            font-size: 0.68rem;
+          }
+          .cheat-status {
+            font-size: 0.55rem;
+          }
+        }
+
         .chord-inline {
           color: #00ff00;
           font-weight: 900;
