@@ -2,8 +2,9 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, Save, UserRound, Mail, CalendarDays, Euro, MapPin, Music, Video, Image as ImageIcon, ListMusic, Radio, Headphones, Trash2, QrCode } from 'lucide-react';
+import { ArrowLeft, Save, UserRound, Mail, CalendarDays, Euro, MapPin, Music, Video, Image as ImageIcon, ListMusic, Radio, Headphones, Trash2, QrCode, HelpCircle } from 'lucide-react';
 import QrModal from '../../../../components/QrModal';
+import DashboardHelpModal from '../../../../components/DashboardHelpModal';
 import SocialShareActions from '../../../../components/SocialShareActions';
 import ChatThread from '../../../../components/ChatThread';
 import BookingCalendar from '../../../../components/BookingCalendar';
@@ -63,6 +64,7 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
   const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState('');
   const [showQr, setShowQr] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
   const [siteOrigin, setSiteOrigin] = useState('');
   const [busyDates, setBusyDates] = useState([]);
   const [manualBusyKeys, setManualBusyKeys] = useState([]);
@@ -1284,9 +1286,22 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
           <>
             <section className="musician-panel">
               <div className="panel-hero">
-                <p className="panel-eyebrow">Moj panel</p>
-                <h2>Brzi ulaz u sve alate</h2>
-                <p>Sve što ti treba za live nastup i repertoar na jednom mestu.</p>
+                <div className="panel-hero-top">
+                  <div>
+                    <p className="panel-eyebrow">Moj panel</p>
+                    <h2>Brzi ulaz u sve alate</h2>
+                    <p>Sve što ti treba za live nastup i repertoar na jednom mestu.</p>
+                  </div>
+                  <button
+                    type="button"
+                    className="panel-help-btn"
+                    onClick={() => setShowHelp(true)}
+                    aria-label="Pomoć — kako koristiti kontrolnu tablu"
+                  >
+                    <HelpCircle size={16} />
+                    <span>Pomoć</span>
+                  </button>
+                </div>
                 <div className="panel-grid">
                   {dashboardCards.map((card) => {
                     const Icon = card.icon;
@@ -1398,6 +1413,7 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
       {showQr && viewer?.musicianProfileId && (
         <QrModal musicianId={viewer.musicianProfileId} onClose={() => setShowQr(false)} />
       )}
+      {showHelp && <DashboardHelpModal role="musician" onClose={() => setShowHelp(false)} />}
 
       <style jsx>{`
         .musician-editor-shell {
@@ -1508,6 +1524,38 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
             padding: 1.5rem 1.2rem;
             border-radius: 24px;
           }
+        }
+        .panel-hero-top {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 1rem;
+          flex-wrap: wrap;
+          margin-bottom: 0.4rem;
+        }
+        .panel-help-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.4rem;
+          padding: 0.5rem 0.85rem;
+          border-radius: 999px;
+          border: 1px solid rgba(255,255,255,0.35);
+          background: rgba(255,255,255,0.15);
+          color: #ffffff;
+          font-weight: 700;
+          font-size: 0.78rem;
+          cursor: pointer;
+          transition: 0.15s ease;
+          backdrop-filter: blur(6px);
+          flex-shrink: 0;
+        }
+        .panel-help-btn:hover {
+          background: rgba(255,255,255,0.28);
+          border-color: rgba(255,255,255,0.55);
+          transform: translateY(-1px);
+        }
+        .panel-help-btn:active {
+          transform: translateY(0);
         }
         .panel-eyebrow {
           text-transform: uppercase;

@@ -16,11 +16,13 @@ import {
   CheckCircle,
   X,
   Download,
+  HelpCircle,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import QrModal from '../../../components/QrModal';
+import DashboardHelpModal from '../../../components/DashboardHelpModal';
 import BookingCalendar from '../../../components/BookingCalendar';
 import BusyDateNoteModal from '../../../components/bands/BusyDateNoteModal';
 import ChatThread from '../../../components/ChatThread';
@@ -48,6 +50,7 @@ export default function BandDashboard() {
   const [bandId, setBandId] = useState(null);
   const [loadError, setLoadError] = useState('');
   const [showQr, setShowQr] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
   const [activeRequest, setActiveRequest] = useState(null);
   const [bookings, setBookings] = useState([]);
   const [stats, setStats] = useState([
@@ -517,9 +520,18 @@ export default function BandDashboard() {
       <div className="blob" style={{ top: '10%', left: '10%' }}></div>
       
       <header className="dash-header">
-        <div>
+        <div className="dash-title-block">
           <h1>Kontrolna Tabla</h1>
           <p className="text-muted">Dobrodošli nazad. Imate {(Array.isArray(bookings) ? bookings : []).filter(b => b.status === 'PENDING').length} novih upita.</p>
+          <button
+            type="button"
+            className="dash-help-btn"
+            onClick={() => setShowHelp(true)}
+            aria-label="Pomoć — kako koristiti kontrolnu tablu"
+          >
+            <HelpCircle size={16} />
+            <span>Pomoć / Uputstvo</span>
+          </button>
         </div>
         <div className="header-actions">
           <div className="header-action-item">
@@ -605,6 +617,7 @@ export default function BandDashboard() {
       )}
 
       {showQr && <QrModal bandId={bandId} onClose={() => setShowQr(false)} />}
+      {showHelp && <DashboardHelpModal role="band" onClose={() => setShowHelp(false)} />}
 
       <div className="stats-grid">
         {stats.map((stat, i) => (
@@ -876,6 +889,37 @@ export default function BandDashboard() {
           gap: 1.5rem;
         }
         .dash-header h1 { font-size: 3rem; font-weight: 800; letter-spacing: -2px; }
+        .dash-title-block {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 0.5rem;
+          min-width: 0;
+        }
+        .dash-help-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.4rem;
+          padding: 0.5rem 0.85rem;
+          border-radius: 999px;
+          border: 1px solid #e2e8f0;
+          background: #ffffff;
+          color: #475569;
+          font-weight: 700;
+          font-size: 0.78rem;
+          cursor: pointer;
+          transition: 0.15s ease;
+          margin-top: 0.25rem;
+        }
+        .dash-help-btn:hover {
+          border-color: #7c3aed;
+          color: #7c3aed;
+          background: #faf5ff;
+          transform: translateY(-1px);
+        }
+        .dash-help-btn:active {
+          transform: translateY(0);
+        }
 
         .stats-grid { 
           display: grid; 
