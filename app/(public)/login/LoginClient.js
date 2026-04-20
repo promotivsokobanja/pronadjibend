@@ -529,9 +529,10 @@ export default function LoginClient() {
         .plan-alert { background: #eff6ff; color: #1d4ed8; padding: 0.85rem 1rem; border-radius: 10px; font-size: 0.84rem; font-weight: 600; margin-bottom: 1rem; border: 1px solid #bfdbfe; line-height: 1.5; }
 
         .role-selector { margin-bottom: 1rem; }
-        .role-selector p { font-size: 0.8rem; font-weight: 700; color: #555; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 1px; }
-        .role-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-        .role-card { background: #ffffff; border: 1px solid #e2e8f0; padding: 0.9rem; border-radius: 12px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 0.55rem; transition: 0.2s ease; }
+        .role-selector p { font-size: 0.8rem; font-weight: 700; color: #555; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 1px; text-align: center; }
+        .role-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; }
+        .role-card { background: #ffffff; border: 1px solid #e2e8f0; padding: 0.9rem 0.6rem; border-radius: 12px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 0.55rem; transition: 0.2s ease; min-height: 88px; }
+        .role-card span { text-align: center; line-height: 1.2; }
         .role-card span { font-size: 0.82rem; font-weight: 700; color: #64748b; }
         .role-card.active { border-color: #007aff; background: #eff6ff; }
         .role-card.active span { color: #0f172a; }
@@ -599,10 +600,35 @@ export default function LoginClient() {
           border-radius: 10px;
           padding: 0.4rem 0.55rem;
           font-size: 0.9rem;
+          width: 100%;
+          min-width: 0;
         }
         .price-inputs span {
           font-weight: 700;
           color: #94a3b8;
+        }
+        .price-input-with-icon {
+          display: flex;
+          align-items: center;
+          gap: 0.4rem;
+          border: 1px solid #dbe1ea;
+          border-radius: 10px;
+          padding: 0.35rem 0.5rem;
+          background: #ffffff;
+          min-width: 0;
+        }
+        .price-input-with-icon :global(svg) {
+          color: #94a3b8;
+          flex-shrink: 0;
+        }
+        .price-input-with-icon input {
+          border: none;
+          padding: 0;
+          width: 100%;
+          min-width: 0;
+          outline: none;
+          font-size: 0.9rem;
+          background: transparent;
         }
 
         .input-group { position: relative; display: flex; align-items: center; gap: 0.85rem; padding: 0.75rem 1rem; background: #ffffff; border: 1px solid #dbe1ea; border-radius: 12px; margin-bottom: 0.9rem; transition: 0.2s ease; }
@@ -682,20 +708,36 @@ export default function LoginClient() {
         }
         .btn-full { width: 100%; }
 
+        /* Tablet */
+        @media (max-width: 768px) {
+          .login-container { padding: 1.5rem 1rem; }
+          .login-box { max-width: 460px; margin: 0 auto; }
+        }
+
+        /* Mobile */
         @media (max-width: 640px) {
-          .login-box { padding: 1.4rem 1rem; border-radius: 18px; }
+          .login-container { padding: 1.25rem 0.75rem; }
+          .login-box { padding: 1.4rem 1rem; border-radius: 18px; max-width: 100%; margin: 0 auto; }
           .login-logo { width: 116px; }
           .title { font-size: 1.65rem; }
           .header-toggle button { font-size: 0.8rem; padding: 0.8rem 0.5rem; }
           .input-group { padding: 0.68rem 0.85rem; margin-bottom: 0.8rem; }
+          .role-cards { grid-template-columns: 1fr; gap: 0.6rem; }
+          .role-card { flex-direction: row; justify-content: flex-start; padding: 0.75rem 1rem; min-height: 0; gap: 0.75rem; }
+          .role-card span { text-align: left; }
+          .input-group.duo { grid-template-columns: 1fr; gap: 0.75rem; }
+          .price-inputs { grid-template-columns: 1fr auto 1fr; gap: 0.35rem; }
+          .price-input-with-icon { padding: 0.3rem 0.4rem; }
         }
-        
+
+        /* Small mobile */
         @media (max-width: 480px) {
-          .login-container { padding: 1.25rem 0.75rem; }
-          .login-box { padding: 1.2rem 0.8rem; }
-          .title { font-size: 1.45rem; }
+          .login-container { padding: 1rem 0.5rem; }
+          .login-box { padding: 1.1rem 0.85rem; }
+          .title { font-size: 1.4rem; }
           .subtitle { margin-bottom: 1.2rem; font-size: 0.82rem; }
           .social-btn { height: 44px; }
+          .plan-alert, .error-alert, .success-alert { font-size: 0.78rem; padding: 0.7rem 0.85rem; }
         }
       `}</style>
     </div>
