@@ -145,6 +145,15 @@ body {
   touch-action: pan-y;
 }
 
+/* Scroll-lock for fullscreen popups (song view, modals, etc.). */
+body.song-popup-open,
+html:has(body.song-popup-open) {
+  overflow: hidden !important;
+  overflow-x: hidden !important;
+  overflow-y: hidden !important;
+  touch-action: none !important;
+}
+
 * {
   box-sizing: border-box !important;
 }

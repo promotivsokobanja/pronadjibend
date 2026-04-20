@@ -49,13 +49,19 @@ export default function SongView({ params }) {
   // Full-screen popup: lock body & html scroll while this view is open.
   useEffect(() => {
     if (typeof document === 'undefined') return;
-    const prevBody = document.body.style.overflow;
-    const prevHtml = document.documentElement.style.overflow;
-    document.body.style.overflow = 'hidden';
-    document.documentElement.style.overflow = 'hidden';
+    const body = document.body;
+    const html = document.documentElement;
+    const prevBody = body.getAttribute('style') || '';
+    const prevHtml = html.getAttribute('style') || '';
+    html.style.setProperty('overflow-x', 'hidden', 'important');
+    html.style.setProperty('overflow-y', 'hidden', 'important');
+    body.style.setProperty('overflow-x', 'hidden', 'important');
+    body.style.setProperty('overflow-y', 'hidden', 'important');
+    body.classList.add('song-popup-open');
     return () => {
-      document.body.style.overflow = prevBody;
-      document.documentElement.style.overflow = prevHtml;
+      body.setAttribute('style', prevBody);
+      html.setAttribute('style', prevHtml);
+      body.classList.remove('song-popup-open');
     };
   }, []);
 
