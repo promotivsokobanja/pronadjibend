@@ -1455,24 +1455,26 @@ export default function LiveDashboard({ bandId, musicianId }) {
                       />
                     ) : (
                       <div className="lyrics-display" ref={lyricsRef} style={{ fontSize: `${fontScale}em` }}>
-                        {selectedSong.lyrics ? (
-                          renderLyrics(selectedSong.lyrics, liveKeyOffset)
-                        ) : (
-                          <div className="no-lyrics-msg">
-                            <Music size={40} />
-                            <p>Tekst za selektovanu pesmu još nije dodat.</p>
-                            <p className="hint">Kliknite ispod da odmah dodate tekst za ovu pesmu.</p>
-                            {selectedSong.id && (
-                              <button
-                                type="button"
-                                className="add-lyrics-btn"
-                                onClick={() => setLiveIsEditing(true)}
-                              >
-                                Dodaj tekst
-                              </button>
-                            )}
-                          </div>
-                        )}
+                        <div className="lyrics-inner">
+                          {selectedSong.lyrics ? (
+                            renderLyrics(selectedSong.lyrics, liveKeyOffset)
+                          ) : (
+                            <div className="no-lyrics-msg">
+                              <Music size={40} />
+                              <p>Tekst za selektovanu pesmu još nije dodat.</p>
+                              <p className="hint">Kliknite ispod da odmah dodate tekst za ovu pesmu.</p>
+                              {selectedSong.id && (
+                                <button
+                                  type="button"
+                                  className="add-lyrics-btn"
+                                  onClick={() => setLiveIsEditing(true)}
+                                >
+                                  Dodaj tekst
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     )}
 
@@ -3840,26 +3842,21 @@ export default function LiveDashboard({ bandId, musicianId }) {
           font-size: 1.1rem;
           color: #ccc;
           white-space: pre-wrap;
-          padding-right: 0.35rem;
           scrollbar-width: thin;
           scrollbar-color: #4a4a4a #0f0f0f;
           width: 100%;
-          max-width: 760px;
-          margin-left: auto;
-          margin-right: auto;
-          padding-left: 1rem;
-          padding-right: 1rem;
+          max-width: 100%;
+          padding: 0;
         }
-        @media (min-width: 1200px) {
-          .lyrics-display {
-            max-width: 860px;
-          }
+        .lyrics-inner {
+          width: 100%;
+          max-width: 860px;
+          margin: 0 auto;
+          padding: 0 1.5rem 1rem;
         }
         @media (max-width: 640px) {
-          .lyrics-display {
-            max-width: 100%;
-            padding-left: 0.5rem;
-            padding-right: 0.5rem;
+          .lyrics-inner {
+            padding: 0 0.75rem 0.75rem;
           }
         }
         .lyrics-display::-webkit-scrollbar {
