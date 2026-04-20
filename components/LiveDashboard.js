@@ -1160,7 +1160,6 @@ export default function LiveDashboard({ bandId, musicianId }) {
                                 value={songSearch}
                                 onChange={(e) => setSongSearch(e.target.value)}
                                 className="song-search-input repertoire-search-input"
-                                autoFocus
                               />
                               <div className="repertoire-cat-scroll">
                                 {REPERTOIRE_CATEGORIES.map((cat) => (
