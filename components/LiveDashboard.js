@@ -4569,6 +4569,510 @@ export default function LiveDashboard({ bandId, musicianId }) {
         .night-vision .help-section strong {
           color: #b7ffb7;
         }
+
+        /* =====================================================
+           LIGHT MODE (Night Vision OFF) — dedicated overrides.
+           Activates with .live-dashboard:not(.night-vision).
+           ===================================================== */
+        .live-dashboard:not(.night-vision) {
+          background: #ffffff;
+          color: #0f172a;
+          font-family: 'Inter', 'JetBrains Mono', monospace;
+          text-shadow: none;
+        }
+        .live-dashboard:not(.night-vision) .hud-header {
+          background: #ffffff;
+          border-bottom-color: #e5e7eb;
+        }
+        .live-dashboard:not(.night-vision) .status-indicator {
+          color: #0f172a;
+          background: rgba(124, 58, 237, 0.08);
+          border-color: rgba(124, 58, 237, 0.25);
+        }
+        .live-dashboard:not(.night-vision) .status-indicator .pulse-dot {
+          background: #7c3aed;
+          box-shadow: 0 0 10px rgba(124, 58, 237, 0.55);
+        }
+        .live-dashboard:not(.night-vision) .hud-btn {
+          background: #ffffff;
+          border-color: #e5e7eb;
+          color: #475569;
+        }
+        .live-dashboard:not(.night-vision) .hud-btn:hover {
+          border-color: #7c3aed;
+          color: #7c3aed;
+          background: rgba(124, 58, 237, 0.05);
+        }
+        .live-dashboard:not(.night-vision) .hud-btn.active {
+          border-color: #7c3aed;
+          color: #7c3aed;
+          background: rgba(124, 58, 237, 0.08);
+        }
+        .live-dashboard:not(.night-vision) .hud-btn.settings-active {
+          background: #ef4444 !important;
+          color: #fff !important;
+          border-color: #ef4444 !important;
+        }
+        .live-dashboard:not(.night-vision) .exit-btn {
+          border-color: #ef4444;
+          color: #ef4444;
+          background: #ffffff;
+        }
+        .live-dashboard:not(.night-vision) .exit-btn:hover {
+          background: #ef4444;
+          color: #fff;
+        }
+        .live-dashboard:not(.night-vision) .hud-pending-orbit {
+          background: #fee2e2;
+          border-color: #fca5a5;
+        }
+        .live-dashboard:not(.night-vision) .hud-pending-orbit-num {
+          color: #b91c1c;
+        }
+        .live-dashboard:not(.night-vision) .hud-pending-orbit.has-pending {
+          background: #fecaca;
+          border-color: #ef4444;
+        }
+
+        /* Sidebar nav */
+        .live-dashboard:not(.night-vision) .hud-side-nav {
+          background: #f8fafc;
+          border-right-color: #e5e7eb;
+        }
+        .live-dashboard:not(.night-vision) .nav-item {
+          color: #64748b;
+          background: transparent;
+        }
+        .live-dashboard:not(.night-vision) .nav-item:hover {
+          background: rgba(124, 58, 237, 0.06);
+          color: #7c3aed;
+        }
+        .live-dashboard:not(.night-vision) .nav-item.active {
+          background: rgba(124, 58, 237, 0.1);
+          color: #7c3aed;
+        }
+        .live-dashboard:not(.night-vision) .nav-item .badge {
+          background: #ef4444;
+          color: #fff;
+        }
+        .live-dashboard:not(.night-vision) .nav-tooltip {
+          background: #0f172a;
+          color: #ffffff;
+        }
+
+        /* Main content */
+        .live-dashboard:not(.night-vision) .hud-content {
+          background: #ffffff;
+          color: #0f172a;
+        }
+        .live-dashboard:not(.night-vision) .hud-content h2,
+        .live-dashboard:not(.night-vision) .detail-title {
+          color: #0f172a;
+        }
+        .live-dashboard:not(.night-vision) .detail-artist,
+        .live-dashboard:not(.night-vision) .setting-hint,
+        .live-dashboard:not(.night-vision) .setlist-help-text,
+        .live-dashboard:not(.night-vision) .setlist-item-artist,
+        .live-dashboard:not(.night-vision) .song-picker-artist,
+        .live-dashboard:not(.night-vision) .song-dropdown-artist,
+        .live-dashboard:not(.night-vision) .cheatsheet-now-artist {
+          color: #64748b;
+        }
+
+        /* Request cards */
+        .live-dashboard:not(.night-vision) .request-card {
+          background: #ffffff;
+          border-color: #e5e7eb;
+          color: #0f172a;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        }
+        .live-dashboard:not(.night-vision) .request-card.waiter-tip {
+          background: linear-gradient(135deg, #fffbeb, #fef3c7);
+          border-color: #fbbf24;
+        }
+        .live-dashboard:not(.night-vision) .req-header .time {
+          color: #64748b;
+        }
+        .live-dashboard:not(.night-vision) .req-header .table-num,
+        .live-dashboard:not(.night-vision) .song-title {
+          color: #0f172a;
+        }
+        .live-dashboard:not(.night-vision) .artist-name {
+          color: #64748b;
+        }
+        .live-dashboard:not(.night-vision) .tip-amount {
+          color: #16a34a;
+        }
+        .live-dashboard:not(.night-vision) .status-chip {
+          background: #f1f5f9;
+          color: #475569;
+        }
+        .live-dashboard:not(.night-vision) .status-chip.accepted {
+          background: rgba(22, 163, 74, 0.1);
+          color: #15803d;
+        }
+        .live-dashboard:not(.night-vision) .status-chip.rejected {
+          background: rgba(239, 68, 68, 0.1);
+          color: #b91c1c;
+        }
+        .live-dashboard:not(.night-vision) .status-chip.played {
+          background: rgba(124, 58, 237, 0.1);
+          color: #6d28d9;
+        }
+
+        /* Action buttons */
+        .live-dashboard:not(.night-vision) .btn-hud {
+          background: #ffffff;
+          border: 1px solid #e5e7eb;
+          color: #475569;
+        }
+        .live-dashboard:not(.night-vision) .btn-hud:hover {
+          border-color: #cbd5e1;
+          background: #f8fafc;
+        }
+        .live-dashboard:not(.night-vision) .btn-hud.accept {
+          background: #16a34a;
+          color: #ffffff;
+          border-color: #16a34a;
+        }
+        .live-dashboard:not(.night-vision) .btn-hud.accept:hover {
+          background: #15803d;
+          border-color: #15803d;
+        }
+        .live-dashboard:not(.night-vision) .btn-hud.reject {
+          background: #ffffff;
+          color: #ef4444;
+          border-color: #fca5a5;
+        }
+        .live-dashboard:not(.night-vision) .btn-hud.reject:hover {
+          background: #ef4444;
+          color: #ffffff;
+        }
+        .live-dashboard:not(.night-vision) .btn-hud.played {
+          background: #7c3aed;
+          color: #ffffff;
+          border-color: #7c3aed;
+        }
+        .live-dashboard:not(.night-vision) .btn-hud.played:hover {
+          background: #6d28d9;
+        }
+        .live-dashboard:not(.night-vision) .request-view-toggle button {
+          background: #ffffff;
+          border: 1px solid #e5e7eb;
+          color: #64748b;
+        }
+        .live-dashboard:not(.night-vision) .request-view-toggle button.active {
+          background: #7c3aed;
+          color: #ffffff;
+          border-color: #7c3aed;
+        }
+
+        /* Right metrics */
+        .live-dashboard:not(.night-vision) .hud-metrics {
+          background: #f8fafc;
+          border-left: 1px solid #e5e7eb;
+        }
+        .live-dashboard:not(.night-vision) .metric-box {
+          background: #ffffff;
+          border-color: #e5e7eb;
+          color: #0f172a;
+        }
+        .live-dashboard:not(.night-vision) .metric-box .label {
+          color: #64748b;
+        }
+        .live-dashboard:not(.night-vision) .metric-box .value {
+          color: #7c3aed;
+        }
+
+        /* Lyrics / cheatsheet */
+        .live-dashboard:not(.night-vision) .lyrics-display {
+          color: #0f172a;
+          scrollbar-color: #cbd5e1 #f1f5f9;
+        }
+        .live-dashboard:not(.night-vision) .lyrics-display::-webkit-scrollbar-track {
+          background: #f1f5f9;
+        }
+        .live-dashboard:not(.night-vision) .lyrics-display::-webkit-scrollbar-thumb {
+          background: #cbd5e1;
+        }
+        .live-dashboard:not(.night-vision) .chord-inline {
+          color: #7c3aed;
+          text-shadow: none;
+          background: rgba(124, 58, 237, 0.08);
+          padding: 0 4px;
+          border-radius: 4px;
+        }
+        .live-dashboard:not(.night-vision) .cheatsheet-song-header {
+          border-bottom-color: #e5e7eb;
+        }
+        .live-dashboard:not(.night-vision) .cheatsheet-now-title {
+          color: #0f172a;
+        }
+        .live-dashboard:not(.night-vision) .cheatsheet-back-btn {
+          background: #f1f5f9;
+          border-color: #cbd5e1;
+          color: #475569;
+        }
+        .live-dashboard:not(.night-vision) .cheatsheet-back-btn:hover {
+          border-color: #7c3aed;
+          color: #7c3aed;
+        }
+        .live-dashboard:not(.night-vision) .key-badge {
+          background: rgba(124, 58, 237, 0.1);
+          color: #7c3aed;
+          border-color: rgba(124, 58, 237, 0.3);
+        }
+        .live-dashboard:not(.night-vision) .cheat-tool-btn {
+          background: #ffffff;
+          border-color: #e5e7eb;
+          color: #475569;
+        }
+        .live-dashboard:not(.night-vision) .cheat-tool-btn:hover {
+          border-color: #7c3aed;
+          color: #7c3aed;
+        }
+        .live-dashboard:not(.night-vision) .cheat-tool-btn.active {
+          background: rgba(124, 58, 237, 0.08);
+          border-color: #7c3aed;
+          color: #7c3aed;
+        }
+        .live-dashboard:not(.night-vision) .cheat-transpose {
+          background: #ffffff;
+          border-color: #e5e7eb;
+        }
+        .live-dashboard:not(.night-vision) .cheat-transpose button {
+          color: #475569;
+        }
+        .live-dashboard:not(.night-vision) .cheat-transpose button:hover {
+          background: rgba(124, 58, 237, 0.08);
+          color: #7c3aed;
+        }
+        .live-dashboard:not(.night-vision) .cheat-key {
+          color: #7c3aed;
+        }
+        .live-dashboard:not(.night-vision) .cheat-edit-area {
+          background: #f8fafc;
+          border-color: #cbd5e1;
+          color: #0f172a;
+          font-family: 'Courier New', monospace;
+        }
+        .live-dashboard:not(.night-vision) .cheat-edit-area:focus {
+          border-color: #7c3aed;
+        }
+        .live-dashboard:not(.night-vision) .cheat-footer {
+          border-top-color: #e5e7eb;
+        }
+        .live-dashboard:not(.night-vision) .cheat-speed button {
+          background: #ffffff;
+          border-color: #e5e7eb;
+          color: #64748b;
+        }
+        .live-dashboard:not(.night-vision) .cheat-speed button:hover {
+          border-color: #7c3aed;
+          color: #7c3aed;
+        }
+        .live-dashboard:not(.night-vision) .cheat-speed button.active {
+          background: #7c3aed;
+          color: #ffffff;
+          border-color: #7c3aed;
+        }
+        .live-dashboard:not(.night-vision) .cheat-play-btn {
+          background: #7c3aed;
+          color: #ffffff;
+          box-shadow: 0 4px 14px rgba(124, 58, 237, 0.35);
+        }
+        .live-dashboard:not(.night-vision) .cheat-status {
+          color: #94a3b8;
+        }
+        .live-dashboard:not(.night-vision) .cheat-status span:first-child {
+          color: #7c3aed;
+        }
+        .live-dashboard:not(.night-vision) .no-lyrics-msg {
+          color: #64748b;
+        }
+        .live-dashboard:not(.night-vision) .no-lyrics-msg .hint {
+          color: #94a3b8;
+        }
+        .live-dashboard:not(.night-vision) .add-lyrics-btn {
+          background: #7c3aed;
+          color: #ffffff;
+        }
+        .live-dashboard:not(.night-vision) .add-lyrics-btn:hover {
+          background: #6d28d9;
+        }
+
+        /* Setlists / song picker / repertoire browser */
+        .live-dashboard:not(.night-vision) .setlists-panel,
+        .live-dashboard:not(.night-vision) .setlist-song-search,
+        .live-dashboard:not(.night-vision) .repertoire-browser,
+        .live-dashboard:not(.night-vision) .active-setlist-strip,
+        .live-dashboard:not(.night-vision) .setlist-item-main,
+        .live-dashboard:not(.night-vision) .song-picker-item,
+        .live-dashboard:not(.night-vision) .song-search-box,
+        .live-dashboard:not(.night-vision) .song-search-inline,
+        .live-dashboard:not(.night-vision) .song-dropdown-toggle,
+        .live-dashboard:not(.night-vision) .song-dropdown-list,
+        .live-dashboard:not(.night-vision) .song-select {
+          background: #ffffff;
+          border-color: #e5e7eb;
+          color: #0f172a;
+        }
+        .live-dashboard:not(.night-vision) .setlist-item-title,
+        .live-dashboard:not(.night-vision) .song-picker-title,
+        .live-dashboard:not(.night-vision) .song-dropdown-title,
+        .live-dashboard:not(.night-vision) .active-setlist-name,
+        .live-dashboard:not(.night-vision) .setlists-panel-header h3 {
+          color: #0f172a;
+        }
+        .live-dashboard:not(.night-vision) .setlist-chip {
+          background: #f1f5f9;
+          border-color: #e5e7eb;
+          color: #475569;
+        }
+        .live-dashboard:not(.night-vision) .setlist-chip.active,
+        .live-dashboard:not(.night-vision) .setlist-chip:hover {
+          background: rgba(124, 58, 237, 0.1);
+          border-color: #7c3aed;
+          color: #7c3aed;
+        }
+        .live-dashboard:not(.night-vision) .repertoire-cat-chip {
+          background: #f1f5f9;
+          border-color: #e5e7eb;
+          color: #475569;
+        }
+        .live-dashboard:not(.night-vision) .repertoire-cat-chip.active {
+          background: #7c3aed;
+          color: #ffffff;
+          border-color: #7c3aed;
+        }
+        .live-dashboard:not(.night-vision) .song-search-input {
+          background: #f8fafc;
+          border-color: #e5e7eb;
+          color: #0f172a;
+        }
+        .live-dashboard:not(.night-vision) .song-search-input:focus {
+          border-color: #7c3aed;
+          background: #ffffff;
+        }
+        .live-dashboard:not(.night-vision) .song-search-input::placeholder {
+          color: #94a3b8;
+        }
+        .live-dashboard:not(.night-vision) .song-dropdown-item:hover {
+          background: rgba(124, 58, 237, 0.05);
+        }
+        .live-dashboard:not(.night-vision) .cheatsheet-setlist-toggle {
+          background: #f8fafc;
+          border-color: #e5e7eb;
+          color: #475569;
+        }
+        .live-dashboard:not(.night-vision) .cheatsheet-setlist-toggle:hover,
+        .live-dashboard:not(.night-vision) .cheatsheet-setlist-toggle.expanded {
+          background: rgba(124, 58, 237, 0.08);
+          border-color: #7c3aed;
+          color: #7c3aed;
+        }
+        .live-dashboard:not(.night-vision) .cheatsheet-setlist-empty {
+          color: #94a3b8;
+        }
+        .live-dashboard:not(.night-vision) .cheatsheet-song-item {
+          background: #ffffff;
+          border-color: #e5e7eb;
+          color: #0f172a;
+        }
+        .live-dashboard:not(.night-vision) .cheatsheet-song-item:hover {
+          background: rgba(124, 58, 237, 0.05);
+          border-color: #7c3aed;
+        }
+
+        /* Settings panel */
+        .live-dashboard:not(.night-vision) .settings-overlay {
+          background: rgba(15, 23, 42, 0.5);
+        }
+        .live-dashboard:not(.night-vision) .settings-panel {
+          background: #ffffff;
+          color: #0f172a;
+          border-color: #e5e7eb;
+        }
+        .live-dashboard:not(.night-vision) .settings-header {
+          border-bottom-color: #e5e7eb;
+        }
+        .live-dashboard:not(.night-vision) .settings-header h2 {
+          color: #0f172a;
+        }
+        .live-dashboard:not(.night-vision) .close-btn {
+          background: #f1f5f9;
+          border-color: #e5e7eb;
+          color: #475569;
+        }
+        .live-dashboard:not(.night-vision) .close-btn:hover {
+          background: #ef4444;
+          color: #ffffff;
+          border-color: #ef4444;
+        }
+        .live-dashboard:not(.night-vision) .setting-group {
+          background: #f8fafc;
+          border-color: #e5e7eb;
+        }
+        .live-dashboard:not(.night-vision) .setting-label {
+          color: #0f172a;
+        }
+        .live-dashboard:not(.night-vision) .setting-input {
+          background: #ffffff;
+          border-color: #cbd5e1;
+          color: #0f172a;
+        }
+        .live-dashboard:not(.night-vision) .setting-input:focus {
+          border-color: #7c3aed;
+        }
+        .live-dashboard:not(.night-vision) .setting-range {
+          accent-color: #7c3aed;
+        }
+        .live-dashboard:not(.night-vision) .range-value {
+          color: #7c3aed;
+        }
+        .live-dashboard:not(.night-vision) .toggle-btn {
+          background: #cbd5e1;
+        }
+        .live-dashboard:not(.night-vision) .toggle-btn.on {
+          background: #7c3aed;
+        }
+        .live-dashboard:not(.night-vision) .toggle-knob {
+          background: #ffffff;
+        }
+
+        /* Help modal (Live) */
+        .live-dashboard:not(.night-vision) .help-section {
+          background: #f8fafc;
+          border-color: #e5e7eb;
+        }
+        .live-dashboard:not(.night-vision) .help-section h3 {
+          color: #7c3aed;
+        }
+        .live-dashboard:not(.night-vision) .help-section p,
+        .live-dashboard:not(.night-vision) .help-section li {
+          color: #475569;
+        }
+        .live-dashboard:not(.night-vision) .help-section strong {
+          color: #0f172a;
+        }
+        .live-dashboard:not(.night-vision) .help-tip {
+          background: rgba(124, 58, 237, 0.05);
+          border-color: rgba(124, 58, 237, 0.3);
+        }
+
+        /* Night vision label on hud button */
+        .live-dashboard:not(.night-vision) .hud-btn span {
+          color: inherit;
+        }
+
+        /* Mobile: ensure responsive light mode remains visible */
+        @media (max-width: 720px) {
+          .live-dashboard:not(.night-vision) .hud-side-nav {
+            background: #ffffff;
+            border-top-color: #e5e7eb;
+            box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.04);
+          }
+        }
       `}</style>
     </div>
   );
