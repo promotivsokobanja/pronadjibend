@@ -1,7 +1,6 @@
 'use client';
 import { ChevronUp, ChevronDown, Play, Pause, RefreshCcw, ArrowLeft, Bell, Check, X, Edit2, Music } from 'lucide-react';
 import { useState, useEffect, useRef, useCallback } from 'react';
-import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
 
@@ -46,6 +45,27 @@ export default function SongView({ params }) {
   useEffect(() => {
     fetchSong();
   }, [fetchSong]);
+
+  // Full-screen popup: lock body scroll while this view is open.
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, []);
+
+  // ESC closes the popup.
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === 'Escape' && !isEditing) {
+        handleStepBack();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [isEditing]);
 
   useEffect(() => {
     const fetchLibrary = async () => {
@@ -129,9 +149,17 @@ export default function SongView({ params }) {
   if (!song) return <div className="error-screen">Pesma nije pronađena.</div>;
 
   return (
-    <div className="stage-view-container">
+    <div className="stage-view-container" role="dialog" aria-modal="true" aria-label={`Tekst pesme: ${song.title}`}>
       <header className="stage-nav">
-        <Link href="/bands/repertoire" className="back-link"><ArrowLeft size={18} /> Repertoar</Link>
+        <button
+          type="button"
+          className="back-link close-x"
+          onClick={handleStepBack}
+          aria-label="Zatvori"
+          title="Zatvori (Esc)"
+        >
+          <X size={20} />
+        </button>
         <div className="song-meta">
           <h1>{song.title}</h1>
           <p>{song.artist}</p>
@@ -252,14 +280,22 @@ export default function SongView({ params }) {
 
       <style jsx>{`
         .stage-view-container {
-          height: calc(100dvh - 72px);
-          min-height: calc(100dvh - 72px);
-          margin-top: 72px;
+          position: fixed;
+          inset: 0;
+          height: 100dvh;
+          min-height: 100dvh;
+          margin-top: 0;
           background: #000;
           color: #fff;
           display: flex;
           flex-direction: column;
           overflow: hidden;
+          z-index: 1500;
+          animation: stage-fade-in 0.18s ease;
+        }
+        @keyframes stage-fade-in {
+          from { opacity: 0; }
+          to { opacity: 1; }
         }
         .stage-nav { 
           padding: 1.5rem 3rem; border-bottom: 1px solid #1a1a1e; 
@@ -337,8 +373,9 @@ export default function SongView({ params }) {
         .no-lyrics { text-align: center; padding: 5rem; display: flex; flex-direction: column; align-items: center; gap: 2rem; color: #444; }
 
         .back-link {
-          display: flex;
+          display: inline-flex;
           align-items: center;
+          justify-content: center;
           gap: 0.5rem;
           color: #cbd5e1;
           font-weight: 800;
@@ -349,6 +386,25 @@ export default function SongView({ params }) {
           z-index: 9;
         }
         .back-link:hover { color: #ffffff; }
+        .close-x {
+          width: 44px;
+          height: 44px;
+          border-radius: 999px;
+          border: 1px solid #2a2a2a;
+          background: #0d0d0d;
+          color: #e2e8f0;
+          cursor: pointer;
+          transition: 0.2s ease;
+          flex-shrink: 0;
+          padding: 0;
+        }
+        .close-x:hover {
+          background: #ef4444;
+          border-color: #ef4444;
+          color: #000;
+          transform: scale(1.04);
+        }
+        .close-x:active { transform: scale(0.98); }
         .song-meta h1 { font-size: 1.5rem; font-weight: 800; margin: 0; }
         .song-meta p { font-size: 0.9rem; color: #555; margin: 0; font-weight: 600; }
         
@@ -404,9 +460,9 @@ export default function SongView({ params }) {
           .stage-nav { padding: 1rem 1.5rem; }
           .song-meta h1 { font-size: 1.2rem; }
           .stage-view-container {
-            height: calc(100dvh - 64px);
-            min-height: calc(100dvh - 64px);
-            margin-top: 64px;
+            height: 100dvh;
+            min-height: 100dvh;
+            margin-top: 0;
           }
         }
 
@@ -414,6 +470,10 @@ export default function SongView({ params }) {
           .stage-nav {
             padding: 0.8rem 0.85rem;
             gap: 0.6rem;
+          }
+          .close-x {
+            width: 40px;
+            height: 40px;
           }
           .song-meta {
             min-width: 0;
