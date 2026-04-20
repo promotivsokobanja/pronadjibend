@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Radio, ListMusic, Eye, EyeOff, MessageSquare, Music, Clock, Settings, ArrowLeft, X, Volume2, VolumeX, Zap, ZapOff, Type, RotateCcw, ChevronDown, Bell, Banknote, PlusCircle } from 'lucide-react';
+import { Radio, ListMusic, Eye, EyeOff, MessageSquare, Music, Clock, Settings, ArrowLeft, X, Volume2, VolumeX, Zap, ZapOff, Type, RotateCcw, ChevronDown, Bell, Banknote, PlusCircle, HelpCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 export default function LiveDashboard({ bandId, musicianId }) {
@@ -11,6 +11,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
   const [sessionElapsed, setSessionElapsed] = useState(0);
   const sessionStartRef = useRef(Date.now());
   const [showSettings, setShowSettings] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
   const [requests, setRequests] = useState([]);
   const [activeTab, setActiveTab] = useState('requests');
   const [requestView, setRequestView] = useState('active');
@@ -867,6 +868,14 @@ export default function LiveDashboard({ bandId, musicianId }) {
             {isNightMode ? <Eye size={20} /> : <EyeOff size={20} />}
             <span>NIGHT VISION</span>
           </button>
+          <button
+            className={`hud-btn ${showHelp ? 'settings-active' : ''}`}
+            onClick={() => setShowHelp(true)}
+            aria-label="Pomoć / uputstvo"
+            title="Pomoć"
+          >
+            <HelpCircle size={20} />
+          </button>
           <button 
             className={`hud-btn exit-btn ${showSettings ? 'settings-active' : ''}`}
             onClick={() => setShowSettings(!showSettings)}
@@ -1542,6 +1551,91 @@ export default function LiveDashboard({ bandId, musicianId }) {
                   Resetuj Sesiju
                 </button>
                 <p className="setting-hint">Briše sve zahteve i resetuje brojače</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Help Panel Overlay */}
+      {showHelp && (
+        <div className="settings-overlay" onClick={() => setShowHelp(false)}>
+          <div className="settings-panel help-panel" onClick={e => e.stopPropagation()}>
+            <div className="settings-header">
+              <h2>POMOĆ — KAKO KORISTITI LIVE PANEL</h2>
+              <button className="close-btn" onClick={() => setShowHelp(false)}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="settings-body help-body">
+              <div className="help-section">
+                <h3><MessageSquare size={16} /> Zahtevi gostiju</h3>
+                <p>Gosti skeniraju <strong>QR kod</strong> i iz svojih telefona šalju želje za pesme. Novi zahtevi se pojavljuju ovde automatski, sa zvučnim signalom.</p>
+                <ul>
+                  <li><strong>Prihvati</strong> — zahtev prelazi u listu potvrđenih pesama.</li>
+                  <li><strong>Preskoči</strong> — zahtev se arhivira i ne svira.</li>
+                  <li><strong>Tekst</strong> — otvara tekst pesme u Podsetniku (ako postoji).</li>
+                  <li><strong>Svirano</strong> — označite kad odsvirate pesmu; gost dobija notifikaciju.</li>
+                  <li>Tab <strong>Aktivni / Istorija</strong> — Aktivni prikazuje trenutne, Istorija sve odrađene i preskočene.</li>
+                  <li>Kartice sa ikonom <Banknote size={14} style={{ display: 'inline', verticalAlign: 'middle' }} /> su napojnice / narudžbine od konobara.</li>
+                </ul>
+              </div>
+
+              <div className="help-section">
+                <h3><ListMusic size={16} /> Set liste (Repertoar)</h3>
+                <p>Pravite liste pesama koje ste spremni da svirate. Gosti vide <strong>samo pesme iz aktivnih (LIVE) set lista</strong> kad otvore QR link.</p>
+                <ul>
+                  <li><strong>LIVE / Off</strong> dugme pored liste — uključuje/isključuje dostupnost. Možete imati više aktivnih lista istovremeno.</li>
+                  <li>Klik na pesmu u listi — otvara tekst pesme.</li>
+                  <li>Strelice <strong>↑ ↓</strong> — menjaju redosled pesama.</li>
+                  <li><strong>×</strong> — briše pesmu iz liste (ne briše iz repertoara).</li>
+                  <li><strong>Obriši</strong> — briše celu set listu.</li>
+                </ul>
+              </div>
+
+              <div className="help-section">
+                <h3><PlusCircle size={16} /> Dodaj pesmu</h3>
+                <p>Dodavanje pesama u set listu iz celog vašeg repertoara.</p>
+                <ul>
+                  <li><strong>+ Nova set lista</strong> — kreira novu praznu listu.</li>
+                  <li>Izaberite set listu (chips na vrhu), zatim kliknite <strong>Pretraži i dodaj pesmu</strong>.</li>
+                  <li>Filteri po kategorijama: Muške/Ženske Zabavne, Narodne, Strane, Razno.</li>
+                  <li>Pesme označene sa <strong>Već dodato</strong> su u trenutnoj listi.</li>
+                  <li><strong>Tekst</strong> — otvara tekst pesme bez dodavanja u listu.</li>
+                </ul>
+              </div>
+
+              <div className="help-section">
+                <h3><Music size={16} /> Podsetnik (tekstovi pesama)</h3>
+                <p>Brz pristup tekstovima i akordima tokom nastupa.</p>
+                <ul>
+                  <li>Pretražite pesmu ili otvorite set listu — klik na pesmu otvara tekst.</li>
+                  <li>Akordi su označeni <span style={{ color: '#00ff00', fontWeight: 700 }}>zelenom bojom</span> unutar teksta.</li>
+                  <li>Veličinu slova menjate u <strong>Podešavanjima</strong>.</li>
+                </ul>
+              </div>
+
+              <div className="help-section">
+                <h3><Eye size={16} /> Night Vision</h3>
+                <p>Specijalni režim sa <strong>zelenim tekstom na crnoj pozadini</strong> — ne smeta publici, čuva vid, idealan za mračnu binu. Uključeno je podrazumevano.</p>
+              </div>
+
+              <div className="help-section">
+                <h3><Settings size={16} /> Podešavanja</h3>
+                <ul>
+                  <li><strong>Naziv lokala</strong> — prikazuje se gostima.</li>
+                  <li><strong>Maks. broj zahteva</strong> — ograničenje čekanja (0 = bez limita).</li>
+                  <li><strong>Veličina teksta</strong> — skaliranje za bolju vidljivost na bini.</li>
+                  <li><strong>Prikaži napojnice</strong> — sakrij/prikaži iznose.</li>
+                  <li><strong>Zvučna obaveštenja</strong> — zvuk za nove zahteve.</li>
+                  <li><strong>Desktop notifikacije</strong> — sistemski pop-up kad stigne zahtev (dozvolite u pregledaču).</li>
+                </ul>
+              </div>
+
+              <div className="help-section help-tip">
+                <h3><Radio size={16} /> Savet za nastup</h3>
+                <p>Odštampajte <strong>QR flajer</strong> sa Live stranice i stavite ga na stolove — gosti direktno šalju zahteve bez pisanja na papir ili dolaska do vas.</p>
               </div>
             </div>
           </div>
@@ -4101,6 +4195,62 @@ export default function LiveDashboard({ bandId, musicianId }) {
           .settings-panel {
             animation: none;
           }
+        }
+
+        /* Help panel */
+        .help-body {
+          display: flex;
+          flex-direction: column;
+          gap: 1rem;
+        }
+        .help-section {
+          border: 1px solid #1a1a1a;
+          border-radius: 10px;
+          background: #070707;
+          padding: 0.85rem 1rem;
+        }
+        .help-section h3 {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          margin: 0 0 0.5rem;
+          font-size: 0.85rem;
+          color: #00ff00;
+          letter-spacing: 0.06em;
+          text-transform: uppercase;
+          font-weight: 800;
+        }
+        .help-section p {
+          margin: 0 0 0.55rem;
+          color: #cbd5e1;
+          font-size: 0.82rem;
+          line-height: 1.55;
+        }
+        .help-section ul {
+          margin: 0;
+          padding-left: 1.1rem;
+          display: flex;
+          flex-direction: column;
+          gap: 0.35rem;
+        }
+        .help-section li {
+          color: #d1d5db;
+          font-size: 0.78rem;
+          line-height: 1.5;
+        }
+        .help-section strong {
+          color: #f3f4f6;
+        }
+        .help-tip {
+          border-color: rgba(0, 255, 0, 0.25);
+          background: rgba(0, 255, 0, 0.04);
+        }
+        .night-vision .help-section p,
+        .night-vision .help-section li {
+          color: rgba(183, 255, 183, 0.82);
+        }
+        .night-vision .help-section strong {
+          color: #b7ffb7;
         }
       `}</style>
     </div>
