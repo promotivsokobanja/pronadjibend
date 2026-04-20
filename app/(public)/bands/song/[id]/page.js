@@ -46,13 +46,16 @@ export default function SongView({ params }) {
     fetchSong();
   }, [fetchSong]);
 
-  // Full-screen popup: lock body scroll while this view is open.
+  // Full-screen popup: lock body & html scroll while this view is open.
   useEffect(() => {
     if (typeof document === 'undefined') return;
-    const prevOverflow = document.body.style.overflow;
+    const prevBody = document.body.style.overflow;
+    const prevHtml = document.documentElement.style.overflow;
     document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
     return () => {
-      document.body.style.overflow = prevOverflow;
+      document.body.style.overflow = prevBody;
+      document.documentElement.style.overflow = prevHtml;
     };
   }, []);
 
@@ -151,15 +154,6 @@ export default function SongView({ params }) {
   return (
     <div className="stage-view-container" role="dialog" aria-modal="true" aria-label={`Tekst pesme: ${song.title}`}>
       <header className="stage-nav">
-        <button
-          type="button"
-          className="back-link close-x"
-          onClick={handleStepBack}
-          aria-label="Zatvori"
-          title="Zatvori (Esc)"
-        >
-          <X size={20} />
-        </button>
         <div className="song-meta">
           <h1>{song.title}</h1>
           <p>{song.artist}</p>
@@ -176,6 +170,15 @@ export default function SongView({ params }) {
               <button onClick={() => setKeyOffset(prev => prev + 1)}>+#</button>
             </div>
           )}
+          <button
+            type="button"
+            className="back-link close-x"
+            onClick={handleStepBack}
+            aria-label="Zatvori"
+            title="Zatvori (Esc)"
+          >
+            <X size={20} />
+          </button>
         </div>
       </header>
 
@@ -420,6 +423,33 @@ export default function SongView({ params }) {
           padding: 4rem 10% 8rem;
           scroll-behavior: smooth;
           position: relative;
+          scrollbar-width: thin;
+          scrollbar-color: rgba(167, 139, 250, 0.5) transparent;
+        }
+        .stage-lyrics::-webkit-scrollbar,
+        .edit-area::-webkit-scrollbar {
+          width: 8px;
+        }
+        .stage-lyrics::-webkit-scrollbar-track,
+        .edit-area::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .stage-lyrics::-webkit-scrollbar-thumb,
+        .edit-area::-webkit-scrollbar-thumb {
+          background: rgba(167, 139, 250, 0.35);
+          border-radius: 999px;
+          border: 2px solid transparent;
+          background-clip: padding-box;
+        }
+        .stage-lyrics::-webkit-scrollbar-thumb:hover,
+        .edit-area::-webkit-scrollbar-thumb:hover {
+          background: rgba(167, 139, 250, 0.6);
+          background-clip: padding-box;
+          border: 2px solid transparent;
+        }
+        .edit-area {
+          scrollbar-width: thin;
+          scrollbar-color: rgba(167, 139, 250, 0.5) transparent;
         }
         .lyrics-content { font-family: 'Outfit', sans-serif; font-size: 1.3rem; line-height: 1.7; white-space: pre-wrap; font-weight: 500; }
         .line {
