@@ -565,20 +565,6 @@ export default function LiveDashboard({ bandId, musicianId }) {
     });
   }, [selectedSetListId, updateSetLists]);
 
-  const removeSongFromSetListBySongId = useCallback((songId) => {
-    if (!selectedSetListId || !songId) return;
-    const current = setListsRef.current.find((e) => e.id === selectedSetListId);
-    if (!current) return;
-    const nextItems = current.items.filter((item) => String(item.songId) !== String(songId));
-    if (nextItems.length === current.items.length) return;
-    updateSetLists((prev) =>
-      prev.map((entry) =>
-        entry.id === selectedSetListId ? { ...entry, items: nextItems } : entry
-      )
-    );
-    syncSetListToApi(selectedSetListId, { items: nextItems.map((i) => ({ songId: i.songId })) });
-  }, [selectedSetListId, updateSetLists, syncSetListToApi]);
-
   const addSongToSelectedSetList = useCallback((song) => {
     if (!selectedSetListId || !song?.id) return;
     // Read current items from ref to avoid closure stale data
@@ -1279,20 +1265,16 @@ export default function LiveDashboard({ bandId, musicianId }) {
                                       <button
                                         type="button"
                                         className="repertoire-dropdown-main"
-                                        title={isAlreadyInSetList ? 'Klikni da ukloniš iz set liste' : 'Dodaj u set listu'}
+                                        title={isAlreadyInSetList ? 'Pesma je već u set listi' : 'Dodaj u set listu'}
                                         onClick={() => {
-                                          if (isAlreadyInSetList) {
-                                            removeSongFromSetListBySongId(song.id);
-                                          } else {
-                                            addSongToSelectedSetList(song);
-                                          }
+                                          addSongToSelectedSetList(song);
                                         }}
                                       >
                                         <span className="song-picker-title">{song.title}</span>
                                         <span className="song-picker-sep">—</span>
                                         <span className="song-picker-artist">{song.artist}</span>
                                         {isAlreadyInSetList ? (
-                                          <span className="song-in-setlist-pill removable">✕ Ukloni</span>
+                                          <span className="song-in-setlist-pill">Već dodato</span>
                                         ) : null}
                                       </button>
                                       <div className="repertoire-item-actions">
@@ -2854,16 +2836,6 @@ export default function LiveDashboard({ bandId, musicianId }) {
         }
         .repertoire-dropdown-main:has(.song-in-setlist-pill) {
           border: 1px dashed rgba(125, 255, 125, 0.35);
-        }
-        .song-in-setlist-pill.removable {
-          cursor: pointer;
-          transition: all 0.2s ease;
-        }
-        .song-in-setlist-pill.removable:hover,
-        .repertoire-dropdown-main:hover .song-in-setlist-pill.removable {
-          background: rgba(239, 68, 68, 0.18);
-          color: #ef4444;
-          border-color: rgba(239, 68, 68, 0.5);
         }
         .repertoire-item-actions {
           display: flex;
@@ -5287,12 +5259,6 @@ export default function LiveDashboard({ bandId, musicianId }) {
         }
         .live-dashboard:not(.night-vision) .repertoire-dropdown-main:has(.song-in-setlist-pill) {
           border: 1px dashed rgba(139, 92, 246, 0.35);
-        }
-        .live-dashboard:not(.night-vision) .song-in-setlist-pill.removable:hover,
-        .live-dashboard:not(.night-vision) .repertoire-dropdown-main:hover .song-in-setlist-pill.removable {
-          background: rgba(239, 68, 68, 0.12);
-          color: #dc2626;
-          border-color: rgba(239, 68, 68, 0.45);
         }
         .live-dashboard:not(.night-vision) .song-open-lyrics-btn {
           background: rgba(255, 255, 255, 0.95);
