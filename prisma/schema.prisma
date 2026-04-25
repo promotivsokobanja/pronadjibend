@@ -309,5 +309,6 @@ model SiteConfig {
   bandProfileMaxVideos Int      @default(3)
   bandProfileMaxLinks  Int      @default(5)
   maintenanceMode      Boolean  @default(false)
+  korgPaDriveUrl       String?
   updatedAt            DateTime @updatedAt
 }

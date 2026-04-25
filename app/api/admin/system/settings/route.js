@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '../../../../../lib/adminAuth';
-import { getDemoBandsEnvOverrideHint, getShowDemoBands, setShowDemoBands, getMaintenanceMode, setMaintenanceMode } from '../../../../../lib/siteConfig';
+import { getDemoBandsEnvOverrideHint, getShowDemoBands, setShowDemoBands, getMaintenanceMode, setMaintenanceMode, getKorgPaDriveUrl, setKorgPaDriveUrl } from '../../../../../lib/siteConfig';
 
 export const dynamic = 'force-dynamic';
 
@@ -43,7 +43,29 @@ export async function PATCH(request) {
     }
   }
 
+  if (Object.prototype.hasOwnProperty.call(body, 'korgPaDriveUrl')) {
+    const raw = body.korgPaDriveUrl;
+    const normalized = String(raw || '').trim();
+    if (normalized) {
+      try {
+        const parsed = new URL(normalized);
+        if (!['http:', 'https:'].includes(parsed.protocol)) {
+          return NextResponse.json({ error: 'Link mora biti validan HTTP/HTTPS URL.' }, { status: 400 });
+        }
+      } catch {
+        return NextResponse.json({ error: 'Google Drive link nije validan URL.' }, { status: 400 });
+      }
+    }
+    try {
+      await setKorgPaDriveUrl(normalized);
+    } catch (e) {
+      console.error('SiteConfig korgPaDriveUrl update:', e);
+      return NextResponse.json({ error: 'Nije moguće sačuvati Google Drive link.' }, { status: 500 });
+    }
+  }
+
   const showDemoBands = await getShowDemoBands();
   const maintenanceMode = await getMaintenanceMode();
-  return NextResponse.json({ ok: true, showDemoBands, maintenanceMode });
+  const korgPaDriveUrl = await getKorgPaDriveUrl();
+  return NextResponse.json({ ok: true, showDemoBands, maintenanceMode, korgPaDriveUrl });
 }

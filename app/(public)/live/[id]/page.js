@@ -10,6 +10,7 @@ const TIP_PRESETS = [1000, 2000, 5000];
  */
 export default function GuestLivePage({ params }) {
   const rawId = params.id;
+  const STATUS_STORAGE_KEY = `pb-live-guest-status:${rawId}`;
   const [ownerType, setOwnerType] = useState(null); // 'band' | 'musician'
   const [bandId, setBandId] = useState(null);
   const [musicianId, setMusicianId] = useState(null);
@@ -18,6 +19,7 @@ export default function GuestLivePage({ params }) {
   const [activeTab, setActiveTab] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [allowTips, setAllowTips] = useState(true);
+  const [allowFullRepertoireLive, setAllowFullRepertoireLive] = useState(false);
 
   const [hasLiveSetLists, setHasLiveSetLists] = useState(true);
   const [selectedSong, setSelectedSong] = useState(null);
@@ -36,6 +38,34 @@ export default function GuestLivePage({ params }) {
   const [tipCustom, setTipCustom] = useState('');
   const [tipError, setTipError] = useState('');
   const [tipSending, setTipSending] = useState(false);
+  const [guestRequestStatus, setGuestRequestStatus] = useState(null);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const saved = window.sessionStorage.getItem(STATUS_STORAGE_KEY);
+      if (!saved) return;
+      const parsed = JSON.parse(saved);
+      if (parsed?.id && parsed?.requestType === 'song') {
+        setGuestRequestStatus(parsed);
+      }
+    } catch {
+      /* ignore storage errors */
+    }
+  }, [STATUS_STORAGE_KEY]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      if (guestRequestStatus?.id) {
+        window.sessionStorage.setItem(STATUS_STORAGE_KEY, JSON.stringify(guestRequestStatus));
+      } else {
+        window.sessionStorage.removeItem(STATUS_STORAGE_KEY);
+      }
+    } catch {
+      /* ignore storage errors */
+    }
+  }, [guestRequestStatus, STATUS_STORAGE_KEY]);
 
   const closeCasti = useCallback(() => {
     setCastiModal(null);
@@ -74,6 +104,7 @@ export default function GuestLivePage({ params }) {
             setOwnerType('band');
             if (b?.name) setBandName(String(b.name));
             setAllowTips(b?.allowTips !== false);
+            setAllowFullRepertoireLive(Boolean(b?.allowFullRepertoireLive));
             return;
           }
         }
@@ -84,7 +115,8 @@ export default function GuestLivePage({ params }) {
             setMusicianId(String(m.id || rawId));
             setOwnerType('musician');
             if (m?.name) setBandName(String(m.name));
-            setAllowTips(true);
+            setAllowTips(m?.allowTips !== false);
+            setAllowFullRepertoireLive(Boolean(m?.allowFullRepertoireLive));
             return;
           }
         }
@@ -114,6 +146,8 @@ export default function GuestLivePage({ params }) {
         const liveResp = await fetch(`/api/live-songs?${param}`, { cache: 'no-store' });
         const liveData = await liveResp.json();
         if (cancelled) return;
+
+        setAllowFullRepertoireLive(Boolean(liveData?.allowFullRepertoireLive));
 
         if (liveData.hasLiveSetLists && Array.isArray(liveData.songs) && liveData.songs.length > 0) {
           setHasLiveSetLists(true);
@@ -157,6 +191,45 @@ export default function GuestLivePage({ params }) {
     return () => { cancelled = true; clearInterval(intervalId); };
   }, [ownerType, bandId, musicianId]);
 
+  useEffect(() => {
+    const ownerId = ownerType === 'band' ? bandId : musicianId;
+    if (!guestRequestStatus?.id || !ownerId || ownerType === 'unknown') return;
+
+    let cancelled = false;
+    const param = ownerType === 'band'
+      ? `bandId=${encodeURIComponent(ownerId)}`
+      : `musicianId=${encodeURIComponent(ownerId)}`;
+
+    const syncGuestRequestStatus = async () => {
+      try {
+        const response = await fetch(`/api/live-requests?${param}`, { cache: 'no-store' });
+        if (!response.ok) return;
+        const data = await response.json();
+        if (cancelled || !Array.isArray(data)) return;
+        const matched = data.find((entry) => entry?.id === guestRequestStatus.id);
+        if (!matched) return;
+        setGuestRequestStatus((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            status: matched.status,
+            time: matched.time || prev.time,
+          };
+        });
+      } catch {
+        /* ignore polling errors */
+      }
+    };
+
+    syncGuestRequestStatus();
+    const intervalId = window.setInterval(syncGuestRequestStatus, 4000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+    };
+  }, [guestRequestStatus?.id, ownerType, bandId, musicianId]);
+
   const categories = [...new Set(songs.map((s) => s.category || s.type).filter(Boolean))];
 
   const filteredSongs = songs.filter((s) => {
@@ -193,6 +266,16 @@ export default function GuestLivePage({ params }) {
       });
       const data = await resp.json();
       if (!resp.ok) throw new Error(data.error || 'Greška pri slanju zahteva');
+
+      setGuestRequestStatus({
+        id: data.id,
+        requestType: 'song',
+        songTitle: selectedSong.title,
+        artist: selectedSong.artist || '',
+        tableNum: String(tableNum).trim(),
+        status: data.status || 'pending',
+        time: 'upravo',
+      });
 
       if (waiterTipRsd > 0) {
         setSongVoucherAmount(waiterTipRsd);
@@ -316,6 +399,17 @@ export default function GuestLivePage({ params }) {
   const tipAmountStep = orderFlow === 'tip_amount';
   const songVoucherStep = orderFlow === 'song_voucher';
   const songSuccessBrief = orderFlow === 'song_success_brief';
+  const repertoireModeLabel = allowFullRepertoireLive ? 'Pun repertoar je dostupan' : 'Naručivanje iz live set liste';
+  const repertoireModeHint = allowFullRepertoireLive
+    ? 'Možete tražiti i pesme van aktivnih live set lista.'
+    : 'Trenutno su dostupne pesme koje je izvođač uključio za live nastup.';
+  const guestRequestStatusLabel = guestRequestStatus?.status === 'accepted'
+    ? 'Prihvaćena'
+    : guestRequestStatus?.status === 'rejected'
+      ? 'Odbijena'
+      : guestRequestStatus?.status === 'played'
+        ? 'Odsvirana'
+        : 'Na čekanju';
 
   return (
     <div className="guest-container container">
@@ -325,7 +419,27 @@ export default function GuestLivePage({ params }) {
           <span className="dot"></span> UŽIVO NASTUP
         </div>
         <h1>Pronađi Bend</h1>
-        <p className="subtitle-text">Izaberite pesmu i pošaljite zahtev bendu direktno sa vašeg stola.</p>
+        <p className="subtitle-text">Izaberite pesmu i pošaljite live zahtev direktno sa vašeg stola.</p>
+        <div className="live-status-grid">
+          <div className="live-status-card">
+            <div className="live-status-kicker">BAKŠIŠ</div>
+            <div className={`live-status-value ${allowTips ? 'is-on' : 'is-off'}`}>
+              {allowTips ? 'Dozvoljen' : 'Trenutno isključen'}
+            </div>
+            <p className="live-status-copy">
+              {allowTips
+                ? 'Možete poslati pesmu uz bakšiš preko konobara ili posebno častiti izvođača.'
+                : 'Slanje pesme je dostupno, ali bez bakšiša preko gostujućeg formulara.'}
+            </p>
+          </div>
+          <div className="live-status-card">
+            <div className="live-status-kicker">REPERTOAR</div>
+            <div className={`live-status-value ${allowFullRepertoireLive ? 'is-on' : 'is-neutral'}`}>
+              {repertoireModeLabel}
+            </div>
+            <p className="live-status-copy">{repertoireModeHint}</p>
+          </div>
+        </div>
         <div className="search-bar">
           <Search size={18} />
           <input
@@ -358,12 +472,42 @@ export default function GuestLivePage({ params }) {
             Časti bend
           </button>
         )}
+        {guestRequestStatus?.id && (
+          <div className={`guest-request-status-card status-${guestRequestStatus.status || 'pending'}`}>
+            <div className="guest-request-status-head">
+              <div>
+                <div className="guest-request-status-kicker">VAŠ POSLEDNJI ZAHTEV</div>
+                <div className="guest-request-status-title">{guestRequestStatus.songTitle}</div>
+                {guestRequestStatus.artist ? (
+                  <div className="guest-request-status-artist">{guestRequestStatus.artist}</div>
+                ) : null}
+              </div>
+              <span className={`guest-request-status-pill status-${guestRequestStatus.status || 'pending'}`}>
+                {guestRequestStatusLabel}
+              </span>
+            </div>
+            <p className="guest-request-status-copy">
+              Sto {guestRequestStatus.tableNum}
+              {guestRequestStatus.status === 'accepted'
+                ? ' • Izvođač je prihvatio vaš zahtev.'
+                : guestRequestStatus.status === 'rejected'
+                  ? ' • Izvođač je trenutno odbio ovaj zahtev.'
+                  : guestRequestStatus.status === 'played'
+                    ? ' • Pesma je označena kao odsvirana.'
+                    : ' • Zahtev je poslat i čeka odgovor izvođača.'}
+            </p>
+          </div>
+        )}
       </header>
 
       {!loading && !hasLiveSetLists && (
         <div className="preparing-banner">
           <Music size={20} />
-          <p>Muzičari trenutno pripremaju repertoar, naručivanje će biti dostupno uskoro.</p>
+          <p>
+            {allowFullRepertoireLive
+              ? 'Live set lista trenutno nije aktivna, ali je deo repertoara i dalje dostupan za naručivanje.'
+              : 'Muzičari trenutno pripremaju repertoar, naručivanje će biti dostupno uskoro.'}
+          </p>
         </div>
       )}
 
@@ -371,7 +515,7 @@ export default function GuestLivePage({ params }) {
         {loading ? (
           <div className="empty-state">
             <div className="spinner"></div>
-            <p>Učitavanje repertoara...</p>
+            <p>Učitavanje live repertoara...</p>
           </div>
         ) : filteredSongs.length > 0 ? (
           filteredSongs.map((song) => (
@@ -408,10 +552,12 @@ export default function GuestLivePage({ params }) {
       {showSongModal && tableStep && (
         <div className="modal-overlay">
           <div className="modal glass-card">
+            <div className="modal-step-chip">Korak 1 od 2</div>
             <h3>Naruči pesmu</h3>
             <p className="selected-song">
               {selectedSong.title} {selectedSong.artist ? `— ${selectedSong.artist}` : ''}
             </p>
+            <p className="modal-support-copy">Unesite broj svog stola da bend zna odakle je stigao zahtev.</p>
             {orderError && (
               <div className="error-msg">
                 <AlertCircle size={16} /> {orderError}
@@ -452,6 +598,7 @@ export default function GuestLivePage({ params }) {
       {showSongModal && tipChoiceStep && (
         <div className="modal-overlay">
           <div className="modal glass-card tip-choice-modal">
+            <div className="modal-step-chip">Korak 2 od 2</div>
             <h3>Želiš li da častiš bend uz ovu pesmu?</h3>
             <p className="tip-choice-lede">
               {selectedSong.title}
@@ -499,6 +646,7 @@ export default function GuestLivePage({ params }) {
             >
               <ArrowLeft size={22} />
             </button>
+            <div className="modal-step-chip modal-step-chip-inline">Korak 2 od 2</div>
 
             <div className="voucher-hero">
               <div className="voucher-music-icon" aria-hidden>
@@ -564,7 +712,7 @@ export default function GuestLivePage({ params }) {
               POKAŽITE KONOBARU: Sto {String(tableNum).trim()} časti muziku {songVoucherAmount} RSD
             </p>
             <p className="song-voucher-sub">
-              Zahtev za pesmu je poslat bendu. Ovaj ekran pokažite osoblju radi naplate bakšiša.
+              Zahtev za pesmu je poslat izvođaču. Ovaj ekran pokažite osoblju radi naplate bakšiša.
             </p>
             <button type="button" className="btn btn-primary btn-full" onClick={resetOrderFlow}>
               Zatvori
@@ -578,7 +726,7 @@ export default function GuestLivePage({ params }) {
           <div className="success-card glass-card">
             <CheckCircle2 size={48} color="var(--accent-primary)" />
             <h2>Zahtev poslat</h2>
-            <p>Hvala! Bend je obavešten.</p>
+            <p>Hvala! Izvođač je obavešten.</p>
           </div>
         </div>
       )}
@@ -604,6 +752,7 @@ export default function GuestLivePage({ params }) {
             <button type="button" className="voucher-back" onClick={() => setCastiModal('menu')} aria-label="Nazad">
               <ArrowLeft size={22} />
             </button>
+            <div className="modal-step-chip modal-step-chip-inline">Bakšiš preko konobara</div>
 
             <div className="voucher-hero">
               <div className="voucher-music-icon" aria-hidden>
@@ -666,7 +815,7 @@ export default function GuestLivePage({ params }) {
               onClick={confirmWaiterTip}
               disabled={tipSending}
             >
-              {tipSending ? 'Šaljem bendu…' : 'Potvrdi i obavesti bend'}
+              {tipSending ? 'Šaljem izvođaču…' : 'Potvrdi i obavesti izvođača'}
             </button>
           </div>
         </div>
@@ -676,8 +825,8 @@ export default function GuestLivePage({ params }) {
         <div className="modal-overlay">
           <div className="success-card glass-card voucher-success">
             <CheckCircle2 size={48} color="#16a34a" />
-            <h2>Poslato bendu</h2>
-            <p>Bend je obavešten. Pokažite ekran konobaru radi naplate.</p>
+            <h2>Poslato izvođaču</h2>
+            <p>Izvođač je obavešten. Pokažite ekran konobaru radi naplate.</p>
           </div>
         </div>
       )}
@@ -748,6 +897,51 @@ export default function GuestLivePage({ params }) {
           margin-left: auto;
           margin-right: auto;
         }
+        .live-status-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 0.9rem;
+          max-width: 760px;
+          margin: 1.35rem auto 0;
+          text-align: left;
+        }
+        .live-status-card {
+          border: 1px solid #e2e8f0;
+          border-radius: 18px;
+          background: rgba(255, 255, 255, 0.88);
+          padding: 1rem 1.05rem;
+          box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+          min-width: 0;
+        }
+        .live-status-kicker {
+          font-size: 0.72rem;
+          font-weight: 800;
+          letter-spacing: 0.08em;
+          color: #64748b;
+          margin-bottom: 0.45rem;
+        }
+        .live-status-value {
+          font-size: 1rem;
+          font-weight: 800;
+          line-height: 1.3;
+          color: #0f172a;
+          overflow-wrap: anywhere;
+        }
+        .live-status-value.is-on {
+          color: #15803d;
+        }
+        .live-status-value.is-off {
+          color: #b45309;
+        }
+        .live-status-value.is-neutral {
+          color: #0f172a;
+        }
+        .live-status-copy {
+          margin: 0.45rem 0 0;
+          color: #64748b;
+          font-size: 0.84rem;
+          line-height: 1.5;
+        }
         .search-bar {
           max-width: 500px;
           margin: 2.5rem auto 1.5rem;
@@ -792,6 +986,90 @@ export default function GuestLivePage({ params }) {
         .casti-bend-btn:hover {
           transform: translateY(-1px);
           box-shadow: 0 8px 24px rgba(34, 197, 94, 0.2);
+        }
+        .guest-request-status-card {
+          max-width: 760px;
+          margin: 1rem auto 0;
+          padding: 1rem 1.05rem;
+          border-radius: 18px;
+          border: 1px solid #e2e8f0;
+          background: rgba(255, 255, 255, 0.92);
+          text-align: left;
+          box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+        }
+        .guest-request-status-card.status-pending {
+          border-color: rgba(59, 130, 246, 0.24);
+          background: rgba(239, 246, 255, 0.9);
+        }
+        .guest-request-status-card.status-accepted {
+          border-color: rgba(34, 197, 94, 0.28);
+          background: rgba(240, 253, 244, 0.94);
+        }
+        .guest-request-status-card.status-rejected {
+          border-color: rgba(248, 113, 113, 0.26);
+          background: rgba(254, 242, 242, 0.95);
+        }
+        .guest-request-status-card.status-played {
+          border-color: rgba(168, 85, 247, 0.26);
+          background: rgba(250, 245, 255, 0.95);
+        }
+        .guest-request-status-head {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          gap: 0.85rem;
+        }
+        .guest-request-status-kicker {
+          font-size: 0.72rem;
+          font-weight: 800;
+          letter-spacing: 0.08em;
+          color: #64748b;
+          margin-bottom: 0.35rem;
+        }
+        .guest-request-status-title {
+          font-size: 1rem;
+          font-weight: 800;
+          color: #0f172a;
+          overflow-wrap: anywhere;
+        }
+        .guest-request-status-artist {
+          margin-top: 0.2rem;
+          color: #64748b;
+          font-size: 0.84rem;
+          overflow-wrap: anywhere;
+        }
+        .guest-request-status-pill {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 0.45rem 0.75rem;
+          border-radius: 999px;
+          font-size: 0.76rem;
+          font-weight: 800;
+          white-space: nowrap;
+          flex-shrink: 0;
+        }
+        .guest-request-status-pill.status-pending {
+          background: #dbeafe;
+          color: #1d4ed8;
+        }
+        .guest-request-status-pill.status-accepted {
+          background: #dcfce7;
+          color: #15803d;
+        }
+        .guest-request-status-pill.status-rejected {
+          background: #fee2e2;
+          color: #b91c1c;
+        }
+        .guest-request-status-pill.status-played {
+          background: #f3e8ff;
+          color: #7e22ce;
+        }
+        .guest-request-status-copy {
+          margin: 0.7rem 0 0;
+          color: #475569;
+          font-size: 0.9rem;
+          line-height: 1.5;
         }
 
         .gender-tabs-container {
@@ -896,6 +1174,30 @@ export default function GuestLivePage({ params }) {
           border-radius: 24px;
           border: 1px solid #e2e8f0;
           position: relative;
+        }
+        .modal-step-chip {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 28px;
+          padding: 0.35rem 0.7rem;
+          border-radius: 999px;
+          background: #eff6ff;
+          color: #1d4ed8;
+          font-size: 0.73rem;
+          font-weight: 800;
+          letter-spacing: 0.04em;
+          margin-bottom: 0.9rem;
+        }
+        .modal-step-chip-inline {
+          margin: 0 auto 0.25rem;
+          width: fit-content;
+        }
+        .modal-support-copy {
+          margin: 0.35rem 0 1.2rem;
+          color: #64748b;
+          font-size: 0.92rem;
+          line-height: 1.5;
         }
         .tip-choice-modal {
           max-width: 420px;
@@ -1103,12 +1405,14 @@ export default function GuestLivePage({ params }) {
           color: #0f172a;
           font-size: 1.5rem;
           margin-bottom: 0.5rem;
+          line-height: 1.25;
         }
         .selected-song {
           font-size: 1.1rem;
           font-weight: 700;
           margin: 1rem 0 2rem;
           color: #007aff;
+          overflow-wrap: anywhere;
         }
         .form-group label {
           display: block;
@@ -1159,8 +1463,8 @@ export default function GuestLivePage({ params }) {
 
         .error-msg {
           display: flex;
-          align-items: center;
-          justify-content: center;
+          align-items: flex-start;
+          justify-content: flex-start;
           gap: 8px;
           background: #fef2f2;
           border: 1px solid #fecaca;
@@ -1170,6 +1474,8 @@ export default function GuestLivePage({ params }) {
           font-size: 0.85rem;
           font-weight: 600;
           margin-bottom: 1rem;
+          text-align: left;
+          line-height: 1.45;
         }
 
         .empty-state {
@@ -1196,15 +1502,126 @@ export default function GuestLivePage({ params }) {
         }
 
         @media (max-width: 640px) {
+          .guest-container {
+            padding-top: 2.75rem;
+            padding-bottom: 2.75rem;
+          }
+          .subtitle-text {
+            font-size: 0.95rem;
+            max-width: 100%;
+          }
+          .live-status-grid {
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+            margin-top: 1rem;
+          }
+          .live-status-card {
+            padding: 0.9rem;
+            border-radius: 16px;
+          }
+          .search-bar {
+            margin-top: 1.5rem;
+            padding: 0.7rem 1rem;
+            gap: 0.75rem;
+          }
+          .casti-bend-btn {
+            max-width: 100%;
+          }
+          .guest-request-status-card {
+            margin-top: 0.85rem;
+            padding: 0.9rem;
+            border-radius: 16px;
+          }
+          .guest-request-status-head {
+            flex-direction: column;
+            align-items: stretch;
+          }
+          .guest-request-status-pill {
+            width: 100%;
+          }
+          .guest-request-status-copy {
+            font-size: 0.84rem;
+          }
           .song-row {
             padding: 1rem;
+            align-items: flex-start;
+            gap: 0.75rem;
+          }
+          .song-title,
+          .song-artist {
+            overflow-wrap: anywhere;
           }
           .modal,
           .success-card {
             padding: 2rem 1.5rem;
+            border-radius: 20px;
           }
           .voucher-modal {
             padding: 1.75rem 1.25rem 2rem;
+          }
+          .modal-step-chip {
+            width: 100%;
+            margin-bottom: 0.8rem;
+          }
+          .modal-step-chip-inline {
+            width: calc(100% - 3.2rem);
+            margin: 0 auto 0.35rem;
+          }
+          .modal h3 {
+            font-size: 1.3rem;
+          }
+          .selected-song {
+            margin: 0.75rem 0 1.2rem;
+            font-size: 1rem;
+          }
+          .modal-support-copy,
+          .tip-choice-table,
+          .voucher-note,
+          .song-voucher-sub {
+            font-size: 0.84rem;
+          }
+          .form-group input {
+            font-size: 1.2rem;
+            padding: 0.9rem;
+          }
+          .preset-chip {
+            min-width: calc(50% - 0.25rem);
+          }
+          .btn-gold-tip,
+          .btn-waiter-tip-main,
+          .btn-skip-tip,
+          .btn-text-muted,
+          .voucher-confirm {
+            min-height: 48px;
+          }
+          .modal-actions {
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+          }
+        }
+
+        @media (min-width: 641px) and (max-width: 900px) {
+          .guest-container {
+            padding-top: 3.25rem;
+          }
+          .live-status-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.85rem;
+            max-width: 680px;
+          }
+          .song-list {
+            max-width: 680px;
+          }
+          .song-row {
+            padding: 1.1rem 1.2rem;
+          }
+          .modal,
+          .success-card {
+            max-width: 460px;
+            padding: 2.35rem 2rem;
+          }
+          .voucher-modal {
+            max-width: 460px;
           }
         }
       `}</style>

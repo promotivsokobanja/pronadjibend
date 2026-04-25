@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '../../../../lib/adminAuth';
 import { hasDatabaseUrl } from '../../../../lib/dbClientErrors';
-import { getDemoBandsEnvOverrideHint, getShowDemoBands, getMaintenanceMode } from '../../../../lib/siteConfig';
+import { getDemoBandsEnvOverrideHint, getShowDemoBands, getMaintenanceMode, getKorgPaDriveUrl } from '../../../../lib/siteConfig';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,6 +11,7 @@ export async function GET(request) {
 
   const showDemoBands = await getShowDemoBands();
   const maintenanceMode = await getMaintenanceMode();
+  const korgPaDriveUrl = await getKorgPaDriveUrl();
   const demoBandsEnv = getDemoBandsEnvOverrideHint();
 
   return NextResponse.json({
@@ -23,6 +24,7 @@ export async function GET(request) {
     nodeEnv: process.env.NODE_ENV || 'development',
     showDemoBands,
     maintenanceMode,
+    korgPaDriveUrl,
     demoBandsEnvLocked: Boolean(demoBandsEnv),
     demoBandsEnvValue: demoBandsEnv,
   });

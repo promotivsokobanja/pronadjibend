@@ -49,6 +49,8 @@ export default function BandDashboard() {
   const router = useRouter();
   const [bandId, setBandId] = useState(null);
   const [loadError, setLoadError] = useState('');
+  const [isPremiumVenue, setIsPremiumVenue] = useState(false);
+  const [korgPaDriveUrl, setKorgPaDriveUrl] = useState('');
   const [showQr, setShowQr] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [activeRequest, setActiveRequest] = useState(null);
@@ -123,6 +125,8 @@ export default function BandDashboard() {
         }
         const id = meData?.user?.bandId;
         const isAdmin = meData?.user?.role === 'ADMIN';
+        const userPlan = String(meData?.user?.plan || '').toUpperCase();
+        const canUseKorg = userPlan === 'PREMIUM_VENUE';
         if (!id) {
           if (isAdmin) {
             if (!cancelled) {
@@ -142,6 +146,21 @@ export default function BandDashboard() {
         if (!cancelled) {
           setIsAdminUser(false);
           setBandId(id);
+          setIsPremiumVenue(canUseKorg);
+        }
+
+        if (canUseKorg) {
+          try {
+            const korgRes = await fetch('/api/korg-pa-sets', { cache: 'no-store' });
+            const korgData = await korgRes.json().catch(() => ({}));
+            if (!cancelled && korgRes.ok) {
+              setKorgPaDriveUrl(String(korgData?.url || '').trim());
+            }
+          } catch {
+            if (!cancelled) setKorgPaDriveUrl('');
+          }
+        } else if (!cancelled) {
+          setKorgPaDriveUrl('');
         }
 
         const [bookingsRes, bandRes, calendarRes, songsPreviewRes, musicianInvitesRes] = await Promise.all([
@@ -564,6 +583,22 @@ export default function BandDashboard() {
               <span className="action-caption">Biblioteka i upload MIDI fajlova</span>
             )}
           </div>
+          {isPremiumVenue && korgPaDriveUrl && (
+            <div className="header-action-item">
+              <a
+                href={korgPaDriveUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="btn btn-secondary"
+                style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}
+              >
+                <Download size={18} style={{ marginRight: '8px' }} /> Korg PA setovi
+              </a>
+              {SHOW_HEADER_ACTION_HINTS && (
+                <span className="action-caption">Download setova i sound paketa za Korg klavijature</span>
+              )}
+            </div>
+          )}
           <div className="header-action-item">
             <button type="button" className="btn btn-secondary" onClick={() => setShowQr(true)}>
               <QrCode size={18} style={{ marginRight: '8px' }} /> Vaš QR Kod

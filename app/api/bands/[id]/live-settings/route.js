@@ -10,6 +10,35 @@ function normalizeMaxPendingRequests(value) {
   return normalized;
 }
 
+export async function GET(request, { params }) {
+  const id = params?.id;
+
+  if (!id || id === '[id]') {
+    return NextResponse.json({ error: 'ID je obavezan' }, { status: 400 });
+  }
+
+  try {
+    const band = await prisma.band.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        maxPendingRequests: true,
+        allowTips: true,
+        allowFullRepertoireLive: true,
+      },
+    });
+
+    if (!band) {
+      return NextResponse.json({ error: 'Bend nije pronađen' }, { status: 404 });
+    }
+
+    return NextResponse.json(band);
+  } catch (error) {
+    console.error('Band live settings GET error:', error);
+    return NextResponse.json({ error: 'Greška pri učitavanju live podešavanja' }, { status: 500 });
+  }
+}
+
 export async function PATCH(request, { params }) {
   const id = params?.id;
 
@@ -38,11 +67,30 @@ export async function PATCH(request, { params }) {
     }
 
     const body = await request.json();
-    const maxPendingRequests = normalizeMaxPendingRequests(body?.maxPendingRequests);
+    const data = {};
 
-    if (maxPendingRequests === null) {
+    if (body?.maxPendingRequests !== undefined) {
+      const maxPendingRequests = normalizeMaxPendingRequests(body.maxPendingRequests);
+      if (maxPendingRequests === null) {
+        return NextResponse.json(
+          { error: 'maxPendingRequests mora biti ceo broj između 0 i 50.' },
+          { status: 400 }
+        );
+      }
+      data.maxPendingRequests = maxPendingRequests;
+    }
+
+    if (body?.allowTips !== undefined) {
+      data.allowTips = Boolean(body.allowTips);
+    }
+
+    if (body?.allowFullRepertoireLive !== undefined) {
+      data.allowFullRepertoireLive = Boolean(body.allowFullRepertoireLive);
+    }
+
+    if (Object.keys(data).length === 0) {
       return NextResponse.json(
-        { error: 'maxPendingRequests mora biti ceo broj između 0 i 50.' },
+        { error: 'Nema ispravnih live podešavanja za čuvanje.' },
         { status: 400 }
       );
     }
@@ -58,8 +106,13 @@ export async function PATCH(request, { params }) {
 
     const updatedBand = await prisma.band.update({
       where: { id },
-      data: { maxPendingRequests },
-      select: { id: true, maxPendingRequests: true },
+      data,
+      select: {
+        id: true,
+        maxPendingRequests: true,
+        allowTips: true,
+        allowFullRepertoireLive: true,
+      },
     });
 
     return NextResponse.json(updatedBand);

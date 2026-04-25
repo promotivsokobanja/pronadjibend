@@ -8,8 +8,11 @@ export default function AdminSystemPage() {
   const [error, setError] = useState('');
   const [savingDemo, setSavingDemo] = useState(false);
   const [savingMaintenance, setSavingMaintenance] = useState(false);
+  const [savingKorg, setSavingKorg] = useState(false);
   const [demoMsg, setDemoMsg] = useState('');
   const [maintenanceMsg, setMaintenanceMsg] = useState('');
+  const [korgMsg, setKorgMsg] = useState('');
+  const [korgInput, setKorgInput] = useState('');
 
   const load = useCallback(async () => {
     setError('');
@@ -18,6 +21,7 @@ export default function AdminSystemPage() {
       const j = await r.json();
       if (!r.ok) throw new Error(j.error || 'Greška');
       setData(j);
+      setKorgInput(j.korgPaDriveUrl || '');
     } catch (e) {
       setError(e.message);
     }
@@ -45,6 +49,27 @@ export default function AdminSystemPage() {
       setDemoMsg(e.message);
     } finally {
       setSavingDemo(false);
+    }
+  };
+
+  const saveKorgDriveLink = async () => {
+    setSavingKorg(true);
+    setKorgMsg('');
+    try {
+      const r = await adminFetch('/api/admin/system/settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ korgPaDriveUrl: korgInput }),
+      });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error || 'Greška pri čuvanju');
+      setData((prev) => (prev ? { ...prev, korgPaDriveUrl: j.korgPaDriveUrl || '' } : prev));
+      setKorgInput(j.korgPaDriveUrl || '');
+      setKorgMsg('Sačuvano. Premium Venue korisnici sada mogu da vide dugme kada je link podešen.');
+    } catch (e) {
+      setKorgMsg(e.message);
+    } finally {
+      setSavingKorg(false);
     }
   };
 
@@ -176,6 +201,50 @@ export default function AdminSystemPage() {
         {maintenanceMsg ? (
           <p style={{ margin: '0.75rem 0 0', fontSize: '0.875rem', color: '#94a3b8' }}>{maintenanceMsg}</p>
         ) : null}
+      </div>
+
+      <div
+        className="admin-table-wrap"
+        style={{
+          maxWidth: 700,
+          marginBottom: '1.75rem',
+          padding: '1.25rem',
+          borderRadius: 12,
+          border: '1px solid rgba(148, 163, 184, 0.35)',
+          background: 'rgba(15, 23, 42, 0.35)',
+        }}
+      >
+        <h2 style={{ fontSize: '1rem', margin: '0 0 0.5rem', fontWeight: 800 }}>Korg PA setovi</h2>
+        <p style={{ color: '#94a3b8', fontSize: '0.875rem', margin: '0 0 1rem', lineHeight: 1.5 }}>
+          Ostavite Google Drive link za download Korg PA setova i sound paketa. Dugme se prikazuje samo
+          Premium Venue korisnicima na bend i muzičar portalu.
+        </p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <input
+            type="url"
+            value={korgInput}
+            onChange={(e) => setKorgInput(e.target.value)}
+            placeholder="https://drive.google.com/..."
+            style={{
+              width: '100%',
+              borderRadius: 10,
+              border: '1px solid rgba(148, 163, 184, 0.45)',
+              background: 'rgba(255, 255, 255, 0.96)',
+              color: '#0f172a',
+              padding: '0.8rem 0.9rem',
+              fontSize: '0.95rem',
+            }}
+          />
+          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
+            <button type="button" className="admin-btn" disabled={savingKorg} onClick={saveKorgDriveLink}>
+              {savingKorg ? 'Čuvanje…' : 'Sačuvaj link'}
+            </button>
+            <span style={{ color: data.korgPaDriveUrl ? '#4ade80' : '#fbbf24', fontWeight: 700, fontSize: '0.875rem' }}>
+              {data.korgPaDriveUrl ? 'Link je podešen' : 'Link još nije podešen'}
+            </span>
+          </div>
+          {korgMsg ? <p style={{ margin: 0, fontSize: '0.875rem', color: '#94a3b8' }}>{korgMsg}</p> : null}
+        </div>
       </div>
 
       <div className="admin-table-wrap" style={{ maxWidth: 560 }}>

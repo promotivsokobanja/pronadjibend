@@ -13,6 +13,10 @@ export default function LiveDashboard({ bandId, musicianId }) {
   const [showSettings, setShowSettings] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [requests, setRequests] = useState([]);
+  const [requestsLoading, setRequestsLoading] = useState(true);
+  const [requestLoadError, setRequestLoadError] = useState('');
+  const [requestActionError, setRequestActionError] = useState('');
+  const [requestActionLoadingId, setRequestActionLoadingId] = useState('');
   const [activeTab, setActiveTab] = useState('requests');
   const [requestView, setRequestView] = useState('active');
   const [showRepertoireBrowser, setShowRepertoireBrowser] = useState(false);
@@ -102,6 +106,8 @@ export default function LiveDashboard({ bandId, musicianId }) {
       showTips: true,
       soundEnabled: true,
       autoAccept: false,
+      allowGuestTips: true,
+      allowFullRepertoireLive: false,
       fontSize: 100,
     };
     if (typeof window === 'undefined') return defaults;
@@ -128,6 +134,25 @@ export default function LiveDashboard({ bandId, musicianId }) {
     return normalized;
   }, []);
 
+  const saveSharedLiveSettings = useCallback(async (patch) => {
+    if (!bandId || !patch || typeof patch !== 'object') return null;
+    try {
+      const response = await fetch(`/api/bands/${encodeURIComponent(bandId)}/live-settings`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(patch),
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || 'Greška pri čuvanju live podešavanja.');
+      }
+      return response.json();
+    } catch (err) {
+      console.error('Error saving shared live settings:', err);
+      return null;
+    }
+  }, [bandId]);
+
   const updateSetting = (key, value) => {
     setSettings(prev => {
       const next = { ...prev, [key]: value };
@@ -139,19 +164,6 @@ export default function LiveDashboard({ bandId, musicianId }) {
     });
   };
 
-  const saveMaxPendingRequests = useCallback(async (nextValue) => {
-    if (!bandId) return; // settings only for bands
-    try {
-      await fetch(`/api/bands/${encodeURIComponent(bandId)}/live-settings`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ maxPendingRequests: nextValue }),
-      });
-    } catch (err) {
-      console.error('Error saving maxPendingRequests:', err);
-    }
-  }, [bandId]);
-
   const maxRequestsSaveTimerRef = useRef(null);
 
   const handleMaxRequestsChange = (rawValue) => {
@@ -162,12 +174,29 @@ export default function LiveDashboard({ bandId, musicianId }) {
       clearTimeout(maxRequestsSaveTimerRef.current);
     }
     maxRequestsSaveTimerRef.current = setTimeout(() => {
-      saveMaxPendingRequests(nextValue);
+      saveSharedLiveSettings({ maxPendingRequests: nextValue });
       maxRequestsSaveTimerRef.current = null;
     }, 220);
   };
 
+  const handleSharedToggleChange = async (key, value) => {
+    setSettings((prev) => ({ ...prev, [key]: value }));
+    const patch = key === 'allowGuestTips'
+      ? { allowTips: value }
+      : key === 'allowFullRepertoireLive'
+        ? { allowFullRepertoireLive: value }
+        : null;
+
+    if (!patch || !bandId) return;
+
+    const saved = await saveSharedLiveSettings(patch);
+    if (!saved) {
+      setSettings((prev) => ({ ...prev, [key]: !value }));
+    }
+  };
+
   const resetSession = async () => {
+    setRequestActionError('');
     if (!confirm('Da li ste sigurni da želite da resetujete sesiju? Svi zahtevi će biti obrisani.')) {
       return;
     }
@@ -225,7 +254,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
   const notifyNewRequests = useCallback((freshRequests) => {
     if (typeof window === 'undefined' || !Array.isArray(freshRequests) || freshRequests.length === 0) return;
 
-    if (settingsRef.current.soundEnabled) {
+    if (settings.soundEnabled) {
       playNewRequestTone();
     }
 
@@ -253,7 +282,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
 
     const loadLiveSettings = async () => {
       try {
-        const response = await fetch(`/api/bands/${encodeURIComponent(bandId)}`, {
+        const response = await fetch(`/api/bands/${encodeURIComponent(bandId)}/live-settings`, {
           cache: 'no-store',
         });
         if (!response.ok) return;
@@ -262,6 +291,8 @@ export default function LiveDashboard({ bandId, musicianId }) {
         setSettings((prev) => ({
           ...prev,
           maxRequests: normalizeMaxRequests(band?.maxPendingRequests),
+          allowGuestTips: typeof band?.allowTips === 'boolean' ? band.allowTips : prev.allowGuestTips,
+          allowFullRepertoireLive: typeof band?.allowFullRepertoireLive === 'boolean' ? band.allowFullRepertoireLive : prev.allowFullRepertoireLive,
         }));
       } catch (err) {
         console.error('Error loading live settings:', err);
@@ -353,13 +384,21 @@ export default function LiveDashboard({ bandId, musicianId }) {
   useEffect(() => {
     if (!ownerId) {
       setRequests([]);
+      setRequestsLoading(false);
+      setRequestLoadError('');
       return;
     }
 
     let cancelled = false;
 
     const loadRequests = async () => {
+      if (!hasLoadedRequestsRef.current && !cancelled) {
+        setRequestsLoading(true);
+      }
       try {
+        if (!cancelled) {
+          setRequestLoadError('');
+        }
         const params = new URLSearchParams();
         if (bandId) params.set('bandId', bandId);
         else if (musicianId) params.set('musicianId', musicianId);
@@ -381,19 +420,22 @@ export default function LiveDashboard({ bandId, musicianId }) {
           }
           hasLoadedRequestsRef.current = true;
 
-          if (settingsRef.current.autoAccept) {
+          if (settings.autoAccept) {
             const toAutoAccept = list.filter(
               (req) => req.status === 'pending' && !autoAcceptedRequestIdsRef.current.has(req.id)
             );
             toAutoAccept.forEach((req) => {
               autoAcceptedRequestIdsRef.current.add(req.id);
-              updateRequestStatus(req.id, 'ACCEPTED');
+              updateRequestStatus(req.id, 'ACCEPTED').catch((err) => {
+                autoAcceptedRequestIdsRef.current.delete(req.id);
+                setRequestActionError(err?.message || 'Auto-prihvatanje zahteva nije uspelo.');
+              });
             });
           } else {
             autoAcceptedRequestIdsRef.current = new Set();
           }
 
-          const normalized = settingsRef.current.autoAccept
+          const normalized = settings.autoAccept
             ? list.map((req) =>
                 req.status === 'pending'
                   ? { ...req, status: 'accepted' }
@@ -402,10 +444,13 @@ export default function LiveDashboard({ bandId, musicianId }) {
             : list;
 
           setRequests(normalized);
+          setRequestsLoading(false);
         }
       } catch (err) {
         if (!cancelled) {
           setRequests([]);
+          setRequestsLoading(false);
+          setRequestLoadError('Zahtevi trenutno nisu dostupni. Proverite vezu i pokušajte ponovo.');
         }
         console.error('Error loading live requests:', err);
       }
@@ -419,7 +464,6 @@ export default function LiveDashboard({ bandId, musicianId }) {
       clearInterval(intervalId);
     };
   }, [ownerId, bandId, musicianId, notifyNewRequests]);
-
 
   /** Sync a single setlist to the API (debounced for items) */
   const syncSetListToApi = useCallback(async (setListId, patchBody) => {
@@ -807,23 +851,52 @@ export default function LiveDashboard({ bandId, musicianId }) {
 
   const updateRequestStatus = async (id, status) => {
     try {
-      await fetch('/api/live-requests', {
+      const response = await fetch('/api/live-requests', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, status }),
       });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || 'Greška pri ažuriranju live zahteva.');
+      }
+      return true;
     } catch (err) {
       console.error('Error updating request status:', err);
+      throw err;
     }
   };
 
-  const handleAcceptRequest = async (req) => {
+  const applyRequestStatusChange = useCallback(async (req, nextStatus, onSuccess) => {
+    if (!req?.id || requestActionLoadingId === req.id) return false;
+    const previousStatus = req.status;
+    setRequestActionError('');
+    setRequestActionLoadingId(req.id);
     setRequests((prev) =>
-      prev.map((r) => (r.id === req.id ? { ...r, status: 'accepted' } : r))
+      prev.map((r) => (r.id === req.id ? { ...r, status: nextStatus.toLowerCase() } : r))
     );
-    updateRequestStatus(req.id, 'ACCEPTED');
 
-    await openRequestSong(req);
+    try {
+      await updateRequestStatus(req.id, nextStatus);
+      if (onSuccess) {
+        await onSuccess();
+      }
+      return true;
+    } catch (err) {
+      setRequests((prev) =>
+        prev.map((r) => (r.id === req.id ? { ...r, status: previousStatus } : r))
+      );
+      setRequestActionError(err?.message || 'Promena statusa nije sačuvana.');
+      return false;
+    } finally {
+      setRequestActionLoadingId((current) => (current === req.id ? '' : current));
+    }
+  }, [requestActionLoadingId]);
+
+  const handleAcceptRequest = async (req) => {
+    await applyRequestStatusChange(req, 'ACCEPTED', async () => {
+      await openRequestSong(req);
+    });
   };
 
   const openRequestSong = async (req) => {
@@ -854,17 +927,11 @@ export default function LiveDashboard({ bandId, musicianId }) {
   };
 
   const handleSkipRequest = (req) => {
-    setRequests((prev) =>
-      prev.map((r) => (r.id === req.id ? { ...r, status: 'rejected' } : r))
-    );
-    updateRequestStatus(req.id, 'REJECTED');
+    applyRequestStatusChange(req, 'REJECTED');
   };
 
   const handleMarkPlayed = (req) => {
-    setRequests((prev) =>
-      prev.map((r) => (r.id === req.id ? { ...r, status: 'played' } : r))
-    );
-    updateRequestStatus(req.id, 'PLAYED');
+    applyRequestStatusChange(req, 'PLAYED');
   };
 
   const requestDesktopNotifications = useCallback(async () => {
@@ -902,7 +969,6 @@ export default function LiveDashboard({ bandId, musicianId }) {
   );
 
   const handleExit = () => {
-    // Always exit Live view to owner's control panel.
     if (bandId) {
       router.push('/bands');
       return;
@@ -916,7 +982,6 @@ export default function LiveDashboard({ bandId, musicianId }) {
 
   return (
     <div className={`live-dashboard ${isNightMode ? 'night-vision' : ''}`}>
-      {/* HUD Header */}
       <header className="hud-header">
         <div className="hud-left">
           <div className="status-indicator">
@@ -932,7 +997,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
           <span className="hud-pending-orbit-num">{pendingCount}</span>
         </div>
         <div className="hud-controls">
-          <button 
+          <button
             className={`hud-btn ${isNightMode ? 'active' : ''}`}
             onClick={() => setIsNightMode(!isNightMode)}
           >
@@ -947,7 +1012,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
           >
             <HelpCircle size={20} />
           </button>
-          <button 
+          <button
             className={`hud-btn ${showSettings ? 'settings-active' : ''}`}
             onClick={() => setShowSettings(!showSettings)}
             aria-label="Podešavanja"
@@ -967,7 +1032,6 @@ export default function LiveDashboard({ bandId, musicianId }) {
       </header>
 
       <main className="hud-main">
-        {/* Sidebar Nav */}
         <nav className="hud-side-nav">
           <button className={`nav-item ${activeTab === 'requests' ? 'active' : ''}`} onClick={() => setActiveTab('requests')}>
             <MessageSquare size={24} />
@@ -988,11 +1052,20 @@ export default function LiveDashboard({ bandId, musicianId }) {
           </button>
         </nav>
 
-        {/* Content Area */}
         <section className="hud-content">
           {activeTab === 'requests' && (
             <div className="request-feed">
-              <h2 className={`requests-title ${isNightMode ? 'night-glow' : ''}`}>Zahtevi Gostiju</h2>
+              <h2 className="requests-title night-glow">ZAHTEVI PUBLIKE</h2>
+              {requestActionError && (
+                <div className="live-inline-error">
+                  {requestActionError}
+                </div>
+              )}
+              {requestLoadError && (
+                <div className="live-inline-error">
+                  {requestLoadError}
+                </div>
+              )}
               <div className="request-view-toggle">
                 <button
                   className={`mini-tab ${requestView === 'active' ? 'active' : ''}`}
@@ -1007,14 +1080,29 @@ export default function LiveDashboard({ bandId, musicianId }) {
                   Istorija
                 </button>
               </div>
-              {filteredRequests.length === 0 ? (
-                <div className="empty-state">
+              {requestsLoading ? (
+                <div className="live-state-card">
+                  <MessageSquare size={38} />
+                  <div className="live-state-copy">
+                    <strong>Učitavanje zahteva…</strong>
+                    <span>Čekam najnovije live porudžbine i osvežavam red čekanja.</span>
+                  </div>
+                </div>
+              ) : filteredRequests.length === 0 ? (
+                <div className="empty-state live-state-card">
                   <MessageSquare size={48} />
-                  <p>{requestView === 'active' ? 'Nema aktivnih zahteva' : 'Nema istorije zahteva'}</p>
+                  <div className="live-state-copy">
+                    <strong>{requestView === 'active' ? 'Nema aktivnih zahteva' : 'Nema istorije zahteva'}</strong>
+                    <span>
+                      {requestView === 'active'
+                        ? 'Kada gosti pošalju novu pesmu ili bakšiš, pojaviće se ovde.'
+                        : 'Ovde će ostati trag odsviranih i preskočenih zahteva tokom sesije.'}
+                    </span>
+                  </div>
                 </div>
               ) : (
                 <div className="feed-grid">
-                  {filteredRequests.map(req => (
+                  {filteredRequests.map((req) => (
                     <div
                       key={req.id}
                       className={`request-card ${req.status} ${
@@ -1044,11 +1132,16 @@ export default function LiveDashboard({ bandId, musicianId }) {
                             <button
                               className="btn-hud accept"
                               onClick={() => handleAcceptRequest(req)}
+                              disabled={requestActionLoadingId === req.id}
                             >
-                              Prihvati
+                              {requestActionLoadingId === req.id ? 'Sačekaj...' : 'Prihvati'}
                             </button>
-                            <button className="btn-hud skip" onClick={() => handleSkipRequest(req)}>
-                              Preskoči
+                            <button
+                              className="btn-hud skip"
+                              onClick={() => handleSkipRequest(req)}
+                              disabled={requestActionLoadingId === req.id}
+                            >
+                              {requestActionLoadingId === req.id ? 'Sačekaj...' : 'Preskoči'}
                             </button>
                           </>
                         )}
@@ -1057,8 +1150,12 @@ export default function LiveDashboard({ bandId, musicianId }) {
                             <button className="btn-hud accept" onClick={() => openRequestSong(req)}>
                               {requestHasLyrics(req) ? 'Tekst' : 'Bez teksta'}
                             </button>
-                            <button className="btn-hud skip" onClick={() => handleMarkPlayed(req)}>
-                              Svirano
+                            <button
+                              className="btn-hud skip"
+                              onClick={() => handleMarkPlayed(req)}
+                              disabled={requestActionLoadingId === req.id}
+                            >
+                              {requestActionLoadingId === req.id ? 'Sačekaj...' : 'Svirano'}
                             </button>
                           </>
                         )}
@@ -1086,9 +1183,21 @@ export default function LiveDashboard({ bandId, musicianId }) {
                   <span>Nijedna pesma nije dostupna za naručivanje. Aktivirajte barem jednu set listu.</span>
                 </div>
               )}
-              {setLists.length === 0 ? (
-                <div className="setlists-empty">
-                  Napravite prvu set listu na <PlusCircle size={14} style={{ verticalAlign: 'middle' }} /> tabu.
+              {setListsLoading ? (
+                <div className="live-state-card compact">
+                  <ListMusic size={34} />
+                  <div className="live-state-copy">
+                    <strong>Učitavanje set lista…</strong>
+                    <span>Pripremam vaše live liste i dostupne pesme za nastup.</span>
+                  </div>
+                </div>
+              ) : setLists.length === 0 ? (
+                <div className="setlists-empty live-state-card compact">
+                  <PlusCircle size={30} />
+                  <div className="live-state-copy">
+                    <strong>Još nema set lista</strong>
+                    <span>Napravite prvu set listu na <PlusCircle size={14} style={{ verticalAlign: 'middle' }} /> tabu da biste uključili pesme za live naručivanje.</span>
+                  </div>
                 </div>
               ) : (
                 <>
@@ -1153,8 +1262,12 @@ export default function LiveDashboard({ bandId, musicianId }) {
 
                         <div className="setlist-items">
                           {selectedSetList.items.length === 0 ? (
-                            <div className="setlists-empty small">
-                              Još nema pesama u ovoj listi.
+                            <div className="setlists-empty small live-state-card compact">
+                              <Music size={26} />
+                              <div className="live-state-copy">
+                                <strong>Još nema pesama u ovoj listi</strong>
+                                <span>Dodajte prvu pesmu da bi lista bila spremna za live režim.</span>
+                              </div>
                               <button type="button" className="setlist-create-btn" style={{ marginTop: '0.5rem' }} onClick={() => { setActiveTab('addSong'); setShowSetlistSongDropdown(true); }}>
                                 + Dodaj pesmu
                               </button>
@@ -1373,11 +1486,25 @@ export default function LiveDashboard({ bandId, musicianId }) {
                     )}
                   </div>
                   {songLoading ? (
-                    <p className="detail-artist">Učitavanje repertoara...</p>
+                    <div className="live-state-card compact">
+                      <Music size={28} />
+                      <div className="live-state-copy">
+                        <strong>Učitavanje repertoara…</strong>
+                        <span>Pripremam pesme i tekstove za brzu pretragu tokom nastupa.</span>
+                      </div>
+                    </div>
                   ) : cheatsheetFilteredSongs.length === 0 ? (
-                    <p className="detail-artist">
-                      {cheatsheetSearch ? 'Nema rezultata za pretragu.' : 'Repertoar je prazan.'}
-                    </p>
+                    <div className="live-state-card compact">
+                      <Music size={28} />
+                      <div className="live-state-copy">
+                        <strong>{cheatsheetSearch ? 'Nema rezultata za pretragu' : 'Repertoar je prazan'}</strong>
+                        <span>
+                          {cheatsheetSearch
+                            ? 'Pokušajte sa drugim nazivom pesme ili izvođača.'
+                            : 'Dodajte pesme u repertoar ili aktivirajte odgovarajuću set listu.'}
+                        </span>
+                      </div>
+                    </div>
                   ) : null}
 
                   {setLists.length > 0 && (
@@ -1585,6 +1712,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
                   <span className="range-value">{settings.maxRequests === 0 ? '∞' : settings.maxRequests}</span>
                 </div>
                 <p className="setting-hint">Ograničite koliko neprihvaćenih zahteva može čekati na prihvat (0 = bez limita)</p>
+                <p className="setting-sync-note">Važi na svim uređajima za ovaj live nastup.</p>
               </div>
 
               {/* Font Size */}
@@ -1605,14 +1733,15 @@ export default function LiveDashboard({ bandId, musicianId }) {
                   <span className="range-value">{settings.fontSize}%</span>
                 </div>
                 <p className="setting-hint">Povećajte tekst za bolju vidljivost na bini</p>
+                <p className="setting-device-note">Lokalna preferenca ovog uređaja.</p>
               </div>
 
-              {/* Toggle: Show Tips */}
+              {/* Toggle: Show tip amounts locally */}
               <div className="setting-group">
                 <div className="setting-toggle-row">
                   <div>
                     <label className="setting-label">PRIKAŽI NAPOJNICE</label>
-                    <p className="setting-hint">Sakrij/prikaži iznose napojnica na zahtevima</p>
+                    <p className="setting-hint">Sakrij/prikaži iznose napojnica samo na ovom uređaju</p>
                   </div>
                   <button
                     className={`toggle-btn ${settings.showTips ? 'on' : 'off'}`}
@@ -1621,6 +1750,24 @@ export default function LiveDashboard({ bandId, musicianId }) {
                     <div className="toggle-knob" />
                   </button>
                 </div>
+                <p className="setting-device-note">Lokalna preferenca ovog uređaja.</p>
+              </div>
+
+              {/* Toggle: Allow guest tips across devices */}
+              <div className="setting-group">
+                <div className="setting-toggle-row">
+                  <div>
+                    <label className="setting-label">DOZVOLI BAKŠIŠ GOSTIMA</label>
+                    <p className="setting-hint">Uključi ili isključi bakšiš u live zahtevima za ceo nastup</p>
+                  </div>
+                  <button
+                    className={`toggle-btn ${settings.allowGuestTips ? 'on' : 'off'}`}
+                    onClick={() => handleSharedToggleChange('allowGuestTips', !settings.allowGuestTips)}
+                  >
+                    <div className="toggle-knob" />
+                  </button>
+                </div>
+                <p className="setting-sync-note">Važi na svim uređajima za ovaj live nastup.</p>
               </div>
 
               {/* Toggle: Sound */}
@@ -1630,7 +1777,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
                     <label className="setting-label">
                       {settings.soundEnabled ? <Volume2 size={14} /> : <VolumeX size={14} />} ZVUČNA OBAVEŠTENJA
                     </label>
-                    <p className="setting-hint">Zvučni signal za nove zahteve gostiju</p>
+                    <p className="setting-hint">Zvučni signal za nove zahteve gostiju na ovom uređaju</p>
                   </div>
                   <button
                     className={`toggle-btn ${settings.soundEnabled ? 'on' : 'off'}`}
@@ -1639,6 +1786,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
                     <div className="toggle-knob" />
                   </button>
                 </div>
+                <p className="setting-device-note">Lokalna preferenca ovog uređaja.</p>
               </div>
 
               {/* Desktop notifications */}
@@ -1671,7 +1819,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
                     <label className="setting-label">
                       {settings.autoAccept ? <Zap size={14} /> : <ZapOff size={14} />} AUTO PRIHVATANJE
                     </label>
-                    <p className="setting-hint">Automatski prihvati sve dolazeće zahteve</p>
+                    <p className="setting-hint">Automatski prihvati sve dolazeće zahteve na ovom uređaju</p>
                   </div>
                   <button
                     className={`toggle-btn ${settings.autoAccept ? 'on' : 'off'}`}
@@ -1680,6 +1828,25 @@ export default function LiveDashboard({ bandId, musicianId }) {
                     <div className="toggle-knob" />
                   </button>
                 </div>
+                <p className="setting-device-note">Lokalna preferenca ovog uređaja.</p>
+              </div>
+
+              <div className="setting-group">
+                <div className="setting-toggle-row">
+                  <div>
+                    <label className="setting-label">
+                      <ListMusic size={14} /> PUN REPERTOAR U LIVE REŽIMU
+                    </label>
+                    <p className="setting-hint">Kad je uključeno, gosti mogu tražiti i pesme van aktivnih live set lista</p>
+                  </div>
+                  <button
+                    className={`toggle-btn ${settings.allowFullRepertoireLive ? 'on' : 'off'}`}
+                    onClick={() => handleSharedToggleChange('allowFullRepertoireLive', !settings.allowFullRepertoireLive)}
+                  >
+                    <div className="toggle-knob" />
+                  </button>
+                </div>
+                <p className="setting-sync-note">Važi na svim uređajima za ovaj live nastup.</p>
               </div>
 
               {/* Reset Session */}
@@ -1710,7 +1877,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
             <div className="settings-body help-body">
               <div className="help-section">
                 <h3><MessageSquare size={16} /> Zahtevi gostiju</h3>
-                <p>Gosti skeniraju <strong>QR kod</strong> i iz svojih telefona šalju želje za pesme. Novi zahtevi se pojavljuju ovde automatski, sa zvučnim signalom.</p>
+                <p>Gosti skeniraju <strong>QR kod</strong> i iz svojih telefona šalju želje za pesme. Novi zahtevi se pojavljuju ovde automatski, a gost na svojoj strani vidi da li je zahtev na čekanju, prihvaćen ili odbijen.</p>
                 <ul>
                   <li><strong>Prihvati</strong> — zahtev prelazi u listu potvrđenih pesama.</li>
                   <li><strong>Preskoči</strong> — zahtev se arhivira i ne svira.</li>
@@ -1763,11 +1930,13 @@ export default function LiveDashboard({ bandId, musicianId }) {
               <div className="help-section">
                 <h3><Settings size={16} /> Podešavanja</h3>
                 <ul>
-                  <li><strong>Naziv lokala</strong> — prikazuje se gostima.</li>
-                  <li><strong>Maks. broj zahteva</strong> — ograničenje čekanja (0 = bez limita).</li>
-                  <li><strong>Veličina teksta</strong> — skaliranje za bolju vidljivost na bini.</li>
-                  <li><strong>Prikaži napojnice</strong> — sakrij/prikaži iznose.</li>
-                  <li><strong>Zvučna obaveštenja</strong> — zvuk za nove zahteve.</li>
+                  <li><strong>Naziv lokala</strong> — prikazuje se u zaglavlju tokom nastupa.</li>
+                  <li><strong>Maks. broj zahteva</strong> — ograničenje čekanja (0 = bez limita) za ceo live nastup.</li>
+                  <li><strong>Veličina teksta</strong> — lokalno skaliranje za bolju vidljivost na bini.</li>
+                  <li><strong>Prikaži napojnice</strong> — lokalno sakrij/prikaži iznose u dashboardu.</li>
+                  <li><strong>Dozvoli bakšiš gostima</strong> — shared pravilo za sve uređaje.</li>
+                  <li><strong>Pun repertoar u live režimu</strong> — shared pravilo za sve uređaje.</li>
+                  <li><strong>Zvučna obaveštenja</strong> — zvuk za nove zahteve na ovom uređaju.</li>
                   <li><strong>Desktop notifikacije</strong> — sistemski pop-up kad stigne zahtev (dozvolite u pregledaču).</li>
                 </ul>
               </div>
@@ -2290,29 +2459,43 @@ export default function LiveDashboard({ bandId, musicianId }) {
           grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
           gap: 1rem;
         }
+        .request-feed {
+          display: flex;
+          flex-direction: column;
+          gap: 0.85rem;
+          min-width: 0;
+        }
         .request-view-toggle {
           display: inline-flex;
           border: 1px solid #222;
           border-radius: 999px;
           padding: 3px;
           gap: 4px;
-          margin-bottom: 1.25rem;
+          margin-bottom: 0;
+          width: fit-content;
+          max-width: 100%;
         }
-        .mini-tab {
-          border: none;
-          background: transparent;
-          color: #777;
-          font-size: 0.68rem;
-          font-weight: 800;
-          letter-spacing: 0.05em;
-          text-transform: uppercase;
-          padding: 8px 12px;
-          border-radius: 999px;
-          cursor: pointer;
+        .live-inline-error,
+        .max-requests-warning {
+          display: flex;
+          align-items: flex-start;
+          gap: 0.5rem;
+          width: 100%;
+          border-radius: 10px;
+          padding: 0.75rem 0.9rem;
+          font-size: 0.78rem;
+          line-height: 1.45;
+          word-break: break-word;
         }
-        .mini-tab.active {
-          background: #00ff0012;
-          color: #00ff00;
+        .live-inline-error {
+          border: 1px solid rgba(239, 68, 68, 0.35);
+          background: rgba(239, 68, 68, 0.08);
+          color: #fca5a5;
+        }
+        .max-requests-warning {
+          border: 1px solid rgba(250, 204, 21, 0.35);
+          background: rgba(250, 204, 21, 0.08);
+          color: #fde68a;
         }
 
         .request-card {
@@ -2320,6 +2503,10 @@ export default function LiveDashboard({ bandId, musicianId }) {
           border: 1px solid #1a1a1a;
           padding: 1.25rem;
           border-radius: 12px;
+          display: flex;
+          flex-direction: column;
+          min-width: 0;
+          gap: 0.75rem;
         }
 
         .request-card.waiter-tip {
@@ -2328,34 +2515,14 @@ export default function LiveDashboard({ bandId, musicianId }) {
           box-shadow: 0 0 28px rgba(34, 197, 94, 0.2);
         }
 
-        .request-card.waiter-tip .song-title {
-          color: #86efac;
-        }
-
-        .request-card.waiter-tip .tip {
-          color: #fef08a;
-        }
-
-        .request-card.accepted {
-          border-color: #00ff0022;
-          background: #00ff0005;
-        }
-        .request-card.skipped {
-          border-color: #47556966;
-          background: #0f172a22;
-        }
-        .request-card.played {
-          border-color: #22c55e55;
-          background: #16a34a14;
-        }
-
         .req-header {
           display: flex;
           justify-content: space-between;
-          align-items: center;
+          align-items: flex-start;
+          flex-wrap: wrap;
           gap: 0.5rem;
           font-size: 0.7rem;
-          margin-bottom: 1rem;
+          margin-bottom: 0;
         }
 
         .req-header-right {
@@ -2384,10 +2551,22 @@ export default function LiveDashboard({ bandId, musicianId }) {
 
         .tip { color: #ffd700; font-weight: 900; }
 
+        .song-title {
+          margin: 0;
+          overflow-wrap: anywhere;
+        }
+
+        .client-name {
+          margin: 0;
+          color: #94a3b8;
+          overflow-wrap: anywhere;
+        }
+
         .req-actions {
           display: flex;
+          flex-wrap: wrap;
           gap: 0.5rem;
-          margin-top: 1rem;
+          margin-top: auto;
         }
 
         .btn-hud {
@@ -2401,9 +2580,16 @@ export default function LiveDashboard({ bandId, musicianId }) {
           transition: background 0.15s, transform 0.1s;
           text-transform: uppercase;
           letter-spacing: 0.04em;
+          min-height: 42px;
+          min-width: 0;
         }
         .btn-hud:active {
           transform: scale(0.97);
+        }
+        .btn-hud:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+          transform: none;
         }
 
         .btn-hud.accept {
@@ -2997,8 +3183,8 @@ export default function LiveDashboard({ bandId, musicianId }) {
         }
         .setlist-chip-wrap.is-live .setlist-chip.active {
           border-color: #ef4444;
-          background: rgba(239, 68, 68, 0.18);
           color: #fca5a5;
+          background: rgba(239, 68, 68, 0.18);
           box-shadow: 0 0 12px rgba(239, 68, 68, 0.4);
         }
         .live-dot {
@@ -4496,6 +4682,42 @@ export default function LiveDashboard({ bandId, musicianId }) {
           }
           .status-indicator span {
             max-width: min(34vw, 7.5rem);
+          }
+          .request-view-toggle {
+            width: 100%;
+          }
+          .mini-tab {
+            flex: 1;
+            text-align: center;
+          }
+          .feed-grid {
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+          }
+          .request-card {
+            padding: 0.8rem;
+            border-radius: 10px;
+          }
+          .req-header {
+            flex-direction: column;
+            align-items: stretch;
+          }
+          .req-header-right {
+            justify-content: flex-start;
+          }
+          .req-actions {
+            flex-direction: column;
+          }
+          .btn-hud,
+          .status-chip {
+            width: 100%;
+            justify-content: center;
+            text-align: center;
+          }
+          .live-inline-error,
+          .max-requests-warning {
+            padding: 0.7rem 0.8rem;
+            font-size: 0.74rem;
           }
         }
 

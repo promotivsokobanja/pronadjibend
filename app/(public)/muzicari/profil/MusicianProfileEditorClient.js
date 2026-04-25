@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, Save, UserRound, Mail, CalendarDays, Euro, MapPin, Music, Video, Image as ImageIcon, ListMusic, Radio, Headphones, Trash2, QrCode, HelpCircle } from 'lucide-react';
+import { ArrowLeft, Save, UserRound, Mail, CalendarDays, Euro, MapPin, Music, Video, Image as ImageIcon, ListMusic, Radio, Headphones, Trash2, QrCode, HelpCircle, Download } from 'lucide-react';
 import QrModal from '../../../../components/QrModal';
 import DashboardHelpModal from '../../../../components/DashboardHelpModal';
 import SocialShareActions from '../../../../components/SocialShareActions';
@@ -65,6 +65,7 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
   const [passwordSuccess, setPasswordSuccess] = useState('');
   const [showQr, setShowQr] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [korgPaDriveUrl, setKorgPaDriveUrl] = useState('');
   const [siteOrigin, setSiteOrigin] = useState('');
   const [busyDates, setBusyDates] = useState([]);
   const [manualBusyKeys, setManualBusyKeys] = useState([]);
@@ -194,6 +195,32 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
       cancelled = true;
     };
   }, [viewer?.musicianProfileId]);
+
+  useEffect(() => {
+    const plan = String(viewer?.plan || '').toUpperCase();
+    if (plan !== 'PREMIUM_VENUE') {
+      setKorgPaDriveUrl('');
+      return;
+    }
+
+    let cancelled = false;
+    const loadKorgLink = async () => {
+      try {
+        const response = await fetch('/api/korg-pa-sets', { cache: 'no-store' });
+        const data = await response.json().catch(() => ({}));
+        if (!cancelled && response.ok) {
+          setKorgPaDriveUrl(String(data?.url || '').trim());
+        }
+      } catch {
+        if (!cancelled) setKorgPaDriveUrl('');
+      }
+    };
+
+    loadKorgLink();
+    return () => {
+      cancelled = true;
+    };
+  }, [viewer?.plan]);
 
   useEffect(() => {
     try {
@@ -459,6 +486,15 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
       href: '/bands/midi',
       icon: Headphones,
     },
+    ...(isPremiumVenue && korgPaDriveUrl
+      ? [{
+          title: 'Korg PA setovi',
+          description: 'Download setova i sound paketa za Korg klavijature.',
+          href: korgPaDriveUrl,
+          icon: Download,
+          external: true,
+        }]
+      : []),
   ];
 
   const onChange = (key, value) => {
@@ -1314,10 +1350,17 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
                           <h3>{card.title}</h3>
                           <p>{card.description}</p>
                         </div>
-                        <span className="panel-cta">{card.href ? 'Otvori' : 'Preuzmi'}</span>
+                        <span className="panel-cta">{card.external ? 'Preuzmi' : card.href ? 'Otvori' : 'Preuzmi'}</span>
                       </div>
                     );
                     if (card.href) {
+                      if (card.external) {
+                        return (
+                          <a key={card.title} href={card.href} className="panel-link" target="_blank" rel="noreferrer">
+                            {inner}
+                          </a>
+                        );
+                      }
                       return (
                         <Link key={card.title} href={card.href} className="panel-link">
                           {inner}
