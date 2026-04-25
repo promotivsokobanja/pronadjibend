@@ -42,3 +42,6 @@ prisma/*.db-journal
 
 # Lokalni puni backupi (baza + izvozi — ne commitovati)
 /backups/
+
+# Setup doc sa kredencijalima
+SETUP.md
