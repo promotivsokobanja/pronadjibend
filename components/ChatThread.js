@@ -1,9 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { Send, Trash2 } from 'lucide-react';
 
-export default function ChatThread({ inviteId }) {
+function ChatThread({ inviteId }) {
   const [messages, setMessages] = useState([]);
   const [currentUserId, setCurrentUserId] = useState(null);
   const [text, setText] = useState('');
@@ -382,3 +382,5 @@ const chatStyles = `
     }
   }
 `;
+
+export default memo(ChatThread);

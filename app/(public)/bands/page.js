@@ -50,7 +50,8 @@ export default function BandDashboard() {
   const [bandId, setBandId] = useState(null);
   const [loadError, setLoadError] = useState('');
   const [isPremiumVenue, setIsPremiumVenue] = useState(false);
-  const [korgPaDriveUrl, setKorgPaDriveUrl] = useState('');
+  const [korgPaItems, setKorgPaItems] = useState([]);
+  const [showKorgDownloads, setShowKorgDownloads] = useState(false);
   const [showQr, setShowQr] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [activeRequest, setActiveRequest] = useState(null);
@@ -61,6 +62,7 @@ export default function BandDashboard() {
     { label: 'Ocena', value: '0.0', icon: Star },
   ]);
   const [isLoading, setIsLoading] = useState(true);
+
   const [isAdminUser, setIsAdminUser] = useState(false);
   const [busyDates, setBusyDates] = useState([]);
   /** Datumi ručno označeni kao zauzeti (BusyDate) — njih bend može ponovo osloboditi klikom */
@@ -149,26 +151,17 @@ export default function BandDashboard() {
           setIsPremiumVenue(canUseKorg);
         }
 
-        if (canUseKorg) {
-          try {
-            const korgRes = await fetch('/api/korg-pa-sets', { cache: 'no-store' });
-            const korgData = await korgRes.json().catch(() => ({}));
-            if (!cancelled && korgRes.ok) {
-              setKorgPaDriveUrl(String(korgData?.url || '').trim());
-            }
-          } catch {
-            if (!cancelled) setKorgPaDriveUrl('');
-          }
-        } else if (!cancelled) {
-          setKorgPaDriveUrl('');
-        }
-
-        const [bookingsRes, bandRes, calendarRes, songsPreviewRes, musicianInvitesRes] = await Promise.all([
+        const [bookingsRes, bandRes, calendarRes, songsPreviewRes, musicianInvitesRes, korgResult] = await Promise.all([
           fetch(`/api/bookings?bandId=${encodeURIComponent(id)}`),
           fetch(`/api/bands/${encodeURIComponent(id)}`),
           fetch(`/api/bands/calendar?bandId=${encodeURIComponent(id)}`),
           fetch(`/api/songs?bandId=${encodeURIComponent(id)}&limit=2`, { cache: 'no-store' }),
           fetch('/api/musicians/invites', { cache: 'no-store' }),
+          canUseKorg
+            ? fetch('/api/korg-pa-sets', { cache: 'no-store' })
+                .then(async (res) => ({ ok: res.ok, data: await res.json().catch(() => ({})) }))
+                .catch(() => ({ ok: false, data: {} }))
+            : Promise.resolve({ ok: false, data: {} }),
         ]);
 
         const bookingsData = await safeResponseJson(bookingsRes, []);
@@ -183,6 +176,7 @@ export default function BandDashboard() {
             : [];
 
         if (cancelled) return;
+        setKorgPaItems(canUseKorg && korgResult.ok && Array.isArray(korgResult.data?.items) ? korgResult.data.items : []);
         setBookings(bookingsList);
         applyCalendarData(calendarData);
         setRepertoirePreview(Array.isArray(songsRaw) ? songsRaw : []);
@@ -553,19 +547,19 @@ export default function BandDashboard() {
           </button>
         </div>
         <div className="header-actions">
-          <div className="header-action-item">
-            <Link href="/bands/live">
+         <div className="header-action-item">
+           <Link href="/bands/live">
               <button type="button" className="btn btn-primary">
-                <Play size={18} style={{ marginRight: '8px' }} /> Pokreni Nastup
+                <Play size={18} style={{ marginRight: '8px' }} /> Pokreni Live
               </button>
             </Link>
             {SHOW_HEADER_ACTION_HINTS && (
-              <span className="action-caption action-caption-primary">Live zahtevi pesama</span>
+              <span className="action-caption">Kontrola live zahteva i aktivne svirke</span>
             )}
           </div>
           <div className="header-action-item">
             <Link href="/bands/pesmarica">
-              <button type="button" className="btn btn-secondary">
+              <button type="button" className="btn btn-secondary header-action-btn">
                 <BookOpen size={18} style={{ marginRight: '8px' }} /> Pesmarica
               </button>
             </Link>
@@ -575,7 +569,7 @@ export default function BandDashboard() {
           </div>
           <div className="header-action-item">
             <Link href="/bands/midi">
-              <button type="button" className="btn btn-secondary">
+              <button type="button" className="btn btn-secondary header-action-btn">
                 <FileMusic size={18} style={{ marginRight: '8px' }} /> MIDI Fajlovi
               </button>
             </Link>
@@ -583,24 +577,49 @@ export default function BandDashboard() {
               <span className="action-caption">Biblioteka i upload MIDI fajlova</span>
             )}
           </div>
-          {isPremiumVenue && korgPaDriveUrl && (
+          {isPremiumVenue && korgPaItems.length > 0 && (
             <div className="header-action-item">
-              <a
-                href={korgPaDriveUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="btn btn-secondary"
-                style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}
+              <button
+                type="button"
+                className="btn btn-secondary header-action-btn"
+                onClick={() => setShowKorgDownloads((prev) => !prev)}
               >
                 <Download size={18} style={{ marginRight: '8px' }} /> Korg PA setovi
-              </a>
+              </button>
+              {showKorgDownloads ? (
+                <div
+                  className="korg-download-list"
+                  style={{
+                    marginTop: '0.65rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.45rem',
+                    padding: '0.75rem',
+                    borderRadius: 12,
+                    border: '1px solid rgba(148, 163, 184, 0.24)',
+                    background: 'rgba(15, 23, 42, 0.24)',
+                  }}
+                >
+                  {korgPaItems.map((item) => (
+                    <a
+                      key={item.id || item.url}
+                      href={item.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{ color: '#e2e8f0', textDecoration: 'none', fontSize: '0.92rem', fontWeight: 700 }}
+                    >
+                      {item.name}
+                    </a>
+                  ))}
+                </div>
+              ) : null}
               {SHOW_HEADER_ACTION_HINTS && (
-                <span className="action-caption">Download setova i sound paketa za Korg klavijature</span>
+                <span className="action-caption">Download više setova i sound paketa za Korg klavijature</span>
               )}
             </div>
           )}
           <div className="header-action-item">
-            <button type="button" className="btn btn-secondary" onClick={() => setShowQr(true)}>
+            <button type="button" className="btn btn-secondary header-action-btn" onClick={() => setShowQr(true)}>
               <QrCode size={18} style={{ marginRight: '8px' }} /> Vaš QR Kod
             </button>
             {SHOW_HEADER_ACTION_HINTS && (
@@ -610,10 +629,10 @@ export default function BandDashboard() {
           <div className="header-action-item">
             <a
               href={`/api/bands/${encodeURIComponent(bandId)}/marketing-poster`}
-              className="btn btn-secondary"
+              className="btn btn-secondary header-action-btn"
               style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}
             >
-              <Download size={18} style={{ marginRight: '8px' }} /> Poster za štampu (A4, 300 DPI)
+              <Download size={18} style={{ marginRight: '8px' }} /> Poster za štampu
             </a>
             {SHOW_HEADER_ACTION_HINTS && (
               <span className="action-caption">Tvoj QR za goste — live pesmarica i narudžbine</span>
@@ -621,7 +640,7 @@ export default function BandDashboard() {
           </div>
           <div className="header-action-item">
             <Link href="/bands/profile">
-              <button type="button" className="btn btn-secondary">
+              <button type="button" className="btn btn-secondary header-action-btn">
                 <Pencil size={18} style={{ marginRight: '8px' }} /> Moj Profil
               </button>
             </Link>
@@ -1192,6 +1211,14 @@ export default function BandDashboard() {
           white-space: nowrap;
           min-height: 46px;
         }
+        .header-action-btn {
+          min-width: 220px;
+          min-height: 46px;
+        }
+        .korg-download-list {
+          width: 100%;
+          max-width: 260px;
+        }
         .action-caption {
           font-size: 0.68rem;
           line-height: 1.3;
@@ -1217,6 +1244,12 @@ export default function BandDashboard() {
           .header-action-item :global(.btn) {
             min-height: 48px;
           }
+          .header-action-btn {
+            min-width: 0;
+          }
+          .korg-download-list {
+            max-width: 100%;
+          }
         }
         @media (max-width: 520px) {
           .dashboard-container { padding-top: 7.5rem; }
@@ -1232,6 +1265,9 @@ export default function BandDashboard() {
           }
           .action-caption {
             font-size: 0.64rem;
+          }
+          .korg-download-list {
+            padding: 0.65rem !important;
           }
         }
         .live-notification { 

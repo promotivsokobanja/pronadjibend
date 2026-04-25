@@ -310,5 +310,6 @@ model SiteConfig {
   bandProfileMaxLinks  Int      @default(5)
   maintenanceMode      Boolean  @default(false)
   korgPaDriveUrl       String?
+  korgPaItemsJson      String?
   updatedAt            DateTime @updatedAt
 }

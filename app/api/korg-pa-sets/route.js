@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '../../../lib/prisma';
 import { getAuthUserFromRequest } from '../../../lib/auth';
-import { getKorgPaDriveUrl } from '../../../lib/siteConfig';
+import { getKorgPaItems } from '../../../lib/siteConfig';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,12 +31,12 @@ export async function GET(request) {
       return NextResponse.json({ error: 'Pristup je dostupan samo Premium Venue korisnicima.' }, { status: 403 });
     }
 
-    const url = await getKorgPaDriveUrl();
-    if (!url) {
+    const items = await getKorgPaItems();
+    if (!items.length) {
       return NextResponse.json({ error: 'Korg PA setovi trenutno nisu dostupni za preuzimanje.' }, { status: 404 });
     }
 
-    return NextResponse.json({ url, available: true });
+    return NextResponse.json({ items, url: items[0].url, available: true });
   } catch (error) {
     console.error('Korg PA sets GET error:', error);
     return NextResponse.json({ error: 'Greška pri učitavanju Korg PA linka.' }, { status: 500 });

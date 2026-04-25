@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { adminFetch } from '../../../lib/adminFetch';
 
+const createEmptyKorgItem = (index = 0) => ({ id: `korg-item-${Date.now()}-${index}`, name: '', url: '' });
+
 export default function AdminSystemPage() {
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
@@ -12,7 +14,16 @@ export default function AdminSystemPage() {
   const [demoMsg, setDemoMsg] = useState('');
   const [maintenanceMsg, setMaintenanceMsg] = useState('');
   const [korgMsg, setKorgMsg] = useState('');
-  const [korgInput, setKorgInput] = useState('');
+  const [korgItems, setKorgItems] = useState([createEmptyKorgItem()]);
+  const [isCompactKorgEditor, setIsCompactKorgEditor] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    const syncCompact = () => setIsCompactKorgEditor(window.innerWidth <= 900);
+    syncCompact();
+    window.addEventListener('resize', syncCompact);
+    return () => window.removeEventListener('resize', syncCompact);
+  }, []);
 
   const load = useCallback(async () => {
     setError('');
@@ -21,7 +32,8 @@ export default function AdminSystemPage() {
       const j = await r.json();
       if (!r.ok) throw new Error(j.error || 'Greška');
       setData(j);
-      setKorgInput(j.korgPaDriveUrl || '');
+      const loadedItems = Array.isArray(j.korgPaItems) && j.korgPaItems.length ? j.korgPaItems : j.korgPaDriveUrl ? [{ id: 'korg-legacy', name: 'Korg PA setovi', url: j.korgPaDriveUrl }] : [createEmptyKorgItem()];
+      setKorgItems(loadedItems);
     } catch (e) {
       setError(e.message);
     }
@@ -56,21 +68,44 @@ export default function AdminSystemPage() {
     setSavingKorg(true);
     setKorgMsg('');
     try {
+      const payloadItems = korgItems
+        .map((item) => ({
+          id: item.id,
+          name: String(item.name || '').trim(),
+          url: String(item.url || '').trim(),
+        }))
+        .filter((item) => item.name || item.url);
       const r = await adminFetch('/api/admin/system/settings', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ korgPaDriveUrl: korgInput }),
+        body: JSON.stringify({ korgPaItems: payloadItems }),
       });
       const j = await r.json();
       if (!r.ok) throw new Error(j.error || 'Greška pri čuvanju');
-      setData((prev) => (prev ? { ...prev, korgPaDriveUrl: j.korgPaDriveUrl || '' } : prev));
-      setKorgInput(j.korgPaDriveUrl || '');
-      setKorgMsg('Sačuvano. Premium Venue korisnici sada mogu da vide dugme kada je link podešen.');
+      const nextItems = Array.isArray(j.korgPaItems) && j.korgPaItems.length ? j.korgPaItems : [createEmptyKorgItem()];
+      setData((prev) => (prev ? { ...prev, korgPaDriveUrl: j.korgPaDriveUrl || '', korgPaItems: j.korgPaItems || [] } : prev));
+      setKorgItems(nextItems);
+      setKorgMsg('Sačuvano. Premium Venue korisnici sada mogu da vide Korg PA download stavke kada je lista podešena.');
     } catch (e) {
       setKorgMsg(e.message);
     } finally {
       setSavingKorg(false);
     }
+  };
+
+  const updateKorgItem = (id, key, value) => {
+    setKorgItems((prev) => prev.map((item) => (item.id === id ? { ...item, [key]: value } : item)));
+  };
+
+  const addKorgItem = () => {
+    setKorgItems((prev) => [...prev, createEmptyKorgItem(prev.length)]);
+  };
+
+  const removeKorgItem = (id) => {
+    setKorgItems((prev) => {
+      const next = prev.filter((item) => item.id !== id);
+      return next.length ? next : [createEmptyKorgItem()];
+    });
   };
 
   const toggleMaintenanceMode = async () => {
@@ -216,31 +251,69 @@ export default function AdminSystemPage() {
       >
         <h2 style={{ fontSize: '1rem', margin: '0 0 0.5rem', fontWeight: 800 }}>Korg PA setovi</h2>
         <p style={{ color: '#94a3b8', fontSize: '0.875rem', margin: '0 0 1rem', lineHeight: 1.5 }}>
-          Ostavite Google Drive link za download Korg PA setova i sound paketa. Dugme se prikazuje samo
-          Premium Venue korisnicima na bend i muzičar portalu.
+          Dodajte više Google Drive linkova za različite Korg PA setove, sound pakete ili fajlove. Stavke se prikazuju
+          samo Premium Venue korisnicima na bend i muzičar portalu.
         </p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          <input
-            type="url"
-            value={korgInput}
-            onChange={(e) => setKorgInput(e.target.value)}
-            placeholder="https://drive.google.com/..."
-            style={{
-              width: '100%',
-              borderRadius: 10,
-              border: '1px solid rgba(148, 163, 184, 0.45)',
-              background: 'rgba(255, 255, 255, 0.96)',
-              color: '#0f172a',
-              padding: '0.8rem 0.9rem',
-              fontSize: '0.95rem',
-            }}
-          />
+          {korgItems.map((item, index) => (
+            <div
+              key={item.id}
+              style={{
+                display: 'grid',
+                gridTemplateColumns: isCompactKorgEditor ? '1fr' : 'minmax(180px, 220px) minmax(0, 1fr) auto',
+                gap: '0.75rem',
+                alignItems: 'center',
+              }}
+            >
+              <input
+                type="text"
+                value={item.name}
+                onChange={(e) => updateKorgItem(item.id, 'name', e.target.value)}
+                placeholder={`Naziv seta ${index + 1}`}
+                style={{
+                  width: '100%',
+                  borderRadius: 10,
+                  border: '1px solid rgba(148, 163, 184, 0.45)',
+                  background: 'rgba(255, 255, 255, 0.96)',
+                  color: '#0f172a',
+                  padding: '0.8rem 0.9rem',
+                  fontSize: '0.95rem',
+                }}
+              />
+              <input
+                type="url"
+                value={item.url}
+                onChange={(e) => updateKorgItem(item.id, 'url', e.target.value)}
+                placeholder="https://drive.google.com/..."
+                style={{
+                  width: '100%',
+                  borderRadius: 10,
+                  border: '1px solid rgba(148, 163, 184, 0.45)',
+                  background: 'rgba(255, 255, 255, 0.96)',
+                  color: '#0f172a',
+                  padding: '0.8rem 0.9rem',
+                  fontSize: '0.95rem',
+                }}
+              />
+              <button
+                type="button"
+                className="admin-btn"
+                onClick={() => removeKorgItem(item.id)}
+                style={{ backgroundColor: '#1e293b', borderColor: '#475569', width: isCompactKorgEditor ? '100%' : 'auto' }}
+              >
+                Obriši
+              </button>
+            </div>
+          ))}
           <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
-            <button type="button" className="admin-btn" disabled={savingKorg} onClick={saveKorgDriveLink}>
-              {savingKorg ? 'Čuvanje…' : 'Sačuvaj link'}
+            <button type="button" className="admin-btn" onClick={addKorgItem} style={{ backgroundColor: '#1e293b', borderColor: '#475569' }}>
+              Dodaj stavku
             </button>
-            <span style={{ color: data.korgPaDriveUrl ? '#4ade80' : '#fbbf24', fontWeight: 700, fontSize: '0.875rem' }}>
-              {data.korgPaDriveUrl ? 'Link je podešen' : 'Link još nije podešen'}
+            <button type="button" className="admin-btn" disabled={savingKorg} onClick={saveKorgDriveLink}>
+              {savingKorg ? 'Čuvanje…' : 'Sačuvaj stavke'}
+            </button>
+            <span style={{ color: data.korgPaItems?.length ? '#4ade80' : '#fbbf24', fontWeight: 700, fontSize: '0.875rem' }}>
+              {data.korgPaItems?.length ? `${data.korgPaItems.length} stavki podešeno` : 'Nema podešenih stavki'}
             </span>
           </div>
           {korgMsg ? <p style={{ margin: 0, fontSize: '0.875rem', color: '#94a3b8' }}>{korgMsg}</p> : null}

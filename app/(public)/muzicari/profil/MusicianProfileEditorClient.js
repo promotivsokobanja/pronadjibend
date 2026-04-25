@@ -65,7 +65,8 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
   const [passwordSuccess, setPasswordSuccess] = useState('');
   const [showQr, setShowQr] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
-  const [korgPaDriveUrl, setKorgPaDriveUrl] = useState('');
+  const [korgPaItems, setKorgPaItems] = useState([]);
+  const [showKorgDownloads, setShowKorgDownloads] = useState(false);
   const [siteOrigin, setSiteOrigin] = useState('');
   const [busyDates, setBusyDates] = useState([]);
   const [manualBusyKeys, setManualBusyKeys] = useState([]);
@@ -147,82 +148,6 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
   }, []);
 
   useEffect(() => {
-    const ownerId = viewer?.musicianProfileId;
-    if (!ownerId) {
-      setPanelStats({ repertoireCount: 0, liveTodayCount: 0 });
-      return;
-    }
-
-    let cancelled = false;
-    const loadPanelStats = async () => {
-      try {
-        const [countsRes, liveRes] = await Promise.all([
-          fetch(`/api/songs/counts?musicianId=${encodeURIComponent(ownerId)}`, { cache: 'no-store' }),
-          fetch(`/api/live-requests?musicianId=${encodeURIComponent(ownerId)}`, { cache: 'no-store' }),
-        ]);
-
-        const countsData = await countsRes.json().catch(() => ({}));
-        const liveData = await liveRes.json().catch(() => ([]));
-
-        if (cancelled) return;
-
-        const repertoireCount = countsData && typeof countsData === 'object'
-          ? Object.values(countsData).reduce((sum, value) => sum + (Number(value) || 0), 0)
-          : 0;
-
-        const today = new Date();
-        const y = today.getFullYear();
-        const m = today.getMonth();
-        const d = today.getDate();
-        const liveTodayCount = Array.isArray(liveData)
-          ? liveData.filter((item) => {
-              const created = new Date(item?.createdAt || item?.created_at || 0);
-              return !Number.isNaN(created.getTime())
-                && created.getFullYear() === y
-                && created.getMonth() === m
-                && created.getDate() === d;
-            }).length
-          : 0;
-
-        setPanelStats({ repertoireCount, liveTodayCount });
-      } catch {
-        if (!cancelled) setPanelStats({ repertoireCount: 0, liveTodayCount: 0 });
-      }
-    };
-
-    loadPanelStats();
-    return () => {
-      cancelled = true;
-    };
-  }, [viewer?.musicianProfileId]);
-
-  useEffect(() => {
-    const plan = String(viewer?.plan || '').toUpperCase();
-    if (plan !== 'PREMIUM_VENUE') {
-      setKorgPaDriveUrl('');
-      return;
-    }
-
-    let cancelled = false;
-    const loadKorgLink = async () => {
-      try {
-        const response = await fetch('/api/korg-pa-sets', { cache: 'no-store' });
-        const data = await response.json().catch(() => ({}));
-        if (!cancelled && response.ok) {
-          setKorgPaDriveUrl(String(data?.url || '').trim());
-        }
-      } catch {
-        if (!cancelled) setKorgPaDriveUrl('');
-      }
-    };
-
-    loadKorgLink();
-    return () => {
-      cancelled = true;
-    };
-  }, [viewer?.plan]);
-
-  useEffect(() => {
     try {
       if (typeof window !== 'undefined' && localStorage.getItem(LS_MUSICIAN_CAL_QUICK) === '0') {
         setCalendarQuickBusy(false);
@@ -252,14 +177,74 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
 
   useEffect(() => {
     const ownerId = viewer?.musicianProfileId;
+    const plan = String(viewer?.plan || '').toUpperCase();
     if (!ownerId) {
+      setPanelStats({ repertoireCount: 0, liveTodayCount: 0 });
+      setKorgPaItems([]);
       setBusyDates([]);
       setManualBusyKeys([]);
       setBusyDateRecords([]);
       return;
     }
-    refreshCalendarOnly();
-  }, [viewer?.musicianProfileId, refreshCalendarOnly]);
+
+    let cancelled = false;
+    const loadPanelExtras = async () => {
+      try {
+        const [countsRes, liveRes, calendarRes, korgResult] = await Promise.all([
+          fetch(`/api/songs/counts?musicianId=${encodeURIComponent(ownerId)}`, { cache: 'no-store' }),
+          fetch(`/api/live-requests?musicianId=${encodeURIComponent(ownerId)}`, { cache: 'no-store' }),
+          fetch(`/api/musicians/calendar?musicianId=${encodeURIComponent(ownerId)}`, { cache: 'no-store' }),
+          plan === 'PREMIUM_VENUE'
+            ? fetch('/api/korg-pa-sets', { cache: 'no-store' })
+                .then(async (res) => ({ ok: res.ok, data: await res.json().catch(() => ({})) }))
+                .catch(() => ({ ok: false, data: {} }))
+            : Promise.resolve({ ok: false, data: {} }),
+        ]);
+
+        const countsData = await countsRes.json().catch(() => ({}));
+        const liveData = await liveRes.json().catch(() => ([]));
+        const calendarData = await calendarRes.json().catch(() => ({}));
+
+        if (cancelled) return;
+
+        const repertoireCount = countsData && typeof countsData === 'object'
+          ? Object.values(countsData).reduce((sum, value) => sum + (Number(value) || 0), 0)
+          : 0;
+
+        const today = new Date();
+        const y = today.getFullYear();
+        const m = today.getMonth();
+        const d = today.getDate();
+        const liveTodayCount = Array.isArray(liveData)
+          ? liveData.filter((item) => {
+              const created = new Date(item?.createdAt || item?.created_at || 0);
+              return !Number.isNaN(created.getTime())
+                && created.getFullYear() === y
+                && created.getMonth() === m
+                && created.getDate() === d;
+            }).length
+          : 0;
+
+        setPanelStats({ repertoireCount, liveTodayCount });
+        applyCalendarData(calendarData);
+        setKorgPaItems(plan === 'PREMIUM_VENUE' && korgResult.ok && Array.isArray(korgResult.data?.items) ? korgResult.data.items : []);
+      } catch {
+        if (cancelled) {
+          return;
+        }
+        setPanelStats({ repertoireCount: 0, liveTodayCount: 0 });
+        setKorgPaItems([]);
+        setBusyDates([]);
+        setManualBusyKeys([]);
+        setBusyDateRecords([]);
+      }
+    };
+
+    loadPanelExtras();
+    return () => {
+      cancelled = true;
+    };
+  }, [viewer?.musicianProfileId, viewer?.plan, applyCalendarData]);
 
   const calendarToggleRequest = useCallback(async (date, reason) => {
     const ownerId = viewer?.musicianProfileId;
@@ -486,13 +471,13 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
       href: '/bands/midi',
       icon: Headphones,
     },
-    ...(isPremiumVenue && korgPaDriveUrl
+    ...(isPremiumVenue && korgPaItems.length
       ? [{
           title: 'Korg PA setovi',
-          description: 'Download setova i sound paketa za Korg klavijature.',
-          href: korgPaDriveUrl,
+          description: 'Otvori listu dostupnih setova i sound paketa za download.',
+          onClick: () => setShowKorgDownloads((prev) => !prev),
           icon: Download,
-          external: true,
+          downloadList: true,
         }]
       : []),
   ];
@@ -1378,6 +1363,38 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
                       </button>
                     );
                   })}
+                {showKorgDownloads && korgPaItems.length ? (
+                  <div
+                    className="panel-korg-downloads"
+                    style={{
+                      marginTop: '1rem',
+                      display: 'grid',
+                      gap: '0.75rem',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(min(220px, 100%), 1fr))',
+                    }}
+                  >
+                    {korgPaItems.map((item) => (
+                      <a
+                        key={item.id || item.url}
+                        href={item.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="panel-link"
+                      >
+                        <div className="panel-card">
+                          <div className="panel-icon">
+                            <Download size={20} />
+                          </div>
+                          <div>
+                            <h3>{item.name}</h3>
+                            <p>Klikni za download fajla ili seta.</p>
+                          </div>
+                          <span className="panel-cta">Preuzmi</span>
+                        </div>
+                      </a>
+                    ))}
+                  </div>
+                ) : null}
                 </div>
               </div>
             </section>
@@ -1650,6 +1667,14 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
         @media (min-width: 641px) and (max-width: 900px) {
           .panel-grid {
             grid-template-columns: repeat(2, 1fr);
+          }
+        }
+        .panel-korg-downloads {
+          grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        }
+        @media (max-width: 900px) {
+          .panel-korg-downloads {
+            grid-template-columns: 1fr !important;
           }
         }
         .panel-link {

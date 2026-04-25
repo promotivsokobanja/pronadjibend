@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Info } from 'lucide-react';
 import { cellCalendarKey, dateToCalendarKeyUTC } from '../lib/calendarDate';
 
@@ -38,9 +38,8 @@ export default function BookingCalendar({
   basePrice = 500,
 }) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [days, setDays] = useState([]);
 
-  const generateDays = useCallback(() => {
+  const days = useMemo(() => {
     const bandMode = manualBusyDateKeys !== undefined;
     const normalizedManual = bandMode
       ? (Array.isArray(manualBusyDateKeys) ? manualBusyDateKeys : []).map((k) => normalizeBusyKey(k))
@@ -92,12 +91,8 @@ export default function BookingCalendar({
       });
     }
 
-    setDays(daysArr);
+    return daysArr;
   }, [currentMonth, busyDates, selectedDate, selectedDates, multiSelect, manualBusyDateKeys]);
-
-  useEffect(() => {
-    generateDays();
-  }, [generateDays]);
 
   const nextMonth = () => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
   const prevMonth = () => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1));
