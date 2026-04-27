@@ -7,14 +7,13 @@
   z-index: 1000;
   width: 100%;
   max-width: 100%;
-  /* Bez overflow-x: hidden — sa visible-y spec često postavlja overflow-y: auto → dodatni skrol. Širinu drže deca (min-width: 0). */
   box-sizing: border-box;
-  background: #f3f4f6 !important;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  border-bottom: 1px solid rgba(15, 23, 42, 0.12);
+  background: linear-gradient(120deg, rgba(8, 8, 18, 0.92), rgba(3, 3, 8, 0.75)) !important;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   padding: max(0.75rem, env(safe-area-inset-top, 0px)) 0 0.85rem;
-  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
 }
 
 .navbar .nav-content {
@@ -43,11 +42,12 @@
   height: 44px;
   border-radius: 12px;
   overflow: hidden;
-  background: #f1f5f9;
+  background: radial-gradient(circle at 30% 30%, rgba(205, 166, 103, 0.35), rgba(12, 12, 24, 0.9));
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
 }
 
 .navbar .logo-img {
@@ -61,13 +61,13 @@
   font-family: var(--font-heading);
   font-weight: 900;
   font-size: 1.45rem;
-  color: #0f172a !important;
+  color: var(--text) !important;
   letter-spacing: -0.04em;
   text-decoration: none !important;
 }
 
 .navbar .accent {
-  color: #8b5cf6 !important;
+  color: var(--accent-secondary) !important;
 }
 
 .navbar .nav-links {
@@ -77,22 +77,22 @@
 }
 
 .navbar .nav-link {
-  font-weight: 800;
-  color: #0f172a !important;
-  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-muted) !important;
+  font-size: 0.9rem;
   text-decoration: none;
-  transition: all 0.2s;
-  letter-spacing: 0.05em;
+  transition: all 0.25s ease;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 
 .navbar .nav-link:hover {
-  color: #8b5cf6 !important;
+  color: var(--accent-primary) !important;
   transform: translateY(-2px);
 }
 
 .navbar .nav-link.active {
-  color: #8b5cf6 !important;
+  color: var(--accent-primary) !important;
   position: relative;
 }
 
@@ -105,30 +105,27 @@
   margin: 0 auto;
   width: 100%;
   height: 2px;
-  background: #8b5cf6;
+  background: linear-gradient(90deg, var(--accent-secondary), var(--accent-ambient));
   border-radius: 2px;
 }
 
 .navbar .btn-prijava {
   font-weight: 800;
-  color: #ffffff !important;
-  font-size: 0.9rem;
-  text-decoration: none;
-  transition: all 0.2s;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  background: #8b5cf6 !important;
-  padding: 0.65rem 1rem;
+  color: #05050a !important;
+  font-size: 0.85rem;
+  background: var(--accent-primary) !important;
+  padding: 0.7rem 1.25rem;
   border-radius: 999px;
   border: none;
   cursor: pointer;
   font-family: inherit;
+  letter-spacing: 0.12em;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.35);
 }
 
 .navbar .btn-prijava:hover {
-  color: #ffffff !important;
   transform: translateY(-1px);
-  opacity: 0.92;
+  filter: brightness(1.05);
 }
 
 .navbar .desktop-only {
@@ -137,16 +134,16 @@
 
 .navbar .mobile-toggle {
   display: none;
-  background: none;
-  border: none;
-  color: #0f172a !important;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text) !important;
   cursor: pointer;
   min-width: 44px;
   min-height: 44px;
   align-items: center;
   justify-content: center;
   padding: 0.25rem;
-  border-radius: 10px;
+  border-radius: 14px;
 }
 
 .navbar .mobile-menu {
@@ -161,7 +158,7 @@
   justify-content: flex-start;
   gap: 2rem;
   padding: max(5rem, calc(env(safe-area-inset-top, 0px) + 4rem)) 1.5rem max(2rem, env(safe-area-inset-bottom, 0px));
-  background: #ffffff;
+  background: rgba(5, 5, 12, 0.98);
   z-index: 10000;
   width: 100%;
   max-width: 100%;
@@ -169,21 +166,22 @@
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   box-sizing: border-box;
+  backdrop-filter: blur(8px);
 }
 
 .navbar .mobile-menu a {
-  font-weight: 900;
-  color: #0f172a !important;
-  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--text) !important;
+  font-size: 1.4rem;
   text-decoration: none !important;
   text-transform: uppercase;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.1em;
 }
 
 .navbar .btn-prijava-mobile {
-  font-weight: 900;
-  color: #8b5cf6 !important;
-  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--accent-primary) !important;
+  font-size: 1.4rem;
   text-decoration: none !important;
   text-transform: uppercase;
   background: none;

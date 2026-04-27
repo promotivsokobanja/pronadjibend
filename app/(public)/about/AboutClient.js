@@ -101,9 +101,24 @@ export default function AboutClient() {
       </section>
 
       <style jsx>{`
-        .about-container { padding-top: 10rem; padding-bottom: 8rem; min-height: 100vh; }
+        .about-container {
+          padding-top: 10rem;
+          padding-bottom: 8rem;
+          min-height: 100vh;
+          position: relative;
+          color: var(--text);
+        }
+        .about-container::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: radial-gradient(circle at 20% 20%, rgba(205, 166, 103, 0.12), transparent 55%),
+            radial-gradient(circle at 80% 10%, rgba(77, 93, 232, 0.15), transparent 45%);
+          pointer-events: none;
+          z-index: -1;
+        }
         .about-hero { text-align: center; margin-bottom: 6rem; }
-        .about-hero h1 { font-size: 4.5rem; font-weight: 800; margin-bottom: 1.5rem; letter-spacing: -2px; }
+        .about-hero h1 { font-size: 4.2rem; font-weight: 800; margin-bottom: 1.25rem; letter-spacing: -2px; }
         .hero-subtitle { font-size: 1.25rem; color: var(--text-muted); max-width: 600px; margin: 0 auto; }
 
         .about-showcase {
@@ -117,8 +132,9 @@ export default function AboutClient() {
         .showcase-media {
           padding: 0;
           overflow: hidden;
-          border: 1px solid var(--border);
+          border: 1px solid rgba(255, 255, 255, 0.08);
           min-height: 340px;
+          background: rgba(10, 10, 22, 0.85);
         }
         .showcase-image {
           width: 100%;
@@ -127,11 +143,13 @@ export default function AboutClient() {
           display: block;
         }
         .showcase-copy {
-          border: 1px solid var(--border);
+          border: 1px solid rgba(255, 255, 255, 0.08);
           padding: 2.25rem;
           display: flex;
           flex-direction: column;
           justify-content: center;
+          background: rgba(8, 8, 18, 0.92);
+          box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
         }
         .showcase-copy h2 {
           font-size: 1.65rem;
@@ -145,21 +163,20 @@ export default function AboutClient() {
         }
         
         .vision-section { max-width: 900px; margin: 0 auto 6rem; }
-        .vision-card { padding: 4rem; text-align: center; border: 1px solid var(--border); }
+        .vision-card { padding: 4rem; text-align: center; border: 1px solid rgba(255, 255, 255, 0.08); background: rgba(9, 9, 20, 0.92); box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45); }
         .vision-card h2 { font-size: 2.5rem; margin-bottom: 1.5rem; }
         .vision-card p { font-size: 1.15rem; line-height: 1.8; color: var(--text-muted); margin-bottom: 3rem; }
         
-        .stats-row { display: flex; justify-content: center; gap: 4rem; padding-top: 3rem; border-top: 1px solid var(--border); }
+        .stats-row { display: flex; justify-content: center; gap: 4rem; padding-top: 3rem; border-top: 1px solid rgba(255, 255, 255, 0.08); }
         .stat-item { display: flex; flex-direction: column; align-items: center; }
         .stat-num {
           font-size: 3rem;
           font-weight: 950;
-          color: #0f172a;
-          text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
+          color: var(--accent-primary);
         }
         .stat-label {
           font-size: 0.75rem;
-          color: #475569;
+          color: var(--text-muted);
           text-transform: uppercase;
           font-weight: 800;
           letter-spacing: 2px;
@@ -167,11 +184,11 @@ export default function AboutClient() {
         
         .values-section { max-width: 1100px; margin: 0 auto; }
         .values-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; }
-        .value-card { padding: 3rem; border: 1px solid var(--border); transition: 0.3s ease; }
+        .value-card { padding: 3rem; border: 1px solid rgba(255, 255, 255, 0.08); background: rgba(8, 8, 18, 0.9); transition: 0.3s ease; }
         .value-card:hover { border-color: rgba(255,255,255,0.2); transform: translateY(-5px); }
-        .icon-box { background: rgba(16, 185, 129, 0.1); width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 2rem; }
+        .icon-box { background: rgba(205, 166, 103, 0.08); width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 2rem; }
         .value-card h3 { font-size: 1.5rem; margin-bottom: 1rem; }
-        .value-card p { font-size: 0.95rem; line-height: 1.6; }
+        .value-card p { font-size: 0.95rem; line-height: 1.6; color: var(--text-muted); }
 
         .about-gallery {
           max-width: 1100px;
@@ -182,8 +199,10 @@ export default function AboutClient() {
         }
         .gallery-card {
           overflow: hidden;
-          border: 1px solid var(--border);
+          border: 1px solid rgba(255, 255, 255, 0.08);
           padding: 0;
+          background: rgba(9, 9, 20, 0.92);
+          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
         }
         .gallery-card img {
           width: 100%;

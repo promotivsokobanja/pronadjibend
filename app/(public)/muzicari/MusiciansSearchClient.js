@@ -238,7 +238,8 @@ export default function MusiciansSearchClient() {
       <style jsx>{`
         .musician-search-page {
           min-height: 100vh;
-          background: #f8fafc;
+          background: radial-gradient(circle at top, rgba(77, 93, 232, 0.18), transparent 55%),
+            #030308;
           padding-bottom: 4rem;
         }
         .musician-search-main {
@@ -247,69 +248,72 @@ export default function MusiciansSearchClient() {
         }
         .search-hero-card {
           margin-bottom: 1.1rem;
-          border: 1px solid #e2e8f0;
-          background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
-          border-radius: 20px;
-          padding: 1rem;
-          box-shadow: 0 6px 24px rgba(15, 23, 42, 0.04);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: rgba(10, 10, 22, 0.85);
+          border-radius: 26px;
+          padding: 1.5rem;
+          box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
           display: flex;
           flex-direction: column;
           gap: 1rem;
         }
         .search-title {
           margin: 0;
-          font-size: clamp(1.8rem, 4vw, 2.6rem);
+          font-size: clamp(1.9rem, 4vw, 2.8rem);
           font-weight: 900;
           line-height: 1.1;
           letter-spacing: -0.03em;
-          color: #0f172a;
+          color: var(--text);
+        }
+        .search-title span {
+          color: var(--accent-secondary);
         }
         .search-subtitle {
           margin: 0.45rem 0 0;
-          color: #64748b;
-          font-size: 0.92rem;
+          color: var(--text-muted);
+          font-size: 1rem;
           line-height: 1.55;
         }
         .results-pill {
           display: inline-flex;
           align-items: center;
           border-radius: 999px;
-          border: 1px solid #dbe4ef;
-          background: #fff;
-          color: #334155;
-          padding: 0.35rem 0.7rem;
-          font-size: 0.75rem;
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          background: rgba(255, 255, 255, 0.06);
+          color: var(--text);
+          padding: 0.45rem 0.85rem;
+          font-size: 0.78rem;
           font-weight: 700;
         }
         .filters-grid {
           display: grid;
           grid-template-columns: repeat(6, minmax(0, 1fr));
-          gap: 0.55rem;
+          gap: 0.65rem;
         }
         .filter-input,
         .filter-select-wrap {
-          min-height: 44px;
-          border-radius: 12px;
-          border: 1px solid #dbe4ef;
-          background: #fff;
-          color: #0f172a;
-          font-size: 0.86rem;
+          min-height: 48px;
+          border-radius: 16px;
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: rgba(255, 255, 255, 0.04);
+          color: var(--text);
+          font-size: 0.9rem;
           font-weight: 600;
         }
         .filter-input {
-          padding: 0 0.7rem;
+          padding: 0 0.9rem;
           outline: none;
         }
         .filter-input:focus {
-          border-color: #007aff;
-          box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.12);
+          border-color: var(--accent-secondary);
+          box-shadow: 0 0 0 1px rgba(205, 166, 103, 0.35);
         }
         .filter-select-wrap {
           display: inline-flex;
           align-items: center;
           gap: 0.45rem;
-          padding: 0 0.7rem;
-          color: #334155;
+          padding: 0 0.85rem;
+          color: var(--text-muted);
         }
         .filter-select {
           width: 100%;
@@ -317,20 +321,24 @@ export default function MusiciansSearchClient() {
           outline: none;
           background: transparent;
           font-weight: 700;
-          color: inherit;
+          color: var(--text);
           font-size: 0.84rem;
         }
+        .filter-select option {
+          color: #050505;
+          background: #f3f4f6;
+        }
         .results-grid {
-          margin-top: 0.8rem;
+          margin-top: 1.4rem;
           display: grid;
           grid-template-columns: repeat(3, minmax(0, 1fr));
-          gap: 1rem;
+          gap: 1.25rem;
         }
         .skeleton-card {
-          height: 285px;
-          border-radius: 18px;
-          border: 1px solid #e2e8f0;
-          background: #f1f5f9;
+          height: 300px;
+          border-radius: 22px;
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: rgba(255, 255, 255, 0.03);
           animation: pulse 1.4s ease-in-out infinite;
         }
         @keyframes pulse {
@@ -343,27 +351,20 @@ export default function MusiciansSearchClient() {
           }
         }
         .result-card {
-          border-radius: 20px;
-          border: 1px solid #e2e8f0;
-          background: #fff;
-          padding: 0.9rem;
-          box-shadow: 0 6px 24px rgba(15, 23, 42, 0.04);
+          border-radius: 24px;
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: rgba(9, 9, 20, 0.9);
+          padding: 1rem;
+          box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
           transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
         .result-card:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 12px 32px rgba(139, 92, 246, 0.13), 0 4px 12px rgba(15, 23, 42, 0.06);
+          transform: translateY(-3px);
+          box-shadow: 0 26px 60px rgba(0, 0, 0, 0.55);
         }
         .result-image-wrap {
-          border-radius: 14px;
-          background: #e2e8f0;
-        }
-        .result-image-wrap img {
-          transition: transform 0.35s ease, filter 0.35s ease;
-        }
-        .result-card:hover .result-image-wrap img {
-          transform: scale(1.04);
-          filter: brightness(1.05);
+          border-radius: 16px;
+          background: #141427;
         }
         .result-image-fallback {
           display: flex;
@@ -371,20 +372,20 @@ export default function MusiciansSearchClient() {
           justify-content: center;
           width: 100%;
           height: 100%;
-          color: #94a3b8;
+          color: var(--text-muted);
         }
         .result-name {
           margin: 0;
-          font-size: 1.08rem;
+          font-size: 1.1rem;
           font-weight: 900;
-          color: #0f172a;
+          color: var(--text);
           line-height: 1.2;
         }
         .result-instrument {
           margin: 0.35rem 0 0;
-          font-size: 0.84rem;
+          font-size: 0.9rem;
           font-weight: 800;
-          color: #007aff;
+          color: var(--accent-secondary);
         }
         .result-meta {
           margin: 0.25rem 0 0;
@@ -392,12 +393,12 @@ export default function MusiciansSearchClient() {
           align-items: center;
           gap: 0.3rem;
           font-size: 0.82rem;
-          color: #64748b;
+          color: var(--text-muted);
           font-weight: 600;
         }
         .result-bio {
           margin: 0.5rem 0 0;
-          color: #475569;
+          color: var(--text-muted);
           font-size: 0.86rem;
           line-height: 1.5;
           display: -webkit-box;
@@ -406,28 +407,27 @@ export default function MusiciansSearchClient() {
           overflow: hidden;
         }
         .result-rating {
-          font-size: 0.74rem;
-          font-weight: 700;
-          color: #64748b;
+          font-size: 0.9rem;
+          font-weight: 800;
+          color: var(--accent-primary);
         }
         .result-price {
-          font-size: 0.88rem;
-          font-weight: 900;
-          color: #0f172a;
+          font-weight: 800;
+          color: var(--text);
         }
         .empty-state {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          border-radius: 22px;
-          border: 2px dashed #cbd5e1;
-          background: #f8fafc;
-          padding: 4.2rem 1.25rem;
+          margin-top: 1.5rem;
+          border-radius: 24px;
+          border: 1px dashed rgba(255, 255, 255, 0.2);
+          background: rgba(8, 8, 18, 0.8);
+          padding: 2.5rem;
           text-align: center;
+          color: var(--text);
         }
-
-        @media (max-width: 1260px) {
+        .empty-state p {
+          color: var(--text-muted);
+        }
+        @media (max-width: 992px) {
           .filters-grid {
             grid-template-columns: repeat(3, minmax(0, 1fr));
           }
@@ -435,21 +435,18 @@ export default function MusiciansSearchClient() {
             grid-template-columns: repeat(2, minmax(0, 1fr));
           }
         }
-
-        @media (max-width: 740px) {
+        @media (max-width: 640px) {
           .musician-search-main {
-            padding-top: 7.2rem;
+            padding-top: 7rem;
           }
-          .filters-grid,
+          .filters-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
           .results-grid {
-            grid-template-columns: 1fr;
+            grid-template-columns: minmax(0, 1fr);
           }
           .search-hero-card {
-            border-radius: 16px;
-            padding: 0.9rem;
-          }
-          .search-title {
-            font-size: 1.65rem;
+            padding: 1.25rem;
           }
         }
       `}</style>

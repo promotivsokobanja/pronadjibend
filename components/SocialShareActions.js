@@ -108,10 +108,10 @@ export default function SocialShareActions({
           gap: 0.4rem;
         }
         .share-btn {
-          border: 1px solid #dbe4ef;
+          border: 1px solid rgba(255, 255, 255, 0.1);
           border-radius: 999px;
-          background: #fff;
-          color: #334155;
+          background: rgba(255, 255, 255, 0.06);
+          color: rgba(226, 232, 240, 0.75);
           height: 34px;
           min-width: 34px;
           padding: 0 0.72rem;
@@ -126,14 +126,15 @@ export default function SocialShareActions({
           transition: border-color 0.2s ease, background 0.2s ease, transform 0.16s ease;
         }
         .share-btn:hover {
-          border-color: #93c5fd;
-          background: #eff6ff;
+          border-color: rgba(139, 92, 246, 0.4);
+          background: rgba(139, 92, 246, 0.12);
+          color: #c4b5fd;
           transform: translateY(-1px);
         }
         .share-btn.primary {
-          border-color: #bfdbfe;
-          background: #eff6ff;
-          color: #1d4ed8;
+          border-color: rgba(139, 92, 246, 0.35);
+          background: rgba(139, 92, 246, 0.12);
+          color: #c4b5fd;
         }
         .compact .share-btn {
           padding: 0;

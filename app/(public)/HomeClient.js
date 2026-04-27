@@ -188,15 +188,18 @@ export default function HomeClient() {
                 <p className="price-info">{band.priceRange || 'Dogovor'}</p>
                 <div className="card-actions">
                   <Link
-                    href={`/clients/band/${band.id}`}
+                    href={`/clients/band/${band.id}#repertoire`}
                     className="btn btn-secondary btn-sm"
                     title={`Pogledaj profil benda ${band.name}`}
                   >
                     Profil i repertoar
                   </Link>
-                  <button type="button" className="btn btn-primary btn-sm" onClick={() => handleBook(band)}>
+                  <Link
+                    href={`/clients/band/${band.id}#booking`}
+                    className="btn btn-primary btn-sm"
+                  >
                     Zakaži nastup
-                  </button>
+                  </Link>
                 </div>
                 <div className="card-share-row" onClick={(e) => e.stopPropagation()}>
                   <SocialShareActions

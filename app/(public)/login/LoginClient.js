@@ -154,10 +154,10 @@ export default function LoginClient() {
 
   return (
     <div className="login-container">
-      <div className="blob" style={{ bottom: '-10%', right: '-10%' }}></div>
-      <div className="blob-2" style={{ top: '-10%', left: '-10%' }}></div>
+      <div className="login-backdrop" aria-hidden />
+      <div className="login-overlay" aria-hidden />
 
-      <div className="login-box glass-card">
+      <div className="login-box">
         <div className="header-toggle">
           <button type="button" className={isLogin ? 'active' : ''} onClick={() => setIsLogin(true)}>Prijava</button>
           <button type="button" className={!isLogin ? 'active' : ''} onClick={() => setIsLogin(false)}>Registracija</button>
@@ -169,9 +169,9 @@ export default function LoginClient() {
               src="/images/logo.png"
               alt="Logo"
               className="login-logo"
-              width={132}
-              height={132}
-              sizes="132px"
+              width={120}
+              height={120}
+              sizes="120px"
               priority
               quality={70}
             />
@@ -449,10 +449,23 @@ export default function LoginClient() {
           display: flex;
           align-items: flex-start;
           justify-content: center;
-          padding: calc(var(--navbar-height, 4.75rem) + 1.5rem) 1rem 2rem;
+          padding: calc(var(--navbar-height, 4.75rem) + 1.5rem) 1.5rem 2.5rem;
           position: relative;
           overflow: hidden;
-          background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+          background: #030308;
+          isolation: isolate;
+        }
+        .login-backdrop {
+          position: absolute;
+          inset: 0;
+          background: url('https://images.unsplash.com/photo-1516280440614-37939bbacd81?auto=format&fit=crop&w=1600&q=80') center/cover no-repeat;
+          opacity: 0.5;
+          filter: grayscale(20%);
+        }
+        .login-overlay {
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(120deg, rgba(3,3,8,0.95), rgba(7,7,18,0.6));
         }
         @media (min-height: 820px) {
           .login-container { align-items: center; }
@@ -460,15 +473,17 @@ export default function LoginClient() {
         .login-box {
           width: 100%;
           max-width: 480px;
-          padding: 2.25rem;
-          border: 1px solid #e2e8f0;
-          border-radius: 24px;
-          background: rgba(255, 255, 255, 0.95);
-          box-shadow: 0 24px 60px rgba(15, 23, 42, 0.1);
+          padding: 2.75rem 2.5rem;
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 28px;
+          background: rgba(8, 8, 18, 0.9);
+          box-shadow: 0 40px 80px rgba(0, 0, 0, 0.55);
+          position: relative;
+          z-index: 1;
         }
 
         .public-poster-hint {
-          margin: 1rem 0 0;
+          margin: 1.5rem 0 0;
           text-align: center;
           display: flex;
           flex-direction: column;
@@ -481,7 +496,7 @@ export default function LoginClient() {
           gap: 0.4rem;
           font-size: 0.84rem;
           font-weight: 700;
-          color: #0d9488;
+          color: var(--accent-secondary);
           text-decoration: none;
         }
         .public-poster-link:hover {
@@ -489,27 +504,28 @@ export default function LoginClient() {
         }
         .public-poster-desc {
           font-size: 0.75rem;
-          color: #64748b;
+          color: var(--text-muted);
           line-height: 1.4;
           max-width: 22rem;
         }
         
-        .login-logo-container { display: flex; justify-content: center; margin-bottom: 2rem; }
-        .login-logo { width: 132px; height: auto; filter: drop-shadow(0 10px 18px rgba(0, 122, 255, 0.2)); }
+        .login-logo-container { display: flex; justify-content: center; margin-bottom: 1.25rem; }
+        .login-logo { width: 120px; height: auto; filter: drop-shadow(0 20px 30px rgba(0, 0, 0, 0.45)); }
         
         .header-toggle {
           display: grid;
           grid-template-columns: 1fr 1fr;
           gap: 0.5rem;
-          background: #f1f5f9;
+          background: rgba(255, 255, 255, 0.04);
           border-radius: 999px;
           padding: 0.35rem;
           margin-bottom: 1.6rem;
+          border: 1px solid rgba(255, 255, 255, 0.1);
         }
         .header-toggle button {
           border: none;
           background: transparent;
-          color: #475569;
+          color: var(--text-muted);
           padding: 0.65rem 0.9rem;
           border-radius: 999px;
           font-weight: 800;
@@ -520,27 +536,27 @@ export default function LoginClient() {
           letter-spacing: 0.06em;
         }
         .header-toggle button.active {
-          color: #0f172a;
-          background: #ffffff;
-          box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
+          color: #050505;
+          background: var(--accent-primary);
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
         }
         
-        .title { font-size: 2rem; margin-bottom: 0.4rem; font-weight: 900; letter-spacing: -0.02em; color: #0f172a; text-align: center; }
-        .subtitle { color: #64748b; margin-bottom: 1.5rem; font-size: 0.9rem; text-align: center; }
+        .title { font-size: 2.45rem; margin-bottom: 0.4rem; font-weight: 900; letter-spacing: -0.02em; color: var(--text); text-align: center; }
+        .subtitle { color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.92rem; text-align: center; }
         
-        .error-alert { background: #fef2f2; color: #dc2626; padding: 0.85rem 1rem; border-radius: 10px; font-size: 0.84rem; font-weight: 600; margin-bottom: 1rem; border: 1px solid #fecaca; }
-        .success-alert { background: #ecfdf5; color: #047857; padding: 0.85rem 1rem; border-radius: 10px; font-size: 0.84rem; font-weight: 600; margin-bottom: 1rem; border: 1px solid #a7f3d0; }
-        .plan-alert { background: #eff6ff; color: #1d4ed8; padding: 0.85rem 1rem; border-radius: 10px; font-size: 0.84rem; font-weight: 600; margin-bottom: 1rem; border: 1px solid #bfdbfe; line-height: 1.5; }
+        .error-alert { background: rgba(239, 68, 68, 0.15); color: #fecaca; padding: 0.85rem 1rem; border-radius: 12px; font-size: 0.84rem; font-weight: 600; margin-bottom: 1rem; border: 1px solid rgba(239, 68, 68, 0.4); }
+        .success-alert { background: rgba(16, 185, 129, 0.15); color: #bbf7d0; padding: 0.85rem 1rem; border-radius: 12px; font-size: 0.84rem; font-weight: 600; margin-bottom: 1rem; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .plan-alert { background: rgba(77, 93, 232, 0.15); color: var(--accent-primary); padding: 0.85rem 1rem; border-radius: 12px; font-size: 0.84rem; font-weight: 600; margin-bottom: 1rem; border: 1px solid rgba(77, 93, 232, 0.35); line-height: 1.5; }
 
         .role-selector { margin-bottom: 1rem; }
-        .role-selector p { font-size: 0.8rem; font-weight: 700; color: #555; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 1px; text-align: center; }
+        .role-selector p { font-size: 0.8rem; font-weight: 700; color: var(--text-muted); margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 1px; text-align: center; }
         .role-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; }
-        .role-card { background: #ffffff; border: 1px solid #e2e8f0; padding: 0.9rem 0.6rem; border-radius: 12px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 0.55rem; transition: 0.2s ease; min-height: 88px; }
+        .role-card { background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); padding: 0.9rem 0.6rem; border-radius: 16px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 0.55rem; transition: 0.2s ease; min-height: 88px; color: var(--text); }
         .role-card span { text-align: center; line-height: 1.2; }
-        .role-card span { font-size: 0.82rem; font-weight: 700; color: #64748b; }
-        .role-card.active { border-color: #007aff; background: #eff6ff; }
-        .role-card.active span { color: #0f172a; }
-        .role-card.active :global(svg) { color: #007aff; }
+        .role-card span { font-size: 0.82rem; font-weight: 700; color: var(--text-muted); }
+        .role-card.active { border-color: var(--accent-secondary); background: rgba(205, 166, 103, 0.12); }
+        .role-card.active span { color: var(--text); }
+        .role-card.active :global(svg) { color: var(--accent-secondary); }
 
         .musician-extra-fields {
           display: flex;
@@ -635,10 +651,18 @@ export default function LoginClient() {
           background: transparent;
         }
 
-        .input-group { position: relative; display: flex; align-items: center; gap: 0.85rem; padding: 0.75rem 1rem; background: #ffffff; border: 1px solid #dbe1ea; border-radius: 12px; margin-bottom: 0.9rem; transition: 0.2s ease; }
-        .input-group:focus-within { border-color: #007aff; box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.12); }
-        .input-group input { background: none; border: none; color: #0f172a; width: 100%; outline: none; font-size: 0.95rem; font-weight: 500; }
-        .input-group :global(svg) { color: #94a3b8; }
+        .input-group { position: relative; display: flex; align-items: center; gap: 0.85rem; padding: 0.85rem 1.1rem; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 14px; margin-bottom: 0.9rem; transition: 0.2s ease; color: var(--text); }
+        .input-group:focus-within { border-color: var(--accent-secondary); box-shadow: 0 0 0 1px rgba(205, 166, 103, 0.45); }
+        .input-group input { background: none; border: none; color: var(--text); width: 100%; outline: none; font-size: 0.95rem; font-weight: 500; }
+        .input-group input:-webkit-autofill,
+        .input-group input:-webkit-autofill:hover,
+        .input-group input:-webkit-autofill:focus {
+          -webkit-box-shadow: 0 0 0 1000px rgba(8, 8, 18, 1) inset !important;
+          -webkit-text-fill-color: #f8fafc !important;
+          caret-color: #f8fafc;
+          transition: background-color 5000s ease-in-out 0s;
+        }
+        .input-group :global(svg) { color: var(--text-muted); }
         .password-toggle {
           border: none;
           background: transparent;
@@ -667,40 +691,40 @@ export default function LoginClient() {
           letter-spacing: 0.01em;
         }
         
-        .divider { margin: 1.4rem 0; text-align: center; color: #94a3b8; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 2px; position: relative; }
-        .divider:before, .divider:after { content: ''; position: absolute; height: 1px; width: 40%; background: #e2e8f0; top: 50%; }
+        .divider { margin: 1.4rem 0; text-align: center; color: var(--text-muted); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 2px; position: relative; }
+        .divider:before, .divider:after { content: ''; position: absolute; height: 1px; width: 40%; background: rgba(255, 255, 255, 0.15); top: 50%; }
         .divider:before { left: 0; }
         .divider:after { right: 0; }
         
         .social-login { display: grid; grid-template-columns: 1fr; gap: 1rem; }
         .social-btn { height: 44px; font-size: 0.85rem; font-weight: 700; }
         .google-btn {
-          border: 1px solid #dbe1ea;
-          color: #0f172a;
-          background: #ffffff;
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          color: var(--text);
+          background: rgba(255, 255, 255, 0.04);
           border-radius: 999px;
           letter-spacing: 0.04em;
           text-transform: uppercase;
-          box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
         }
         .google-btn:hover {
-          border-color: #007aff;
-          color: #007aff;
+          border-color: var(--accent-secondary);
+          color: var(--accent-secondary);
           transform: translateY(-1px);
         }
         .auth-submit-btn {
-          border: 1px solid #005fcc;
-          background: linear-gradient(135deg, #007aff 0%, #0a84ff 45%, #38bdf8 100%);
-          color: #ffffff;
+          border: none;
+          background: linear-gradient(120deg, var(--accent-primary), var(--accent-secondary));
+          color: #050505;
           border-radius: 999px;
           font-weight: 800;
           letter-spacing: 0.02em;
-          box-shadow: 0 10px 24px rgba(0, 122, 255, 0.35);
+          box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
         }
         .auth-submit-btn:hover:not(:disabled) {
           transform: translateY(-1px);
-          box-shadow: 0 14px 28px rgba(0, 122, 255, 0.45);
-          filter: saturate(1.05);
+          box-shadow: 0 22px 44px rgba(0, 0, 0, 0.6);
+          filter: brightness(1.05);
         }
         .auth-submit-btn:disabled {
           opacity: 0.7;
@@ -715,13 +739,13 @@ export default function LoginClient() {
         /* Tablet */
         @media (max-width: 768px) {
           .login-container { padding: calc(var(--navbar-height, 4.75rem) + 1.25rem) 1rem 2rem; }
-          .login-box { max-width: 460px; margin: 0 auto; }
+          .login-box { max-width: 460px; margin: 0 auto; padding: 2rem 1.75rem; }
         }
 
         /* Mobile */
         @media (max-width: 640px) {
           .login-container { padding: calc(var(--navbar-height, 4rem) + 1rem) 0.75rem 1.5rem; }
-          .login-box { padding: 1.4rem 1rem; border-radius: 18px; max-width: 100%; margin: 0 auto; }
+          .login-box { padding: 1.6rem 1.25rem; border-radius: 22px; max-width: 100%; margin: 0 auto; }
           .login-logo { width: 116px; }
           .title { font-size: 1.65rem; }
           .header-toggle button { font-size: 0.8rem; padding: 0.8rem 0.5rem; }
@@ -737,7 +761,7 @@ export default function LoginClient() {
         /* Small mobile */
         @media (max-width: 480px) {
           .login-container { padding: calc(var(--navbar-height, 4rem) + 0.75rem) 0.5rem 1rem; }
-          .login-box { padding: 1.1rem 0.85rem; }
+          .login-box { padding: 1.2rem 0.95rem; }
           .title { font-size: 1.4rem; }
           .subtitle { margin-bottom: 1.2rem; font-size: 0.82rem; }
           .social-btn { height: 44px; }

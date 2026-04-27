@@ -134,14 +134,11 @@ export const viewport = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="sr" className={`${inter.variable} ${montserrat.variable} ${playfair.variable} ${poppins.variable} ${bebas.variable} ${raleway.variable} ${oswald.variable} ${robotoSlab.variable}`}>
-      <body
-        style={{
-          margin: 0,
-          backgroundColor: '#f0e8ff',
-          color: '#0f172a',
-        }}
-      >
+    <html
+      lang="sr"
+      className={`theme-dark ${inter.variable} ${montserrat.variable} ${playfair.variable} ${poppins.variable} ${bebas.variable} ${raleway.variable} ${oswald.variable} ${robotoSlab.variable}`}
+    >
+      <body style={{ margin: 0 }}>
         <StrictModeProvider>{children}</StrictModeProvider>
         <div id="notifications" />
       </body>

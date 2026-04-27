@@ -1,49 +1,51 @@
 /* Fontovi: next/font u app/layout.js (bez spoljnog @import — blokira ceo CSS ako fonts.googleapis.com ne odgovori) */
 @import "tailwindcss";
-@source "../app/**/*.{js,ts,jsx,tsx}";
-@source "../components/**/*.{js,ts,jsx,tsx}";
 
 @import "./navbar.css";
 @import "./footer.css";
 @import "./ui-shared.css";
 
 :root {
-  /* Visina fiksnog menija (panel pretrage koristi ovo za top) */
+  /* Layout metrics */
   --navbar-height: 4.75rem;
-  /* Dodatni vazduh ispod menija — samo za sadržaj stranice, meni se ne širi */
   --content-below-nav-gap: 2.5rem;
 
-  /* Premium Colors */
-  --accent-purple: #8b5cf6; 
-  --accent-primary: var(--accent-purple);
-  --accent-glow: rgba(139, 92, 246, 0.4);
-  
-  /* DEFAULT Theme: Clean Light */
-  --bg: #ffffff;
-  --bg-soft: #f8fafc;
-  --text: #0f172a;
-  --text-muted: #64748b;
-  --border: rgba(0, 0, 0, 0.08);
-  --glass: rgba(255, 255, 255, 0.9);
-  --glass-border: rgba(0, 0, 0, 0.05);
+  /* Premium Noir palette */
+  --bg: #030308;
+  --bg-soft: #070711;
+  --bg-elevated: #0d0d19;
+  --panel: #111124;
+  --text: #f5f5ff;
+  --text-muted: #9ea5c7;
+  --border: rgba(255, 255, 255, 0.08);
+  --glass: rgba(9, 9, 18, 0.75);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --accent-primary: #f3ede2;
+  --accent-secondary: #cda667;
+  --accent-ambient: #4d5de8;
+  --accent-faded: rgba(255, 255, 255, 0.08);
 
-  --radius-xl: 24px;
-  --radius-lg: 16px;
+  --radius-xl: 28px;
+  --radius-lg: 20px;
   --radius-md: 14px;
   --radius-sm: 10px;
   --transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-  --font-main: 'Inter', system-ui, sans-serif;
-  --font-heading: 'Montserrat', sans-serif;
+
+  --font-main: var(--font-body, 'Inter'), 'Space Grotesk', system-ui, sans-serif;
+  --font-heading: var(--font-heading, 'Montserrat'), 'Raleway', sans-serif;
+  --font-serif: var(--font-playfair, 'Playfair Display'), 'Cormorant Garamond', serif;
 }
 
 .theme-dark {
-  --bg: #050505;
-  --bg-soft: #0a0a0b;
-  --text: #ffffff;
-  --text-muted: #94a3b8;
-  --border: rgba(255, 255, 255, 0.06);
-  --glass: rgba(10, 10, 11, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.08);
+  --bg: #030308;
+  --bg-soft: #070711;
+  --bg-elevated: #0d0d19;
+  --panel: #111124;
+  --text: #f5f5ff;
+  --text-muted: #9ea5c7;
+  --border: rgba(255, 255, 255, 0.08);
+  --glass: rgba(9, 9, 18, 0.8);
+  --glass-border: rgba(255, 255, 255, 0.12);
 }
 
 * {
@@ -77,10 +79,13 @@ body {
   position: relative;
   min-height: 100dvh;
   background-color: var(--bg);
+  background-image: radial-gradient(circle at 20% 20%, rgba(205, 166, 103, 0.08), transparent 55%),
+    radial-gradient(circle at 80% 0%, rgba(77, 93, 232, 0.25), transparent 45%);
   color: var(--text);
   font-family: var(--font-main);
   line-height: 1.6;
   touch-action: manipulation;
+  letter-spacing: 0.01em;
 }
 
 /* Navbar styling is owned by `components/Navbar.js` */
@@ -90,12 +95,20 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.75rem 1.5rem;
-  border-radius: 100px;
+  padding: 0.85rem 1.65rem;
+  border-radius: 999px;
   font-weight: 700;
   cursor: pointer;
   transition: var(--transition);
   text-decoration: none;
+  border: 1px solid transparent;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.btn-sm {
+  padding: 0.45rem 0.9rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.03em;
 }
 
 .container {

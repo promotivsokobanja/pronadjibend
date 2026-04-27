@@ -13,6 +13,210 @@
   transform-style: preserve-3d;
 }
 
+.theme-dark .home-container {
+  background: radial-gradient(circle at top, rgba(77, 93, 232, 0.18), transparent 60%),
+    radial-gradient(circle at 20% 40%, rgba(205, 166, 103, 0.08), transparent 55%),
+    var(--bg);
+  padding-bottom: 8rem;
+}
+
+.theme-dark .hero {
+  text-align: left;
+  padding: 4rem 0 8rem;
+  background: linear-gradient(120deg, rgba(3, 3, 8, 0.9), rgba(6, 6, 16, 0.65)),
+    url('https://images.unsplash.com/photo-1507878866276-a947ef722fee?auto=format&fit=crop&w=1600&q=80') center/cover;
+  border-bottom: none;
+}
+
+.theme-dark .hero::before {
+  inset: 0;
+  background: linear-gradient(180deg, rgba(3, 3, 8, 0.9), rgba(5, 5, 11, 0.6));
+  animation: none;
+}
+
+.theme-dark .hero .container {
+  max-width: 1200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  text-align: center;
+}
+
+.theme-dark .hero-title {
+  color: var(--text);
+  font-size: clamp(2.2rem, 6vw, 4.6rem);
+}
+
+.theme-dark .hero-title em {
+  font-family: var(--font-serif);
+  font-style: italic;
+  color: var(--accent-secondary);
+}
+
+.theme-dark .hero-subtitle {
+  color: var(--text-muted);
+  max-width: 36rem;
+}
+
+.theme-dark .hero-tagline {
+  color: var(--accent-primary);
+  font-family: var(--font-serif);
+  font-weight: 500;
+}
+
+.theme-dark .hero-musician-links {
+  color: var(--text-muted);
+}
+
+.theme-dark .hero-musician-links a {
+  color: var(--accent-secondary);
+}
+
+.theme-dark .hotel-search {
+  background: rgba(8, 8, 18, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.45);
+}
+
+.theme-dark .search-field label {
+  color: var(--text-muted);
+}
+
+.theme-dark .search-field input,
+.theme-dark .search-field select {
+  color: var(--text);
+}
+
+.theme-dark .search-btn {
+  background: var(--accent-secondary);
+  color: #050505 !important;
+  border: none;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
+}
+
+.theme-dark .home-container .section-title h2 {
+  color: var(--text);
+}
+
+.theme-dark .home-container .section-title p {
+  color: var(--text-muted);
+}
+
+.theme-dark .featured-bands,
+.theme-dark .experience-gallery,
+.theme-dark .testimonials,
+.theme-dark .pricing,
+.theme-dark .home-blog-guide {
+  background: linear-gradient(180deg, rgba(6, 6, 16, 0.5), rgba(3, 3, 8, 0.9));
+}
+
+.theme-dark .band-card,
+.theme-dark .testimonial-grid .glass-card,
+.theme-dark .pricing-card,
+.theme-dark .home-blog-guide__article,
+.theme-dark .vodic-sekcija .glass-card,
+.theme-dark .footer .glass-card {
+  background: linear-gradient(150deg, rgba(13, 13, 25, 0.95), rgba(5, 5, 12, 0.95));
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.55);
+}
+
+.theme-dark .band-card::before,
+.theme-dark .testimonial-grid .glass-card::before,
+.theme-dark .pricing-card::before,
+.theme-dark .home-blog-guide__article::before {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(77, 93, 232, 0.45));
+}
+
+.theme-dark .band-card .band-header-row h3,
+.theme-dark .band-card .text-muted,
+.theme-dark .band-card .price-info,
+.theme-dark .testimonial-grid .quote,
+.theme-dark .testimonial-grid .author,
+.theme-dark .home-blog-guide__lede,
+.theme-dark .home-blog-guide__dek,
+.theme-dark .home-blog-guide__body p,
+.theme-dark .home-blog-guide__tag,
+.theme-dark .price-features li,
+.theme-dark .price,
+.theme-dark .pricing-card h3 {
+  color: var(--text);
+}
+
+.theme-dark .pa-badge {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--accent-secondary);
+}
+
+.theme-dark .rating-tag {
+  color: var(--accent-secondary);
+}
+
+.theme-dark .card-actions .btn.btn-secondary {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--text);
+}
+
+.theme-dark .card-actions .btn.btn-primary {
+  background: linear-gradient(120deg, var(--accent-secondary), var(--accent-ambient));
+  border: none;
+}
+
+.theme-dark .gallery-grid .img-wrap,
+.theme-dark .img-wrap {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.theme-dark .testimonial-grid .quote {
+  font-style: normal;
+  font-family: var(--font-serif);
+  color: var(--text);
+}
+
+.theme-dark .testimonial-grid .author {
+  color: var(--accent-secondary);
+}
+
+.theme-dark .pricing-card .badge {
+  background: linear-gradient(120deg, var(--accent-secondary), var(--accent-ambient));
+  color: #050505;
+}
+
+.theme-dark .home-blog-guide__eyebrow,
+.theme-dark .home-blog-guide__footnote {
+  color: var(--text-muted);
+}
+
+.theme-dark .home-blog-guide__pill,
+.theme-dark .home-blog-guide__tag {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.theme-dark .home-blog-guide__h2,
+.theme-dark .home-blog-guide__h3,
+.theme-dark .home-blog-guide__h4,
+.theme-dark .home-blog-guide__aside strong {
+  color: var(--text);
+}
+
+.theme-dark .home-blog-guide__aside {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.theme-dark .home-blog-guide__cta {
+  background: linear-gradient(120deg, var(--accent-secondary), var(--accent-ambient));
+  color: #050505;
+}
+
+.theme-dark .home-blog-guide__cta:hover {
+  filter: brightness(1.05);
+}
+
 /* Animated gradient orbs */
 .home-container::before {
   content: '';
@@ -242,6 +446,34 @@
   box-sizing: border-box;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   animation: search-float 6s ease-in-out infinite;
+}
+
+.hotel-search select,
+.hotel-search input,
+.hotel-search select:focus {
+  outline: none;
+}
+
+.hotel-search select {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.hotel-search select option {
+  color: #0f172a;
+  background: #ffffff;
+}
+
+.theme-dark .hotel-search select {
+  color: var(--text);
+}
+
+.theme-dark .hotel-search select option {
+  color: #050505;
+  background: #f3f4f6;
 }
 
 .hotel-search:hover {
@@ -511,6 +743,11 @@
   grid-template-columns: 1fr 1fr;
   gap: 0.75rem;
   margin-top: 1.5rem;
+}
+
+.card-actions .btn {
+  width: 100%;
+  justify-content: center;
 }
 
 @media (max-width: 640px) {

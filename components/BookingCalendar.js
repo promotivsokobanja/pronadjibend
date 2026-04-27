@@ -203,11 +203,11 @@ export default function BookingCalendar({
 
       <style jsx>{`
         .calendar-card { 
-          background: #ffffff; 
+          background: rgba(10, 10, 22, 0.85); 
           border-radius: 20px; 
           padding: 1.5rem;
-          box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
-          border: 1px solid #f1f5f9;
+          box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+          border: 1px solid rgba(255, 255, 255, 0.08);
           max-width: 350px;
         }
         
@@ -221,15 +221,15 @@ export default function BookingCalendar({
         .calendar-header h3 { 
           font-weight: 700; 
           font-size: 1rem; 
-          color: #1e293b;
+          color: #f8fafc;
           margin: 0;
         }
         
         .calendar-nav { display: flex; gap: 0.5rem; }
         .nav-btn { 
-          background: #f8fafc; 
-          border: none; 
-          color: #64748b; 
+          background: rgba(255, 255, 255, 0.06); 
+          border: 1px solid rgba(255, 255, 255, 0.1); 
+          color: rgba(226, 232, 240, 0.6); 
           width: 32px;
           height: 32px;
           display: flex;
@@ -239,7 +239,7 @@ export default function BookingCalendar({
           cursor: pointer; 
           transition: 0.2s; 
         }
-        .nav-btn:hover { background: #f1f5f9; color: #0f172a; }
+        .nav-btn:hover { background: rgba(255, 255, 255, 0.1); color: #f8fafc; }
 
         .calendar-grid { 
           display: grid; 
@@ -251,7 +251,7 @@ export default function BookingCalendar({
         .week-day { 
           font-size: 0.75rem; 
           font-weight: 600; 
-          color: #94a3b8; 
+          color: rgba(226, 232, 240, 0.4); 
           padding-bottom: 12px;
         }
         
@@ -265,40 +265,40 @@ export default function BookingCalendar({
           cursor: pointer; 
           border-radius: 12px;
           transition: 0.2s; 
-          color: #334155;
+          color: rgba(226, 232, 240, 0.8);
         }
         
         .calendar-day:hover:not(.empty):not(.past):not(.busy) { 
-          background: #f1f5f9; 
+          background: rgba(255, 255, 255, 0.08); 
         }
         .band-toggle-mode .calendar-day.busy:not(.busy-locked):hover:not(.empty):not(.past) {
-          background: #eef2ff;
+          background: rgba(139, 92, 246, 0.15);
         }
         
-        .past { color: #cbd5e1; cursor: not-allowed; }
+        .past { color: rgba(226, 232, 240, 0.2); cursor: not-allowed; }
         .calendar-day.busy {
-          background: linear-gradient(160deg, #e2e8f0 0%, #cbd5e1 100%);
-          color: #475569;
+          background: rgba(255, 255, 255, 0.06);
+          color: rgba(226, 232, 240, 0.4);
           font-weight: 800;
-          border: 1px solid #94a3b8;
+          border: 1px solid rgba(255, 255, 255, 0.1);
           text-decoration: line-through;
           text-decoration-thickness: 2px;
-          text-decoration-color: #64748b;
-          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+          text-decoration-color: rgba(226, 232, 240, 0.25);
+          box-shadow: none;
         }
         .band-toggle-mode .calendar-day.busy:not(.busy-locked) {
           cursor: pointer;
-          background: linear-gradient(160deg, #e0e7ff 0%, #c7d2fe 100%);
-          color: #312e81;
-          border-color: #818cf8;
-          text-decoration-color: #4f46e5;
+          background: rgba(139, 92, 246, 0.12);
+          color: #c4b5fd;
+          border-color: rgba(139, 92, 246, 0.3);
+          text-decoration-color: rgba(139, 92, 246, 0.5);
         }
         .busy-locked {
           cursor: not-allowed !important;
-          background: linear-gradient(160deg, #f1f5f9 0%, #e2e8f0 100%) !important;
-          color: #64748b !important;
-          border-color: #cbd5e1 !important;
-          text-decoration-color: #94a3b8 !important;
+          background: rgba(255, 255, 255, 0.03) !important;
+          color: rgba(226, 232, 240, 0.2) !important;
+          border-color: rgba(255, 255, 255, 0.06) !important;
+          text-decoration-color: rgba(226, 232, 240, 0.15) !important;
         }
         
         .selected { 
@@ -317,14 +317,14 @@ export default function BookingCalendar({
         .booking-summary {
           margin-top: 1.5rem;
           padding-top: 1.5rem;
-          border-top: 1px solid #f1f5f9;
+          border-top: 1px solid rgba(255, 255, 255, 0.08);
         }
 
         .summary-row {
           display: flex;
           justify-content: space-between;
           font-size: 0.875rem;
-          color: #64748b;
+          color: rgba(226, 232, 240, 0.5);
           margin-bottom: 0.5rem;
         }
 
@@ -332,7 +332,7 @@ export default function BookingCalendar({
           display: flex;
           justify-content: space-between;
           font-weight: 700;
-          color: #0f172a;
+          color: #f8fafc;
           font-size: 1rem;
           margin-top: 1rem;
           margin-bottom: 0.75rem;
@@ -340,7 +340,7 @@ export default function BookingCalendar({
 
         .summary-note {
           font-size: 0.75rem;
-          color: #94a3b8;
+          color: rgba(226, 232, 240, 0.4);
           display: flex;
           align-items: center;
           gap: 4px;

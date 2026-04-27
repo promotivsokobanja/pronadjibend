@@ -753,7 +753,7 @@ export default function RepertoirePage() {
           display: inline-flex;
           align-items: center;
           gap: 0.5rem;
-          color: #334155;
+          color: rgba(226, 232, 240, 0.8);
           font-weight: 800;
           font-size: 0.8rem;
           text-transform: uppercase;
@@ -761,21 +761,21 @@ export default function RepertoirePage() {
           margin-bottom: 2rem;
           padding: 0.45rem 0.7rem;
           border-radius: 999px;
-          border: 1px solid rgba(148, 163, 184, 0.5);
-          background: rgba(255, 255, 255, 0.85);
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          background: rgba(255, 255, 255, 0.06);
           position: relative;
           z-index: 3;
           transition: 0.2s ease;
         }
-        .back-link:hover { color: #0f172a; border-color: rgba(100, 116, 139, 0.75); }
+        .back-link:hover { color: #f8fafc; border-color: rgba(139, 92, 246, 0.4); }
         .title-section h1 { font-size: 3.5rem; font-weight: 800; margin-bottom: 1.5rem; letter-spacing: -2px; }
         .header-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 3rem; gap: 2rem; flex-wrap: wrap; }
         .header-cta-group { display: flex; align-items: center; gap: 0.85rem; flex-wrap: wrap; }
-        .btn-danger-outline { background: rgba(255, 255, 255, 0.92); color: #b91c1c; border: 1px solid rgba(239, 68, 68, 0.25); box-shadow: 0 10px 25px rgba(239, 68, 68, 0.08); }
+        .btn-danger-outline { background: rgba(239, 68, 68, 0.1); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3); box-shadow: 0 10px 25px rgba(239, 68, 68, 0.08); }
         .btn-danger-outline:disabled { opacity: 0.55; cursor: not-allowed; box-shadow: none; }
         .search-box-wrap { position: relative; flex: 1; min-width: 300px; max-width: 500px; }
-        .search-box { flex: 1; min-width: 300px; max-width: 500px; display: flex; align-items: center; gap: 1rem; padding: 0.75rem 1.5rem; background: #fff; border: 1px solid #e2e8f0; border-radius: 100px; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04); }
-        .search-box input { background: none; border: none; color: #0f172a; width: 100%; outline: none; font-size: 0.95rem; font-weight: 600; }
+        .search-box { flex: 1; min-width: 300px; max-width: 500px; display: flex; align-items: center; gap: 1rem; padding: 0.75rem 1.5rem; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 100px; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2); }
+        .search-box input { background: none; border: none; color: #f8fafc; width: 100%; outline: none; font-size: 0.95rem; font-weight: 600; }
                 .search-box svg { color: #64748b; flex-shrink: 0; }
         .bulk-add-btn { background: rgba(255, 255, 255, 0.92); color: #4338ca; border: 1px solid rgba(99, 102, 241, 0.16); box-shadow: 0 10px 25px rgba(99, 102, 241, 0.12); }
         .global-dropdown { position: absolute; top: calc(100% + 0.7rem); left: 0; right: 0; z-index: 20; background: rgba(255, 255, 255, 0.98); border: 1px solid #e2e8f0; border-radius: 22px; box-shadow: 0 20px 45px rgba(15, 23, 42, 0.12); overflow: hidden; }
@@ -795,10 +795,11 @@ export default function RepertoirePage() {
         .tab-btn { background: rgba(255,255,255,0.03); border: 1px solid var(--border); color: #888; padding: 0.6rem 1.25rem; border-radius: 100px; cursor: pointer; transition: 0.3s; font-weight: 700; font-size: 0.75rem; white-space: nowrap; }
         .tab-btn.active { background: var(--accent-primary); color: black; border-color: var(--accent-primary); }
         
-        .repertoire-list { padding: 0; border: 1px solid var(--border); overflow: hidden; margin-top: 2rem; }
-        .list-header { display: grid; grid-template-columns: 2fr 1fr 1fr 120px; padding: 1.5rem 2.5rem; background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--border); font-size: 0.7rem; font-weight: 800; color: #555; letter-spacing: 1.5px; }
+        .repertoire-list { padding: 0; border: 1px solid rgba(255, 255, 255, 0.08); overflow: hidden; margin-top: 2rem; background: rgba(10, 10, 22, 0.85); border-radius: 20px; }
+        .list-header { display: grid; grid-template-columns: 2fr 1fr 1fr 120px; padding: 1.5rem 2.5rem; background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--border); font-size: 0.7rem; font-weight: 800; color: rgba(226, 232, 240, 0.5); letter-spacing: 1.5px; }
         .song-row { display: grid; grid-template-columns: 2fr 1fr 1fr 120px; padding: 1.25rem 2.5rem; border-bottom: 1px solid var(--border); align-items: center; transition: 0.3s ease; }
-        .song-name { font-size: 1.15rem; font-weight: 700; transition: 0.2s; }
+        .song-name { font-size: 1.15rem; font-weight: 700; transition: 0.2s; color: #f8fafc; }
+        .song-artist { color: rgba(226, 232, 240, 0.55); font-size: 0.85rem; }
         .clickable-title:hover { color: var(--accent-primary); }
         
         .suggestions-divider { padding: 1rem 2.5rem; background: rgba(16, 185, 129, 0.05); border-bottom: 1px solid rgba(16, 185, 129, 0.1); font-size: 0.65rem; font-weight: 800; color: var(--accent-primary); letter-spacing: 1px; text-transform: uppercase; }
@@ -812,7 +813,7 @@ export default function RepertoirePage() {
         .genre-label { font-size: 0.8rem; color: var(--text-muted); }
         .genre-label.glass { background: rgba(255,255,255,0.05); padding: 2px 8px; border-radius: 4px; }
         
-        .action-btn { color: #555; transition: 0.2s; padding: 8px; border-radius: 6px; }
+        .action-btn { color: rgba(226, 232, 240, 0.5); transition: 0.2s; padding: 8px; border-radius: 6px; }
         .action-btn:hover { color: white; background: rgba(255,255,255,0.05); }
         .action-btn.delete:hover { color: #ef4444; background: rgba(239, 68, 68, 0.1); }
         .bulk-import-overlay { position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 80; background: rgba(15, 23, 42, 0.32); padding: 5.5rem 2rem 2rem; display: flex; align-items: flex-start; justify-content: center; overflow-y: auto; }
