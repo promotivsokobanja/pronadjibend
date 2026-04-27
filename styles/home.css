@@ -1377,3 +1377,28 @@
     gap: 10px;
   }
 }
+
+/* Mobile perf: disable expensive animations & 3D */
+@media (max-width: 768px) {
+  .home-container::before,
+  .orb-2,
+  .orb-3,
+  .blob,
+  .blob-2 {
+    animation: none !important;
+    opacity: 0.4;
+  }
+  .hero::before {
+    animation: none !important;
+  }
+  .band-card:hover {
+    transform: translateY(-4px);
+  }
+  .hotel-search {
+    animation: none !important;
+  }
+  .band-card {
+    transform-style: flat;
+    perspective: none;
+  }
+}

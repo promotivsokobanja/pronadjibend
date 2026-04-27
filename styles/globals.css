@@ -31,9 +31,10 @@
   --radius-sm: 10px;
   --transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 
-  --font-main: var(--font-body, 'Inter'), 'Space Grotesk', system-ui, sans-serif;
-  --font-heading: var(--font-heading, 'Montserrat'), 'Raleway', sans-serif;
+  --font-main: -apple-system, 'SF Pro Display', var(--font-body, 'Inter'), 'Space Grotesk', system-ui, sans-serif;
+  --font-heading: -apple-system, 'SF Pro Display', var(--font-heading, 'Montserrat'), 'Raleway', sans-serif;
   --font-serif: var(--font-playfair, 'Playfair Display'), 'Cormorant Garamond', serif;
+  --font-emoji: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', 'Twemoji Mozilla', sans-serif;
 }
 
 .theme-dark {
@@ -82,10 +83,13 @@ body {
   background-image: radial-gradient(circle at 20% 20%, rgba(205, 166, 103, 0.08), transparent 55%),
     radial-gradient(circle at 80% 0%, rgba(77, 93, 232, 0.25), transparent 45%);
   color: var(--text);
-  font-family: var(--font-main);
+  font-family: var(--font-main), 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji';
   line-height: 1.6;
   touch-action: manipulation;
   letter-spacing: 0.01em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 /* Navbar styling is owned by `components/Navbar.js` */
@@ -169,4 +173,38 @@ html:has(body.song-popup-open) {
 
 * {
   box-sizing: border-box !important;
+}
+
+/* Premium emoji rendering */
+.emoji, [data-emoji] {
+  font-family: var(--font-emoji);
+}
+
+/* GPU-accelerated animations */
+.hero::before, .orb-2, .orb-3, .blob, .blob-2 {
+  will-change: transform, opacity;
+  contain: layout style;
+}
+
+/* Off-screen sections: skip rendering until near viewport */
+section, .featured-bands, .experience-gallery, .testimonials, .pricing, .home-blog-guide, .vodic-sekcija {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 600px;
+}
+
+/* Respect user motion preferences — kills decorative animations */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Smooth 60fps scrolling */
+* {
+  scroll-behavior: auto;
+}
+html {
+  scroll-behavior: smooth;
 }

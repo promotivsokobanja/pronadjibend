@@ -1,5 +1,5 @@
 import '../styles/globals.css';
-import { Inter, Montserrat, Playfair_Display, Poppins, Bebas_Neue, Raleway, Oswald, Roboto_Slab } from 'next/font/google';
+import { Inter, Montserrat, Playfair_Display } from 'next/font/google';
 import StrictModeProvider from '@/components/providers/StrictModeProvider';
 import { getSiteUrl, getSiteMetadataBaseUrl } from '@/lib/siteUrl';
 
@@ -24,37 +24,6 @@ const playfair = Playfair_Display({
   display: 'swap',
 });
 
-const poppins = Poppins({
-  subsets: ['latin'],
-  weight: ['400', '600', '800'],
-  variable: '--font-poppins',
-  display: 'swap',
-});
-
-const bebas = Bebas_Neue({
-  subsets: ['latin'],
-  weight: '400',
-  variable: '--font-bebas',
-  display: 'swap',
-});
-
-const raleway = Raleway({
-  subsets: ['latin'],
-  variable: '--font-raleway',
-  display: 'swap',
-});
-
-const oswald = Oswald({
-  subsets: ['latin'],
-  variable: '--font-oswald',
-  display: 'swap',
-});
-
-const robotoSlab = Roboto_Slab({
-  subsets: ['latin'],
-  variable: '--font-robotoslab',
-  display: 'swap',
-});
 
 const googleVerify = process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION;
 
@@ -136,7 +105,7 @@ export default function RootLayout({ children }) {
   return (
     <html
       lang="sr"
-      className={`theme-dark ${inter.variable} ${montserrat.variable} ${playfair.variable} ${poppins.variable} ${bebas.variable} ${raleway.variable} ${oswald.variable} ${robotoSlab.variable}`}
+      className={`theme-dark ${inter.variable} ${montserrat.variable} ${playfair.variable}`}
     >
       <body style={{ margin: 0 }}>
         <StrictModeProvider>{children}</StrictModeProvider>

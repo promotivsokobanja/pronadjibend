@@ -2,17 +2,18 @@
 import { Music, Calendar, Zap, Mail, X, CheckCircle, Star } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
 import { motion } from 'framer-motion';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback, memo } from 'react';
 
-// Component removed - using static text instead
 import { DEFAULT_BAND_COVER, resolveBandCoverImage } from '../../lib/bandImages';
 import { nextImageShouldUnoptimize } from '../../lib/remoteImage';
 import { pickFeaturedBands } from '../../lib/featuredBands';
 import '../../styles/home.css';
-import HomeBlogGuideSection from '../../components/home/HomeBlogGuideSection';
-import VodicSekcija from '../../components/VodicSekcija';
-import SocialShareActions from '../../components/SocialShareActions';
+
+const HomeBlogGuideSection = dynamic(() => import('../../components/home/HomeBlogGuideSection'), { ssr: false });
+const VodicSekcija = dynamic(() => import('../../components/VodicSekcija'), { ssr: false });
+const SocialShareActions = dynamic(() => import('../../components/SocialShareActions'), { ssr: false });
 
 /* SSR: bez opacity 0 u initial (sadržaj ostaje vidljiv pre nego što FM animira). */
 const scrollFade = {
@@ -22,7 +23,7 @@ const scrollFade = {
   transition: { duration: 0.48, ease: [0.16, 1, 0.3, 1] },
 };
 
-function FeaturedBandCover({ band, priority }) {
+const FeaturedBandCover = memo(function FeaturedBandCover({ band, priority }) {
   const initial = resolveBandCoverImage(band);
   const [src, setSrc] = useState(initial);
 
@@ -42,7 +43,7 @@ function FeaturedBandCover({ band, priority }) {
       onError={() => setSrc(DEFAULT_BAND_COVER)}
     />
   );
-}
+});
 
 export default function HomeClient() {
   const [showBooking, setShowBooking] = useState(false);
