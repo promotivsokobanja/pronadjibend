@@ -156,104 +156,102 @@ export default function DashboardHelpModal({ onClose, role = 'band' }) {
           to { opacity: 1; }
         }
         .help-modal {
-          background: #ffffff;
+          background: #080816;
           width: 100%;
           max-width: 640px;
-          max-height: calc(100dvh - 2rem);
-          border-radius: 20px;
-          box-shadow: 0 30px 80px rgba(15, 23, 42, 0.25);
-          display: flex;
-          flex-direction: column;
-          overflow: hidden;
-          box-sizing: border-box;
+          max-height: 90dvh;
+          border-radius: 24px;
+          padding: 2rem 2.25rem;
+          overflow-y: auto;
+          box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          animation: hm-slide 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+          scrollbar-width: thin;
+          scrollbar-color: rgba(139, 92, 246, 0.35) transparent;
+        }
+        .help-modal::-webkit-scrollbar {
+          width: 6px;
+        }
+        .help-modal::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .help-modal::-webkit-scrollbar-thumb {
+          background: rgba(139, 92, 246, 0.35);
+          border-radius: 999px;
+        }
+        .help-modal::-webkit-scrollbar-thumb:hover {
+          background: rgba(139, 92, 246, 0.55);
+        }
+        @keyframes hm-slide {
+          from { opacity: 0; transform: translateY(16px) scale(0.97); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
         }
         .help-header {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          gap: 1rem;
-          padding: 1.1rem 1.35rem;
-          border-bottom: 1px solid #e2e8f0;
-          background: linear-gradient(135deg, #f8fafc, #ffffff);
-          flex-shrink: 0;
+          gap: 1.25rem;
+          margin-bottom: 1.5rem;
         }
         .help-header h2 {
           margin: 0;
-          font-size: 1.05rem;
+          font-size: clamp(1.5rem, 3.4vw, 2rem);
           font-weight: 800;
-          color: #0f172a;
-          letter-spacing: -0.01em;
+          letter-spacing: -0.04em;
+          color: #f8fafc;
         }
         .help-close {
           border: none;
-          background: #f1f5f9;
-          color: #475569;
-          width: 36px;
-          height: 36px;
+          background: rgba(255, 255, 255, 0.08);
           border-radius: 999px;
+          width: 40px;
+          height: 40px;
           display: inline-flex;
           align-items: center;
           justify-content: center;
+          color: #f8fafc;
           cursor: pointer;
-          transition: 0.15s ease;
-          flex-shrink: 0;
         }
         .help-close:hover {
-          background: #e2e8f0;
-          color: #0f172a;
-        }
-        .help-body {
-          padding: 1.1rem 1.35rem 1.4rem;
-          overflow-y: auto;
-          display: flex;
-          flex-direction: column;
-          gap: 0.85rem;
+          background: rgba(255, 255, 255, 0.18);
         }
         .help-intro {
-          margin: 0 0 0.3rem;
-          color: #475569;
-          font-size: 0.9rem;
-          line-height: 1.55;
+          margin: 0 0 1.25rem;
+          color: rgba(226, 232, 240, 0.75);
+          line-height: 1.6;
+          font-size: 0.98rem;
         }
         .help-item {
           display: flex;
-          gap: 0.85rem;
-          padding: 0.85rem 0.95rem;
-          border: 1px solid #e2e8f0;
-          border-radius: 12px;
-          background: #f8fafc;
+          gap: 1rem;
+          padding: 1.25rem 0;
+          border-top: 1px solid rgba(148, 163, 184, 0.18);
+        }
+        .help-item:first-of-type {
+          border-top: none;
+          padding-top: 0;
         }
         .help-icon {
-          flex-shrink: 0;
-          width: 36px;
-          height: 36px;
-          border-radius: 10px;
-          background: linear-gradient(135deg, #a78bfa, #7c3aed);
-          color: #ffffff;
-          display: inline-flex;
+          width: 46px;
+          height: 46px;
+          border-radius: 14px;
+          background: rgba(124, 58, 237, 0.18);
+          display: flex;
           align-items: center;
           justify-content: center;
-        }
-        .help-text {
-          flex: 1;
-          min-width: 0;
+          color: #c4b5fd;
+          flex-shrink: 0;
         }
         .help-text h3 {
-          margin: 0 0 0.3rem;
-          font-size: 0.92rem;
-          font-weight: 800;
-          color: #0f172a;
-          line-height: 1.25;
+          margin: 0 0 0.35rem;
+          font-size: 1.05rem;
+          color: #f8fafc;
         }
         .help-text p {
           margin: 0;
-          color: #475569;
-          font-size: 0.82rem;
+          color: rgba(226, 232, 240, 0.75);
           line-height: 1.55;
-        }
-        .help-text strong {
-          color: #0f172a;
-          font-weight: 700;
+          font-size: 0.92rem;
         }
         .help-tip {
           display: flex;
@@ -261,14 +259,14 @@ export default function DashboardHelpModal({ onClose, role = 'band' }) {
           gap: 0.6rem;
           padding: 0.8rem 0.95rem;
           border-radius: 12px;
-          border: 1px solid #bfdbfe;
-          background: #eff6ff;
-          color: #1e3a8a;
+          border: 1px solid rgba(14, 165, 233, 0.4);
+          background: rgba(14, 165, 233, 0.08);
+          color: #e0f2fe;
           font-size: 0.82rem;
           line-height: 1.5;
         }
         .help-tip strong {
-          color: #1e3a8a;
+          color: #7dd3fc;
         }
 
         @media (max-width: 640px) {
@@ -280,6 +278,7 @@ export default function DashboardHelpModal({ onClose, role = 'band' }) {
             max-width: 100%;
             max-height: 100dvh;
             border-radius: 0;
+            background: #050511;
           }
           .help-header {
             padding: 0.85rem 1rem;

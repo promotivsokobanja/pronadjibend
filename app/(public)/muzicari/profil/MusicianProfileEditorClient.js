@@ -660,10 +660,10 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
     : '';
 
   const contactCard = (
-    <section style={{ background: '#fff', border: '1.5px solid #e2e8f0', borderRadius: '20px', padding: '1.4rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '0.85rem', boxShadow: '0 4px 16px rgba(15,23,42,0.07)' }}>
-      <h2 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 900, color: '#0f172a', paddingBottom: '0.65rem', borderBottom: '1.5px solid #f1f5f9' }}>Kontakt naloga</h2>
-      <p style={{ margin: 0, display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontWeight: 700, color: '#334155', fontSize: '0.9rem' }}><Mail size={15} /> {viewer?.email || '—'}</p>
-      <p style={{ color: '#64748b', fontSize: '0.75rem', lineHeight: 1.45, margin: 0 }}>Javni kontakt može kasnije da se proširi telefonom i društvenim mrežama.</p>
+    <section style={{ background: 'rgba(10, 10, 22, 0.85)', border: '1.5px solid rgba(255, 255, 255, 0.08)', borderRadius: '20px', padding: '1.4rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '0.85rem', boxShadow: '0 4px 16px rgba(0,0,0,0.3)' }}>
+      <h2 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 900, color: '#f8fafc', paddingBottom: '0.65rem', borderBottom: '1.5px solid rgba(255, 255, 255, 0.08)' }}>Kontakt naloga</h2>
+      <p style={{ margin: 0, display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontWeight: 700, color: 'rgba(226, 232, 240, 0.8)', fontSize: '0.9rem' }}><Mail size={15} /> {viewer?.email || '—'}</p>
+      <p style={{ color: 'rgba(226, 232, 240, 0.5)', fontSize: '0.75rem', lineHeight: 1.45, margin: 0 }}>Javni kontakt može kasnije da se proširi telefonom i društvenim mrežama.</p>
     </section>
   );
 
@@ -695,12 +695,12 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
     [invites]
   );
 
-  const sCard = { background: '#fff', border: '1.5px solid #e2e8f0', borderRadius: '20px', padding: '1.4rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '0.85rem', boxShadow: '0 4px 16px rgba(15,23,42,0.07)' };
-  const sTitle = { margin: 0, fontSize: '0.95rem', fontWeight: 900, color: '#0f172a', paddingBottom: '0.65rem', borderBottom: '1.5px solid #f1f5f9' };
-  const sInvCard = { border: '1.5px solid #e2e8f0', borderRadius: '16px', padding: '1rem 1.1rem', background: '#f8fafc', display: 'flex', flexDirection: 'column', gap: '0.7rem' };
-  const sMeta = { display: 'flex', flexWrap: 'wrap', gap: '0.35rem 0.7rem', padding: '0.55rem 0.7rem', border: '1px solid #e2e8f0', borderRadius: '10px', background: '#fff', color: '#475569', fontSize: '0.8rem', fontWeight: 700 };
-  const sMsg = { margin: 0, whiteSpace: 'pre-wrap', color: '#1e293b', fontSize: '0.88rem', lineHeight: 1.5, padding: '0.55rem 0.7rem', border: '1px solid #e2e8f0', borderRadius: '10px', background: '#fff' };
-  const sActions = { display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.25rem', paddingTop: '0.65rem', borderTop: '1.5px solid #e2e8f0' };
+  const sCard = { background: 'rgba(10, 10, 22, 0.85)', border: '1.5px solid rgba(255, 255, 255, 0.08)', borderRadius: '20px', padding: '1.4rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '0.85rem', boxShadow: '0 4px 16px rgba(0,0,0,0.3)' };
+  const sTitle = { margin: 0, fontSize: '0.95rem', fontWeight: 900, color: '#f8fafc', paddingBottom: '0.65rem', borderBottom: '1.5px solid rgba(255, 255, 255, 0.08)' };
+  const sInvCard = { border: '1.5px solid rgba(255, 255, 255, 0.08)', borderRadius: '16px', padding: '1rem 1.1rem', background: 'rgba(255, 255, 255, 0.03)', display: 'flex', flexDirection: 'column', gap: '0.7rem' };
+  const sMeta = { display: 'flex', flexWrap: 'wrap', gap: '0.35rem 0.7rem', padding: '0.55rem 0.7rem', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '10px', background: 'rgba(255, 255, 255, 0.03)', color: 'rgba(226, 232, 240, 0.7)', fontSize: '0.8rem', fontWeight: 700 };
+  const sMsg = { margin: 0, whiteSpace: 'pre-wrap', color: '#e2e8f0', fontSize: '0.88rem', lineHeight: 1.5, padding: '0.55rem 0.7rem', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '10px', background: 'rgba(255, 255, 255, 0.03)' };
+  const sActions = { display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.25rem', paddingTop: '0.65rem', borderTop: '1.5px solid rgba(255, 255, 255, 0.08)' };
   const sPill = (status) => ({
     display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: '999px', padding: '0.22rem 0.58rem', fontSize: '0.68rem', fontWeight: 800, letterSpacing: '0.04em',
     ...(status === 'ACCEPTED' ? { background: 'rgba(16,185,129,0.12)', color: '#10b981' }
@@ -710,37 +710,49 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
 
   const invitesCard = (
     <section style={sCard}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem', paddingBottom: '0.85rem', borderBottom: '1.5px solid #f1f5f9' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem', paddingBottom: '0.85rem', borderBottom: '1.5px solid rgba(255, 255, 255, 0.08)' }}>
         <div>
           <h2 style={sTitle}>Pristigli pozivi bendova</h2>
-          <p style={{ color: '#64748b', fontSize: '0.75rem', margin: '0.4rem 0 0' }}>Ukupno poziva: {invites.length}</p>
+          <p style={{ color: 'rgba(226, 232, 240, 0.5)', fontSize: '0.75rem', margin: '0.4rem 0 0' }}>Ukupno poziva: {invites.length}</p>
         </div>
         <input
           type="search"
           value={inviteSearch}
           onChange={(e) => setInviteSearch(e.target.value)}
           placeholder="Pretraži bend ili poruku..."
-          style={{ width: 'min(260px, 100%)', border: '1px solid #dbe4ef', borderRadius: '999px', padding: '0.43rem 0.8rem', fontSize: '0.78rem', color: '#1e293b', outline: 'none', background: '#fff' }}
+          style={{ width: 'min(260px, 100%)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '999px', padding: '0.43rem 0.8rem', fontSize: '0.78rem', color: '#f8fafc', outline: 'none', background: 'rgba(255, 255, 255, 0.04)' }}
         />
       </div>
       <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.25rem', flexWrap: 'wrap' }}>
         <button
           type="button"
-          className={`btn btn-sm ${inviteView === 'active' ? 'btn-primary' : 'btn-secondary'}`}
+          style={{
+            padding: '0.5rem 1rem', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer', transition: '0.2s', letterSpacing: '0.03em',
+            background: inviteView === 'active' ? '#8b5cf6' : 'rgba(255, 255, 255, 0.08)',
+            color: inviteView === 'active' ? '#ffffff' : '#cbd5e1',
+            border: inviteView === 'active' ? '1.5px solid #a78bfa' : '1.5px solid rgba(255, 255, 255, 0.15)',
+            boxShadow: inviteView === 'active' ? '0 0 16px rgba(139, 92, 246, 0.45)' : 'none',
+          }}
           onClick={() => setInviteView('active')}
         >
           Aktivni ({activeInviteCount})
         </button>
         <button
           type="button"
-          className={`btn btn-sm ${inviteView === 'archive' ? 'btn-primary' : 'btn-secondary'}`}
+          style={{
+            padding: '0.5rem 1rem', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer', transition: '0.2s', letterSpacing: '0.03em',
+            background: inviteView === 'archive' ? '#8b5cf6' : 'rgba(255, 255, 255, 0.08)',
+            color: inviteView === 'archive' ? '#ffffff' : '#cbd5e1',
+            border: inviteView === 'archive' ? '1.5px solid #a78bfa' : '1.5px solid rgba(255, 255, 255, 0.15)',
+            boxShadow: inviteView === 'archive' ? '0 0 16px rgba(139, 92, 246, 0.45)' : 'none',
+          }}
           onClick={() => setInviteView('archive')}
         >
           Arhiva ({archivedInviteCount})
         </button>
       </div>
       {filteredInvites.length === 0 ? (
-        <p style={{ color: '#64748b', fontSize: '0.75rem' }}>
+        <p style={{ color: 'rgba(226, 232, 240, 0.5)', fontSize: '0.75rem' }}>
           {inviteView === 'archive' ? 'Nema arhiviranih poziva za prikaz.' : 'Nema aktivnih poziva koji odgovaraju pretrazi.'}
         </p>
       ) : (
@@ -755,10 +767,10 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.75rem' }}>
                   {inv.band?.id ? (
                     <Link href={`/clients/band/${inv.band.id}`} style={{ textDecoration: 'none' }} target="_blank">
-                      <p style={{ margin: 0, fontWeight: 800, fontSize: '1rem', color: '#0f172a' }}>{inv.band?.name || 'Bend'}</p>
+                      <p style={{ margin: 0, fontWeight: 800, fontSize: '1rem', color: '#f8fafc' }}>{inv.band?.name || 'Bend'}</p>
                     </Link>
                   ) : (
-                    <p style={{ margin: 0, fontWeight: 800, fontSize: '1rem', color: '#0f172a' }}>{inv.band?.name || 'Bend'}</p>
+                    <p style={{ margin: 0, fontWeight: 800, fontSize: '1rem', color: '#f8fafc' }}>{inv.band?.name || 'Bend'}</p>
                   )}
                   <span style={sPill(statusText)}>{statusText}</span>
                 </div>
@@ -796,7 +808,7 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
                   </button>
                 </div>
                 <details style={{ marginTop: '0.15rem' }}>
-                  <summary style={{ cursor: 'pointer', fontSize: '0.82rem', fontWeight: 800, color: '#475569' }}>Poruke</summary>
+                  <summary style={{ cursor: 'pointer', fontSize: '0.82rem', fontWeight: 800, color: 'rgba(226, 232, 240, 0.6)' }}>Poruke</summary>
                   <ChatThread inviteId={inv.id} />
                 </details>
               </li>
@@ -819,11 +831,11 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
   };
 
   const deleteCard = (
-    <section style={{ background: '#fef2f2', border: '1.5px solid #fecaca', borderRadius: '20px', padding: '1.4rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '0.85rem', boxShadow: '0 4px 16px rgba(15,23,42,0.07)' }}>
-      <h2 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 900, color: '#dc2626', paddingBottom: '0.65rem', borderBottom: '1.5px solid #fecaca', display: 'flex', alignItems: 'center', gap: '0.4rem' }}><Trash2 size={16} /> Brisanje naloga</h2>
+    <section style={{ background: 'rgba(239, 68, 68, 0.06)', border: '1.5px solid rgba(239, 68, 68, 0.2)', borderRadius: '20px', padding: '1.4rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '0.85rem', boxShadow: '0 4px 16px rgba(0,0,0,0.2)' }}>
+      <h2 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 900, color: '#fca5a5', paddingBottom: '0.65rem', borderBottom: '1.5px solid rgba(239, 68, 68, 0.2)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}><Trash2 size={16} /> Brisanje naloga</h2>
       {!showDeleteConfirm ? (
         <>
-          <p style={{ color: '#64748b', fontSize: '0.75rem', lineHeight: 1.45, margin: 0 }}>Trajno brisanje vašeg naloga, profila i svih povezanih podataka.</p>
+          <p style={{ color: 'rgba(226, 232, 240, 0.5)', fontSize: '0.75rem', lineHeight: 1.45, margin: 0 }}>Trajno brisanje vašeg naloga, profila i svih povezanih podataka.</p>
           <button
             type="button"
             className="btn"
@@ -869,14 +881,14 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
     </section>
   );
 
-  const sKpiItem = { display: 'flex', alignItems: 'center', gap: '0.65rem', border: '1.5px solid #e2e8f0', borderRadius: '14px', padding: '0.85rem 0.8rem', background: '#f8fafc' };
-  const sKpiIcon = { width: 38, height: 38, borderRadius: 12, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(59,130,246,0.12)', color: '#2563eb' };
-  const sKpiLabel = { margin: 0, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.04em', color: '#64748b', fontWeight: 800 };
-  const sKpiValue = { margin: '0.08rem 0 0', fontSize: '1.2rem', fontWeight: 900, color: '#0f172a', lineHeight: 1 };
+  const sKpiItem = { display: 'flex', alignItems: 'center', gap: '0.65rem', border: '1.5px solid rgba(255, 255, 255, 0.08)', borderRadius: '14px', padding: '0.85rem 0.8rem', background: 'rgba(255, 255, 255, 0.03)' };
+  const sKpiIcon = { width: 38, height: 38, borderRadius: 12, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(139, 92, 246, 0.15)', color: '#a78bfa' };
+  const sKpiLabel = { margin: 0, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.04em', color: 'rgba(226, 232, 240, 0.5)', fontWeight: 800 };
+  const sKpiValue = { margin: '0.08rem 0 0', fontSize: '1.2rem', fontWeight: 900, color: '#f8fafc', lineHeight: 1 };
 
   const panelKpiCard = (
     <section style={{ ...sCard, padding: '1.3rem 1.4rem' }}>
-      <h2 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 900, color: '#0f172a', paddingBottom: '0.65rem', borderBottom: '1.5px solid #f1f5f9' }}>Pregled aktivnosti</h2>
+      <h2 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 900, color: '#f8fafc', paddingBottom: '0.65rem', borderBottom: '1.5px solid rgba(255, 255, 255, 0.08)' }}>Pregled aktivnosti</h2>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(140px, 100%), 1fr))', gap: '0.85rem' }}>
         <article style={sKpiItem}>
           <div style={sKpiIcon}><Mail size={16} /></div>
@@ -905,8 +917,8 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
 
   const summaryCard = (
     <section style={sCard}>
-      <h2 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 900, color: '#0f172a', paddingBottom: '0.6rem', borderBottom: '1.5px solid #f1f5f9' }}>Profil muzičara</h2>
-      <p style={{ color: '#475569', fontWeight: 700, marginBottom: '0.6rem' }}>{profilePreview}</p>
+      <h2 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 900, color: '#f8fafc', paddingBottom: '0.6rem', borderBottom: '1.5px solid rgba(255, 255, 255, 0.08)' }}>Profil muzičara</h2>
+      <p style={{ color: 'rgba(226, 232, 240, 0.7)', fontWeight: 700, marginBottom: '0.6rem' }}>{profilePreview}</p>
       {viewer?.musicianProfileId ? (
         <SocialShareActions
           url={publicMusicianProfileUrl || publicMusicianProfilePath}
@@ -923,19 +935,19 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
   return (
     <div className="container" style={{ paddingTop: '8.75rem', paddingBottom: '5.5rem', minHeight: '100vh' }}>
       <div style={{ maxWidth: 1180, margin: '0 auto', position: 'relative', zIndex: 1, width: '100%' }}>
-        <div style={{ marginBottom: '2rem', padding: '2rem 2.1rem', borderRadius: '24px', background: 'linear-gradient(135deg, rgba(255,255,255,0.96), rgba(244,243,255,0.96))', border: '1.5px solid #e2e8f0', boxShadow: '0 8px 28px rgba(99,102,241,0.08)', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ marginBottom: '2rem', padding: '2rem 2.1rem', borderRadius: '24px', background: 'rgba(10, 10, 22, 0.85)', border: '1.5px solid rgba(255, 255, 255, 0.08)', boxShadow: '0 8px 28px rgba(0,0,0,0.3)', position: 'relative', overflow: 'hidden' }}>
           <div>
-            <Link href={backLink.href} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: '#334155', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: '0.76rem', marginBottom: '1.15rem', padding: '0.52rem 0.8rem', borderRadius: '999px', border: '1px solid rgba(148,163,184,0.5)', background: 'rgba(255,255,255,0.9)', textDecoration: 'none' }}>
+            <Link href={backLink.href} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: 'rgba(226, 232, 240, 0.8)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: '0.76rem', marginBottom: '1.15rem', padding: '0.52rem 0.8rem', borderRadius: '999px', border: '1px solid rgba(255, 255, 255, 0.12)', background: 'rgba(255, 255, 255, 0.06)', textDecoration: 'none' }}>
               <ArrowLeft size={15} />
               {backLink.label}
             </Link>
-            <h1 style={{ fontSize: 'clamp(2.3rem, 4vw, 3.6rem)', fontWeight: 900, letterSpacing: '-0.04em', color: '#0f172a', marginBottom: '0.45rem', lineHeight: 1.02 }}>{isSettingsPage ? 'Podešavanja profila' : 'Moj Profil Muzičara'}</h1>
-            <p style={{ color: '#64748b', maxWidth: 760, marginBottom: '0.6rem', fontSize: '1rem', lineHeight: 1.65 }}>
+            <h1 style={{ fontSize: 'clamp(2.3rem, 4vw, 3.6rem)', fontWeight: 900, letterSpacing: '-0.04em', color: '#f8fafc', marginBottom: '0.45rem', lineHeight: 1.02 }}>{isSettingsPage ? 'Podešavanja profila' : 'Moj Profil Muzičara'}</h1>
+            <p style={{ color: 'rgba(226, 232, 240, 0.65)', maxWidth: 760, marginBottom: '0.6rem', fontSize: '1rem', lineHeight: 1.65 }}>
               {isSettingsPage
                 ? 'Održi svoj javni nastup ažurnim – fotografije, video i opis se uređuju ovde.'
                 : 'Ovde upravljaš svojim panelom, pozivima i pristupom live alatima.'}
             </p>
-            <p style={{ margin: '0.2rem 0 0', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem', fontWeight: 700, color: '#4f46e5', padding: '0.7rem 1rem', borderRadius: '999px', background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.16)' }}>
+            <p style={{ margin: '0.2rem 0 0', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem', fontWeight: 700, color: '#c4b5fd', padding: '0.7rem 1rem', borderRadius: '999px', background: 'rgba(139, 92, 246, 0.12)', border: '1px solid rgba(139, 92, 246, 0.25)' }}>
               <UserRound size={16} aria-hidden />
               {profilePreview}
             </p>
@@ -943,7 +955,7 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
         </div>
 
         {loading ? (
-          <div style={{ border: '1px dashed #cbd5e1', borderRadius: '14px', padding: '1.2rem', color: '#64748b', background: '#f8fafc', fontWeight: 600 }}>Učitavanje profila...</div>
+          <div style={{ border: '1px dashed rgba(255, 255, 255, 0.1)', borderRadius: '14px', padding: '1.2rem', color: 'rgba(226, 232, 240, 0.5)', background: 'rgba(255, 255, 255, 0.02)', fontWeight: 600 }}>Učitavanje profila...</div>
         ) : isBandAccount ? (
           <div style={{ ...sCard, maxWidth: 520 }}>
             <p style={{ marginBottom: '1rem', color: '#94a3b8' }}>
@@ -1423,18 +1435,18 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
             </div>
 
             <section style={{ ...sCard, marginTop: '1.6rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap', paddingBottom: '0.85rem', borderBottom: '1.5px solid #f1f5f9' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap', paddingBottom: '0.85rem', borderBottom: '1.5px solid rgba(255, 255, 255, 0.08)' }}>
                 <div>
-                  <h2 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 900, color: '#0f172a', display: 'inline-flex', alignItems: 'center', gap: '0.45rem' }}>
+                  <h2 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 900, color: '#f8fafc', display: 'inline-flex', alignItems: 'center', gap: '0.45rem' }}>
                     <CalendarDays size={16} /> Kalendar zauzetosti
                   </h2>
-                  <p style={{ margin: '0.3rem 0 0', fontSize: '0.8rem', color: '#64748b', lineHeight: 1.45 }}>
+                  <p style={{ margin: '0.3rem 0 0', fontSize: '0.8rem', color: 'rgba(226, 232, 240, 0.5)', lineHeight: 1.45 }}>
                     {calendarQuickBusy
                       ? 'Kliknite na datum da ga označite kao zauzet ili slobodan (jedan klik).'
                       : 'Kliknite na datum da dodate zauzeće i napomenu.'}
                   </p>
                 </div>
-                <label className="calendar-quick-row" htmlFor="musician-calendar-quick-cb" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.8rem', color: '#475569', cursor: 'pointer' }}>
+                <label className="calendar-quick-row" htmlFor="musician-calendar-quick-cb" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.8rem', color: 'rgba(226, 232, 240, 0.6)', cursor: 'pointer' }}>
                   <input
                     id="musician-calendar-quick-cb"
                     type="checkbox"
@@ -1453,7 +1465,7 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
                   onDateSelect={handleCalendarDayClick}
                 />
               ) : (
-                <p style={{ color: '#64748b', fontSize: '0.85rem' }}>Učitavanje kalendara...</p>
+                <p style={{ color: 'rgba(226, 232, 240, 0.5)', fontSize: '0.85rem' }}>Učitavanje kalendara...</p>
               )}
               <BusyDateNoteModal
                 open={busyModal.open}
@@ -1498,9 +1510,9 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
           margin-bottom: 2rem;
           padding: 2rem 2.1rem;
           border-radius: 32px;
-          background: linear-gradient(135deg, rgba(255,255,255,0.96), rgba(244, 243, 255, 0.96));
-          border: 1px solid rgba(226, 232, 240, 0.92);
-          box-shadow: 0 22px 48px rgba(99, 102, 241, 0.08);
+          background: rgba(10, 10, 22, 0.85);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          box-shadow: 0 22px 48px rgba(0, 0, 0, 0.3);
           position: relative;
           overflow: hidden;
         }
@@ -1515,12 +1527,12 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
           font-size: clamp(2.3rem, 4vw, 3.6rem);
           font-weight: 900;
           letter-spacing: -0.04em;
-          color: #0f172a;
+          color: #f8fafc;
           margin-bottom: 0.45rem;
           line-height: 1.02;
         }
         .profile-header p {
-          color: #64748b;
+          color: rgba(226, 232, 240, 0.65);
           max-width: 760px;
           position: relative;
           z-index: 1;
@@ -1537,17 +1549,17 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
           gap: 0.5rem;
           font-size: 0.9rem;
           font-weight: 700;
-          color: #4f46e5;
+          color: #c4b5fd;
           padding: 0.7rem 1rem;
           border-radius: 999px;
-          background: rgba(99, 102, 241, 0.08);
-          border: 1px solid rgba(99, 102, 241, 0.16);
+          background: rgba(139, 92, 246, 0.12);
+          border: 1px solid rgba(139, 92, 246, 0.25);
         }
         .back-link {
           display: inline-flex;
           align-items: center;
           gap: 0.4rem;
-          color: #334155;
+          color: rgba(226, 232, 240, 0.8);
           font-weight: 800;
           text-transform: uppercase;
           letter-spacing: 0.08em;
@@ -1555,14 +1567,14 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
           margin-bottom: 1.15rem;
           padding: 0.52rem 0.8rem;
           border-radius: 999px;
-          border: 1px solid rgba(148, 163, 184, 0.5);
-          background: rgba(255, 255, 255, 0.9);
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          background: rgba(255, 255, 255, 0.06);
           position: relative;
           z-index: 3;
           transition: 0.2s ease;
           text-decoration: none;
         }
-        .back-link:hover { color: #0f172a; border-color: rgba(100, 116, 139, 0.75); }
+        .back-link:hover { color: #f8fafc; border-color: rgba(139, 92, 246, 0.4); }
         .musician-panel { margin-bottom: 2rem; }
         @media (max-width: 640px) {
           .musician-panel {
@@ -1570,14 +1582,29 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
           }
         }
         .panel-hero {
-          background: linear-gradient(135deg, #4f46e5, #7c3aed);
+          background: linear-gradient(135deg, rgba(12, 12, 28, 0.95), rgba(18, 18, 30, 0.65));
           border-radius: 34px;
           padding: 2.15rem;
-          color: #eef2ff;
-          box-shadow: 0 30px 60px rgba(79, 70, 229, 0.22);
+          color: #f1f5f9;
+          box-shadow: 0 30px 60px rgba(3, 7, 18, 0.55);
           position: relative;
           overflow: hidden;
-          border: 1px solid rgba(255,255,255,0.12);
+          border: 1px solid rgba(255,255,255,0.08);
+        }
+        .panel-hero::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          border-radius: inherit;
+          padding: 1px;
+          background: linear-gradient(120deg, rgba(139, 92, 246, 0.4), rgba(14, 165, 233, 0.3), transparent);
+          mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+          mask-composite: exclude;
+          pointer-events: none;
+        }
+        .panel-hero > * {
+          position: relative;
+          z-index: 1;
         }
         @media (max-width: 640px) {
           .panel-hero {
@@ -1599,9 +1626,9 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
           gap: 0.4rem;
           padding: 0.5rem 0.85rem;
           border-radius: 999px;
-          border: 1px solid rgba(255,255,255,0.35);
-          background: rgba(255,255,255,0.15);
-          color: #ffffff;
+          border: 1px solid rgba(255,255,255,0.12);
+          background: rgba(255,255,255,0.06);
+          color: rgba(226, 232, 240, 0.8);
           font-weight: 700;
           font-size: 0.78rem;
           cursor: pointer;
@@ -1610,8 +1637,8 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
           flex-shrink: 0;
         }
         .panel-help-btn:hover {
-          background: rgba(255,255,255,0.28);
-          border-color: rgba(255,255,255,0.55);
+          background: rgba(255,255,255,0.1);
+          border-color: rgba(139, 92, 246, 0.35);
           transform: translateY(-1px);
         }
         .panel-help-btn:active {
@@ -1641,7 +1668,7 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
           }
         }
         .panel-hero p {
-          color: rgba(226, 232, 240, 0.9);
+          color: rgba(226, 232, 240, 0.6);
           margin-bottom: 1.4rem;
           max-width: 620px;
         }
@@ -1682,9 +1709,9 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
           cursor: pointer;
         }
         .panel-card {
-          background: rgba(15, 23, 42, 0.4);
+          background: rgba(255, 255, 255, 0.04);
           border-radius: 22px;
-          border: 1px solid rgba(226, 232, 240, 0.25);
+          border: 1px solid rgba(255, 255, 255, 0.08);
           padding: 1.25rem;
           min-height: 168px;
           display: flex;
@@ -1700,8 +1727,8 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
         }
         .panel-card:hover {
           transform: translateY(-4px);
-          border-color: rgba(255, 255, 255, 0.5);
-          background: rgba(15, 23, 42, 0.55);
+          border-color: rgba(139, 92, 246, 0.3);
+          background: rgba(255, 255, 255, 0.07);
         }
         .panel-icon {
           width: 46px;
@@ -1710,8 +1737,8 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          background: rgba(255, 255, 255, 0.15);
-          color: #a5b4fc;
+          background: rgba(139, 92, 246, 0.12);
+          color: #a78bfa;
         }
         @media (max-width: 640px) {
           .panel-icon {
@@ -1748,7 +1775,7 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
           font-weight: 700;
           text-transform: uppercase;
           letter-spacing: 0.08em;
-          color: #a5b4fc;
+          color: #a78bfa;
         }
         .musician-content {
           display: grid;
@@ -1826,14 +1853,14 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
           }
         }
         .profile-card {
-          background: #ffffff;
-          border: 1.5px solid #e2e8f0;
+          background: rgba(10, 10, 22, 0.85);
+          border: 1.5px solid rgba(255, 255, 255, 0.08);
           border-radius: 20px;
           padding: 1.4rem 1.5rem;
           display: flex;
           flex-direction: column;
           gap: 0.85rem;
-          box-shadow: 0 4px 16px rgba(15, 23, 42, 0.07), 0 1px 3px rgba(15, 23, 42, 0.04);
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
         }
         @media (max-width: 640px) {
           .profile-card {
@@ -1846,10 +1873,10 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
           margin: 0;
           font-size: 0.95rem;
           font-weight: 900;
-          color: #0f172a;
+          color: #f8fafc;
           letter-spacing: -0.01em;
           padding-bottom: 0.65rem;
-          border-bottom: 1.5px solid #f1f5f9;
+          border-bottom: 1.5px solid rgba(255, 255, 255, 0.08);
         }
         @media (max-width: 640px) {
           .sidebar-title {
@@ -1863,7 +1890,7 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
           align-items: center;
           gap: 0.5rem;
           font-weight: 700;
-          color: #334155;
+          color: rgba(226, 232, 240, 0.8);
           font-size: 0.9rem;
         }
         @media (max-width: 640px) {
@@ -1874,7 +1901,7 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
         .save-bar {
           margin-top: 1.1rem;
           padding-top: 1rem;
-          border-top: 1px solid #f1f5f9;
+          border-top: 1px solid rgba(255, 255, 255, 0.08);
           display: flex;
           align-items: center;
           justify-content: space-between;
@@ -1891,7 +1918,7 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
           margin: 0;
           font-size: 1.05rem;
           font-weight: 800;
-          color: #0f172a;
+          color: #f8fafc;
         }
         @media (max-width: 640px) {
           .save-bar h3 {
@@ -1900,7 +1927,7 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
         }
         .save-bar p {
           margin: 0.15rem 0 0;
-          color: #94a3b8;
+          color: rgba(226, 232, 240, 0.5);
           font-size: 0.83rem;
         }
         @media (max-width: 640px) {
@@ -1952,7 +1979,7 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
         .field label {
           font-size: 0.75rem;
           font-weight: 800;
-          color: #64748b;
+          color: rgba(226, 232, 240, 0.6);
           text-transform: uppercase;
           letter-spacing: 0.05em;
           display: inline-flex;
@@ -1963,20 +1990,20 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
           width: 100%;
           max-width: 100%;
           box-sizing: border-box;
-          border: 1px solid #d6dee8;
+          border: 1px solid rgba(255, 255, 255, 0.1);
           border-radius: 16px;
           padding: 0.82rem 0.95rem;
           font-size: 0.93rem;
-          color: #0f172a;
+          color: #f8fafc;
           outline: none;
-          background: rgba(255,255,255,0.96);
+          background: rgba(255, 255, 255, 0.04);
         }
         .field input:focus, .field textarea:focus {
-          border-color: #6366f1;
-          box-shadow: 0 0 0 4px rgba(99,102,241,0.12);
+          border-color: #8b5cf6;
+          box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.15);
         }
         .field-hint {
-          color: #64748b;
+          color: rgba(226, 232, 240, 0.5);
           font-size: 0.75rem;
           line-height: 1.45;
         }
@@ -1994,21 +2021,21 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
         }
         .toggle-field {
           padding: 1rem 1.05rem;
-          border: 1px solid rgba(226, 232, 240, 0.95);
+          border: 1px solid rgba(255, 255, 255, 0.08);
           border-radius: 20px;
-          background: rgba(255,255,255,0.8);
+          background: rgba(255, 255, 255, 0.03);
           margin-bottom: 0.35rem;
         }
         .toggle-label {
           font-size: 0.95rem;
           font-weight: 800;
-          color: #0f172a;
+          color: #f8fafc;
           text-transform: none;
           letter-spacing: 0;
         }
         .toggle-hint {
           font-size: 0.8rem;
-          color: #64748b;
+          color: rgba(226, 232, 240, 0.5);
           line-height: 1.45;
           margin: 0;
         }
@@ -2050,30 +2077,30 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
           gap: 0.5rem;
           margin-top: 0.35rem;
           font-size: 0.75rem;
-          color: #64748b;
+          color: rgba(226, 232, 240, 0.5);
         }
         .upload-row input[type='file'] {
           display: none;
         }
         .drop-zone {
-          border: 1px dashed #94a3b8;
+          border: 1px dashed rgba(255, 255, 255, 0.15);
           border-radius: 16px;
           padding: 1rem 1rem;
           text-align: center;
-          color: #475569;
-          background: #f8fafc;
+          color: rgba(226, 232, 240, 0.6);
+          background: rgba(255, 255, 255, 0.03);
           cursor: pointer;
           transition: 0.2s ease;
         }
         .drop-zone:hover {
-          border-color: #007aff;
-          background: #eff6ff;
+          border-color: rgba(139, 92, 246, 0.4);
+          background: rgba(139, 92, 246, 0.06);
         }
         .drop-zone.disabled,
         .drop-zone.disabled:hover {
-          border-color: #cbd5e1;
-          background: #f1f5f9;
-          color: #94a3b8;
+          border-color: rgba(255, 255, 255, 0.06);
+          background: rgba(255, 255, 255, 0.02);
+          color: rgba(226, 232, 240, 0.3);
           cursor: not-allowed;
         }
         .progress-wrap {
@@ -2099,11 +2126,11 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
         }
         .save-btn { width: fit-content; margin-top: 0.2rem; gap: 0.5rem; }
         .state-box {
-          border: 1px dashed #cbd5e1;
+          border: 1px dashed rgba(255, 255, 255, 0.1);
           border-radius: 14px;
           padding: 1.2rem;
-          color: #64748b;
-          background: #f8fafc;
+          color: rgba(226, 232, 240, 0.5);
+          background: rgba(255, 255, 255, 0.02);
           font-weight: 600;
         }
         .alert {
@@ -2112,37 +2139,37 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
           font-size: 0.84rem;
           font-weight: 700;
         }
-        .alert.error { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
-        .alert.success { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+        .alert.error { background: rgba(239, 68, 68, 0.1); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.25); }
+        .alert.success { background: rgba(16, 185, 129, 0.1); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.25); }
         .panel-summary {
-          background: #fff;
-          border: 1.5px solid #e2e8f0;
+          background: rgba(10, 10, 22, 0.85);
+          border: 1.5px solid rgba(255, 255, 255, 0.08);
         }
         .panel-summary h2 {
           margin: 0;
           font-size: 1.15rem;
           font-weight: 900;
-          color: #0f172a;
+          color: #f8fafc;
           letter-spacing: -0.02em;
           padding-bottom: 0.6rem;
-          border-bottom: 1.5px solid #f1f5f9;
+          border-bottom: 1.5px solid rgba(255, 255, 255, 0.08);
         }
         .summary-eyebrow {
           letter-spacing: 0.3em;
           text-transform: uppercase;
           font-size: 0.62rem;
           font-weight: 800;
-          color: #818cf8;
+          color: #a78bfa;
           margin-bottom: 0.5rem;
         }
         .summary-subtitle {
-          color: #475569;
+          color: rgba(226, 232, 240, 0.7);
           font-weight: 700;
           margin-bottom: 0.6rem;
         }
         .summary-copy {
           margin: 0 0 1.1rem;
-          color: #64748b;
+          color: rgba(226, 232, 240, 0.5);
         }
         .panel-settings-btn {
           align-self: flex-start;
@@ -2150,8 +2177,8 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
         }
         .panel-kpi-card {
           padding: 1.3rem 1.4rem;
-          border: 1.5px solid #e2e8f0;
-          background: #ffffff;
+          border: 1.5px solid rgba(255, 255, 255, 0.08);
+          background: rgba(10, 10, 22, 0.85);
         }
         .kpi-grid {
           display: grid;

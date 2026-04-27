@@ -981,7 +981,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
   };
 
   return (
-    <div className={`live-dashboard ${isNightMode ? 'night-vision' : ''}`}>
+    <div className={`live-dashboard ${isNightMode ? 'night-vision' : 'light-mode'}`}>
       <header className="hud-header">
         <div className="hud-left">
           <div className="status-indicator">
@@ -1917,14 +1917,14 @@ export default function LiveDashboard({ bandId, musicianId }) {
                 <p>Brz pristup tekstovima i akordima tokom nastupa.</p>
                 <ul>
                   <li>Pretražite pesmu ili otvorite set listu — klik na pesmu otvara tekst.</li>
-                  <li>Akordi su označeni <span style={{ color: '#00ff00', fontWeight: 700 }}>zelenom bojom</span> unutar teksta.</li>
+                  <li>Akordi su označeni <span style={{ color: '#8b5cf6', fontWeight: 700 }}>ljubičastom bojom</span> unutar teksta.</li>
                   <li>Veličinu slova menjate u <strong>Podešavanjima</strong>.</li>
                 </ul>
               </div>
 
               <div className="help-section">
                 <h3><Eye size={16} /> Night Vision</h3>
-                <p>Specijalni režim sa <strong>zelenim tekstom na crnoj pozadini</strong> — ne smeta publici, čuva vid, idealan za mračnu binu. Uključeno je podrazumevano.</p>
+                <p>Specijalni režim sa <strong>ljubičastim akcentima na tamnoj pozadini</strong> — ne smeta publici, čuva vid, idealan za mračnu binu. Uključeno je podrazumevano.</p>
               </div>
 
               <div className="help-section">
@@ -1950,7 +1950,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
         </div>
       )}
 
-      <style jsx>{`
+      <style jsx global>{`
         .live-dashboard {
           position: fixed;
           top: 0;
@@ -1961,8 +1961,8 @@ export default function LiveDashboard({ bandId, musicianId }) {
           max-width: 100vw;
           height: 100%;
           max-height: 100dvh;
-          background: #000;
-          color: #eee;
+          background: #050505;
+          color: #e2e8f0;
           display: flex;
           flex-direction: column;
           font-family: 'JetBrains Mono', monospace;
@@ -1972,8 +1972,12 @@ export default function LiveDashboard({ bandId, musicianId }) {
         }
 
         .night-vision {
-          color: #00ff00;
-          text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+          background:
+            radial-gradient(circle at 20% 20%, rgba(124, 58, 237, 0.2), transparent 55%),
+            radial-gradient(circle at 80% 0%, rgba(59, 130, 246, 0.18), transparent 60%),
+            #03030b;
+          color: #f1f5f9;
+          text-shadow: 0 0 3px rgba(139, 92, 246, 0.2);
         }
         .night-vision .hud-header,
         .night-vision .setlists-panel,
@@ -1990,7 +1994,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
         .night-vision .song-select,
         .night-vision .settings-panel,
         .night-vision .setting-group {
-          border-color: rgba(0, 255, 0, 0.18);
+          border-color: rgba(139, 92, 246, 0.18);
         }
         .night-vision .setting-hint,
         .night-vision .setlist-help-text,
@@ -2002,7 +2006,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
         .night-vision .song-dropdown-artist,
         .night-vision .nav-item,
         .night-vision .hud-content h2 {
-          color: rgba(0, 255, 0, 0.62);
+          color: #cbd5e1;
         }
         .night-vision .setting-label,
         .night-vision .settings-header h2,
@@ -2014,20 +2018,22 @@ export default function LiveDashboard({ bandId, musicianId }) {
         .night-vision .song-dropdown-title,
         .night-vision .status-indicator,
         .night-vision .lyrics-display {
-          color: #b7ffb7 !important;
+          color: #ffffff !important;
         }
 
         .hud-header {
           min-height: 52px;
           height: auto;
           flex-shrink: 0;
-          border-bottom: 1px solid #222;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.06);
           display: flex;
           justify-content: space-between;
           align-items: center;
           gap: 0.75rem;
           padding: 0.35rem 1rem;
-          background: #0a0a0a;
+          background: rgba(5, 6, 15, 0.78);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
           z-index: 10;
           position: relative;
           flex-wrap: nowrap;
@@ -2071,18 +2077,18 @@ export default function LiveDashboard({ bandId, musicianId }) {
         }
 
         .night-vision .hud-pending-orbit.has-pending {
-          color: #0a0a0a;
-          background: #ff3333;
-          border-color: #00ff00;
-          box-shadow: 0 0 12px rgba(255, 51, 51, 0.6);
+          color: #fff;
+          background: #dc2626;
+          border-color: #fca5a5;
+          box-shadow: 0 0 16px rgba(220, 38, 38, 0.5);
         }
 
         .night-vision .hud-pending-orbit.has-pending .hud-pending-orbit-num {
-          color: #000;
+          color: #fff;
         }
 
         .night-vision .hud-pending-orbit:not(.has-pending) {
-          border-color: #333;
+          border-color: rgba(139, 92, 246, 0.2);
         }
 
         .settings-overlay {
@@ -2142,12 +2148,12 @@ export default function LiveDashboard({ bandId, musicianId }) {
           color: #ef4444;
         }
         .night-vision .close-btn {
-          border-color: rgba(0, 255, 0, 0.18);
-          color: #7dff7d;
+          border-color: rgba(139, 92, 246, 0.18);
+          color: #f8fafc;
         }
         .night-vision .close-btn:hover {
-          border-color: #00ff00;
-          color: #00ff00;
+          border-color: #8b5cf6;
+          color: #8b5cf6;
         }
         .settings-body {
           padding: 0.95rem 1rem 1rem;
@@ -2227,7 +2233,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
           width: 100%;
           padding: 10px 14px;
           border-radius: 8px;
-          border: 1px solid #333;
+          border: 1px solid rgba(255, 255, 255, 0.1);
           background: #111;
           color: #e5e7eb;
           font-family: 'JetBrains Mono', monospace;
@@ -2242,13 +2248,13 @@ export default function LiveDashboard({ bandId, musicianId }) {
         }
 
         .notif-permission-btn:hover:not(:disabled) {
-          border-color: #00ff00;
-          background: #0f1a0f;
+          border-color: #8b5cf6;
+          background: rgba(139, 92, 246, 0.06);
         }
         .night-vision .notif-permission-btn {
-          border-color: rgba(0, 255, 0, 0.2);
-          color: #8dff8d;
-          background: rgba(0, 255, 0, 0.05);
+          border-color: rgba(139, 92, 246, 0.2);
+          color: #f8fafc;
+          background: rgba(139, 92, 246, 0.05);
         }
 
         .notif-permission-btn:disabled {
@@ -2281,7 +2287,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
         .hud-controls { display: flex; gap: 1rem; }
         .hud-btn {
           background: #111;
-          border: 1px solid #333;
+          border: 1px solid rgba(255, 255, 255, 0.1);
           color: #cbd5e1;
           padding: 6px 12px;
           border-radius: 6px;
@@ -2295,23 +2301,23 @@ export default function LiveDashboard({ bandId, musicianId }) {
         }
 
         .hud-btn.active {
-          border-color: #00ff00;
-          color: #00ff00;
+          border-color: #8b5cf6;
+          color: #8b5cf6;
         }
         .hud-btn:hover {
           border-color: #4b5563;
           color: #f3f4f6;
         }
         .night-vision .hud-btn {
-          border-color: rgba(0, 255, 0, 0.18);
-          color: #8dff8d;
-          background: rgba(0, 255, 0, 0.03);
+          border-color: rgba(139, 92, 246, 0.18);
+          color: #f8fafc;
+          background: rgba(139, 92, 246, 0.03);
         }
         .night-vision .hud-btn:hover,
         .night-vision .hud-btn.active {
-          border-color: #00ff00;
-          color: #00ff00;
-          background: rgba(0, 255, 0, 0.08);
+          border-color: #8b5cf6;
+          color: #8b5cf6;
+          background: rgba(139, 92, 246, 0.08);
         }
 
         .exit-btn {
@@ -2340,7 +2346,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
         }
 
         .hud-side-nav {
-          border-right: 1px solid #222;
+          border-right: 1px solid rgba(255, 255, 255, 0.06);
           display: flex;
           flex-direction: column;
           align-items: center;
@@ -2365,11 +2371,11 @@ export default function LiveDashboard({ bandId, musicianId }) {
           justify-content: center;
         }
 
-        .nav-item.active { color: #00ff00; }
+        .nav-item.active { color: #a78bfa; }
         .nav-item:hover { color: #f3f4f6; }
         .night-vision .nav-item:hover,
         .night-vision .nav-item.active {
-          color: #00ff00;
+          color: #c4b5fd;
         }
         .nav-item .nav-tooltip {
           position: absolute;
@@ -2450,8 +2456,8 @@ export default function LiveDashboard({ bandId, musicianId }) {
           letter-spacing: 2px;
         }
         .requests-title.night-glow {
-          color: #00ff00 !important;
-          text-shadow: 0 0 7px rgba(0, 255, 0, 0.5), 0 0 16px rgba(0, 255, 0, 0.22);
+          color: #c4b5fd !important;
+          text-shadow: 0 0 7px rgba(139, 92, 246, 0.5), 0 0 16px rgba(139, 92, 246, 0.22);
         }
 
         .feed-grid {
@@ -2467,7 +2473,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
         }
         .request-view-toggle {
           display: inline-flex;
-          border: 1px solid #222;
+          border: 1px solid rgba(255, 255, 255, 0.08);
           border-radius: 999px;
           padding: 3px;
           gap: 4px;
@@ -2624,33 +2630,33 @@ export default function LiveDashboard({ bandId, musicianId }) {
         }
 
         .night-vision .btn-hud.accept {
-          background: rgba(0, 255, 0, 0.1);
-          color: #4ade80;
-          border-color: rgba(0, 255, 0, 0.2);
+          background: rgba(139, 92, 246, 0.1);
+          color: #f8fafc;
+          border-color: rgba(139, 92, 246, 0.2);
           box-shadow: none;
         }
         .night-vision .btn-hud.accept:hover {
-          background: rgba(0, 255, 0, 0.18);
+          background: rgba(139, 92, 246, 0.18);
         }
         .night-vision .btn-hud.accept:active {
-          background: rgba(0, 255, 0, 0.35);
+          background: rgba(139, 92, 246, 0.35);
           color: #fff;
-          border-color: #00ff00;
-          box-shadow: 0 0 10px rgba(0, 255, 0, 0.25);
+          border-color: #8b5cf6;
+          box-shadow: 0 0 10px rgba(139, 92, 246, 0.25);
           transform: scale(0.95);
         }
         .night-vision .btn-hud.skip {
-          border-color: rgba(0, 255, 0, 0.12);
-          color: rgba(0, 255, 0, 0.4);
+          border-color: rgba(139, 92, 246, 0.18);
+          color: #94a3b8;
         }
         .night-vision .btn-hud.skip:hover {
-          background: rgba(0, 255, 0, 0.06);
-          color: rgba(0, 255, 0, 0.6);
+          background: rgba(139, 92, 246, 0.06);
+          color: #cbd5e1;
         }
         .night-vision .btn-hud.skip:active {
-          background: rgba(0, 255, 0, 0.15);
-          color: #00ff00;
-          border-color: rgba(0, 255, 0, 0.4);
+          background: rgba(139, 92, 246, 0.15);
+          color: #8b5cf6;
+          border-color: rgba(139, 92, 246, 0.4);
           transform: scale(0.95);
         }
 
@@ -2664,12 +2670,12 @@ export default function LiveDashboard({ bandId, musicianId }) {
           letter-spacing: 0.04em;
           background: #1a1a1a;
           color: #666;
-          border: 1px solid #333;
+          border: 1px solid rgba(255, 255, 255, 0.1);
         }
         .night-vision .status-chip {
-          background: rgba(0, 255, 0, 0.05);
-          color: rgba(0, 255, 0, 0.4);
-          border-color: rgba(0, 255, 0, 0.12);
+          background: rgba(139, 92, 246, 0.08);
+          color: #cbd5e1;
+          border-color: rgba(139, 92, 246, 0.18);
         }
 
         .setting-input {
@@ -2677,18 +2683,18 @@ export default function LiveDashboard({ bandId, musicianId }) {
           transition: border-color 0.2s ease;
         }
         .setting-input:focus {
-          border-color: #00ff00;
+          border-color: #8b5cf6;
         }
         .setting-input::placeholder {
           color: #333;
         }
         .night-vision .setting-input {
-          border-color: rgba(0, 255, 0, 0.18);
-          background: rgba(0, 255, 0, 0.03);
-          color: #b7ffb7;
+          border-color: rgba(139, 92, 246, 0.18);
+          background: rgba(139, 92, 246, 0.03);
+          color: #e2e8f0;
         }
         .night-vision .setting-input::placeholder {
-          color: rgba(0, 255, 0, 0.35);
+          color: #64748b;
         }
 
         .setting-range-row {
@@ -2711,7 +2717,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
           -webkit-appearance: none;
           width: 16px;
           height: 16px;
-          background: #00ff00;
+          background: #8b5cf6;
           border-radius: 50%;
           cursor: pointer;
           border: 2px solid #000;
@@ -2719,7 +2725,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
         .setting-range::-moz-range-thumb {
           width: 16px;
           height: 16px;
-          background: #00ff00;
+          background: #8b5cf6;
           border-radius: 50%;
           cursor: pointer;
           border: 2px solid #000;
@@ -2728,7 +2734,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
         .range-value {
           font-size: 0.85rem;
           font-weight: 800;
-          color: #00ff00;
+          color: #c4b5fd;
           min-width: 32px;
           text-align: right;
         }
@@ -2757,7 +2763,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
           flex-shrink: 0;
         }
         .toggle-btn.on {
-          background: #00ff00;
+          background: #8b5cf6;
         }
         .toggle-btn.off {
           background: #333;
@@ -2859,7 +2865,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
           outline: none;
         }
         .repertoire-search-input:focus {
-          border-color: #00ff00;
+          border-color: #8b5cf6;
         }
         .repertoire-browser-head {
           display: flex;
@@ -2899,8 +2905,8 @@ export default function LiveDashboard({ bandId, musicianId }) {
           text-align: left;
         }
         .repertoire-combo-toggle.open {
-          border-color: #00ff00;
-          color: #00ff00;
+          border-color: #8b5cf6;
+          color: #8b5cf6;
         }
         .repertoire-combo-toggle svg {
           flex-shrink: 0;
@@ -2964,9 +2970,9 @@ export default function LiveDashboard({ bandId, musicianId }) {
           color: #9ca3af;
         }
         .repertoire-cat-chip.active {
-          border-color: #00ff00;
-          color: #00ff00;
-          background: rgba(0, 255, 0, 0.08);
+          border-color: #8b5cf6;
+          color: #8b5cf6;
+          background: rgba(139, 92, 246, 0.08);
         }
         .repertoire-combo-count {
           font-size: 0.62rem;
@@ -3032,14 +3038,14 @@ export default function LiveDashboard({ bandId, musicianId }) {
           margin-top: 0;
           padding: 0.1rem 0.4rem;
           border-radius: 999px;
-          border: 1px solid rgba(0, 255, 0, 0.35);
-          background: rgba(0, 255, 0, 0.1);
-          color: #7dff7d;
+          border: 1px solid rgba(139, 92, 246, 0.35);
+          background: rgba(139, 92, 246, 0.1);
+          color: #f8fafc;
           font-size: 0.66rem;
           font-weight: 700;
         }
         .repertoire-dropdown-main:has(.song-in-setlist-pill) {
-          border: 1px dashed rgba(125, 255, 125, 0.35);
+          border: 1px dashed rgba(139, 92, 246, 0.35);
         }
         .song-in-setlist-pill.removable {
           cursor: pointer;
@@ -3148,9 +3154,9 @@ export default function LiveDashboard({ bandId, musicianId }) {
         .song-add-to-setlist,
         .active-setlist-nav button,
         .setlist-item-actions button {
-          border: 1px solid #1f2937;
-          background: #0a0a0a;
-          color: #d1d5db;
+          border: 1px solid #e2e8f0;
+          background: #ffffff;
+          color: #475569;
           border-radius: 8px;
           cursor: pointer;
           font-family: 'JetBrains Mono', monospace;
@@ -3162,12 +3168,12 @@ export default function LiveDashboard({ bandId, musicianId }) {
           font-size: 0.7rem;
           white-space: nowrap;
         }
-        .setlist-chip.active,
-        .active-setlist-item.active {
-          border-color: #00ff00;
-          color: #00ff00;
-          background: rgba(0, 255, 0, 0.15);
-          box-shadow: 0 0 8px rgba(0, 255, 0, 0.3), inset 0 0 6px rgba(0, 255, 0, 0.1);
+        .night-vision .setlist-chip.active,
+        .night-vision .active-setlist-item.active {
+          border-color: #a78bfa;
+          color: #fff;
+          background: rgba(139, 92, 246, 0.18);
+          box-shadow: 0 0 8px rgba(139, 92, 246, 0.3), inset 0 0 6px rgba(139, 92, 246, 0.1);
           font-weight: 700;
         }
 
@@ -3202,7 +3208,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
           align-items: center;
           gap: 4px;
           padding: 2px 8px;
-          border: 1px solid #333;
+          border: 1px solid rgba(255, 255, 255, 0.1);
           border-radius: 6px;
           background: #111;
           color: #777;
@@ -3270,16 +3276,108 @@ export default function LiveDashboard({ bandId, musicianId }) {
         .night-vision .song-add-to-setlist,
         .night-vision .active-setlist-nav button,
         .night-vision .setlist-item-actions button {
-          border-color: rgba(0, 255, 0, 0.18);
-          color: #8dff8d;
-          background: rgba(0, 255, 0, 0.03);
+          border-color: rgba(139, 92, 246, 0.22);
+          color: #f8fafc;
+          background: rgba(139, 92, 246, 0.05);
+        }
+        .night-vision .setlist-item-main {
+          background: #0a0a0b;
+          border-color: rgba(255, 255, 255, 0.06);
+          color: #f1f5f9;
+        }
+        .night-vision .setlist-item-order {
+          color: #a78bfa;
+        }
+        .night-vision .setlist-item-title {
+          color: #f1f5f9;
+        }
+        .night-vision .active-setlist-strip {
+          background: rgba(10, 10, 11, 0.7);
+          border-color: rgba(255, 255, 255, 0.06);
+        }
+        .night-vision .setlist-name-input {
+          background: #0a0a0b;
+          border-color: rgba(255, 255, 255, 0.08);
+          color: #f8fafc;
+        }
+        .night-vision .setlists-empty {
+          border-color: rgba(255, 255, 255, 0.06);
+          color: #cbd5e1;
+        }
+
+        /* ── Night-vision: brighten all remaining dim elements ── */
+        .night-vision .repertoire-cat-chip {
+          border-color: rgba(139, 92, 246, 0.2);
+          color: #cbd5e1;
+        }
+        .night-vision .repertoire-cat-chip:hover {
+          border-color: rgba(139, 92, 246, 0.4);
+          color: #f1f5f9;
+        }
+        .night-vision .repertoire-cat-chip.active {
+          border-color: #a78bfa;
+          color: #f8fafc;
+          background: rgba(139, 92, 246, 0.15);
+        }
+        .night-vision .repertoire-combo-toggle {
+          border-color: rgba(139, 92, 246, 0.2);
+          background: rgba(5, 5, 15, 0.8);
+          color: #e2e8f0;
+        }
+        .night-vision .repertoire-combo-toggle.open {
+          border-color: #a78bfa;
+          color: #f8fafc;
+        }
+        .night-vision .repertoire-combo-count {
+          color: #cbd5e1;
+        }
+        .night-vision .repertoire-empty {
+          color: #94a3b8;
+        }
+        .night-vision .repertoire-dropdown-main {
+          color: #e2e8f0;
+        }
+        .night-vision .repertoire-dropdown-main:hover {
+          background: rgba(139, 92, 246, 0.05);
+        }
+        .night-vision .repertoire-dropdown-item {
+          border-bottom-color: rgba(255, 255, 255, 0.04);
+        }
+        .night-vision .song-open-lyrics-btn {
+          border-color: rgba(139, 92, 246, 0.2);
+          background: rgba(139, 92, 246, 0.05);
+          color: #e2e8f0;
+        }
+        .night-vision .song-open-lyrics-btn:hover {
+          border-color: #a78bfa;
+          color: #f8fafc;
+        }
+        .night-vision .setlists-panel-header h3,
+        .night-vision .active-setlist-name {
+          color: #e2e8f0;
+        }
+        .night-vision .setlist-status-row {
+          color: #cbd5e1;
+        }
+        .night-vision .setlist-count-badge {
+          border-color: rgba(139, 92, 246, 0.2);
+          background: rgba(139, 92, 246, 0.06);
+          color: #e2e8f0;
+        }
+        .night-vision .repertoire-combo-sticky-search {
+          background: rgba(5, 5, 15, 0.95);
+          border-bottom-color: rgba(255, 255, 255, 0.06);
+        }
+        .night-vision .song-search-box {
+          background: rgba(5, 5, 15, 0.8);
+          color: #cbd5e1;
         }
         .night-vision .setlist-chip.active,
         .night-vision .active-setlist-item.active {
-          border-color: #00ff00;
-          color: #00ff00;
-          background: rgba(0, 255, 0, 0.18);
-          box-shadow: 0 0 10px rgba(0, 255, 0, 0.35), inset 0 0 6px rgba(0, 255, 0, 0.12);
+          border-color: #8b5cf6;
+          color: #fff;
+          background: rgba(139, 92, 246, 0.2);
+          box-shadow: 0 0 10px rgba(139, 92, 246, 0.3), inset 0 0 6px rgba(139, 92, 246, 0.1);
           font-weight: 700;
         }
         .setlist-create-btn,
@@ -3290,27 +3388,15 @@ export default function LiveDashboard({ bandId, musicianId }) {
           font-size: 0.72rem;
           font-weight: 700;
         }
-        .setlist-create-btn:hover,
-        .setlist-delete-btn:hover,
-        .song-add-to-setlist:hover:not(:disabled),
-        .setlist-chip:hover,
-        .active-setlist-item:hover,
-        .active-setlist-nav button:hover:not(:disabled),
-        .setlist-item-actions button:hover {
-          border-color: #00ff00;
-          color: #00ff00;
-        }
-        .setlist-create-btn:active,
-        .setlist-delete-btn:active,
-        .song-add-to-setlist:active:not(:disabled),
-        .setlist-chip:active,
-        .active-setlist-item:active,
-        .active-setlist-nav button:active:not(:disabled),
-        .setlist-item-actions button:active {
-          background: rgba(0, 255, 0, 0.18);
-          border-color: #00ff00;
-          color: #fff;
-          transform: scale(0.95);
+        .night-vision .setlist-create-btn:hover,
+        .night-vision .setlist-delete-btn:hover,
+        .night-vision .song-add-to-setlist:hover:not(:disabled),
+        .night-vision .setlist-chip:hover,
+        .night-vision .active-setlist-item:hover,
+        .night-vision .active-setlist-nav button:hover:not(:disabled),
+        .night-vision .setlist-item-actions button:hover {
+          border-color: #8b5cf6;
+          color: #f8fafc;
         }
         .night-vision .setlist-create-btn:active,
         .night-vision .setlist-delete-btn:active,
@@ -3319,10 +3405,10 @@ export default function LiveDashboard({ bandId, musicianId }) {
         .night-vision .active-setlist-item:active,
         .night-vision .active-setlist-nav button:active:not(:disabled),
         .night-vision .setlist-item-actions button:active {
-          background: rgba(0, 255, 0, 0.25);
-          border-color: #00ff00;
-          color: #00ff00;
-          box-shadow: 0 0 8px rgba(0, 255, 0, 0.2);
+          background: rgba(139, 92, 246, 0.18);
+          border-color: #8b5cf6;
+          color: #fff;
+          box-shadow: 0 0 8px rgba(139, 92, 246, 0.2);
           transform: scale(0.95);
         }
         .song-add-to-setlist:disabled,
@@ -3331,10 +3417,10 @@ export default function LiveDashboard({ bandId, musicianId }) {
           cursor: not-allowed;
         }
         .setlists-empty {
-          border: 1px dashed #1f2937;
+          border: 1px dashed #e2e8f0;
           border-radius: 10px;
           padding: 1rem;
-          color: #6b7280;
+          color: #64748b;
           font-size: 0.76rem;
           line-height: 1.55;
         }
@@ -3345,10 +3431,10 @@ export default function LiveDashboard({ bandId, musicianId }) {
         .setlist-name-input {
           flex: 1;
           min-width: 0;
-          border: 1px solid #1f2937;
+          border: 1px solid #e2e8f0;
           border-radius: 8px;
-          background: #0a0a0a;
-          color: #eee;
+          background: #ffffff;
+          color: #0f172a;
           padding: 0.65rem 0.75rem;
           font-family: 'JetBrains Mono', monospace;
           font-size: 0.78rem;
@@ -3411,9 +3497,9 @@ export default function LiveDashboard({ bandId, musicianId }) {
           gap: 0.5rem;
           align-items: stretch;
         }
-        .setlist-item-row.just-added .setlist-item-main {
-          border-color: rgba(0, 255, 0, 0.62);
-          box-shadow: 0 0 0 1px rgba(0, 255, 0, 0.3) inset;
+        .night-vision .setlist-item-row.just-added .setlist-item-main {
+          border-color: rgba(139, 92, 246, 0.55);
+          box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.25) inset;
         }
         .setlist-item-main,
         .song-picker-open {
@@ -3432,22 +3518,23 @@ export default function LiveDashboard({ bandId, musicianId }) {
         }
         .setlist-item-main {
           padding: 0.75rem 0.85rem;
-          border: 1px solid #111827;
+          border: 1px solid #e2e8f0;
           border-radius: 10px;
-          background: #080808;
+          background: #ffffff;
+          color: #0f172a;
           transition: background 0.15s, border-color 0.15s, transform 0.1s;
         }
-        .setlist-item-main:hover {
-          border-color: rgba(0, 255, 0, 0.3);
-          background: #0c0c0c;
+        .night-vision .setlist-item-main:hover {
+          border-color: rgba(139, 92, 246, 0.3);
+          background: #0e0e10;
         }
-        .setlist-item-main:active {
-          border-color: #00ff00;
-          background: rgba(0, 255, 0, 0.1);
+        .night-vision .setlist-item-main:active {
+          border-color: #8b5cf6;
+          background: rgba(139, 92, 246, 0.08);
           transform: scale(0.98);
         }
         .setlist-item-order {
-          color: #00ff00;
+          color: #7c3aed;
           font-size: 0.72rem;
           min-width: 1.6rem;
         }
@@ -3458,7 +3545,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
           min-width: 0;
         }
         .setlist-item-title {
-          color: #e5e7eb;
+          color: #0f172a;
           font-size: 0.82rem;
           font-weight: 700;
         }
@@ -3479,9 +3566,9 @@ export default function LiveDashboard({ bandId, musicianId }) {
           width: 100%;
           margin-bottom: 0.9rem;
           padding: 0.85rem;
-          border: 1px solid #1a1a1a;
+          border: none;
           border-radius: 12px;
-          background: #070707;
+          background: transparent;
           display: flex;
           flex-direction: column;
           gap: 0.75rem;
@@ -3520,11 +3607,11 @@ export default function LiveDashboard({ bandId, musicianId }) {
           color: #fff;
         }
         .cheatsheet-setlist-toggle.expanded {
-          color: #00ff00;
+          color: #8b5cf6;
           border-bottom: 1px solid #1a1a1a;
         }
         .cheatsheet-setlist-toggle:active {
-          background: rgba(0, 255, 0, 0.1);
+          background: rgba(139, 92, 246, 0.1);
           transform: scale(0.98);
         }
         .cheatsheet-chevron {
@@ -3534,7 +3621,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
         }
         .cheatsheet-chevron.open {
           transform: rotate(180deg);
-          color: #00ff00;
+          color: #8b5cf6;
         }
         .cheatsheet-setlist-songs {
           display: flex;
@@ -3567,14 +3654,14 @@ export default function LiveDashboard({ bandId, musicianId }) {
           background: #0c0c0c;
         }
         .cheatsheet-song-item:active {
-          background: rgba(0, 255, 0, 0.1);
+          background: rgba(139, 92, 246, 0.1);
         }
         .cheatsheet-song-item.active {
-          background: rgba(0, 255, 0, 0.08);
-          color: #00ff00;
+          background: rgba(139, 92, 246, 0.08);
+          color: #a78bfa;
         }
         .cheatsheet-song-num {
-          color: #00ff00;
+          color: #a78bfa;
           font-size: 0.68rem;
           min-width: 1.5rem;
           flex-shrink: 0;
@@ -3593,30 +3680,30 @@ export default function LiveDashboard({ bandId, musicianId }) {
           flex-shrink: 0;
         }
         .night-vision .cheatsheet-setlist-block {
-          border-color: rgba(0, 255, 0, 0.12);
+          border-color: rgba(139, 92, 246, 0.12);
         }
         .night-vision .cheatsheet-setlist-toggle {
-          color: rgba(0, 255, 0, 0.6);
+          color: #e2e8f0;
         }
         .night-vision .cheatsheet-setlist-toggle:hover {
-          color: #00ff00;
-          background: rgba(0, 255, 0, 0.04);
+          color: #fff;
+          background: rgba(139, 92, 246, 0.06);
         }
         .night-vision .cheatsheet-setlist-toggle.expanded {
-          color: #00ff00;
-          border-bottom-color: rgba(0, 255, 0, 0.12);
+          color: #f8fafc;
+          border-bottom-color: rgba(139, 92, 246, 0.18);
         }
         .night-vision .cheatsheet-song-item {
-          color: rgba(0, 255, 0, 0.6);
-          border-top-color: rgba(0, 255, 0, 0.06);
+          color: #e2e8f0;
+          border-top-color: rgba(255, 255, 255, 0.06);
         }
         .night-vision .cheatsheet-song-item:hover {
-          background: rgba(0, 255, 0, 0.04);
-          color: #00ff00;
+          background: rgba(139, 92, 246, 0.06);
+          color: #fff;
         }
         .night-vision .cheatsheet-song-item.active {
-          background: rgba(0, 255, 0, 0.1);
-          color: #00ff00;
+          background: rgba(139, 92, 246, 0.12);
+          color: #fff;
         }
 
         .song-search-box {
@@ -3624,7 +3711,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
           align-items: center;
           gap: 10px;
           background: #111;
-          border: 1px solid #222;
+          border: 1px solid rgba(255, 255, 255, 0.08);
           border-radius: 8px;
           padding: 10px 14px;
           margin-bottom: 0.75rem;
@@ -3675,21 +3762,21 @@ export default function LiveDashboard({ bandId, musicianId }) {
           transition: color 0.2s ease, background 0.2s ease;
         }
         .song-dropdown-toggle:hover {
-          color: #00ff00;
+          color: #8b5cf6;
           background: #121212;
         }
         .night-vision .song-dropdown-toggle {
-          color: #8dff8d;
-          border-left-color: rgba(0, 255, 0, 0.18);
-          background: rgba(0, 255, 0, 0.03);
+          color: #f8fafc;
+          border-left-color: rgba(139, 92, 246, 0.18);
+          background: rgba(139, 92, 246, 0.03);
         }
         .night-vision .song-search-inline {
-          border-color: rgba(0, 255, 0, 0.2);
+          border-color: rgba(139, 92, 246, 0.2);
           background: rgba(0, 0, 0, 0.72);
         }
         .night-vision .song-search-inline:focus-within {
-          border-color: rgba(0, 255, 0, 0.55);
-          box-shadow: 0 0 0 2px rgba(0, 255, 0, 0.14);
+          border-color: rgba(139, 92, 246, 0.55);
+          box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.14);
         }
         .song-dropdown-list {
           position: absolute;
@@ -3767,10 +3854,10 @@ export default function LiveDashboard({ bandId, musicianId }) {
         }
         .song-search-input::placeholder { color: #94a3b8; }
         .night-vision .song-search-input {
-          color: #b7ffb7;
+          color: #e2e8f0;
         }
         .night-vision .song-search-input::placeholder {
-          color: rgba(141, 255, 141, 0.62);
+          color: #94a3b8;
         }
 
         .song-loading {
@@ -3826,13 +3913,35 @@ export default function LiveDashboard({ bandId, musicianId }) {
         }
         .song-picker-item:hover {
           background: #111;
-          border-color: #333;
+          border-color: rgba(255, 255, 255, 0.1);
         }
         .song-picker-item.has-lyrics {
-          border-left: 3px solid #00ff00;
+          border-left: 3px solid #8b5cf6;
         }
         .night-vision .song-picker-item.has-lyrics {
-          box-shadow: inset 0 0 0 1px rgba(0, 255, 0, 0.08);
+          box-shadow: inset 0 0 0 1px rgba(139, 92, 246, 0.08);
+        }
+        .night-vision .song-picker-item {
+          border-color: rgba(255, 255, 255, 0.06);
+          background: rgba(5, 5, 15, 0.6);
+          color: #e2e8f0;
+        }
+        .night-vision .song-picker-item:hover {
+          background: rgba(139, 92, 246, 0.05);
+          border-color: rgba(139, 92, 246, 0.2);
+        }
+        .night-vision .song-picker-artist {
+          color: #94a3b8;
+        }
+        .night-vision .genre-tag {
+          background: rgba(139, 92, 246, 0.08);
+          color: #94a3b8;
+        }
+        .night-vision .song-loading {
+          color: #94a3b8;
+        }
+        .night-vision .song-dropdown-artist {
+          color: #94a3b8;
         }
 
         .song-picker-info {
@@ -3864,10 +3973,10 @@ export default function LiveDashboard({ bandId, musicianId }) {
         }
         .lyrics-tag {
           font-size: 0.55rem;
-          color: #00ff00;
+          color: #8b5cf6;
           padding: 2px 8px;
-          background: rgba(0, 255, 0, 0.08);
-          border: 1px solid rgba(0, 255, 0, 0.2);
+          background: rgba(139, 92, 246, 0.08);
+          border: 1px solid rgba(139, 92, 246, 0.2);
           border-radius: 4px;
           font-weight: 800;
           letter-spacing: 1px;
@@ -3878,12 +3987,12 @@ export default function LiveDashboard({ bandId, musicianId }) {
         }
         .night-vision .lyrics-tag {
           color: #0b0b0b;
-          background: #00ff00;
-          border-color: #00ff00;
+          background: #8b5cf6;
+          border-color: #8b5cf6;
           text-shadow: none;
         }
         .night-vision .no-lyrics-tag {
-          color: rgba(0, 255, 0, 0.45);
+          color: #94a3b8;
         }
 
         /* Song Detail / Lyrics View */
@@ -3909,7 +4018,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
           padding: 0;
           transition: color 0.2s;
         }
-        .back-to-list:hover { color: #00ff00; }
+        .back-to-list:hover { color: #8b5cf6; }
 
         .cheatsheet-nav {
           padding-bottom: 1rem;
@@ -3939,10 +4048,10 @@ export default function LiveDashboard({ bandId, musicianId }) {
           display: inline-flex;
           align-items: center;
           gap: 5px;
-          background: rgba(0, 255, 0, 0.08);
-          border: 1px solid rgba(0, 255, 0, 0.25);
+          background: rgba(139, 92, 246, 0.08);
+          border: 1px solid rgba(139, 92, 246, 0.25);
           border-radius: 6px;
-          color: #4ade80;
+          color: #f8fafc;
           font-family: 'JetBrains Mono', monospace;
           font-size: 0.72rem;
           font-weight: 800;
@@ -3953,12 +4062,12 @@ export default function LiveDashboard({ bandId, musicianId }) {
           letter-spacing: 0.02em;
         }
         .cheatsheet-back-btn:hover {
-          color: #00ff00;
-          background: rgba(0, 255, 0, 0.15);
-          border-color: rgba(0, 255, 0, 0.45);
+          color: #8b5cf6;
+          background: rgba(139, 92, 246, 0.15);
+          border-color: rgba(139, 92, 246, 0.45);
         }
         .cheatsheet-back-btn:active {
-          background: rgba(0, 255, 0, 0.22);
+          background: rgba(139, 92, 246, 0.22);
           transform: scale(0.95);
         }
         .cheatsheet-song-info {
@@ -3983,21 +4092,21 @@ export default function LiveDashboard({ bandId, musicianId }) {
           font-weight: 600;
         }
         .night-vision .cheatsheet-back-btn {
-          border-color: rgba(0, 255, 0, 0.15);
-          color: rgba(0, 255, 0, 0.5);
+          border-color: rgba(139, 92, 246, 0.2);
+          color: #cbd5e1;
         }
         .night-vision .cheatsheet-back-btn:hover {
-          color: #00ff00;
-          border-color: rgba(0, 255, 0, 0.4);
+          color: #8b5cf6;
+          border-color: rgba(139, 92, 246, 0.4);
         }
         .night-vision .cheatsheet-song-header {
-          border-bottom-color: rgba(0, 255, 0, 0.1);
+          border-bottom-color: rgba(139, 92, 246, 0.1);
         }
         .night-vision .cheatsheet-now-title {
-          color: #b7ffb7;
+          color: #e2e8f0;
         }
         .night-vision .cheatsheet-now-artist {
-          color: rgba(0, 255, 0, 0.45);
+          color: #94a3b8;
         }
         .song-detail-header {
           margin-bottom: 2rem;
@@ -4023,7 +4132,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
           max-width: 560px;
           margin-bottom: 0.9rem;
           background: #111;
-          border: 1px solid #222;
+          border: 1px solid rgba(255, 255, 255, 0.08);
           color: #eee;
           padding: 10px 12px;
           border-radius: 8px;
@@ -4032,13 +4141,13 @@ export default function LiveDashboard({ bandId, musicianId }) {
           outline: none;
         }
         .song-select:focus {
-          border-color: #00ff00;
+          border-color: #8b5cf6;
         }
         .key-badge {
           font-size: 0.65rem;
-          color: #00ff00;
-          background: rgba(0, 255, 0, 0.05);
-          border: 1px solid rgba(0, 255, 0, 0.15);
+          color: #8b5cf6;
+          background: rgba(139, 92, 246, 0.05);
+          border: 1px solid rgba(139, 92, 246, 0.15);
           padding: 4px 12px;
           border-radius: 4px;
           font-weight: 800;
@@ -4118,13 +4227,13 @@ export default function LiveDashboard({ bandId, musicianId }) {
           min-height: 34px;
         }
         .cheat-tool-btn:hover {
-          border-color: #00ff00;
-          color: #00ff00;
+          border-color: #8b5cf6;
+          color: #8b5cf6;
         }
         .cheat-tool-btn.active {
-          background: rgba(0, 255, 0, 0.08);
-          border-color: #00ff00;
-          color: #00ff00;
+          background: rgba(139, 92, 246, 0.08);
+          border-color: #8b5cf6;
+          color: #8b5cf6;
         }
         .cheat-tool-btn:disabled {
           opacity: 0.55;
@@ -4153,11 +4262,11 @@ export default function LiveDashboard({ bandId, musicianId }) {
           transition: 0.15s ease;
         }
         .cheat-transpose button:hover {
-          background: rgba(0, 255, 0, 0.1);
-          color: #00ff00;
+          background: rgba(139, 92, 246, 0.1);
+          color: #8b5cf6;
         }
         .cheat-key {
-          color: #00ff00;
+          color: #8b5cf6;
           font-weight: 950;
           font-size: 0.88rem;
           min-width: 22px;
@@ -4168,7 +4277,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
           flex: 1;
           width: 100%;
           background: #050505;
-          border: 1px dashed #333;
+          border: 1px dashed rgba(255, 255, 255, 0.1);
           color: #e2e8f0;
           font-family: 'Courier New', monospace;
           font-size: 0.95rem;
@@ -4179,12 +4288,12 @@ export default function LiveDashboard({ bandId, musicianId }) {
           border-radius: 8px;
           overflow-y: auto;
           scrollbar-width: thin;
-          scrollbar-color: rgba(0, 255, 0, 0.4) transparent;
+          scrollbar-color: rgba(139, 92, 246, 0.4) transparent;
         }
-        .cheat-edit-area:focus { border-color: #00ff00; }
+        .cheat-edit-area:focus { border-color: #8b5cf6; }
         .cheat-edit-area::-webkit-scrollbar { width: 8px; }
         .cheat-edit-area::-webkit-scrollbar-thumb {
-          background: rgba(0, 255, 0, 0.35);
+          background: rgba(139, 92, 246, 0.35);
           border-radius: 999px;
         }
         .cheat-footer {
@@ -4214,16 +4323,16 @@ export default function LiveDashboard({ bandId, musicianId }) {
           min-height: 32px;
         }
         .cheat-speed button:hover {
-          border-color: #00ff00;
-          color: #00ff00;
+          border-color: #8b5cf6;
+          color: #8b5cf6;
         }
         .cheat-speed button.active {
-          background: #00ff00;
+          background: #8b5cf6;
           color: #000;
-          border-color: #00ff00;
+          border-color: #8b5cf6;
         }
         .cheat-play-btn {
-          background: #00ff00;
+          background: #8b5cf6;
           color: #000;
           border: none;
           width: 44px;
@@ -4234,7 +4343,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
           align-items: center;
           justify-content: center;
           transition: 0.18s ease;
-          box-shadow: 0 0 18px rgba(0, 255, 0, 0.35);
+          box-shadow: 0 0 18px rgba(139, 92, 246, 0.35);
         }
         .cheat-play-btn:hover { transform: scale(1.06); }
         .cheat-play-btn:active { transform: scale(0.97); }
@@ -4248,7 +4357,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
           color: #4b5563;
           letter-spacing: 0.08em;
         }
-        .cheat-status span:first-child { color: #00ff00; }
+        .cheat-status span:first-child { color: #8b5cf6; }
         @media (max-width: 640px) {
           .cheatsheet-tools {
             width: 100%;
@@ -4278,11 +4387,11 @@ export default function LiveDashboard({ bandId, musicianId }) {
         }
 
         .chord-inline {
-          color: #00ff00;
+          color: #8b5cf6;
           font-weight: 900;
           margin: 0 2px;
           font-size: 0.85em;
-          text-shadow: 0 0 8px rgba(0, 255, 0, 0.3);
+          text-shadow: 0 0 8px rgba(139, 92, 246, 0.3);
         }
         .empty-line {
           display: inline-block;
@@ -4306,9 +4415,9 @@ export default function LiveDashboard({ bandId, musicianId }) {
         }
         .add-lyrics-btn {
           margin-top: 0.8rem;
-          border: 1px solid rgba(0, 255, 0, 0.35);
-          background: rgba(0, 255, 0, 0.08);
-          color: #00ff00;
+          border: 1px solid rgba(139, 92, 246, 0.35);
+          background: rgba(139, 92, 246, 0.08);
+          color: #8b5cf6;
           border-radius: 8px;
           padding: 10px 14px;
           font-size: 0.75rem;
@@ -4319,8 +4428,8 @@ export default function LiveDashboard({ bandId, musicianId }) {
           transition: all 0.2s ease;
         }
         .add-lyrics-btn:hover {
-          background: rgba(0, 255, 0, 0.16);
-          border-color: rgba(0, 255, 0, 0.6);
+          background: rgba(139, 92, 246, 0.16);
+          border-color: rgba(139, 92, 246, 0.6);
         }
 
         @media (max-width: 1024px) {
@@ -4410,7 +4519,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
             width: 100%;
             padding: 0.35rem 0.25rem calc(0.35rem + env(safe-area-inset-bottom, 0px));
             border-right: none;
-            border-top: 1px solid #222;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
             gap: 0;
             flex-shrink: 0;
           }
@@ -4659,7 +4768,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
             font-size: 1.2rem !important;
           }
           .night-vision {
-            text-shadow: 0 0 3px rgba(0, 255, 0, 0.35);
+            text-shadow: 0 0 3px rgba(139, 92, 246, 0.35);
           }
           .chord-inline {
             text-shadow: none;
@@ -4782,7 +4891,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
           gap: 0.5rem;
           margin: 0 0 0.5rem;
           font-size: 0.85rem;
-          color: #00ff00;
+          color: #8b5cf6;
           letter-spacing: 0.06em;
           text-transform: uppercase;
           font-weight: 800;
@@ -4809,15 +4918,15 @@ export default function LiveDashboard({ bandId, musicianId }) {
           color: #f3f4f6;
         }
         .help-tip {
-          border-color: rgba(0, 255, 0, 0.25);
-          background: rgba(0, 255, 0, 0.04);
+          border-color: rgba(139, 92, 246, 0.25);
+          background: rgba(139, 92, 246, 0.04);
         }
         .night-vision .help-section p,
         .night-vision .help-section li {
-          color: rgba(183, 255, 183, 0.82);
+          color: #cbd5e1;
         }
         .night-vision .help-section strong {
-          color: #b7ffb7;
+          color: #e2e8f0;
         }
 
         /* =====================================================
@@ -4825,7 +4934,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
            Uses same palette as rest of site: soft white/slate bg,
            glass-card surfaces, purple (#8b5cf6) accents.
            ===================================================== */
-        .live-dashboard:not(.night-vision) {
+        .light-mode {
           background:
             radial-gradient(1200px 600px at 15% -10%, rgba(139, 92, 246, 0.08), transparent 55%),
             radial-gradient(900px 500px at 100% 100%, rgba(99, 102, 241, 0.06), transparent 60%),
@@ -4834,120 +4943,120 @@ export default function LiveDashboard({ bandId, musicianId }) {
           font-family: 'Inter', system-ui, sans-serif;
           text-shadow: none;
         }
-        .live-dashboard:not(.night-vision) .hud-header {
+        .light-mode .hud-header {
           background: rgba(255, 255, 255, 0.78);
           backdrop-filter: blur(14px);
           -webkit-backdrop-filter: blur(14px);
           border-bottom-color: rgba(148, 163, 184, 0.22);
           box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
         }
-        .live-dashboard:not(.night-vision) .status-indicator {
+        .light-mode .status-indicator {
           color: #334155;
           background: rgba(139, 92, 246, 0.07);
           border: 1px solid rgba(139, 92, 246, 0.18);
           border-radius: 999px;
         }
-        .live-dashboard:not(.night-vision) .status-indicator .pulse-dot {
+        .light-mode .status-indicator .pulse-dot {
           background: #8b5cf6;
           box-shadow: 0 0 10px rgba(139, 92, 246, 0.55);
         }
-        .live-dashboard:not(.night-vision) .hud-btn {
+        .light-mode .hud-btn {
           background: rgba(255, 255, 255, 0.85);
           backdrop-filter: blur(8px);
           border-color: rgba(148, 163, 184, 0.25);
           color: #475569;
           border-radius: 10px;
         }
-        .live-dashboard:not(.night-vision) .hud-btn:hover {
+        .light-mode .hud-btn:hover {
           border-color: rgba(139, 92, 246, 0.45);
           color: #8b5cf6;
           background: rgba(139, 92, 246, 0.06);
           box-shadow: 0 4px 14px rgba(139, 92, 246, 0.1);
         }
-        .live-dashboard:not(.night-vision) .hud-btn.active {
+        .light-mode .hud-btn.active {
           border-color: rgba(139, 92, 246, 0.55);
           color: #8b5cf6;
           background: rgba(139, 92, 246, 0.1);
         }
-        .live-dashboard:not(.night-vision) .hud-btn.settings-active {
+        .light-mode .hud-btn.settings-active {
           background: #ef4444 !important;
           color: #fff !important;
           border-color: #ef4444 !important;
         }
-        .live-dashboard:not(.night-vision) .exit-btn {
+        .light-mode .exit-btn {
           border-color: rgba(239, 68, 68, 0.45);
           color: #dc2626;
           background: rgba(255, 255, 255, 0.85);
         }
-        .live-dashboard:not(.night-vision) .exit-btn:hover {
+        .light-mode .exit-btn:hover {
           background: #ef4444;
           color: #fff;
           border-color: #ef4444;
         }
-        .live-dashboard:not(.night-vision) .hud-pending-orbit {
+        .light-mode .hud-pending-orbit {
           background: rgba(254, 226, 226, 0.7);
           border-color: rgba(252, 165, 165, 0.6);
         }
-        .live-dashboard:not(.night-vision) .hud-pending-orbit-num {
+        .light-mode .hud-pending-orbit-num {
           color: #b91c1c;
         }
-        .live-dashboard:not(.night-vision) .hud-pending-orbit.has-pending {
+        .light-mode .hud-pending-orbit.has-pending {
           background: linear-gradient(135deg, #fecaca, #fca5a5);
           border-color: #ef4444;
         }
 
         /* Sidebar nav */
-        .live-dashboard:not(.night-vision) .hud-side-nav {
+        .light-mode .hud-side-nav {
           background: rgba(255, 255, 255, 0.7);
           backdrop-filter: blur(12px);
           border-right: 1px solid rgba(148, 163, 184, 0.22);
         }
-        .live-dashboard:not(.night-vision) .nav-item {
+        .light-mode .nav-item {
           color: #64748b;
           background: transparent;
           border-radius: 10px;
         }
-        .live-dashboard:not(.night-vision) .nav-item:hover {
+        .light-mode .nav-item:hover {
           background: rgba(139, 92, 246, 0.07);
           color: #8b5cf6;
         }
-        .live-dashboard:not(.night-vision) .nav-item.active {
+        .light-mode .nav-item.active {
           background: linear-gradient(135deg, rgba(139, 92, 246, 0.14), rgba(99, 102, 241, 0.1));
           color: #7c3aed;
           box-shadow: inset 0 0 0 1px rgba(139, 92, 246, 0.22);
         }
-        .live-dashboard:not(.night-vision) .nav-item .badge {
+        .light-mode .nav-item .badge {
           background: #ef4444;
           color: #fff;
           box-shadow: 0 2px 6px rgba(239, 68, 68, 0.35);
         }
-        .live-dashboard:not(.night-vision) .nav-tooltip {
+        .light-mode .nav-tooltip {
           background: #0f172a;
           color: #ffffff;
           box-shadow: 0 8px 24px rgba(15, 23, 42, 0.15);
         }
 
         /* Main content */
-        .live-dashboard:not(.night-vision) .hud-content {
+        .light-mode .hud-content {
           background: transparent;
           color: #0f172a;
         }
-        .live-dashboard:not(.night-vision) .hud-content h2,
-        .live-dashboard:not(.night-vision) .detail-title {
+        .light-mode .hud-content h2,
+        .light-mode .detail-title {
           color: #0f172a;
         }
-        .live-dashboard:not(.night-vision) .detail-artist,
-        .live-dashboard:not(.night-vision) .setting-hint,
-        .live-dashboard:not(.night-vision) .setlist-help-text,
-        .live-dashboard:not(.night-vision) .setlist-item-artist,
-        .live-dashboard:not(.night-vision) .song-picker-artist,
-        .live-dashboard:not(.night-vision) .song-dropdown-artist,
-        .live-dashboard:not(.night-vision) .cheatsheet-now-artist {
+        .light-mode .detail-artist,
+        .light-mode .setting-hint,
+        .light-mode .setlist-help-text,
+        .light-mode .setlist-item-artist,
+        .light-mode .song-picker-artist,
+        .light-mode .song-dropdown-artist,
+        .light-mode .cheatsheet-now-artist {
           color: #64748b;
         }
 
         /* Request cards — glass style matching site */
-        .live-dashboard:not(.night-vision) .request-card {
+        .light-mode .request-card {
           background: rgba(255, 255, 255, 0.9);
           backdrop-filter: blur(10px);
           -webkit-backdrop-filter: blur(10px);
@@ -4957,414 +5066,434 @@ export default function LiveDashboard({ bandId, musicianId }) {
           box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 4px 16px rgba(139, 92, 246, 0.04);
           transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
-        .live-dashboard:not(.night-vision) .request-card:hover {
+        .light-mode .request-card:hover {
           border-color: rgba(139, 92, 246, 0.3);
           box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05), 0 12px 32px rgba(139, 92, 246, 0.08);
           transform: translateY(-1px);
         }
-        .live-dashboard:not(.night-vision) .request-card.waiter-tip {
+        .light-mode .request-card.waiter-tip {
           background: linear-gradient(135deg, rgba(255, 251, 235, 0.95), rgba(254, 243, 199, 0.85));
           border-color: rgba(251, 191, 36, 0.5);
         }
-        .live-dashboard:not(.night-vision) .req-header .time {
+        .light-mode .req-header .time {
           color: #64748b;
         }
-        .live-dashboard:not(.night-vision) .req-header .table-num,
-        .live-dashboard:not(.night-vision) .song-title {
+        .light-mode .req-header .table-num,
+        .light-mode .song-title {
           color: #0f172a;
         }
-        .live-dashboard:not(.night-vision) .artist-name {
+        .light-mode .artist-name {
           color: #64748b;
         }
-        .live-dashboard:not(.night-vision) .tip-amount {
+        .light-mode .tip-amount {
           color: #16a34a;
         }
-        .live-dashboard:not(.night-vision) .status-chip {
+        .light-mode .status-chip {
           background: #f1f5f9;
           color: #475569;
         }
-        .live-dashboard:not(.night-vision) .status-chip.accepted {
+        .light-mode .status-chip.accepted {
           background: rgba(22, 163, 74, 0.1);
           color: #15803d;
         }
-        .live-dashboard:not(.night-vision) .status-chip.rejected {
+        .light-mode .status-chip.rejected {
           background: rgba(239, 68, 68, 0.1);
           color: #b91c1c;
         }
-        .live-dashboard:not(.night-vision) .status-chip.played {
+        .light-mode .status-chip.played {
           background: rgba(124, 58, 237, 0.1);
           color: #6d28d9;
         }
 
         /* Action buttons */
-        .live-dashboard:not(.night-vision) .btn-hud {
+        .light-mode .btn-hud {
           background: rgba(255, 255, 255, 0.85);
           border: 1px solid rgba(148, 163, 184, 0.25);
           color: #475569;
           border-radius: 10px;
           font-weight: 700;
         }
-        .live-dashboard:not(.night-vision) .btn-hud:hover {
+        .light-mode .btn-hud:hover {
           border-color: rgba(148, 163, 184, 0.5);
           background: rgba(248, 250, 252, 0.95);
         }
-        .live-dashboard:not(.night-vision) .btn-hud.accept {
+        .light-mode .btn-hud.accept {
           background: linear-gradient(135deg, #22c55e, #16a34a);
           color: #ffffff;
           border-color: transparent;
           box-shadow: 0 4px 12px rgba(22, 163, 74, 0.25);
         }
-        .live-dashboard:not(.night-vision) .btn-hud.accept:hover {
+        .light-mode .btn-hud.accept:hover {
           background: linear-gradient(135deg, #16a34a, #15803d);
           box-shadow: 0 6px 18px rgba(22, 163, 74, 0.35);
         }
-        .live-dashboard:not(.night-vision) .btn-hud.reject {
+        .light-mode .btn-hud.reject {
           background: rgba(255, 255, 255, 0.9);
           color: #dc2626;
           border-color: rgba(239, 68, 68, 0.4);
         }
-        .live-dashboard:not(.night-vision) .btn-hud.reject:hover {
+        .light-mode .btn-hud.reject:hover {
           background: #ef4444;
           color: #ffffff;
           border-color: #ef4444;
         }
-        .live-dashboard:not(.night-vision) .btn-hud.played {
+        .light-mode .btn-hud.played {
           background: linear-gradient(135deg, #8b5cf6, #7c3aed);
           color: #ffffff;
           border-color: transparent;
           box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
         }
-        .live-dashboard:not(.night-vision) .btn-hud.played:hover {
+        .light-mode .btn-hud.played:hover {
           background: linear-gradient(135deg, #7c3aed, #6d28d9);
           box-shadow: 0 6px 18px rgba(139, 92, 246, 0.4);
         }
-        .live-dashboard:not(.night-vision) .request-view-toggle button {
+        .light-mode .request-view-toggle button {
           background: rgba(255, 255, 255, 0.8);
           border: 1px solid rgba(148, 163, 184, 0.22);
           color: #64748b;
           border-radius: 999px;
         }
-        .live-dashboard:not(.night-vision) .request-view-toggle button.active {
+        .light-mode .request-view-toggle button.active {
           background: linear-gradient(135deg, #8b5cf6, #7c3aed);
           color: #ffffff;
           border-color: transparent;
           box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
         }
 
+        .night-vision .request-view-toggle {
+          border-color: rgba(139, 92, 246, 0.15);
+        }
+        .night-vision .request-view-toggle button {
+          background: transparent;
+          border: 1px solid rgba(139, 92, 246, 0.15);
+          color: #94a3b8;
+          border-radius: 999px;
+          font-weight: 700;
+          padding: 0.4rem 0.85rem;
+          font-size: 0.72rem;
+          cursor: pointer;
+        }
+        .night-vision .request-view-toggle button.active {
+          background: rgba(139, 92, 246, 0.18);
+          color: #f8fafc;
+          border-color: #a78bfa;
+          box-shadow: 0 0 12px rgba(139, 92, 246, 0.25);
+        }
+
         /* Right metrics panel */
-        .live-dashboard:not(.night-vision) .hud-metrics {
+        .light-mode .hud-metrics {
           background: rgba(255, 255, 255, 0.55);
           backdrop-filter: blur(12px);
           -webkit-backdrop-filter: blur(12px);
           border-left: 1px solid rgba(148, 163, 184, 0.22);
         }
-        .live-dashboard:not(.night-vision) .metric-box {
+        .light-mode .metric-box {
           background: rgba(255, 255, 255, 0.9);
           border: 1px solid rgba(148, 163, 184, 0.22);
           border-radius: 14px;
           color: #0f172a;
           box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
         }
-        .live-dashboard:not(.night-vision) .metric-box .label {
+        .light-mode .metric-box .label {
           color: #64748b;
         }
-        .live-dashboard:not(.night-vision) .metric-box .value {
+        .light-mode .metric-box .value {
           color: #7c3aed;
         }
 
         /* Lyrics / cheatsheet */
-        .live-dashboard:not(.night-vision) .lyrics-display {
+        .light-mode .lyrics-display {
           color: #0f172a;
           scrollbar-color: #cbd5e1 #f1f5f9;
         }
-        .live-dashboard:not(.night-vision) .lyrics-display::-webkit-scrollbar-track {
+        .light-mode .lyrics-display::-webkit-scrollbar-track {
           background: #f1f5f9;
         }
-        .live-dashboard:not(.night-vision) .lyrics-display::-webkit-scrollbar-thumb {
+        .light-mode .lyrics-display::-webkit-scrollbar-thumb {
           background: #cbd5e1;
         }
-        .live-dashboard:not(.night-vision) .chord-inline {
+        .light-mode .chord-inline {
           color: #7c3aed;
           text-shadow: none;
           background: rgba(124, 58, 237, 0.08);
           padding: 0 4px;
           border-radius: 4px;
         }
-        .live-dashboard:not(.night-vision) .cheatsheet-song-header {
+        .light-mode .cheatsheet-song-header {
           border-bottom-color: #e5e7eb;
         }
-        .live-dashboard:not(.night-vision) .cheatsheet-now-title {
+        .light-mode .cheatsheet-now-title {
           color: #0f172a;
         }
-        .live-dashboard:not(.night-vision) .cheatsheet-back-btn {
+        .light-mode .cheatsheet-back-btn {
           background: #f1f5f9;
           border-color: #cbd5e1;
           color: #475569;
         }
-        .live-dashboard:not(.night-vision) .cheatsheet-back-btn:hover {
+        .light-mode .cheatsheet-back-btn:hover {
           border-color: #7c3aed;
           color: #7c3aed;
         }
-        .live-dashboard:not(.night-vision) .key-badge {
+        .light-mode .key-badge {
           background: rgba(124, 58, 237, 0.1);
           color: #7c3aed;
           border-color: rgba(124, 58, 237, 0.3);
         }
-        .live-dashboard:not(.night-vision) .cheat-tool-btn {
+        .light-mode .cheat-tool-btn {
           background: #ffffff;
           border-color: #e5e7eb;
           color: #475569;
         }
-        .live-dashboard:not(.night-vision) .cheat-tool-btn:hover {
+        .light-mode .cheat-tool-btn:hover {
           border-color: #7c3aed;
           color: #7c3aed;
         }
-        .live-dashboard:not(.night-vision) .cheat-tool-btn.active {
+        .light-mode .cheat-tool-btn.active {
           background: rgba(124, 58, 237, 0.08);
           border-color: #7c3aed;
           color: #7c3aed;
         }
-        .live-dashboard:not(.night-vision) .cheat-transpose {
+        .light-mode .cheat-transpose {
           background: #ffffff;
           border-color: #e5e7eb;
         }
-        .live-dashboard:not(.night-vision) .cheat-transpose button {
+        .light-mode .cheat-transpose button {
           color: #475569;
         }
-        .live-dashboard:not(.night-vision) .cheat-transpose button:hover {
+        .light-mode .cheat-transpose button:hover {
           background: rgba(124, 58, 237, 0.08);
           color: #7c3aed;
         }
-        .live-dashboard:not(.night-vision) .cheat-key {
+        .light-mode .cheat-key {
           color: #7c3aed;
         }
-        .live-dashboard:not(.night-vision) .cheat-edit-area {
+        .light-mode .cheat-edit-area {
           background: #f8fafc;
           border-color: #cbd5e1;
           color: #0f172a;
           font-family: 'Courier New', monospace;
         }
-        .live-dashboard:not(.night-vision) .cheat-edit-area:focus {
+        .light-mode .cheat-edit-area:focus {
           border-color: #7c3aed;
         }
-        .live-dashboard:not(.night-vision) .cheat-footer {
+        .light-mode .cheat-footer {
           border-top-color: #e5e7eb;
         }
-        .live-dashboard:not(.night-vision) .cheat-speed button {
+        .light-mode .cheat-speed button {
           background: #ffffff;
           border-color: #e5e7eb;
           color: #64748b;
         }
-        .live-dashboard:not(.night-vision) .cheat-speed button:hover {
+        .light-mode .cheat-speed button:hover {
           border-color: #7c3aed;
           color: #7c3aed;
         }
-        .live-dashboard:not(.night-vision) .cheat-speed button.active {
+        .light-mode .cheat-speed button.active {
           background: #7c3aed;
           color: #ffffff;
           border-color: #7c3aed;
         }
-        .live-dashboard:not(.night-vision) .cheat-play-btn {
+        .light-mode .cheat-play-btn {
           background: #7c3aed;
           color: #ffffff;
           box-shadow: 0 4px 14px rgba(124, 58, 237, 0.35);
         }
-        .live-dashboard:not(.night-vision) .cheat-status {
+        .light-mode .cheat-status {
           color: #94a3b8;
         }
-        .live-dashboard:not(.night-vision) .cheat-status span:first-child {
+        .light-mode .cheat-status span:first-child {
           color: #7c3aed;
         }
-        .live-dashboard:not(.night-vision) .no-lyrics-msg {
+        .light-mode .no-lyrics-msg {
           color: #64748b;
         }
-        .live-dashboard:not(.night-vision) .no-lyrics-msg .hint {
+        .light-mode .no-lyrics-msg .hint {
           color: #94a3b8;
         }
-        .live-dashboard:not(.night-vision) .add-lyrics-btn {
+        .light-mode .add-lyrics-btn {
           background: #7c3aed;
           color: #ffffff;
         }
-        .live-dashboard:not(.night-vision) .add-lyrics-btn:hover {
+        .light-mode .add-lyrics-btn:hover {
           background: #6d28d9;
         }
 
         /* Setlists / song picker / repertoire browser */
-        .live-dashboard:not(.night-vision) .setlists-panel,
-        .live-dashboard:not(.night-vision) .setlist-song-search,
-        .live-dashboard:not(.night-vision) .repertoire-browser,
-        .live-dashboard:not(.night-vision) .active-setlist-strip,
-        .live-dashboard:not(.night-vision) .setlist-item-main,
-        .live-dashboard:not(.night-vision) .song-picker-item,
-        .live-dashboard:not(.night-vision) .song-search-box,
-        .live-dashboard:not(.night-vision) .song-search-inline,
-        .live-dashboard:not(.night-vision) .song-dropdown-toggle,
-        .live-dashboard:not(.night-vision) .song-dropdown-list,
-        .live-dashboard:not(.night-vision) .song-select {
+        .light-mode .setlists-panel,
+        .light-mode .setlist-song-search,
+        .light-mode .repertoire-browser,
+        .light-mode .active-setlist-strip,
+        .light-mode .setlist-item-main,
+        .light-mode .song-picker-item,
+        .light-mode .song-search-box,
+        .light-mode .song-search-inline,
+        .light-mode .song-dropdown-toggle,
+        .light-mode .song-dropdown-list,
+        .light-mode .song-select {
           background: #ffffff;
           border-color: #e5e7eb;
           color: #0f172a;
         }
-        .live-dashboard:not(.night-vision) .setlist-item-title,
-        .live-dashboard:not(.night-vision) .song-picker-title,
-        .live-dashboard:not(.night-vision) .song-dropdown-title,
-        .live-dashboard:not(.night-vision) .active-setlist-name,
-        .live-dashboard:not(.night-vision) .setlists-panel-header h3 {
+        .light-mode .setlist-item-title,
+        .light-mode .song-picker-title,
+        .light-mode .song-dropdown-title,
+        .light-mode .active-setlist-name,
+        .light-mode .setlists-panel-header h3 {
           color: #0f172a;
         }
-        .live-dashboard:not(.night-vision) .setlist-chip {
+        .light-mode .setlist-chip {
           background: #f1f5f9;
           border-color: #e5e7eb;
           color: #475569;
         }
-        .live-dashboard:not(.night-vision) .setlist-chip.active,
-        .live-dashboard:not(.night-vision) .setlist-chip:hover {
+        .light-mode .setlist-chip.active,
+        .light-mode .setlist-chip:hover {
           background: rgba(124, 58, 237, 0.1);
           border-color: #7c3aed;
           color: #7c3aed;
         }
-        .live-dashboard:not(.night-vision) .repertoire-cat-chip {
+        .light-mode .repertoire-cat-chip {
           background: #f1f5f9;
           border-color: #e5e7eb;
           color: #475569;
         }
-        .live-dashboard:not(.night-vision) .repertoire-cat-chip.active {
+        .light-mode .repertoire-cat-chip.active {
           background: #7c3aed;
           color: #ffffff;
           border-color: #7c3aed;
         }
-        .live-dashboard:not(.night-vision) .song-search-input {
+        .light-mode .song-search-input {
           background: #f8fafc;
           border-color: #e5e7eb;
           color: #0f172a;
         }
-        .live-dashboard:not(.night-vision) .song-search-input:focus {
+        .light-mode .song-search-input:focus {
           border-color: #7c3aed;
           background: #ffffff;
         }
-        .live-dashboard:not(.night-vision) .song-search-input::placeholder {
+        .light-mode .song-search-input::placeholder {
           color: #94a3b8;
         }
-        .live-dashboard:not(.night-vision) .song-dropdown-item:hover {
+        .light-mode .song-dropdown-item:hover {
           background: rgba(124, 58, 237, 0.05);
         }
-        .live-dashboard:not(.night-vision) .cheatsheet-setlist-toggle {
+        .light-mode .cheatsheet-setlist-toggle {
           background: #f8fafc;
           border-color: #e5e7eb;
           color: #475569;
         }
-        .live-dashboard:not(.night-vision) .cheatsheet-setlist-toggle:hover,
-        .live-dashboard:not(.night-vision) .cheatsheet-setlist-toggle.expanded {
+        .light-mode .cheatsheet-setlist-toggle:hover,
+        .light-mode .cheatsheet-setlist-toggle.expanded {
           background: rgba(124, 58, 237, 0.08);
           border-color: #7c3aed;
           color: #7c3aed;
         }
-        .live-dashboard:not(.night-vision) .cheatsheet-setlist-empty {
+        .light-mode .cheatsheet-setlist-empty {
           color: #94a3b8;
         }
-        .live-dashboard:not(.night-vision) .cheatsheet-song-item {
+        .light-mode .cheatsheet-song-item {
           background: #ffffff;
           border-color: #e5e7eb;
           color: #0f172a;
         }
-        .live-dashboard:not(.night-vision) .cheatsheet-song-item:hover {
+        .light-mode .cheatsheet-song-item:hover {
           background: rgba(124, 58, 237, 0.05);
           border-color: #7c3aed;
         }
 
         /* Settings panel */
-        .live-dashboard:not(.night-vision) .settings-overlay {
+        .light-mode .settings-overlay {
           background: rgba(15, 23, 42, 0.45);
           backdrop-filter: blur(6px);
           -webkit-backdrop-filter: blur(6px);
         }
-        .live-dashboard:not(.night-vision) .settings-panel {
+        .light-mode .settings-panel {
           background: rgba(255, 255, 255, 0.98);
           backdrop-filter: blur(20px);
           color: #0f172a;
           border: 1px solid rgba(148, 163, 184, 0.2);
           box-shadow: 0 20px 60px rgba(139, 92, 246, 0.15), 0 8px 24px rgba(15, 23, 42, 0.08);
         }
-        .live-dashboard:not(.night-vision) .settings-header {
+        .light-mode .settings-header {
           border-bottom-color: #e5e7eb;
         }
-        .live-dashboard:not(.night-vision) .settings-header h2 {
+        .light-mode .settings-header h2 {
           color: #0f172a;
         }
-        .live-dashboard:not(.night-vision) .close-btn {
+        .light-mode .close-btn {
           background: #f1f5f9;
           border-color: #e5e7eb;
           color: #475569;
         }
-        .live-dashboard:not(.night-vision) .close-btn:hover {
+        .light-mode .close-btn:hover {
           background: #ef4444;
           color: #ffffff;
           border-color: #ef4444;
         }
-        .live-dashboard:not(.night-vision) .setting-group {
+        .light-mode .setting-group {
           background: rgba(248, 250, 252, 0.8);
           border: 1px solid rgba(148, 163, 184, 0.18);
           border-radius: 12px;
         }
-        .live-dashboard:not(.night-vision) .setting-label {
+        .light-mode .setting-label {
           color: #0f172a;
         }
-        .live-dashboard:not(.night-vision) .setting-input {
+        .light-mode .setting-input {
           background: #ffffff;
           border-color: #cbd5e1;
           color: #0f172a;
         }
-        .live-dashboard:not(.night-vision) .setting-input:focus {
+        .light-mode .setting-input:focus {
           border-color: #7c3aed;
         }
-        .live-dashboard:not(.night-vision) .setting-range {
+        .light-mode .setting-range {
           accent-color: #7c3aed;
         }
-        .live-dashboard:not(.night-vision) .range-value {
+        .light-mode .range-value {
           color: #7c3aed;
         }
-        .live-dashboard:not(.night-vision) .toggle-btn {
+        .light-mode .toggle-btn {
           background: #cbd5e1;
         }
-        .live-dashboard:not(.night-vision) .toggle-btn.on {
+        .light-mode .toggle-btn.on {
           background: #7c3aed;
         }
-        .live-dashboard:not(.night-vision) .toggle-knob {
+        .light-mode .toggle-knob {
           background: #ffffff;
         }
 
         /* Help modal (Live) */
-        .live-dashboard:not(.night-vision) .help-section {
+        .light-mode .help-section {
           background: rgba(248, 250, 252, 0.85);
           border: 1px solid rgba(148, 163, 184, 0.2);
           border-radius: 12px;
         }
-        .live-dashboard:not(.night-vision) .help-section h3 {
+        .light-mode .help-section h3 {
           color: #7c3aed;
         }
-        .live-dashboard:not(.night-vision) .help-section p,
-        .live-dashboard:not(.night-vision) .help-section li {
+        .light-mode .help-section p,
+        .light-mode .help-section li {
           color: #475569;
         }
-        .live-dashboard:not(.night-vision) .help-section strong {
+        .light-mode .help-section strong {
           color: #0f172a;
         }
-        .live-dashboard:not(.night-vision) .help-tip {
+        .light-mode .help-tip {
           background: rgba(124, 58, 237, 0.05);
           border-color: rgba(124, 58, 237, 0.3);
         }
 
         /* Night vision label on hud button */
-        .live-dashboard:not(.night-vision) .hud-btn span {
+        .light-mode .hud-btn span {
           color: inherit;
         }
 
         /* Repertoire browser / Dodaj pesmu panel — glass style */
-        .live-dashboard:not(.night-vision) .song-picker,
-        .live-dashboard:not(.night-vision) .setlists-panel,
-        .live-dashboard:not(.night-vision) .setlist-song-search,
-        .live-dashboard:not(.night-vision) .repertoire-browser,
-        .live-dashboard:not(.night-vision) .active-setlist-strip {
+        .light-mode .song-picker,
+        .light-mode .setlists-panel,
+        .light-mode .setlist-song-search,
+        .light-mode .repertoire-browser,
+        .light-mode .active-setlist-strip {
           background: rgba(255, 255, 255, 0.85);
           backdrop-filter: blur(10px);
           -webkit-backdrop-filter: blur(10px);
@@ -5373,242 +5502,274 @@ export default function LiveDashboard({ bandId, musicianId }) {
           color: #0f172a;
           box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
         }
-        .live-dashboard:not(.night-vision) .setlists-panel-header h3,
-        .live-dashboard:not(.night-vision) .repertoire-browser-head h3,
-        .live-dashboard:not(.night-vision) .active-setlist-name {
+        .light-mode .setlists-panel-header h3,
+        .light-mode .repertoire-browser-head h3,
+        .light-mode .active-setlist-name {
           color: #0f172a;
         }
-        .live-dashboard:not(.night-vision) .setlist-help-text {
+        .light-mode .setlist-help-text {
           color: #64748b;
         }
-        .live-dashboard:not(.night-vision) .setlist-status-row {
+        .light-mode .setlist-status-row {
           color: #475569;
         }
-        .live-dashboard:not(.night-vision) .setlist-status-row strong {
+        .light-mode .setlist-status-row strong {
           color: #0f172a;
         }
-        .live-dashboard:not(.night-vision) .setlist-count-badge {
+        .light-mode .setlist-count-badge {
           background: rgba(139, 92, 246, 0.12);
           color: #6d28d9;
           border: 1px solid rgba(139, 92, 246, 0.25);
         }
-        .live-dashboard:not(.night-vision) .setlist-chip,
-        .live-dashboard:not(.night-vision) .active-setlist-item,
-        .live-dashboard:not(.night-vision) .setlist-create-btn,
-        .live-dashboard:not(.night-vision) .setlist-delete-btn,
-        .live-dashboard:not(.night-vision) .song-add-to-setlist,
-        .live-dashboard:not(.night-vision) .active-setlist-nav button,
-        .live-dashboard:not(.night-vision) .setlist-item-actions button {
+        .light-mode .setlist-chip,
+        .light-mode .active-setlist-item,
+        .light-mode .setlist-create-btn,
+        .light-mode .setlist-delete-btn,
+        .light-mode .song-add-to-setlist,
+        .light-mode .active-setlist-nav button,
+        .light-mode .setlist-item-actions button {
           background: rgba(255, 255, 255, 0.95);
           border: 1px solid rgba(148, 163, 184, 0.3);
           color: #475569;
         }
-        .live-dashboard:not(.night-vision) .setlist-chip:hover,
-        .live-dashboard:not(.night-vision) .active-setlist-item:hover,
-        .live-dashboard:not(.night-vision) .setlist-create-btn:hover,
-        .live-dashboard:not(.night-vision) .setlist-delete-btn:hover,
-        .live-dashboard:not(.night-vision) .song-add-to-setlist:hover:not(:disabled),
-        .live-dashboard:not(.night-vision) .active-setlist-nav button:hover,
-        .live-dashboard:not(.night-vision) .setlist-item-actions button:hover {
+        .light-mode .setlist-chip:hover,
+        .light-mode .active-setlist-item:hover,
+        .light-mode .setlist-create-btn:hover,
+        .light-mode .setlist-delete-btn:hover,
+        .light-mode .song-add-to-setlist:hover:not(:disabled),
+        .light-mode .active-setlist-nav button:hover,
+        .light-mode .setlist-item-actions button:hover {
           border-color: rgba(139, 92, 246, 0.5);
           color: #7c3aed;
           background: rgba(139, 92, 246, 0.06);
         }
-        .live-dashboard:not(.night-vision) .setlist-chip.active {
+        .light-mode .setlist-chip.active {
           background: linear-gradient(135deg, #8b5cf6, #7c3aed);
           color: #ffffff;
           border-color: transparent;
           box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
         }
 
+        .light-mode .setlist-item-order {
+          color: #7c3aed;
+        }
+        .light-mode .setlist-item-main:hover {
+          border-color: rgba(139, 92, 246, 0.35);
+          background: rgba(255, 255, 255, 1);
+        }
+        .light-mode .setlist-item-main:active {
+          border-color: #7c3aed;
+          background: rgba(139, 92, 246, 0.06);
+        }
+        .light-mode .setlist-item-row.just-added .setlist-item-main {
+          border-color: rgba(139, 92, 246, 0.5);
+          box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.2) inset;
+        }
+        .light-mode .setlist-items {
+          scrollbar-color: #cbd5e1 #f8fafc;
+        }
+        .light-mode .setlist-items::-webkit-scrollbar-track {
+          background: #f8fafc;
+        }
+        .light-mode .setlist-items::-webkit-scrollbar-thumb {
+          background: #cbd5e1;
+        }
+        .light-mode .setlists-empty {
+          border-color: #e2e8f0;
+          color: #64748b;
+        }
+        .light-mode .setlist-item-artist {
+          color: #64748b;
+        }
+
         /* Repertoire combo (dropdown search inside Dodaj pesmu) */
-        .live-dashboard:not(.night-vision) .repertoire-combo-toggle {
+        .light-mode .repertoire-combo-toggle {
           background: rgba(255, 255, 255, 0.95);
           border: 1px solid rgba(148, 163, 184, 0.3);
           color: #334155;
           border-radius: 10px;
         }
-        .live-dashboard:not(.night-vision) .repertoire-combo-toggle:hover {
+        .light-mode .repertoire-combo-toggle:hover {
           border-color: rgba(139, 92, 246, 0.4);
           color: #7c3aed;
         }
-        .live-dashboard:not(.night-vision) .repertoire-combo-toggle.open {
+        .light-mode .repertoire-combo-toggle.open {
           border-color: #8b5cf6;
           color: #7c3aed;
           background: rgba(139, 92, 246, 0.06);
         }
-        .live-dashboard:not(.night-vision) .repertoire-combo-panel {
+        .light-mode .repertoire-combo-panel {
           background: rgba(255, 255, 255, 0.98);
           backdrop-filter: blur(20px);
           -webkit-backdrop-filter: blur(20px);
           border: 1px solid rgba(148, 163, 184, 0.25);
           box-shadow: 0 20px 60px rgba(139, 92, 246, 0.15), 0 8px 24px rgba(15, 23, 42, 0.08);
         }
-        .live-dashboard:not(.night-vision) .repertoire-combo-sticky-search {
+        .light-mode .repertoire-combo-sticky-search {
           background: rgba(255, 255, 255, 0.95);
           border-bottom: 1px solid rgba(148, 163, 184, 0.18);
         }
-        .live-dashboard:not(.night-vision) .repertoire-combo-sticky-search input {
+        .light-mode .repertoire-combo-sticky-search input {
           background: #ffffff;
           border: 1px solid rgba(148, 163, 184, 0.35);
           color: #0f172a;
         }
-        .live-dashboard:not(.night-vision) .repertoire-combo-sticky-search input:focus {
+        .light-mode .repertoire-combo-sticky-search input:focus {
           border-color: #8b5cf6;
         }
-        .live-dashboard:not(.night-vision) .repertoire-combo-sticky-search input::placeholder {
+        .light-mode .repertoire-combo-sticky-search input::placeholder {
           color: #94a3b8;
         }
-        .live-dashboard:not(.night-vision) .repertoire-combo-count {
+        .light-mode .repertoire-combo-count {
           color: #64748b;
         }
-        .live-dashboard:not(.night-vision) .repertoire-cat-chip {
+        .light-mode .repertoire-cat-chip {
           background: #f8fafc;
           border: 1px solid rgba(148, 163, 184, 0.25);
           color: #475569;
         }
-        .live-dashboard:not(.night-vision) .repertoire-cat-chip:hover {
+        .light-mode .repertoire-cat-chip:hover {
           border-color: rgba(139, 92, 246, 0.4);
           color: #7c3aed;
         }
-        .live-dashboard:not(.night-vision) .repertoire-cat-chip.active {
+        .light-mode .repertoire-cat-chip.active {
           background: linear-gradient(135deg, #8b5cf6, #7c3aed);
           color: #ffffff;
           border-color: transparent;
           box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
         }
-        .live-dashboard:not(.night-vision) .repertoire-dropdown-list {
+        .light-mode .repertoire-dropdown-list {
           background: rgba(255, 255, 255, 0.98);
           scrollbar-color: #cbd5e1 #f1f5f9;
         }
-        .live-dashboard:not(.night-vision) .repertoire-dropdown-list::-webkit-scrollbar-track {
+        .light-mode .repertoire-dropdown-list::-webkit-scrollbar-track {
           background: #f1f5f9;
         }
-        .live-dashboard:not(.night-vision) .repertoire-dropdown-list::-webkit-scrollbar-thumb {
+        .light-mode .repertoire-dropdown-list::-webkit-scrollbar-thumb {
           background: #cbd5e1;
         }
-        .live-dashboard:not(.night-vision) .repertoire-dropdown-item {
+        .light-mode .repertoire-dropdown-item {
           border-bottom: 1px solid rgba(148, 163, 184, 0.15);
         }
-        .live-dashboard:not(.night-vision) .repertoire-dropdown-main {
+        .light-mode .repertoire-dropdown-main {
           color: #0f172a;
         }
-        .live-dashboard:not(.night-vision) .repertoire-dropdown-main:hover {
+        .light-mode .repertoire-dropdown-main:hover {
           background: rgba(139, 92, 246, 0.06);
         }
-        .live-dashboard:not(.night-vision) .repertoire-dropdown-main .song-title {
+        .light-mode .repertoire-dropdown-main .song-title {
           color: #0f172a;
         }
-        .live-dashboard:not(.night-vision) .repertoire-dropdown-main .song-artist {
+        .light-mode .repertoire-dropdown-main .song-artist {
           color: #64748b;
         }
-        .live-dashboard:not(.night-vision) .song-in-setlist-pill {
+        .light-mode .song-in-setlist-pill {
           background: rgba(34, 197, 94, 0.1);
           color: #15803d;
           border-color: rgba(34, 197, 94, 0.3);
         }
-        .live-dashboard:not(.night-vision) .repertoire-dropdown-main:has(.song-in-setlist-pill) {
+        .light-mode .repertoire-dropdown-main:has(.song-in-setlist-pill) {
           border: 1px dashed rgba(139, 92, 246, 0.35);
         }
-        .live-dashboard:not(.night-vision) .song-in-setlist-pill.removable:hover,
-        .live-dashboard:not(.night-vision) .repertoire-dropdown-main:hover .song-in-setlist-pill.removable {
+        .light-mode .song-in-setlist-pill.removable:hover,
+        .light-mode .repertoire-dropdown-main:hover .song-in-setlist-pill.removable {
           background: rgba(239, 68, 68, 0.12);
           color: #dc2626;
           border-color: rgba(239, 68, 68, 0.45);
         }
-        .live-dashboard:not(.night-vision) .song-open-lyrics-btn {
+        .light-mode .song-open-lyrics-btn {
           background: rgba(255, 255, 255, 0.95);
           border: 1px solid rgba(148, 163, 184, 0.3);
           color: #475569;
         }
-        .live-dashboard:not(.night-vision) .song-open-lyrics-btn:hover {
+        .light-mode .song-open-lyrics-btn:hover {
           border-color: #8b5cf6;
           color: #7c3aed;
           background: rgba(139, 92, 246, 0.06);
         }
-        .live-dashboard:not(.night-vision) .repertoire-empty {
+        .light-mode .repertoire-empty {
           color: #94a3b8;
         }
 
         /* Setlist items */
-        .live-dashboard:not(.night-vision) .setlist-item-main,
-        .live-dashboard:not(.night-vision) .song-picker-item {
+        .light-mode .setlist-item-main,
+        .light-mode .song-picker-item {
           background: rgba(255, 255, 255, 0.95);
           border: 1px solid rgba(148, 163, 184, 0.22);
           color: #0f172a;
         }
-        .live-dashboard:not(.night-vision) .setlist-item-main:hover,
-        .live-dashboard:not(.night-vision) .song-picker-item:hover {
+        .light-mode .setlist-item-main:hover,
+        .light-mode .song-picker-item:hover {
           border-color: rgba(139, 92, 246, 0.35);
           background: rgba(255, 255, 255, 1);
         }
-        .live-dashboard:not(.night-vision) .setlist-item-title,
-        .live-dashboard:not(.night-vision) .song-picker-title {
+        .light-mode .setlist-item-title,
+        .light-mode .song-picker-title {
           color: #0f172a;
         }
-        .live-dashboard:not(.night-vision) .setlist-item-artist,
-        .live-dashboard:not(.night-vision) .song-picker-artist {
+        .light-mode .setlist-item-artist,
+        .light-mode .song-picker-artist {
           color: #64748b;
         }
-        .live-dashboard:not(.night-vision) .setlist-name-input {
+        .light-mode .setlist-name-input {
           background: #ffffff;
           border: 1px solid rgba(148, 163, 184, 0.35);
           color: #0f172a;
         }
-        .live-dashboard:not(.night-vision) .setlist-name-input:focus {
+        .light-mode .setlist-name-input:focus {
           border-color: #8b5cf6;
         }
 
         /* Cheatsheet song dropdown (PODSETNIK tab) */
-        .live-dashboard:not(.night-vision) .song-search-inline {
+        .light-mode .song-search-inline {
           background: rgba(255, 255, 255, 0.95);
           border: 1px solid rgba(148, 163, 184, 0.3);
           border-radius: 10px;
         }
-        .live-dashboard:not(.night-vision) .song-search-inline input {
+        .light-mode .song-search-inline input {
           background: transparent;
           color: #0f172a;
         }
-        .live-dashboard:not(.night-vision) .song-search-inline input::placeholder {
+        .light-mode .song-search-inline input::placeholder {
           color: #94a3b8;
         }
-        .live-dashboard:not(.night-vision) .song-dropdown-toggle {
+        .light-mode .song-dropdown-toggle {
           background: transparent;
           color: #64748b;
         }
-        .live-dashboard:not(.night-vision) .song-dropdown-toggle:hover {
+        .light-mode .song-dropdown-toggle:hover {
           color: #7c3aed;
         }
-        .live-dashboard:not(.night-vision) .song-dropdown-list {
+        .light-mode .song-dropdown-list {
           background: rgba(255, 255, 255, 0.98);
           backdrop-filter: blur(14px);
           border: 1px solid rgba(148, 163, 184, 0.25);
           box-shadow: 0 16px 40px rgba(139, 92, 246, 0.12), 0 4px 12px rgba(15, 23, 42, 0.05);
         }
-        .live-dashboard:not(.night-vision) .song-dropdown-item {
+        .light-mode .song-dropdown-item {
           color: #0f172a;
           border-bottom: 1px solid rgba(148, 163, 184, 0.12);
         }
-        .live-dashboard:not(.night-vision) .song-dropdown-item:hover {
+        .light-mode .song-dropdown-item:hover {
           background: rgba(139, 92, 246, 0.06);
         }
-        .live-dashboard:not(.night-vision) .song-dropdown-title {
+        .light-mode .song-dropdown-title {
           color: #0f172a;
         }
-        .live-dashboard:not(.night-vision) .song-dropdown-artist {
+        .light-mode .song-dropdown-artist {
           color: #64748b;
         }
-        .live-dashboard:not(.night-vision) .song-search-box {
+        .light-mode .song-search-box {
           background: rgba(255, 255, 255, 0.95);
           border: 1px solid rgba(148, 163, 184, 0.3);
           color: #0f172a;
         }
 
         /* Cheatsheet setlist expander */
-        .live-dashboard:not(.night-vision) .cheatsheet-setlists {
+        .light-mode .cheatsheet-setlists {
           gap: 0.5rem;
         }
-        .live-dashboard:not(.night-vision) .cheatsheet-setlist-block {
+        .light-mode .cheatsheet-setlist-block {
           background: rgba(255, 255, 255, 0.85);
           border: 1px solid rgba(148, 163, 184, 0.22);
           border-radius: 12px;
@@ -5616,14 +5777,14 @@ export default function LiveDashboard({ bandId, musicianId }) {
 
         /* Mobile: ensure responsive light mode remains visible */
         @media (max-width: 720px) {
-          .live-dashboard:not(.night-vision) .hud-side-nav {
+          .light-mode .hud-side-nav {
             background: rgba(255, 255, 255, 0.9);
             backdrop-filter: blur(14px);
             border-top: 1px solid rgba(148, 163, 184, 0.22);
             border-right: none;
             box-shadow: 0 -4px 20px rgba(15, 23, 42, 0.05);
           }
-          .live-dashboard:not(.night-vision) .hud-header {
+          .light-mode .hud-header {
             background: rgba(255, 255, 255, 0.9);
           }
         }

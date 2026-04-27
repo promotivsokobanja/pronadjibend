@@ -10,6 +10,7 @@ import SocialShareActions from './SocialShareActions';
 export default function BandCard({ band, priority = false }) {
   const videoRef = useRef(null);
   const [isHovered, setIsHovered] = useState(false);
+  const [videoPlaying, setVideoPlaying] = useState(false);
   const resolved = resolveBandCoverImage(band);
   const [imgSrc, setImgSrc] = useState(resolved);
 
@@ -20,12 +21,13 @@ export default function BandCard({ band, priority = false }) {
   const handleMouseEnter = () => {
     setIsHovered(true);
     if (videoRef.current) {
-      videoRef.current.play().catch(() => {});
+      videoRef.current.play().then(() => setVideoPlaying(true)).catch(() => {});
     }
   };
 
   const handleMouseLeave = () => {
     setIsHovered(false);
+    setVideoPlaying(false);
     if (videoRef.current) {
       videoRef.current.pause();
       videoRef.current.currentTime = 0;
@@ -48,7 +50,7 @@ export default function BandCard({ band, priority = false }) {
             alt={coverAlt}
             fill
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            className={`hero-media-img max-w-full object-cover ${isHovered && band.videoUrl ? 'hidden' : ''}`}
+            className={`hero-media-img max-w-full object-cover ${videoPlaying ? 'hidden' : ''}`}
             priority={priority}
             unoptimized={nextImageShouldUnoptimize(imgSrc)}
             onError={() => {
@@ -162,7 +164,12 @@ export default function BandCard({ band, priority = false }) {
         .hero-media-img,
         .hero-media-video {
           max-width: 100%;
-          transition: opacity 0.5s ease;
+          transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), filter 0.5s ease;
+        }
+
+        .card-airbnb-container:hover .hero-media-img {
+          transform: scale(1.04);
+          filter: brightness(1.08);
         }
 
         .hero-media-img.hidden {
@@ -332,7 +339,11 @@ export default function BandCard({ band, priority = false }) {
           box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2);
         }
         .card-airbnb-container:hover {
-          transform: translateY(-2px);
+          transform: translateY(-6px);
+        }
+
+        .card-airbnb-container:hover .card-media {
+          box-shadow: 0 12px 28px rgba(139, 92, 246, 0.15), 0 4px 12px rgba(0, 0, 0, 0.2);
         }
 
         .card-share-actions {

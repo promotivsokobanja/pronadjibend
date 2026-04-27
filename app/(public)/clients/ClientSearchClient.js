@@ -1,12 +1,17 @@
 'use client';
 
-import { Music } from 'lucide-react';
+import { Music, SlidersHorizontal } from 'lucide-react';
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import BandCard from '../../../components/BandCard';
 import BandCardSkeleton from '../../../components/BandCardSkeleton';
-import { useClientSearch } from '../../../components/clients/ClientSearchContext';
+import {
+  useClientSearch,
+  CLIENT_GENRE_CATEGORIES,
+  CLIENT_EVENT_TYPES,
+  CLIENT_BUDGET_OPTIONS,
+} from '../../../components/clients/ClientSearchContext';
 
 export default function ClientSearchClient() {
   const router = useRouter();
@@ -20,7 +25,6 @@ export default function ClientSearchClient() {
     setActiveFilters,
     sortBy,
     setSortBy,
-    setIsNavSearchOpen,
   } = useClientSearch();
 
   const [bands, setBands] = useState([]);
@@ -165,7 +169,7 @@ export default function ClientSearchClient() {
                 Pronađi <span className="text-[#007AFF]">savršeni bend</span>
               </h1>
               <p className="search-subtitle">
-                Pogledaj proverene bendove po žanru, lokaciji i dostupnosti termina za tvoj događaj.
+                Filtriraj proverene bendove po žanru, lokaciji, vremenu događaja i budžetu.
               </p>
             </div>
             <span className="results-pill">
@@ -173,24 +177,96 @@ export default function ClientSearchClient() {
             </span>
           </div>
 
-          <div className="hero-actions-row">
-            <button
-              type="button"
-              onClick={() => setIsNavSearchOpen(true)}
-              className="open-search-btn"
-            >
-              Otvori pretragu
-            </button>
+          <div className="filters-grid">
+            <input
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Naziv benda ili ključna reč"
+              className="filter-input"
+            />
+
             <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="sort-select"
+              value={activeFilters.genre}
+              onChange={(e) => {
+                const nextGenre = e.target.value;
+                setActiveFilters((prev) => ({ ...prev, genre: nextGenre }));
+                setSortBy(nextGenre ? 'genre' : 'recommended');
+              }}
+              className="filter-input filter-select"
             >
-              <option value="recommended">Preporučeno</option>
-              <option value="genre">Aktivni žanr</option>
-              <option value="rating">Najbolje ocenjeni</option>
-              <option value="name">Naziv A-Z</option>
+              <option value="">Svi žanrovi</option>
+              {CLIENT_GENRE_CATEGORIES.filter((g) => g !== 'Svi žanrovi').map((genre) => (
+                <option key={genre} value={genre}>
+                  {genre}
+                </option>
+              ))}
             </select>
+
+            <input
+              value={activeFilters.location}
+              onChange={(e) => setActiveFilters((prev) => ({ ...prev, location: e.target.value }))}
+              placeholder="Grad ili region"
+              className="filter-input"
+            />
+
+            <select
+              value={activeFilters.eventType}
+              onChange={(e) => setActiveFilters((prev) => ({ ...prev, eventType: e.target.value }))}
+              className="filter-input filter-select"
+            >
+              {CLIENT_EVENT_TYPES.map((option) => (
+                <option key={option.value || 'all'} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={activeFilters.budget}
+              onChange={(e) => setActiveFilters((prev) => ({ ...prev, budget: e.target.value }))}
+              className="filter-input filter-select"
+            >
+              {CLIENT_BUDGET_OPTIONS.map((option) => (
+                <option key={option.value || 'all'} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+
+            <input
+              type="date"
+              value={activeFilters.eventDate}
+              onChange={(e) => setActiveFilters((prev) => ({ ...prev, eventDate: e.target.value }))}
+              className="filter-input"
+            />
+
+            <label className="filter-toggle">
+              <input
+                type="checkbox"
+                checked={activeFilters.equipment}
+                onChange={(e) =>
+                  setActiveFilters((prev) => ({
+                    ...prev,
+                    equipment: e.target.checked,
+                  }))
+                }
+              />
+              <span>Sopstveno ozvučenje i rasveta</span>
+            </label>
+
+            <label className="filter-select-wrap sort-select">
+              <SlidersHorizontal size={15} />
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="filter-select"
+              >
+                <option value="recommended">Preporučeno</option>
+                <option value="genre">Aktivni žanr</option>
+                <option value="rating">Najbolje ocenjeni</option>
+                <option value="name">Naziv A-Z</option>
+              </select>
+            </label>
           </div>
         </section>
 
@@ -323,42 +399,71 @@ export default function ClientSearchClient() {
           font-weight: 700;
           white-space: nowrap;
         }
-        .hero-actions-row {
-          display: flex;
-          align-items: center;
-          gap: 0.55rem;
-          flex-wrap: wrap;
+        .filters-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+          gap: 0.6rem;
         }
-        .open-search-btn {
-          min-height: 44px;
-          border-radius: 999px;
-          border: 1px solid #007aff;
-          background: #007aff;
-          color: #fff;
-          font-size: 0.84rem;
-          font-weight: 800;
-          padding: 0 1rem;
-          transition: background 0.2s ease, border-color 0.2s ease;
-        }
-        .open-search-btn:hover {
-          background: #0066d6;
-          border-color: #0066d6;
-        }
-        .sort-select {
-          min-height: 44px;
-          border-radius: 999px;
+        .filter-input,
+        .filter-select,
+        .filter-select-wrap,
+        .filter-toggle {
+          min-height: 46px;
+          border-radius: 12px;
           border: 1px solid #dbe4ef;
           background: #fff;
           color: #0f172a;
-          font-size: 0.84rem;
-          font-weight: 700;
-          padding: 0 0.9rem;
-          min-width: 188px;
+          font-size: 0.86rem;
+          font-weight: 600;
+        }
+        .filter-input {
+          width: 100%;
+          padding: 0 0.75rem;
           outline: none;
         }
-        .sort-select:focus {
+        .filter-input:focus {
           border-color: #007aff;
           box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.12);
+        }
+        select.filter-input {
+          padding-right: 2rem;
+          appearance: none;
+          background-image: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 20 20" fill="none"%3E%3Cpath d="M5 7L10 12L15 7" stroke="%230F172A" stroke-width="1.5" stroke-linecap="round"/%3E%3C/svg%3E');
+          background-repeat: no-repeat;
+          background-position: right 0.7rem center;
+        }
+        .filter-select {
+          appearance: none;
+          background: transparent;
+          border: none;
+          padding: 0;
+          font-weight: 700;
+          color: inherit;
+          width: 100%;
+          outline: none;
+        }
+        .filter-select-wrap {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.45rem;
+          padding: 0 0.75rem;
+          color: #334155;
+        }
+        .filter-toggle {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.55rem;
+          padding: 0 0.75rem;
+          color: #334155;
+        }
+        .filter-toggle input {
+          width: 1rem;
+          height: 1rem;
+          accent-color: #007aff;
+        }
+        .filter-toggle span {
+          font-size: 0.78rem;
+          font-weight: 700;
         }
         .results-grid {
           margin-top: 0.8rem;
@@ -428,10 +533,6 @@ export default function ClientSearchClient() {
           }
           .search-title {
             font-size: 1.65rem;
-          }
-          .sort-select,
-          .open-search-btn {
-            width: 100%;
           }
         }
       `}</style>

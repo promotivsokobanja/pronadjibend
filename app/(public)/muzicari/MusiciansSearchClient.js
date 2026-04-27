@@ -351,12 +351,19 @@ export default function MusiciansSearchClient() {
           transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
         .result-card:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 12px 26px rgba(15, 23, 42, 0.08);
+          transform: translateY(-4px);
+          box-shadow: 0 12px 32px rgba(139, 92, 246, 0.13), 0 4px 12px rgba(15, 23, 42, 0.06);
         }
         .result-image-wrap {
           border-radius: 14px;
           background: #e2e8f0;
+        }
+        .result-image-wrap img {
+          transition: transform 0.35s ease, filter 0.35s ease;
+        }
+        .result-card:hover .result-image-wrap img {
+          transform: scale(1.04);
+          filter: brightness(1.05);
         }
         .result-image-fallback {
           display: flex;

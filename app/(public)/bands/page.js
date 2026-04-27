@@ -49,9 +49,6 @@ export default function BandDashboard() {
   const router = useRouter();
   const [bandId, setBandId] = useState(null);
   const [loadError, setLoadError] = useState('');
-  const [isPremiumVenue, setIsPremiumVenue] = useState(false);
-  const [korgPaItems, setKorgPaItems] = useState([]);
-  const [showKorgDownloads, setShowKorgDownloads] = useState(false);
   const [showQr, setShowQr] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [activeRequest, setActiveRequest] = useState(null);
@@ -62,7 +59,6 @@ export default function BandDashboard() {
     { label: 'Ocena', value: '0.0', icon: Star },
   ]);
   const [isLoading, setIsLoading] = useState(true);
-
   const [isAdminUser, setIsAdminUser] = useState(false);
   const [busyDates, setBusyDates] = useState([]);
   /** Datumi ručno označeni kao zauzeti (BusyDate) — njih bend može ponovo osloboditi klikom */
@@ -127,8 +123,6 @@ export default function BandDashboard() {
         }
         const id = meData?.user?.bandId;
         const isAdmin = meData?.user?.role === 'ADMIN';
-        const userPlan = String(meData?.user?.plan || '').toUpperCase();
-        const canUseKorg = userPlan === 'PREMIUM_VENUE';
         if (!id) {
           if (isAdmin) {
             if (!cancelled) {
@@ -148,20 +142,14 @@ export default function BandDashboard() {
         if (!cancelled) {
           setIsAdminUser(false);
           setBandId(id);
-          setIsPremiumVenue(canUseKorg);
         }
 
-        const [bookingsRes, bandRes, calendarRes, songsPreviewRes, musicianInvitesRes, korgResult] = await Promise.all([
+        const [bookingsRes, bandRes, calendarRes, songsPreviewRes, musicianInvitesRes] = await Promise.all([
           fetch(`/api/bookings?bandId=${encodeURIComponent(id)}`),
           fetch(`/api/bands/${encodeURIComponent(id)}`),
           fetch(`/api/bands/calendar?bandId=${encodeURIComponent(id)}`),
           fetch(`/api/songs?bandId=${encodeURIComponent(id)}&limit=2`, { cache: 'no-store' }),
           fetch('/api/musicians/invites', { cache: 'no-store' }),
-          canUseKorg
-            ? fetch('/api/korg-pa-sets', { cache: 'no-store' })
-                .then(async (res) => ({ ok: res.ok, data: await res.json().catch(() => ({})) }))
-                .catch(() => ({ ok: false, data: {} }))
-            : Promise.resolve({ ok: false, data: {} }),
         ]);
 
         const bookingsData = await safeResponseJson(bookingsRes, []);
@@ -176,7 +164,6 @@ export default function BandDashboard() {
             : [];
 
         if (cancelled) return;
-        setKorgPaItems(canUseKorg && korgResult.ok && Array.isArray(korgResult.data?.items) ? korgResult.data.items : []);
         setBookings(bookingsList);
         applyCalendarData(calendarData);
         setRepertoirePreview(Array.isArray(songsRaw) ? songsRaw : []);
@@ -487,7 +474,10 @@ export default function BandDashboard() {
   ).length;
 
   return (
-    <div className="dashboard-container container">
+    <div className="band-dashboard theme-dark">
+      <div className="dashboard-gradient gradient-primary" aria-hidden="true" />
+      <div className="dashboard-gradient gradient-accent" aria-hidden="true" />
+      <div className="dashboard-container container">
       {profileSavedNotice && (
         <div
           role="status"
@@ -531,8 +521,8 @@ export default function BandDashboard() {
         </div>
       )}
       <div className="blob" style={{ top: '10%', left: '10%' }}></div>
-      
-      <header className="dash-header">
+
+      <header className="dash-header hero-panel">
         <div className="dash-title-block">
           <h1>Kontrolna Tabla</h1>
           <p className="text-muted">Dobrodošli nazad. Imate {(Array.isArray(bookings) ? bookings : []).filter(b => b.status === 'PENDING').length} novih upita.</p>
@@ -547,79 +537,32 @@ export default function BandDashboard() {
           </button>
         </div>
         <div className="header-actions">
-         <div className="header-action-item">
-           <Link href="/bands/live">
-              <button type="button" className="btn btn-primary">
-                <Play size={18} style={{ marginRight: '8px' }} /> Pokreni Live
-              </button>
+          <div className="header-action-item">
+            <Link href="/bands/live" className="btn btn-primary">
+              <Play size={18} style={{ marginRight: '8px' }} /> Pokreni Nastup
             </Link>
             {SHOW_HEADER_ACTION_HINTS && (
-              <span className="action-caption">Kontrola live zahteva i aktivne svirke</span>
+              <span className="action-caption action-caption-primary">Live zahtevi pesama</span>
             )}
           </div>
           <div className="header-action-item">
-            <Link href="/bands/pesmarica">
-              <button type="button" className="btn btn-secondary header-action-btn">
-                <BookOpen size={18} style={{ marginRight: '8px' }} /> Pesmarica
-              </button>
+            <Link href="/bands/pesmarica" className="btn btn-secondary">
+              <BookOpen size={18} style={{ marginRight: '8px' }} /> Pesmarica
             </Link>
             {SHOW_HEADER_ACTION_HINTS && (
               <span className="action-caption">Tekstovi i akordi za setlistu</span>
             )}
           </div>
           <div className="header-action-item">
-            <Link href="/bands/midi">
-              <button type="button" className="btn btn-secondary header-action-btn">
-                <FileMusic size={18} style={{ marginRight: '8px' }} /> MIDI Fajlovi
-              </button>
+            <Link href="/bands/midi" className="btn btn-secondary">
+              <FileMusic size={18} style={{ marginRight: '8px' }} /> MIDI Fajlovi
             </Link>
             {SHOW_HEADER_ACTION_HINTS && (
               <span className="action-caption">Biblioteka i upload MIDI fajlova</span>
             )}
           </div>
-          {isPremiumVenue && korgPaItems.length > 0 && (
-            <div className="header-action-item">
-              <button
-                type="button"
-                className="btn btn-secondary header-action-btn"
-                onClick={() => setShowKorgDownloads((prev) => !prev)}
-              >
-                <Download size={18} style={{ marginRight: '8px' }} /> Korg PA setovi
-              </button>
-              {showKorgDownloads ? (
-                <div
-                  className="korg-download-list"
-                  style={{
-                    marginTop: '0.65rem',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '0.45rem',
-                    padding: '0.75rem',
-                    borderRadius: 12,
-                    border: '1px solid rgba(148, 163, 184, 0.24)',
-                    background: 'rgba(15, 23, 42, 0.24)',
-                  }}
-                >
-                  {korgPaItems.map((item) => (
-                    <a
-                      key={item.id || item.url}
-                      href={item.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      style={{ color: '#e2e8f0', textDecoration: 'none', fontSize: '0.92rem', fontWeight: 700 }}
-                    >
-                      {item.name}
-                    </a>
-                  ))}
-                </div>
-              ) : null}
-              {SHOW_HEADER_ACTION_HINTS && (
-                <span className="action-caption">Download više setova i sound paketa za Korg klavijature</span>
-              )}
-            </div>
-          )}
           <div className="header-action-item">
-            <button type="button" className="btn btn-secondary header-action-btn" onClick={() => setShowQr(true)}>
+            <button type="button" className="btn btn-secondary" onClick={() => setShowQr(true)}>
               <QrCode size={18} style={{ marginRight: '8px' }} /> Vaš QR Kod
             </button>
             {SHOW_HEADER_ACTION_HINTS && (
@@ -629,20 +572,18 @@ export default function BandDashboard() {
           <div className="header-action-item">
             <a
               href={`/api/bands/${encodeURIComponent(bandId)}/marketing-poster`}
-              className="btn btn-secondary header-action-btn"
+              className="btn btn-secondary"
               style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}
             >
-              <Download size={18} style={{ marginRight: '8px' }} /> Poster za štampu
+              <Download size={18} style={{ marginRight: '8px' }} /> Poster za štampu (A4, 300 DPI)
             </a>
             {SHOW_HEADER_ACTION_HINTS && (
               <span className="action-caption">Tvoj QR za goste — live pesmarica i narudžbine</span>
             )}
           </div>
           <div className="header-action-item">
-            <Link href="/bands/profile">
-              <button type="button" className="btn btn-secondary header-action-btn">
-                <Pencil size={18} style={{ marginRight: '8px' }} /> Moj Profil
-              </button>
+            <Link href="/bands/profile" className="btn btn-secondary">
+              <Pencil size={18} style={{ marginRight: '8px' }} /> Moj Profil
             </Link>
             {SHOW_HEADER_ACTION_HINTS && (
               <span className="action-caption">Javni profil, slike, video i opis</span>
@@ -653,7 +594,7 @@ export default function BandDashboard() {
 
       {/* Live Request Notification Overlay */}
       {activeRequest && (
-        <div className="live-notification glass-card animate-slide-in">
+        <div className="live-notification animate-slide-in">
           <div className="notif-header">
             <div className="pulse-dot"></div>
             <span className="notif-title">NOVI ZAHTEV</span>
@@ -675,7 +616,7 @@ export default function BandDashboard() {
 
       <div className="stats-grid">
         {stats.map((stat, i) => (
-          <div key={i} className="glass-card stat-card">
+          <div key={i} className="stat-card">
             <div className="stat-icon-box">
               <stat.icon size={20} color="var(--accent-primary)" />
             </div>
@@ -688,7 +629,7 @@ export default function BandDashboard() {
       </div>
 
       <div className="dash-content">
-        <section className="repertoire-preview glass-card">
+        <section className="repertoire-preview dashboard-panel">
           <div className="section-header">
             <h3>Digitalni Repertoar</h3>
             <Link href="/bands/repertoire" className="btn btn-secondary btn-sm">Vidi sve</Link>
@@ -719,7 +660,7 @@ export default function BandDashboard() {
           </div>
         </section>
 
-        <section className="upcoming-bookings glass-card">
+        <section className="upcoming-bookings dashboard-panel">
           <h3>Predstojeći Upiti & Rezervacije</h3>
           {bookingActionError ? (
             <p className="booking-action-error" role="alert">
@@ -844,7 +785,7 @@ export default function BandDashboard() {
           </div>
         </section>
 
-        <section className="calendar-management glass-card">
+        <section className="calendar-management dashboard-panel">
           <h3>Kalendar Zauzetosti</h3>
           <p className="text-muted calendar-hint-p">
             {calendarQuickBusy
@@ -879,7 +820,7 @@ export default function BandDashboard() {
           />
         </section>
 
-        <section className="musician-invites glass-card">
+        <section className="musician-invites dashboard-panel">
           <div className="section-header">
             <h3>Pozivi muzičarima</h3>
             <Link href="/muzicari" className="btn btn-secondary btn-sm">Pronađi muzičare</Link>
@@ -933,75 +874,216 @@ export default function BandDashboard() {
       </div>
 
       <style jsx>{`
-        .dashboard-container { padding-top: 10rem; padding-bottom: 6rem; min-height: 100vh; }
-        .dash-header { 
-          display: flex; 
-          justify-content: space-between; 
-          align-items: flex-start; 
-          margin-bottom: 5rem;
-          flex-wrap: wrap;
-          gap: 1.5rem;
+        .band-dashboard {
+          position: relative;
+          min-height: 100vh;
+          background: radial-gradient(circle at 20% 20%, rgba(124, 58, 237, 0.2), transparent 55%),
+            radial-gradient(circle at 80% 0%, rgba(59, 130, 246, 0.18), transparent 60%),
+            #03030b;
+          color: #f8fafc;
+          overflow: hidden;
         }
-        .dash-header h1 { font-size: 3rem; font-weight: 800; letter-spacing: -2px; }
+
+        .band-dashboard :global(.text-muted) {
+          color: rgba(226, 232, 240, 0.65);
+        }
+
+        .band-dashboard :global(.glass-card) {
+          background: rgba(5, 6, 15, 0.78);
+          border-color: rgba(255, 255, 255, 0.08);
+          color: #f8fafc;
+        }
+
+        .band-dashboard :global(.glass-card .text-muted) {
+          color: rgba(226, 232, 240, 0.65);
+        }
+
+        .dashboard-gradient {
+          position: absolute;
+          width: clamp(320px, 45vw, 780px);
+          height: clamp(320px, 45vw, 780px);
+          border-radius: 999px;
+          filter: blur(80px);
+          opacity: 0.8;
+          z-index: 0;
+        }
+
+        .gradient-primary {
+          top: -160px;
+          left: -120px;
+          background: radial-gradient(circle, rgba(124, 58, 237, 0.6), transparent 70%);
+        }
+
+        .gradient-accent {
+          bottom: -120px;
+          right: -200px;
+          background: radial-gradient(circle, rgba(59, 130, 246, 0.5), transparent 70%);
+        }
+
+        .dashboard-container {
+          position: relative;
+          z-index: 1;
+          padding-top: clamp(7rem, 10vw, 10rem);
+          padding-bottom: clamp(4rem, 8vw, 6.5rem);
+          min-height: 100vh;
+        }
+        .hero-panel {
+          position: relative;
+          width: 100%;
+          padding: clamp(1.5rem, 3vw, 3rem);
+          border-radius: var(--radius-xl);
+          background: linear-gradient(135deg, rgba(12, 12, 28, 0.95), rgba(18, 18, 30, 0.65));
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          box-shadow: 0 25px 60px rgba(3, 7, 18, 0.55);
+        }
+        .hero-panel::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          border-radius: inherit;
+          padding: 1px;
+          background: linear-gradient(120deg, rgba(139, 92, 246, 0.45), rgba(14, 165, 233, 0.35), transparent);
+          mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+          mask-composite: exclude;
+          pointer-events: none;
+        }
+        .hero-panel > * {
+          position: relative;
+          z-index: 1;
+        }
+        .dash-header {
+          display: flex;
+          flex-direction: column;
+          align-items: stretch;
+          margin-bottom: clamp(2.5rem, 6vw, 4rem);
+          gap: 1.2rem;
+        }
+        .dash-header h1 {
+          font-size: clamp(2.4rem, 5vw, 3.4rem);
+          font-weight: 800;
+          letter-spacing: -0.06em;
+          color: #f8fafc;
+        }
         .dash-title-block {
           display: flex;
           flex-direction: column;
           align-items: flex-start;
-          gap: 0.5rem;
+          gap: 0.65rem;
           min-width: 0;
+        }
+        .dash-title-block p {
+          color: rgba(226, 232, 240, 0.75);
+          font-size: 0.95rem;
+          max-width: 32rem;
         }
         .dash-help-btn {
           display: inline-flex;
           align-items: center;
           gap: 0.4rem;
-          padding: 0.5rem 0.85rem;
+          padding: 0.55rem 1rem;
           border-radius: 999px;
-          border: 1px solid #e2e8f0;
-          background: #ffffff;
-          color: #475569;
+          border: 1px solid rgba(255, 255, 255, 0.18);
+          background: rgba(15, 16, 25, 0.9);
+          color: #e2e8f0;
           font-weight: 700;
-          font-size: 0.78rem;
+          font-size: 0.8rem;
           cursor: pointer;
-          transition: 0.15s ease;
-          margin-top: 0.25rem;
+          transition: all 0.2s ease;
+          margin-top: 0.5rem;
         }
         .dash-help-btn:hover {
-          border-color: #7c3aed;
-          color: #7c3aed;
-          background: #faf5ff;
+          border-color: rgba(139, 92, 246, 0.8);
+          color: #fff;
           transform: translateY(-1px);
-        }
-        .dash-help-btn:active {
-          transform: translateY(0);
+          box-shadow: 0 10px 30px rgba(139, 92, 246, 0.25);
         }
 
-        .stats-grid { 
-          display: grid; 
-          grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); 
-          gap: 2rem; 
-          margin-bottom: 4rem;
+        .stats-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+          gap: 1.5rem;
+          margin-bottom: clamp(2rem, 4vw, 3.5rem);
         }
-        .stat-card { display: flex; align-items: center; gap: 1.5rem; border: 1px solid var(--border); }
-        .stat-icon-box { background: rgba(16, 185, 129, 0.05); width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
-        .stat-value { display: block; font-size: 2rem; font-weight: 800; line-height: 1; margin-bottom: 4px; }
-        .stat-label { font-size: 0.75rem; color: #555; text-transform: uppercase; font-weight: 700; letter-spacing: 1px; }
-        
-        .dash-content { 
-          display: grid; 
-          grid-template-columns: 1.5fr 1fr; 
-          gap: 3rem; 
+        .stat-card {
+          display: flex;
+          align-items: center;
+          gap: 1.25rem;
+          padding: 1.5rem;
+          border-radius: var(--radius-lg);
+          background: rgba(7, 9, 18, 0.75);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
         }
-        .repertoire-preview, .upcoming-bookings, .calendar-management { padding: 2rem; border: 1px solid var(--border); }
-        .musician-invites { padding: 2rem; border: 1px solid var(--border); }
-        .calendar-hint-p { margin-bottom: 0.75rem; font-size: 0.85rem; line-height: 1.45; }
+        .stat-icon-box {
+          background: radial-gradient(circle, rgba(139, 92, 246, 0.35), rgba(3, 7, 18, 0.8));
+          width: 52px;
+          height: 52px;
+          border-radius: 16px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .stat-value {
+          display: block;
+          font-size: 2rem;
+          font-weight: 800;
+          line-height: 1;
+          margin-bottom: 6px;
+          color: #f8fafc;
+        }
+        .stat-label {
+          font-size: 0.75rem;
+          color: rgba(226, 232, 240, 0.6);
+          text-transform: uppercase;
+          font-weight: 700;
+          letter-spacing: 0.18em;
+        }
+
+        .dash-content {
+          display: grid;
+          grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.9fr);
+          gap: clamp(1.5rem, 4vw, 3rem);
+        }
+        .dashboard-panel {
+          position: relative;
+          padding: clamp(1.5rem, 3vw, 2.5rem);
+          border-radius: var(--radius-xl);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: rgba(5, 6, 15, 0.75);
+          box-shadow: 0 25px 60px rgba(2, 6, 23, 0.55);
+        }
+        .dashboard-panel h3 {
+          color: #f8fafc;
+          font-weight: 800;
+          letter-spacing: -0.01em;
+        }
+        .dashboard-panel p,
+        .dashboard-panel span,
+        .dashboard-panel label {
+          color: rgba(226, 232, 240, 0.8);
+        }
+        .dashboard-panel::before {
+          content: '';
+          position: absolute;
+          inset: 1px;
+          border-radius: inherit;
+          background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0));
+          pointer-events: none;
+        }
+        .dashboard-panel > * {
+          position: relative;
+          z-index: 1;
+        }
+        .calendar-hint-p { margin-bottom: 0.75rem; font-size: 0.85rem; line-height: 1.45; color: rgba(226,232,240,0.65); }
         .calendar-quick-row {
           display: flex;
           align-items: flex-start;
           gap: 0.6rem;
           margin-bottom: 1.25rem;
-          font-size: 0.8rem;
+          font-size: 0.82rem;
           font-weight: 600;
-          color: #475569;
+          color: rgba(226, 232, 240, 0.75);
           cursor: pointer;
           user-select: none;
         }
@@ -1029,24 +1111,26 @@ export default function BandDashboard() {
           line-height: 1.45;
         }
 
-        .song-item { 
-          display: flex; 
-          align-items: center; 
-          justify-content: space-between; 
-          padding: 1.5rem;
-          background: rgba(255,255,255,0.01);
-          border: 1px solid var(--border);
-          border-radius: var(--radius-md);
+        .song-item {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 1.35rem 1.5rem;
+          background: rgba(12, 12, 24, 0.85);
+          border: 1px solid rgba(255, 255, 255, 0.06);
+          border-radius: var(--radius-lg);
         }
+        .song-title { font-weight: 700; font-size: 1.1rem; color: #f8fafc; }
+        .song-artist { color: rgba(226, 232, 240, 0.65); }
         .booking-item {
           display: flex;
           flex-direction: column;
           align-items: stretch;
           gap: 1rem;
           padding: 1.5rem;
-          background: rgba(255,255,255,0.01);
-          border: 1px solid var(--border);
-          border-radius: var(--radius-md);
+          background: rgba(12, 13, 26, 0.78);
+          border: 1px solid rgba(255, 255, 255, 0.06);
+          border-radius: var(--radius-lg);
         }
         .invite-chat-panel {
           margin-top: 0.15rem;
@@ -1055,7 +1139,7 @@ export default function BandDashboard() {
           cursor: pointer;
           font-size: 0.82rem;
           font-weight: 800;
-          color: var(--text-muted, #94a3b8);
+          color: rgba(226, 232, 240, 0.7);
           list-style: none;
         }
         .invite-chat-toggle::-webkit-details-marker {
@@ -1072,10 +1156,11 @@ export default function BandDashboard() {
           margin-top: 0.45rem;
           margin-bottom: 0;
           line-height: 1.35;
+          color: rgba(226, 232, 240, 0.65);
         }
         .booking-confirmed-block {
           padding-top: 1rem;
-          border-top: 1px solid var(--border);
+          border-top: 1px solid rgba(255, 255, 255, 0.08);
         }
         .booking-confirmed-label {
           display: flex;
@@ -1092,8 +1177,8 @@ export default function BandDashboard() {
           margin: 0 0 0.75rem;
           white-space: pre-wrap;
           font-size: 0.92rem;
-          line-height: 1.45;
-          color: var(--text, #e2e8f0);
+          line-height: 1.5;
+          color: rgba(248, 250, 252, 0.9);
         }
         .booking-message.muted {
           color: var(--text-muted);
@@ -1120,7 +1205,7 @@ export default function BandDashboard() {
           gap: 0.6rem;
           padding-top: 1rem;
           margin-top: 0.25rem;
-          border-top: 1px solid var(--border);
+          border-top: 1px solid rgba(255, 255, 255, 0.08);
         }
         .booking-item-actions :global(.btn) { min-height: 40px; }
         .invite-status-pill {
@@ -1146,27 +1231,28 @@ export default function BandDashboard() {
         .booking-btn-danger:hover:not(:disabled) {
           background: rgba(248, 113, 113, 0.12) !important;
         }
-        .song-title { font-weight: 700; font-size: 1.1rem; }
-        .tonality-badge { 
-          padding: 4px 12px; 
-          background: var(--accent-primary); 
-          color: #000;
-          font-size: 0.7rem; 
-          font-weight: 800;
-          border-radius: 4px;
+        .tonality-badge {
+          padding: 0.2rem 0.85rem;
+          background: rgba(139, 92, 246, 0.2);
+          color: #d8b4fe;
+          font-size: 0.68rem;
+          font-weight: 700;
+          border-radius: 999px;
+          border: 1px solid rgba(139, 92, 246, 0.4);
         }
         
-        .date-box { 
-          width: 54px; 
-          height: 54px; 
-          background: rgba(255,255,255,0.03); 
-          display: flex; 
-          flex-direction: column; 
-          align-items: center; 
-          justify-content: center; 
-          border-radius: 10px;
-          border: 1px solid var(--border);
+        .date-box {
+          width: 54px;
+          height: 54px;
+          background: rgba(255, 255, 255, 0.04);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          border-radius: 14px;
+          border: 1px solid rgba(255, 255, 255, 0.08);
           margin-right: 1.5rem;
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
         }
         .month { font-size: 0.65rem; color: var(--accent-primary); font-weight: 800; letter-spacing: 1px; }
         .day { font-size: 1.25rem; font-weight: 900; }
@@ -1187,10 +1273,9 @@ export default function BandDashboard() {
         .header-actions {
           display: flex;
           flex-wrap: wrap;
-          gap: 0.85rem 1rem;
+          gap: 0.65rem;
           align-items: flex-start;
-          justify-content: flex-end;
-          max-width: 100%;
+          width: 100%;
         }
         .header-action-item {
           display: flex;
@@ -1198,10 +1283,12 @@ export default function BandDashboard() {
           align-items: center;
           gap: 0.4rem;
           min-width: 0;
-          flex: 0 1 auto;
+          flex: 1 1 auto;
         }
         .header-action-item :global(a) {
-          display: block;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
           width: 100%;
           text-decoration: none;
         }
@@ -1210,14 +1297,6 @@ export default function BandDashboard() {
           justify-content: center;
           white-space: nowrap;
           min-height: 46px;
-        }
-        .header-action-btn {
-          min-width: 220px;
-          min-height: 46px;
-        }
-        .korg-download-list {
-          width: 100%;
-          max-width: 260px;
         }
         .action-caption {
           font-size: 0.68rem;
@@ -1234,7 +1313,6 @@ export default function BandDashboard() {
         }
         @media (max-width: 968px) {
           .header-actions {
-            justify-content: stretch;
             width: 100%;
           }
           .header-action-item {
@@ -1243,12 +1321,6 @@ export default function BandDashboard() {
           }
           .header-action-item :global(.btn) {
             min-height: 48px;
-          }
-          .header-action-btn {
-            min-width: 0;
-          }
-          .korg-download-list {
-            max-width: 100%;
           }
         }
         @media (max-width: 520px) {
@@ -1265,9 +1337,6 @@ export default function BandDashboard() {
           }
           .action-caption {
             font-size: 0.64rem;
-          }
-          .korg-download-list {
-            padding: 0.65rem !important;
           }
         }
         .live-notification { 
@@ -1289,5 +1358,6 @@ export default function BandDashboard() {
         .notif-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
       `}</style>
     </div>
+  </div>
   );
 }
