@@ -777,7 +777,7 @@ export default function RepertoirePage() {
         .search-box { flex: 1; min-width: 300px; max-width: 500px; display: flex; align-items: center; gap: 1rem; padding: 0.75rem 1.5rem; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 100px; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2); }
         .search-box input { background: none; border: none; color: #f8fafc; width: 100%; outline: none; font-size: 0.95rem; font-weight: 600; }
                 .search-box svg { color: #64748b; flex-shrink: 0; }
-        .bulk-add-btn { background: rgba(255, 255, 255, 0.92); color: #4338ca; border: 1px solid rgba(99, 102, 241, 0.16); box-shadow: 0 10px 25px rgba(99, 102, 241, 0.12); }
+        .bulk-add-btn { background: rgba(255, 255, 255, 0.92); color: #4338ca !important; border: 1px solid rgba(99, 102, 241, 0.16); box-shadow: 0 10px 25px rgba(99, 102, 241, 0.12); }
         .global-dropdown { position: absolute; top: calc(100% + 0.7rem); left: 0; right: 0; z-index: 20; background: rgba(255, 255, 255, 0.98); border: 1px solid #e2e8f0; border-radius: 22px; box-shadow: 0 20px 45px rgba(15, 23, 42, 0.12); overflow: hidden; }
         .global-dropdown-head { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; padding: 0.9rem 1.15rem 0.75rem; border-bottom: 1px solid rgba(226, 232, 240, 0.9); font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: #64748b; }
         .global-dropdown-list { max-height: min(52vh, 420px); overflow-y: auto; }
