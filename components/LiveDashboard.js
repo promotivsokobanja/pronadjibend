@@ -4800,6 +4800,51 @@ export default function LiveDashboard({ bandId, musicianId }) {
           }
         }
 
+        /* Landscape telefon: sidebar → donji bar */
+        @media (max-width: 900px) and (max-height: 500px) and (orientation: landscape) {
+          .hud-main {
+            display: flex;
+            flex-direction: column;
+            grid-template-columns: unset;
+          }
+          .hud-content {
+            order: 1;
+            flex: 1;
+            min-height: 0;
+            padding: 0.5rem 0.75rem;
+          }
+          .hud-side-nav {
+            order: 2;
+            flex-direction: row;
+            justify-content: space-around;
+            align-items: center;
+            width: 100%;
+            padding: 0.25rem 0.25rem calc(0.25rem + env(safe-area-inset-bottom, 0px));
+            border-right: none;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            gap: 0;
+            flex-shrink: 0;
+          }
+          .nav-item {
+            flex: 1;
+            max-width: 120px;
+            flex-direction: column;
+            gap: 2px;
+          }
+          .nav-item .nav-tooltip {
+            display: none;
+          }
+          .nav-label {
+            display: block;
+            font-size: 0.55rem;
+            font-weight: 700;
+            opacity: 0.7;
+          }
+          .nav-item.active .nav-label {
+            opacity: 1;
+          }
+        }
+
         @media (max-width: 480px) {
           .hud-controls {
             gap: 0.25rem;
