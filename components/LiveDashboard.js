@@ -1037,18 +1037,22 @@ export default function LiveDashboard({ bandId, musicianId }) {
             <MessageSquare size={24} />
             <span className="badge">{pendingCount}</span>
             <span className="nav-tooltip">Zahtevi</span>
+            <span className="nav-label">Zahtevi</span>
           </button>
           <button className={`nav-item ${activeTab === 'cheatsheet' ? 'active' : ''}`} onClick={() => setActiveTab('cheatsheet')}>
             <Music size={24} />
-            <span className="nav-tooltip">Tekst pesme</span>
+            <span className="nav-tooltip">Tekst</span>
+            <span className="nav-label">Tekst</span>
           </button>
           <button className={`nav-item ${activeTab === 'repertoire' ? 'active' : ''}`} onClick={() => setActiveTab('repertoire')}>
             <ListMusic size={24} />
             <span className="nav-tooltip">Set liste</span>
+            <span className="nav-label">Set liste</span>
           </button>
           <button className={`nav-item ${activeTab === 'addSong' ? 'active' : ''}`} onClick={() => { setActiveTab('addSong'); setShowSetlistSongDropdown(true); }}>
             <PlusCircle size={24} />
-            <span className="nav-tooltip">Dodaj pesmu</span>
+            <span className="nav-tooltip">Dodaj</span>
+            <span className="nav-label">Dodaj</span>
           </button>
         </nav>
 
@@ -2359,10 +2363,10 @@ export default function LiveDashboard({ bandId, musicianId }) {
         .nav-item {
           background: none;
           border: none;
-          color: #9ca3af;
+          color: #d1d5db;
           cursor: pointer;
           position: relative;
-          transition: color 0.15s ease, transform 0.12s ease;
+          transition: color 0.15s ease, transform 0.12s ease, background 0.15s ease;
           padding: 8px;
           border-radius: 10px;
           min-width: 44px;
@@ -2372,8 +2376,8 @@ export default function LiveDashboard({ bandId, musicianId }) {
           justify-content: center;
         }
 
-        .nav-item.active { color: #a78bfa; }
-        .nav-item:hover { color: #f3f4f6; }
+        .nav-item.active { color: #a78bfa; background: rgba(139, 92, 246, 0.12); }
+        .nav-item:hover { color: #f3f4f6; background: rgba(255, 255, 255, 0.06); }
         .night-vision .nav-item:hover,
         .night-vision .nav-item.active {
           color: #c4b5fd;
@@ -2422,6 +2426,9 @@ export default function LiveDashboard({ bandId, musicianId }) {
           font-size: 0.6rem;
           padding: 2px 5px;
           border-radius: 10px;
+        }
+        .nav-label {
+          display: none;
         }
 
         .hud-content {
@@ -4527,9 +4534,21 @@ export default function LiveDashboard({ bandId, musicianId }) {
           .nav-item {
             flex: 1;
             max-width: 120px;
+            flex-direction: column;
+            gap: 2px;
           }
           .nav-item .nav-tooltip {
             display: none;
+          }
+          .nav-label {
+            display: block;
+            font-size: 0.6rem;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            opacity: 0.7;
+          }
+          .nav-item.active .nav-label {
+            opacity: 1;
           }
           .settings-overlay {
             backdrop-filter: none;
