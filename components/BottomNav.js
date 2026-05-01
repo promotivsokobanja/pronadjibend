@@ -10,7 +10,7 @@ const NAV_ITEMS = [
   { href: '/bands', icon: User, label: 'Portal' },
 ];
 
-const HIDDEN_PREFIXES = ['/live'];
+const HIDDEN_PREFIXES = ['/live', '/bands/live', '/muzicari/profil/live'];
 
 export default function BottomNav() {
   const pathname = usePathname();
