@@ -216,6 +216,7 @@ export default function MusiciansSearchClient() {
                 <div className="mt-3" onClick={(e) => e.stopPropagation()}>
                   <SocialShareActions
                     compact
+                    variant="light"
                     url={`/muzicari/${musician.id}`}
                     title={`${musician.name} — Muzičar | Pronađi Bend`}
                     text={`Pogledaj profil muzičara ${musician.name} na platformi Pronađi Bend.`}

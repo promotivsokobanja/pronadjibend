@@ -22,6 +22,7 @@ export default function SocialShareActions({
   text = 'Pogledaj ovaj profil na platformi Pronađi Bend.',
   compact = false,
   className = '',
+  variant = 'dark',
 }) {
   const [copied, setCopied] = useState(false);
   const shareUrl = useMemo(() => resolveShareUrl(url), [url]);
@@ -69,7 +70,7 @@ export default function SocialShareActions({
   };
 
   return (
-    <div className={`share-wrap ${compact ? 'compact' : ''} ${className}`.trim()}>
+    <div className={`share-wrap ${compact ? 'compact' : ''} ${variant === 'light' ? 'light' : ''} ${className}`.trim()}>
       <button type="button" className="share-btn primary" onClick={handleNativeShare}>
         <Share2 size={14} />
         {!compact ? 'Podeli' : null}
@@ -139,6 +140,21 @@ export default function SocialShareActions({
         .compact .share-btn {
           padding: 0;
           width: 34px;
+        }
+        .light .share-btn {
+          border-color: rgba(100, 116, 139, 0.22);
+          background: rgba(100, 116, 139, 0.07);
+          color: #475569;
+        }
+        .light .share-btn:hover {
+          border-color: rgba(139, 92, 246, 0.4);
+          background: rgba(139, 92, 246, 0.1);
+          color: #7c3aed;
+        }
+        .light .share-btn.primary {
+          border-color: rgba(139, 92, 246, 0.3);
+          background: rgba(139, 92, 246, 0.08);
+          color: #7c3aed;
         }
       `}</style>
     </div>

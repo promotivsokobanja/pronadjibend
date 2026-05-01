@@ -270,6 +270,7 @@ export default function MusicianProfileClient({ musicianId }) {
 
             <div className="share-row">
               <SocialShareActions
+                variant="light"
                 url={`/muzicari/${musician.id}`}
                 title={`${musician.name} — Muzičar | Pronađi Bend`}
                 text={`Pogledaj profil muzičara ${musician.name} na platformi Pronađi Bend.`}

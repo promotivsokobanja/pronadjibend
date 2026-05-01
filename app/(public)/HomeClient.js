@@ -205,6 +205,7 @@ export default function HomeClient() {
                 <div className="card-share-row" onClick={(e) => e.stopPropagation()}>
                   <SocialShareActions
                     compact
+                    variant="light"
                     url={`/clients/band/${band.id}`}
                     title={`${band.name} — Pronađi Bend`}
                     text={`Pogledaj profil benda ${band.name} na platformi Pronađi Bend.`}

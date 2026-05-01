@@ -223,6 +223,7 @@ export default function BandProfileClient({ params }) {
               </div>
               <div className="hero-share-row">
                 <SocialShareActions
+                  variant="light"
                   url={`/clients/band/${params.id}`}
                   title={`${band.name} — Pronađi Bend`}
                   text={`Pogledaj profil benda ${band.name} na platformi Pronađi Bend.`}
