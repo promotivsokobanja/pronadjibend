@@ -224,6 +224,27 @@ html {
   scroll-behavior: smooth;
 }
 
+/* ===== GLOBAL DARK SCROLLBAR ===== */
+html,
+body {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
+}
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
 /* ===== APP-LIKE MOBILE: hide scrollbars ===== */
 @media (max-width: 768px) {
   html,
