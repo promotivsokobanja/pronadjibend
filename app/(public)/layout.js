@@ -1,6 +1,8 @@
 import ErrorBoundaryClient from '@/components/errors/ErrorBoundaryClient';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import BottomNav from '@/components/BottomNav';
+import InstallPrompt from '@/components/InstallPrompt';
 import { ClientSearchProvider } from '@/components/clients/ClientSearchContext';
 import { getMaintenanceMode } from '@/lib/siteConfig';
 
@@ -22,6 +24,8 @@ export default async function PublicLayout({ children }) {
           {children}
         </main>
         <Footer />
+        <BottomNav />
+        <InstallPrompt />
       </ClientSearchProvider>
     </ErrorBoundaryClient>
   );

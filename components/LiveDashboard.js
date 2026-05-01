@@ -2096,6 +2096,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
           inset: 0;
           z-index: 120;
           background: rgba(0, 0, 0, 0.72);
+          -webkit-backdrop-filter: blur(3px);
           backdrop-filter: blur(3px);
           display: flex;
           align-items: center;
@@ -4962,6 +4963,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
         }
         .light-mode .hud-btn {
           background: rgba(255, 255, 255, 0.85);
+          -webkit-backdrop-filter: blur(8px);
           backdrop-filter: blur(8px);
           border-color: rgba(148, 163, 184, 0.25);
           color: #475569;
@@ -5008,6 +5010,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
         /* Sidebar nav */
         .light-mode .hud-side-nav {
           background: rgba(255, 255, 255, 0.7);
+          -webkit-backdrop-filter: blur(12px);
           backdrop-filter: blur(12px);
           border-right: 1px solid rgba(148, 163, 184, 0.22);
         }
@@ -5409,6 +5412,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
         }
         .light-mode .settings-panel {
           background: rgba(255, 255, 255, 0.98);
+          -webkit-backdrop-filter: blur(20px);
           backdrop-filter: blur(20px);
           color: #0f172a;
           border: 1px solid rgba(148, 163, 184, 0.2);
@@ -5742,6 +5746,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
         }
         .light-mode .song-dropdown-list {
           background: rgba(255, 255, 255, 0.98);
+          -webkit-backdrop-filter: blur(14px);
           backdrop-filter: blur(14px);
           border: 1px solid rgba(148, 163, 184, 0.25);
           box-shadow: 0 16px 40px rgba(139, 92, 246, 0.12), 0 4px 12px rgba(15, 23, 42, 0.05);
@@ -5779,6 +5784,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
         @media (max-width: 720px) {
           .light-mode .hud-side-nav {
             background: rgba(255, 255, 255, 0.9);
+            -webkit-backdrop-filter: blur(14px);
             backdrop-filter: blur(14px);
             border-top: 1px solid rgba(148, 163, 184, 0.22);
             border-right: none;

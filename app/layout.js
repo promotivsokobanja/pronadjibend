@@ -79,9 +79,10 @@ export const metadata = {
       'Iznajmite proverene bendove za svadbe, hotele i proslave. Online rezervacija, 600+ pesama, Live Request sistem.',
     images: ['/images/og-cover.png'],
   },
+  manifest: '/manifest.json',
   icons: {
     icon: '/favicon.ico',
-    apple: '/favicon.ico',
+    apple: '/images/logo.png',
   },
   ...(googleVerify
     ? {

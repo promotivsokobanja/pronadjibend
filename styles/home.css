@@ -8,6 +8,7 @@
   max-width: 100%;
   min-width: 0;
   /* Seče eventualni preliv dekoracija; ne dira vertikalni skrol (html već clip) */
+  overflow-x: hidden;
   overflow-x: clip;
   perspective: 2000px;
   transform-style: preserve-3d;
@@ -1380,6 +1381,10 @@
 
 /* Mobile perf: disable expensive animations & 3D */
 @media (max-width: 768px) {
+  .home-container {
+    perspective: none;
+    transform-style: flat;
+  }
   .home-container::before,
   .orb-2,
   .orb-3,

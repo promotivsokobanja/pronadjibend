@@ -436,11 +436,6 @@ export default function BandProfilePage() {
                     Otvori profil
                   </Link>
                 </div>
-                <SocialShareActions
-                  url={publicBandProfileUrl || publicBandProfilePath}
-                  title={`${formData.name || 'Bend'} — Profil | Pronađi Bend`}
-                  text="Pogledaj naš javni profil benda na platformi Pronađi Bend."
-                />
               </div>
             ) : null}
 
@@ -826,8 +821,8 @@ export default function BandProfilePage() {
 
       <style jsx>{`
         .profile-wrap { max-width: 920px; margin: 0 auto; }
-        .profile-header h1 { font-size: 2.1rem; font-weight: 900; color: #0f172a; margin-bottom: 0.3rem; }
-        .profile-header p { color: #64748b; }
+        .profile-header h1 { font-size: 2.1rem; font-weight: 900; color: var(--text, #f5f5ff); margin-bottom: 0.3rem; }
+        .profile-header p { color: var(--text-muted, #9ea5c7); }
         .profile-header p:not(.profile-poster-hint) { margin-bottom: 0.55rem; }
         .profile-poster-hint { margin: 0 0 1.4rem; }
         .profile-poster-link {
@@ -836,7 +831,7 @@ export default function BandProfilePage() {
           gap: 0.45rem;
           font-size: 0.88rem;
           font-weight: 700;
-          color: #0d9488;
+          color: #2dd4bf;
           text-decoration: none;
         }
         .profile-poster-link:hover { text-decoration: underline; }
@@ -844,7 +839,7 @@ export default function BandProfilePage() {
           display: inline-flex;
           align-items: center;
           gap: 0.4rem;
-          color: #334155;
+          color: var(--text-muted, #9ea5c7);
           font-weight: 800;
           text-transform: uppercase;
           letter-spacing: 0.08em;
@@ -852,13 +847,13 @@ export default function BandProfilePage() {
           margin-bottom: 0.9rem;
           padding: 0.45rem 0.7rem;
           border-radius: 999px;
-          border: 1px solid rgba(148, 163, 184, 0.5);
-          background: rgba(255, 255, 255, 0.9);
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          background: rgba(255, 255, 255, 0.06);
           position: relative;
           z-index: 3;
           transition: 0.2s ease;
         }
-        .back-link:hover { color: #0f172a; border-color: rgba(100, 116, 139, 0.75); }
+        .back-link:hover { color: var(--text, #f5f5ff); border-color: rgba(139, 92, 246, 0.4); }
         .profile-card {
           background: #fff;
           border: 1px solid #e2e8f0;

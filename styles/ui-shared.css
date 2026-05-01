@@ -479,6 +479,29 @@
   }
 }
 
+/* Mobile: disable expensive 3D transforms (iOS Safari rendering, battery) */
+@media (max-width: 768px) {
+  .card-3d-wrap {
+    perspective: none;
+    transform-style: flat;
+  }
+  .card-3d-content {
+    transform-style: flat;
+  }
+  .card-3d-wrap:hover .card-3d-content {
+    transform: none;
+  }
+  .card-3d-wrap:hover {
+    transform: translateY(-4px);
+  }
+  .tilt-card {
+    transform-style: flat;
+  }
+  .tilt-card .tilt-content {
+    transform: none;
+  }
+}
+
 /* ===== CHIP TAG PREMIUM ===== */
 .chip-tag-premium {
   background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(0, 122, 255, 0.15) 100%);

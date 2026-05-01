@@ -1,0 +1,22 @@
+{
+  "name": "Pronađi Bend",
+  "short_name": "PronadjiBend",
+  "description": "Pronađite i rezervišite bend za svadbu, restoran ili event. Uživo muzika Srbija.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#0a0a0c",
+  "background_color": "#0a0a0c",
+  "icons": [
+    {
+      "src": "/images/logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/images/logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

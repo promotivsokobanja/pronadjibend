@@ -1633,6 +1633,7 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
           font-size: 0.78rem;
           cursor: pointer;
           transition: 0.15s ease;
+          -webkit-backdrop-filter: blur(6px);
           backdrop-filter: blur(6px);
           flex-shrink: 0;
         }

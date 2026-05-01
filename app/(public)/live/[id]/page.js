@@ -834,8 +834,9 @@ export default function GuestLivePage({ params }) {
       <style jsx>{`
         .guest-container {
           padding-top: 4rem;
-          padding-bottom: 4rem;
+          padding-bottom: max(4rem, env(safe-area-inset-bottom, 0px));
           min-height: 100vh;
+          min-height: 100dvh;
         }
         .preparing-banner {
           display: flex;
@@ -1157,12 +1158,14 @@ export default function GuestLivePage({ params }) {
           right: 0;
           bottom: 0;
           background: rgba(0, 0, 0, 0.6);
+          -webkit-backdrop-filter: blur(8px);
           backdrop-filter: blur(8px);
           display: flex;
           align-items: center;
           justify-content: center;
           z-index: 2000;
           padding: 1.5rem;
+          padding-bottom: max(1.5rem, env(safe-area-inset-bottom, 0px));
         }
         .modal,
         .success-card {

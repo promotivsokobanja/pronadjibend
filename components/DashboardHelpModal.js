@@ -141,6 +141,7 @@ export default function DashboardHelpModal({ onClose, role = 'band' }) {
           position: fixed;
           inset: 0;
           background: rgba(15, 23, 42, 0.6);
+          -webkit-backdrop-filter: blur(6px);
           backdrop-filter: blur(6px);
           display: flex;
           align-items: center;

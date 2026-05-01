@@ -61,6 +61,7 @@
  * → drugi skrol bar na body. Zato body ostaje overflow: visible; horizontalno seče <html>.
  */
 html {
+  overflow-x: hidden;
   overflow-x: clip;
   overflow-y: auto;
   width: 100%;
@@ -78,7 +79,10 @@ body {
   max-width: 100%;
   min-width: 0;
   position: relative;
+  min-height: 100vh;
   min-height: 100dvh;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  overscroll-behavior-y: contain;
   background-color: var(--bg);
   background-image: radial-gradient(circle at 20% 20%, rgba(205, 166, 103, 0.08), transparent 55%),
     radial-gradient(circle at 80% 0%, rgba(77, 93, 232, 0.25), transparent 45%);
@@ -149,17 +153,18 @@ body {
  */
 html {
   max-width: 100% !important;
+  overflow-x: hidden !important;
   overflow-x: clip !important;
   overflow-y: auto !important;
   position: relative;
-  touch-action: pan-y;
+  touch-action: pan-y pinch-zoom;
 }
 
 body {
   max-width: 100% !important;
   overflow: visible !important;
   position: relative;
-  touch-action: pan-y;
+  touch-action: manipulation;
 }
 
 /* Scroll-lock for fullscreen popups (song view, modals, etc.). */
@@ -187,9 +192,19 @@ html:has(body.song-popup-open) {
 }
 
 /* Off-screen sections: skip rendering until near viewport */
-section, .featured-bands, .experience-gallery, .testimonials, .pricing, .home-blog-guide, .vodic-sekcija {
-  content-visibility: auto;
-  contain-intrinsic-size: auto 600px;
+/* content-visibility:auto can cause glitches on older iOS Safari, so gate it */
+@supports (content-visibility: auto) {
+  section, .featured-bands, .experience-gallery, .testimonials, .pricing, .home-blog-guide, .vodic-sekcija {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 600px;
+  }
+}
+
+/* iOS Safari: inputs < 16px auto-zoom — force minimum 16px on touch devices */
+@media (hover: none) and (pointer: coarse) {
+  input, select, textarea {
+    font-size: max(16px, 1em) !important;
+  }
 }
 
 /* Respect user motion preferences — kills decorative animations */
@@ -207,4 +222,67 @@ section, .featured-bands, .experience-gallery, .testimonials, .pricing, .home-bl
 }
 html {
   scroll-behavior: smooth;
+}
+
+/* ===== APP-LIKE MOBILE: hide scrollbars ===== */
+@media (max-width: 768px) {
+  html,
+  body {
+    scrollbar-width: none; /* Firefox */
+  }
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar {
+    display: none; /* Chrome/Safari/Edge */
+  }
+  /* Bottom nav spacing */
+  body {
+    --bottom-nav-h: calc(60px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: var(--bottom-nav-h);
+  }
+}
+
+/* ===== BOTTOM NAVIGATION BAR ===== */
+.bottom-nav {
+  display: none;
+}
+@media (max-width: 768px) {
+  .bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 9990;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    height: 60px;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    background: rgba(5, 5, 12, 0.95);
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+  }
+  .bottom-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    flex: 1;
+    padding: 6px 0;
+    color: rgba(226, 232, 240, 0.55);
+    text-decoration: none;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    transition: color 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .bottom-nav-item.active {
+    color: #8b5cf6;
+  }
+  .bottom-nav-item:active {
+    transform: scale(0.92);
+  }
 }

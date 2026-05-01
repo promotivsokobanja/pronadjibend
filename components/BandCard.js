@@ -255,6 +255,7 @@ export default function BandCard({ band, priority = false }) {
           bottom: 12px;
           left: 12px;
           background: rgba(0, 0, 0, 0.5);
+          -webkit-backdrop-filter: blur(8px);
           backdrop-filter: blur(8px);
           color: white;
           padding: 6px 12px;

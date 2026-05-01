@@ -44,6 +44,7 @@ export default function UnderConstructionPage() {
           max-width: 500px;
           width: 100%;
           background: rgba(30, 41, 59, 0.5);
+          -webkit-backdrop-filter: blur(10px);
           backdrop-filter: blur(10px);
           border: 1px solid rgba(148, 163, 184, 0.1);
           padding: 3rem 2rem;
