@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, Save, UserRound, Mail, CalendarDays, Euro, MapPin, Music, Video, Image as ImageIcon, ListMusic, Radio, Headphones, Trash2, QrCode, HelpCircle, Download } from 'lucide-react';
+import { ArrowLeft, Save, UserRound, Mail, CalendarDays, Euro, MapPin, Music, Video, Image as ImageIcon, ListMusic, Radio, Headphones, Trash2, QrCode, HelpCircle, Download, ChevronDown, ExternalLink } from 'lucide-react';
 import QrModal from '../../../../components/QrModal';
 import DashboardHelpModal from '../../../../components/DashboardHelpModal';
 import SocialShareActions from '../../../../components/SocialShareActions';
@@ -471,16 +471,15 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
       href: '/bands/midi',
       icon: Headphones,
     },
-    ...(isPremiumVenue && korgPaItems.length
-      ? [{
-          title: 'Korg PA setovi',
-          description: 'Otvori listu dostupnih setova i sound paketa za download.',
-          onClick: () => setShowKorgDownloads((prev) => !prev),
-          icon: Download,
-          downloadList: true,
-        }]
-      : []),
   ];
+
+  const handleKorgDownload = useCallback((url) => {
+    const iframe = document.createElement('iframe');
+    iframe.style.display = 'none';
+    iframe.src = url;
+    document.body.appendChild(iframe);
+    setTimeout(() => iframe.remove(), 10000);
+  }, []);
 
   const onChange = (key, value) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -1375,39 +1374,61 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
                       </button>
                     );
                   })}
-                {showKorgDownloads && korgPaItems.length ? (
-                  <div
-                    className="panel-korg-downloads"
-                    style={{
-                      marginTop: '1rem',
-                      display: 'grid',
-                      gap: '0.75rem',
-                      gridTemplateColumns: 'repeat(auto-fit, minmax(min(220px, 100%), 1fr))',
-                    }}
-                  >
-                    {korgPaItems.map((item) => (
-                      <a
-                        key={item.id || item.url}
-                        href={item.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="panel-link"
-                      >
-                        <div className="panel-card">
-                          <div className="panel-icon">
-                            <Download size={20} />
+                </div>
+
+                {isPremiumVenue && korgPaItems.length ? (
+                  <div className="korg-accordion" style={{ marginTop: '1rem' }}>
+                    <button
+                      type="button"
+                      className="korg-accordion-toggle"
+                      onClick={() => setShowKorgDownloads((prev) => !prev)}
+                    >
+                      <div className="panel-icon" style={{ width: 36, height: 36 }}>
+                        <Download size={18} />
+                      </div>
+                      <div style={{ flex: 1, textAlign: 'left' }}>
+                        <h3 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 800, color: '#f8fafc' }}>Korg PA setovi</h3>
+                        <p style={{ margin: 0, fontSize: '0.78rem', color: 'rgba(226,232,240,0.6)' }}>
+                          {korgPaItems.length} {korgPaItems.length === 1 ? 'set dostupan' : 'setova dostupno'} za download
+                        </p>
+                      </div>
+                      <ChevronDown
+                        size={18}
+                        style={{
+                          color: 'rgba(226,232,240,0.5)',
+                          transition: 'transform 0.25s ease',
+                          transform: showKorgDownloads ? 'rotate(180deg)' : 'rotate(0)',
+                        }}
+                      />
+                    </button>
+                    {showKorgDownloads && (
+                      <div className="korg-download-list">
+                        {korgPaItems.map((item) => (
+                          <div key={item.id || item.url} className="korg-download-item">
+                            <Download size={15} style={{ flexShrink: 0, color: '#8b5cf6' }} />
+                            <span className="korg-item-name">{item.name}</span>
+                            <button
+                              type="button"
+                              className="korg-dl-btn"
+                              onClick={() => handleKorgDownload(item.url)}
+                            >
+                              Preuzmi
+                            </button>
+                            <a
+                              href={item.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="korg-ext-btn"
+                              title="Otvori u pregledaču"
+                            >
+                              <ExternalLink size={13} />
+                            </a>
                           </div>
-                          <div>
-                            <h3>{item.name}</h3>
-                            <p>Klikni za download fajla ili seta.</p>
-                          </div>
-                          <span className="panel-cta">Preuzmi</span>
-                        </div>
-                      </a>
-                    ))}
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ) : null}
-                </div>
               </div>
             </section>
 
@@ -1697,13 +1718,90 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
             grid-template-columns: repeat(2, 1fr);
           }
         }
-        .panel-korg-downloads {
-          grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        .korg-accordion {
+          border-radius: 18px;
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: rgba(255, 255, 255, 0.03);
+          overflow: hidden;
         }
-        @media (max-width: 900px) {
-          .panel-korg-downloads {
-            grid-template-columns: 1fr !important;
-          }
+        .korg-accordion-toggle {
+          all: unset;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          width: 100%;
+          padding: 1rem 1.15rem;
+          box-sizing: border-box;
+          transition: background 0.2s;
+        }
+        .korg-accordion-toggle:hover {
+          background: rgba(255, 255, 255, 0.04);
+        }
+        .korg-download-list {
+          border-top: 1px solid rgba(255, 255, 255, 0.06);
+          padding: 0.5rem 0;
+          animation: korg-slide 0.2s ease;
+        }
+        @keyframes korg-slide {
+          from { opacity: 0; transform: translateY(-6px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .korg-download-item {
+          display: flex;
+          align-items: center;
+          gap: 0.65rem;
+          padding: 0.65rem 1.15rem;
+          transition: background 0.15s;
+        }
+        .korg-download-item:hover {
+          background: rgba(139, 92, 246, 0.06);
+        }
+        .korg-item-name {
+          flex: 1;
+          font-size: 0.85rem;
+          font-weight: 700;
+          color: #e2e8f0;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          min-width: 0;
+        }
+        .korg-dl-btn {
+          all: unset;
+          cursor: pointer;
+          padding: 0.35rem 0.75rem;
+          border-radius: 999px;
+          background: rgba(139, 92, 246, 0.15);
+          color: #a78bfa;
+          font-size: 0.7rem;
+          font-weight: 800;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          white-space: nowrap;
+          transition: background 0.15s;
+          flex-shrink: 0;
+        }
+        .korg-dl-btn:hover {
+          background: rgba(139, 92, 246, 0.3);
+        }
+        .korg-dl-btn:active {
+          transform: scale(0.95);
+        }
+        .korg-ext-btn {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 28px;
+          height: 28px;
+          border-radius: 50%;
+          color: rgba(226, 232, 240, 0.35);
+          transition: color 0.15s, background 0.15s;
+          flex-shrink: 0;
+        }
+        .korg-ext-btn:hover {
+          color: #a78bfa;
+          background: rgba(139, 92, 246, 0.1);
         }
         .panel-link {
           all: unset;
