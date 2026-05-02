@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '../../../../lib/prisma';
 import { getAuthUserFromRequest } from '../../../../lib/auth';
+import { sendBookingConfirmedEmails } from '../../../../lib/sendBookingNotificationEmail';
 
 export const dynamic = 'force-dynamic';
 
@@ -41,9 +42,10 @@ async function assertBandBookingAccess(request, id) {
 }
 
 /**
- * action: "accept" — PENDING → BAND_ACCEPTED
+ * action: "accept"  — PENDING → BAND_ACCEPTED
+ * action: "confirm" — BAND_ACCEPTED → CONFIRMED (bend sam potvrđuje)
  * action: "complete" — CONFIRMED → COMPLETED (završen nastup)
- * action: "reject" — PENDING | BAND_ACCEPTED | CONFIRMED → CANCELLED
+ * action: "reject"  — PENDING | BAND_ACCEPTED | CONFIRMED → CANCELLED
  */
 export async function PATCH(request, { params } = {}) {
   const id = params?.id;
@@ -78,6 +80,34 @@ export async function PATCH(request, { params } = {}) {
       return NextResponse.json({ success: true, booking });
     }
 
+    if (action === 'confirm') {
+      if (existing.status !== 'BAND_ACCEPTED') {
+        return NextResponse.json(
+          { error: 'Potvrda je moguća samo za prihvaćene upite (BAND_ACCEPTED).' },
+          { status: 400 }
+        );
+      }
+      const booking = await prisma.booking.update({
+        where: { id },
+        data: { status: 'CONFIRMED' },
+        select: {
+          id: true, status: true, clientName: true, clientEmail: true,
+          clientPhone: true, date: true, message: true, location: true,
+          band: { select: { name: true, user: { select: { email: true } } } },
+        },
+      });
+      try {
+        await sendBookingConfirmedEmails({
+          bandEmail: booking.band?.user?.email,
+          bandName: booking.band?.name,
+          booking,
+        });
+      } catch (mailErr) {
+        console.error('[booking-email] Potvrda (CONFIRMED):', mailErr);
+      }
+      return NextResponse.json({ success: true, booking });
+    }
+
     if (action === 'complete') {
       if (existing.status !== 'CONFIRMED') {
         return NextResponse.json(
@@ -107,7 +137,7 @@ export async function PATCH(request, { params } = {}) {
     }
 
     return NextResponse.json(
-      { error: 'Nepoznata akcija. Koristite accept, complete ili reject.' },
+      { error: 'Nepoznata akcija. Koristite accept, confirm, complete ili reject.' },
       { status: 400 }
     );
   } catch (error) {

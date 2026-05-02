@@ -83,3 +83,52 @@ export async function GET(request) {
     return NextResponse.json({ error: 'Greška pri učitavanju poziva muzičarima.' }, { status: 500 });
   }
 }
+
+const INVITE_STATUSES = new Set(['PENDING', 'ACCEPTED', 'REJECTED', 'CANCELLED']);
+
+export async function PATCH(request) {
+  const gate = await requireAdmin(request);
+  if (!gate.ok) return gate.response;
+
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: 'Neispravan JSON.' }, { status: 400 });
+  }
+
+  const id = body.id;
+  const status = body.status !== undefined ? String(body.status).toUpperCase() : null;
+  if (!id || !status || !INVITE_STATUSES.has(status)) {
+    return NextResponse.json(
+      { error: 'Nedostaje id ili je status neispravan.' },
+      { status: 400 }
+    );
+  }
+
+  try {
+    const existing = await prisma.musicianInvite.findUnique({ where: { id } });
+    if (!existing) {
+      return NextResponse.json({ error: 'Poziv nije pronađen.' }, { status: 404 });
+    }
+
+    const updated = await prisma.musicianInvite.update({
+      where: { id },
+      data: { status },
+      include: {
+        band: { select: { id: true, name: true } },
+        musician: { select: { id: true, name: true, primaryInstrument: true } },
+      },
+    });
+
+    return NextResponse.json({ success: true, invite: updated });
+  } catch (error) {
+    if (error?.code === 'P2025') {
+      return NextResponse.json({ error: 'Poziv nije pronađen.' }, { status: 404 });
+    }
+    console.error('admin/musician-invites PATCH', error);
+    const safe = responseFromDatabaseError(error);
+    if (safe) return safe;
+    return NextResponse.json({ error: 'Greška pri ažuriranju poziva.' }, { status: 500 });
+  }
+}

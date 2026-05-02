@@ -84,6 +84,7 @@ export async function PATCH(request, { params } = {}) {
       select: {
         id: true,
         status: true,
+        senderType: true,
         bandId: true,
         musicianId: true,
         senderMusicianId: true,
@@ -111,8 +112,15 @@ export async function PATCH(request, { params } = {}) {
       return NextResponse.json({ error: 'Pošiljalac može samo otkazati poziv.' }, { status: 403 });
     }
 
-    if (isBandOwner && nextStatus !== 'CANCELLED' && !isAdmin) {
+    const bandIsSender = isBandOwner && existing.senderType === 'BAND';
+    const bandIsReceiver = isBandOwner && existing.senderType === 'MUSICIAN';
+
+    if (bandIsSender && nextStatus !== 'CANCELLED' && !isAdmin) {
       return NextResponse.json({ error: 'Bend može samo otkazati poslati poziv.' }, { status: 403 });
+    }
+
+    if (bandIsReceiver && !['ACCEPTED', 'REJECTED'].includes(nextStatus) && !isAdmin) {
+      return NextResponse.json({ error: 'Bend može prihvatiti ili odbiti primljeni poziv.' }, { status: 403 });
     }
 
     if (existing.status !== 'PENDING' && !isAdmin) {

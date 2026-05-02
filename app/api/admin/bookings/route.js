@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '../../../../lib/prisma';
 import { requireAdmin } from '../../../../lib/adminAuth';
 import { responseFromDatabaseError } from '../../../../lib/dbClientErrors';
-import { sendBookingConfirmedEmails } from '../../../../lib/sendBookingNotificationEmail';
+import { sendBookingConfirmedEmails, sendBookingStatusChangedToBand } from '../../../../lib/sendBookingNotificationEmail';
 
 export const dynamic = 'force-dynamic';
 
@@ -136,6 +136,19 @@ export async function PATCH(request) {
         });
       } catch (mailErr) {
         console.error('[booking-email] Potvrda (CONFIRMED):', mailErr);
+      }
+    }
+
+    if (status !== 'CONFIRMED' && booking.band) {
+      try {
+        await sendBookingStatusChangedToBand({
+          bandEmail: booking.band.user?.email,
+          bandName: booking.band.name,
+          booking,
+          newStatus: status,
+        });
+      } catch (mailErr) {
+        console.error('[booking-email] Status promena:', mailErr);
       }
     }
 
