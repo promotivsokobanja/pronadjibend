@@ -17,11 +17,11 @@ function formatDateKeySr(ymd) {
   return `${parseInt(d, 10)}. ${parseInt(mo, 10)}. ${y}.`;
 }
 
-export default function BandProfileClient({ params }) {
-  const [band, setBand] = useState(null);
+export default function BandProfileClient({ params, initialBand = null }) {
+  const [band, setBand] = useState(initialBand);
   const [reviews, setReviews] = useState([]);
   const [busyDates, setBusyDates] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!initialBand);
   
   const [bookingForm, setBookingForm] = useState({
     dates: [],
@@ -76,20 +76,40 @@ export default function BandProfileClient({ params }) {
   };
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchSecondary = async () => {
+      try {
+        const [reviewsRes, calendarRes] = await Promise.all([
+          fetch(`/api/bands/reviews?bandId=${params.id}`),
+          fetch(`/api/bands/calendar?bandId=${params.id}`)
+        ]);
+        const [reviewsData, calendarData] = await Promise.all([
+          reviewsRes.json(),
+          calendarRes.json()
+        ]);
+        setReviews(reviewsData);
+        setBusyDates(calendarData.allBusy || []);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    if (initialBand) {
+      fetchSecondary();
+      return;
+    }
+
+    const fetchAll = async () => {
       try {
         const [bandRes, reviewsRes, calendarRes] = await Promise.all([
           fetch(`/api/bands/show/${params.id}`),
           fetch(`/api/bands/reviews?bandId=${params.id}`),
           fetch(`/api/bands/calendar?bandId=${params.id}`)
         ]);
-        
         const [bandData, reviewsData, calendarData] = await Promise.all([
           bandRes.json(),
           reviewsRes.json(),
           calendarRes.json()
         ]);
-        
         setBand(bandData);
         setReviews(reviewsData);
         setBusyDates(calendarData.allBusy || []);
@@ -99,8 +119,8 @@ export default function BandProfileClient({ params }) {
         setIsLoading(false);
       }
     };
-    fetchData();
-  }, [params.id]);
+    fetchAll();
+  }, [params.id, initialBand]);
 
   const handleReviewSubmit = async (e) => {
     e.preventDefault();

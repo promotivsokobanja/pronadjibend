@@ -50,8 +50,22 @@ function ChatThread({ inviteId }) {
 
   useEffect(() => {
     loadMessages();
-    pollRef.current = setInterval(loadMessages, 5000);
-    return () => clearInterval(pollRef.current);
+    pollRef.current = setInterval(loadMessages, 8000);
+
+    const handleVisibility = () => {
+      if (document.hidden) {
+        clearInterval(pollRef.current);
+      } else {
+        loadMessages();
+        pollRef.current = setInterval(loadMessages, 8000);
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      clearInterval(pollRef.current);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
   }, [loadMessages]);
 
   useEffect(() => {

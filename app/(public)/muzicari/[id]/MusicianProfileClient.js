@@ -46,9 +46,9 @@ function extractVideoEmbed(url) {
   }
 }
 
-export default function MusicianProfileClient({ musicianId }) {
-  const [musician, setMusician] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+export default function MusicianProfileClient({ musicianId, initialMusician = null }) {
+  const [musician, setMusician] = useState(initialMusician);
+  const [isLoading, setIsLoading] = useState(!initialMusician);
   const [error, setError] = useState('');
   const [viewer, setViewer] = useState(null);
   const [inviteSending, setInviteSending] = useState(false);
@@ -62,6 +62,7 @@ export default function MusicianProfileClient({ musicianId }) {
   });
 
   useEffect(() => {
+    if (initialMusician) return;
     let cancelled = false;
 
     const load = async () => {

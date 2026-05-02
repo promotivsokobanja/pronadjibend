@@ -47,7 +47,7 @@ export default async function MusicianProfilePage({ params }) {
   return (
     <>
       {musician && <MusicianSchema musician={musician} />}
-      <MusicianProfileClient musicianId={params.id} />
+      <MusicianProfileClient musicianId={params.id} initialMusician={musician} />
     </>
   );
 }

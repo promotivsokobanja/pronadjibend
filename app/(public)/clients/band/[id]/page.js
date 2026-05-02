@@ -76,7 +76,7 @@ export default async function BandProfilePage({ params }) {
   return (
     <>
       {band && <BandSchema band={band} />}
-      <BandProfileClient params={params} />
+      <BandProfileClient params={params} initialBand={band} />
     </>
   );
 }
