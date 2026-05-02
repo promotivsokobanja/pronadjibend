@@ -18,6 +18,7 @@ export default function AdminMusicianInvitesPage() {
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState('');
   const [premiumOnly, setPremiumOnly] = useState(false);
+  const [saving, setSaving] = useState(null);
 
   const load = useCallback(async () => {
     setError('');
@@ -36,6 +37,25 @@ export default function AdminMusicianInvitesPage() {
   useEffect(() => {
     load();
   }, [load]);
+
+  const updateStatus = async (id, status) => {
+    setSaving(id);
+    setError('');
+    try {
+      const r = await adminFetch('/api/admin/musician-invites', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, status }),
+      });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error || 'Greška');
+      await load();
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setSaving(null);
+    }
+  };
 
   const invitesList = Array.isArray(data?.invites) ? data.invites : [];
   const visibleInvites = premiumOnly
@@ -110,12 +130,62 @@ export default function AdminMusicianInvitesPage() {
                     </p>
                   ) : null}
                   <p style={{ margin: '0.45rem 0 0', color: '#94a3b8', fontSize: '0.78rem' }}>
-                    Premium chat: {invite.premiumChatEnabled ? 'DA' : 'NE'}
+                    Smer: {invite.senderType === 'MUSICIAN' ? 'Muzičar → Bend' : 'Bend → Muzičar'}
+                    {invite.senderMusician ? ` (poslao: ${invite.senderMusician.name})` : ''}
+                    {' • '}Premium chat: {invite.premiumChatEnabled ? 'DA' : 'NE'}
                   </p>
                 </div>
-                <span className={`invite-status-pill invite-status-${String(invite.status || '').toLowerCase()}`}>
-                  {invite.status || '—'}
-                </span>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.4rem' }}>
+                  <span className={`invite-status-pill invite-status-${String(invite.status || '').toLowerCase()}`}>
+                    {invite.status || '—'}
+                  </span>
+                  <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                    {invite.status !== 'ACCEPTED' && (
+                      <button
+                        type="button"
+                        className="admin-btn"
+                        style={{ fontSize: '0.72rem', padding: '0.25rem 0.5rem', background: '#166534' }}
+                        disabled={saving === invite.id}
+                        onClick={() => updateStatus(invite.id, 'ACCEPTED')}
+                      >
+                        Odobri
+                      </button>
+                    )}
+                    {invite.status !== 'REJECTED' && (
+                      <button
+                        type="button"
+                        className="admin-btn"
+                        style={{ fontSize: '0.72rem', padding: '0.25rem 0.5rem', background: '#991b1b' }}
+                        disabled={saving === invite.id}
+                        onClick={() => updateStatus(invite.id, 'REJECTED')}
+                      >
+                        Odbij
+                      </button>
+                    )}
+                    {invite.status !== 'CANCELLED' && (
+                      <button
+                        type="button"
+                        className="admin-btn"
+                        style={{ fontSize: '0.72rem', padding: '0.25rem 0.5rem', background: '#78350f' }}
+                        disabled={saving === invite.id}
+                        onClick={() => updateStatus(invite.id, 'CANCELLED')}
+                      >
+                        Otkaži
+                      </button>
+                    )}
+                    {invite.status !== 'PENDING' && (
+                      <button
+                        type="button"
+                        className="admin-btn"
+                        style={{ fontSize: '0.72rem', padding: '0.25rem 0.5rem', background: '#334155' }}
+                        disabled={saving === invite.id}
+                        onClick={() => updateStatus(invite.id, 'PENDING')}
+                      >
+                        Vrati na PENDING
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
               {invite.premiumChatEnabled ? (
                 <ChatThread inviteId={invite.id} />
