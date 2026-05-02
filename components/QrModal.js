@@ -1,6 +1,7 @@
 'use client';
 import { QrCode, Download, FileImage, Share2, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import QRCode from 'qrcode';
 
 const drawRoundedRect = (ctx, x, y, width, height, radius) => {
@@ -54,6 +55,9 @@ export default function QrModal({ bandId, musicianId, onClose }) {
   const [qrDataUrl, setQrDataUrl] = useState('');
   const [shareText, setShareText] = useState('');
   const [isGeneratingFlyer, setIsGeneratingFlyer] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
     const url = `${window.location.origin}/live/${ownerId}`;
@@ -230,7 +234,9 @@ export default function QrModal({ bandId, musicianId, onClose }) {
     }
   };
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <div className="modal-overlay">
       <div className="modal glass-card">
         <button className="close-btn" onClick={onClose}><X size={24} /></button>
@@ -354,6 +360,7 @@ export default function QrModal({ bandId, musicianId, onClose }) {
 
         .btn:disabled { opacity: 0.55; cursor: not-allowed; }
       `}</style>
-    </div>
+    </div>,
+    document.body
   );
 }
