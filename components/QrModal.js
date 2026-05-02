@@ -237,7 +237,7 @@ export default function QrModal({ bandId, musicianId, onClose }) {
   if (!mounted) return null;
 
   return createPortal(
-    <div className="modal-overlay">
+    <div className="modal-overlay" style={{ position: 'fixed', inset: 0, zIndex: 999999, background: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', overflowY: 'auto' }}>
       <div className="modal glass-card">
         <button className="close-btn" onClick={onClose}><X size={24} /></button>
         
