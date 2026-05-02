@@ -263,7 +263,7 @@ function applySecurityHeaders(response) {
       "font-src 'self' https://fonts.gstatic.com",
       "img-src 'self' data: blob: https:",
       "frame-src https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com",
-      "connect-src 'self'",
+      "connect-src 'self' https://*.supabase.co https://gleitz.github.io",
       "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self'",
