@@ -1,6 +1,7 @@
 import prisma from '../../../lib/prisma';
 import { NextResponse } from 'next/server';
 import { resolveSongOwner } from '../../../lib/songOwner';
+import { getAuthUserFromRequest } from '../../../lib/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -80,6 +81,23 @@ export async function GET(request) {
       limitRaw != null && limitRaw !== ''
         ? Math.min(Math.max(parseInt(limitRaw, 10) || 0, 1), 100)
         : undefined;
+
+    if (bandId || musicianId) {
+      const auth = await getAuthUserFromRequest(request);
+      if (!auth?.userId) {
+        return NextResponse.json({ error: 'Niste prijavljeni.' }, { status: 401 });
+      }
+      const user = await prisma.user.findUnique({
+        where: { id: auth.userId },
+        select: { role: true, bandId: true, musicianProfile: { select: { id: true } } },
+      });
+      const isAdmin = user?.role === 'ADMIN';
+      const ownsBand = bandId && user?.bandId === bandId;
+      const ownsMusician = musicianId && user?.musicianProfile?.id === musicianId;
+      if (!isAdmin && !ownsBand && !ownsMusician) {
+        return NextResponse.json({ error: 'Nemate dozvolu.' }, { status: 403 });
+      }
+    }
 
     let where = {};
     if (bandId) {

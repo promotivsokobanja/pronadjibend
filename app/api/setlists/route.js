@@ -24,14 +24,27 @@ async function resolveOwner(request) {
 // GET /api/setlists?bandId=X or ?musicianId=X
 export async function GET(request) {
   try {
+    const { owner, error } = await resolveOwner(request);
+    if (error) return error;
+
     const { searchParams } = new URL(request.url);
     const bandId = searchParams.get('bandId');
     const musicianId = searchParams.get('musicianId');
 
+    if (!bandId && !musicianId) {
+      return NextResponse.json({ error: 'bandId ili musicianId je obavezan.' }, { status: 400 });
+    }
+
+    const isAdmin = owner?.user?.role === 'ADMIN';
+    const ownsBand = bandId && owner?.owner?.bandId === bandId;
+    const ownsMusician = musicianId && owner?.owner?.musicianProfileId === musicianId;
+    if (!isAdmin && !ownsBand && !ownsMusician) {
+      return NextResponse.json({ error: 'Nemate dozvolu.' }, { status: 403 });
+    }
+
     const where = {};
     if (bandId) where.bandId = bandId;
-    else if (musicianId) where.musicianProfileId = musicianId;
-    else return NextResponse.json({ error: 'bandId ili musicianId je obavezan.' }, { status: 400 });
+    else where.musicianProfileId = musicianId;
 
     const setLists = await prisma.setList.findMany({
       where,

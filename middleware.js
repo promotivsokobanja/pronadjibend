@@ -2,12 +2,20 @@ import { NextResponse } from 'next/server';
 
 const authRateStore = new Map();
 const bookingPostStore = new Map();
+const messagesPostStore = new Map();
+const invitesPostStore = new Map();
 
 const AUTH_WINDOW_MS = 60 * 1000;
 const AUTH_MAX_REQUESTS = 12;
 
 const BOOKING_WINDOW_MS = 60 * 1000;
 const BOOKING_MAX_PER_WINDOW = 25;
+
+const MESSAGES_WINDOW_MS = 60 * 1000;
+const MESSAGES_MAX_PER_WINDOW = 30;
+
+const INVITES_WINDOW_MS = 60 * 1000;
+const INVITES_MAX_PER_WINDOW = 10;
 
 function getClientIp(request) {
   try {
@@ -172,6 +180,56 @@ function enforceBookingPostRateLimit(request, pathname) {
   return null;
 }
 
+function enforceMessagesPostRateLimit(request, pathname) {
+  if (request.method !== 'POST' || pathname !== '/api/messages') return null;
+
+  const ip = getClientIp(request);
+  const key = `msg:${ip}`;
+  const now = Date.now();
+  const current = messagesPostStore.get(key);
+
+  if (!current || now - current.windowStart > MESSAGES_WINDOW_MS) {
+    messagesPostStore.set(key, { count: 1, windowStart: now });
+    return null;
+  }
+
+  if (current.count >= MESSAGES_MAX_PER_WINDOW) {
+    return NextResponse.json(
+      { error: 'Previše poruka u kratkom roku. Sačekajte minut.' },
+      { status: 429 }
+    );
+  }
+
+  current.count += 1;
+  messagesPostStore.set(key, current);
+  return null;
+}
+
+function enforceInvitesPostRateLimit(request, pathname) {
+  if (request.method !== 'POST' || pathname !== '/api/musicians/invites') return null;
+
+  const ip = getClientIp(request);
+  const key = `inv:${ip}`;
+  const now = Date.now();
+  const current = invitesPostStore.get(key);
+
+  if (!current || now - current.windowStart > INVITES_WINDOW_MS) {
+    invitesPostStore.set(key, { count: 1, windowStart: now });
+    return null;
+  }
+
+  if (current.count >= INVITES_MAX_PER_WINDOW) {
+    return NextResponse.json(
+      { error: 'Previše poziva u kratkom roku. Pokušajte ponovo za minut.' },
+      { status: 429 }
+    );
+  }
+
+  current.count += 1;
+  invitesPostStore.set(key, current);
+  return null;
+}
+
 function hasAnyAuthCookie(request) {
   const c = request.cookies;
   return Boolean(
@@ -192,6 +250,20 @@ function applySecurityHeaders(response) {
   response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
   response.headers.set('X-DNS-Prefetch-Control', 'off');
   response.headers.set('X-Permitted-Cross-Domain-Policies', 'none');
+  response.headers.set(
+    'Content-Security-Policy',
+    [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "font-src 'self' https://fonts.gstatic.com",
+      "img-src 'self' data: blob: https://images.unsplash.com https://res.cloudinary.com https://upload.wikimedia.org",
+      "connect-src 'self'",
+      "frame-ancestors 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+    ].join('; ')
+  );
   if (process.env.NODE_ENV === 'production') {
     response.headers.set(
       'Strict-Transport-Security',
@@ -287,6 +359,18 @@ export async function middleware(request) {
       return bookingLimitError;
     }
 
+    const messagesLimitError = enforceMessagesPostRateLimit(request, pathname);
+    if (messagesLimitError) {
+      applySecurityHeaders(messagesLimitError);
+      return messagesLimitError;
+    }
+
+    const invitesLimitError = enforceInvitesPostRateLimit(request, pathname);
+    if (invitesLimitError) {
+      applySecurityHeaders(invitesLimitError);
+      return invitesLimitError;
+    }
+
     const response = NextResponse.next();
     applySecurityHeaders(response);
     return response;
@@ -308,6 +392,8 @@ export const config = {
     '/api/auth/register',
     '/api/bookings',
     '/api/bookings/:path*',
+    '/api/messages',
+    '/api/musicians/invites',
     // Maintenance mode – javne stranice (osim /login i /under-construction)
     '/',
     '/about',
