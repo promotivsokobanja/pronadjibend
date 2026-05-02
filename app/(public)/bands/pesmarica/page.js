@@ -287,8 +287,9 @@ export default function PesmaricaPage() {
           margin-bottom: 1rem; transition: border-color 0.3s;
         }
         .search-box:focus-within { border-color: var(--accent-primary); }
-        .search-icon { color: #555; flex-shrink: 0; }
-        .search-box input { background: none; border: none; color: #1a1a1a; width: 100%; outline: none; font-size: 0.95rem; }
+        .search-icon { color: #94a3b8; flex-shrink: 0; }
+        .search-box input { background: none; border: none; color: #e2e8f0; width: 100%; outline: none; font-size: 0.95rem; }
+        .search-box input::placeholder { color: #64748b; }
         .clear-btn { background: none; border: none; color: #555; cursor: pointer; display: flex; padding: 4px; border-radius: 50%; }
           .clear-btn:hover { color: #ef4444; }
 
