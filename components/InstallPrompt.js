@@ -9,32 +9,36 @@ export default function InstallPrompt() {
   const [isStandalone, setIsStandalone] = useState(false);
 
   useEffect(() => {
-    const standalone =
-      window.matchMedia('(display-mode: standalone)').matches ||
-      window.navigator.standalone === true;
-    setIsStandalone(standalone);
+    try {
+      const standalone =
+        (typeof window.matchMedia === 'function' && window.matchMedia('(display-mode: standalone)').matches) ||
+        window.navigator.standalone === true;
+      setIsStandalone(standalone);
 
-    if (standalone) return;
+      if (standalone) return;
 
-    const dismissed = sessionStorage.getItem('pb_install_dismissed');
-    if (dismissed) return;
+      const dismissed = sessionStorage.getItem('pb_install_dismissed');
+      if (dismissed) return;
 
-    const ua = window.navigator.userAgent.toLowerCase();
-    const ios = /iphone|ipad|ipod/.test(ua) && !window.MSStream;
-    setIsIos(ios);
+      const ua = window.navigator.userAgent.toLowerCase();
+      const ios = /iphone|ipad|ipod/.test(ua) && !window.MSStream;
+      setIsIos(ios);
 
-    if (ios) {
-      setShowBanner(true);
-      return;
+      if (ios) {
+        setShowBanner(true);
+        return;
+      }
+
+      const handler = (e) => {
+        e.preventDefault();
+        setDeferredPrompt(e);
+        setShowBanner(true);
+      };
+      window.addEventListener('beforeinstallprompt', handler);
+      return () => window.removeEventListener('beforeinstallprompt', handler);
+    } catch {
+      // Older browsers without matchMedia support — silently skip install prompt
     }
-
-    const handler = (e) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-      setShowBanner(true);
-    };
-    window.addEventListener('beforeinstallprompt', handler);
-    return () => window.removeEventListener('beforeinstallprompt', handler);
   }, []);
 
   const handleInstall = useCallback(async () => {

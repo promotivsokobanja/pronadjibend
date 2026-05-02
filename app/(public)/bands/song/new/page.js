@@ -1,5 +1,5 @@
 'use client';
-import { Mail, Phone, MapPin, Calendar, Star, Send, Shield, Music, Video, Info, ArrowLeft, Save } from 'lucide-react';
+import { Send, Music, ArrowLeft, Save } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';

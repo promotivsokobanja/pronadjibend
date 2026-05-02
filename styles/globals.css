@@ -255,8 +255,8 @@ body {
   body::-webkit-scrollbar {
     display: none; /* Chrome/Safari/Edge */
   }
-  /* Bottom nav spacing */
-  body {
+  /* Bottom nav spacing — only when nav is actually visible */
+  body.bottom-nav-visible {
     --bottom-nav-h: calc(60px + env(safe-area-inset-bottom, 0px));
     padding-bottom: var(--bottom-nav-h);
   }

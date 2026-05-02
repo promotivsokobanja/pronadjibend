@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { Home, Search, Music, User } from 'lucide-react';
 import { usePathname } from 'next/navigation';
+import { useEffect } from 'react';
 
 const NAV_ITEMS = [
   { href: '/', icon: Home, label: 'Početna' },
@@ -14,8 +15,18 @@ const HIDDEN_PREFIXES = ['/live', '/bands/live', '/muzicari/profil/live'];
 
 export default function BottomNav() {
   const pathname = usePathname();
+  const isHidden = HIDDEN_PREFIXES.some((p) => pathname.startsWith(p));
 
-  if (HIDDEN_PREFIXES.some((p) => pathname.startsWith(p))) return null;
+  useEffect(() => {
+    if (isHidden) {
+      document.body.classList.remove('bottom-nav-visible');
+    } else {
+      document.body.classList.add('bottom-nav-visible');
+    }
+    return () => document.body.classList.remove('bottom-nav-visible');
+  }, [isHidden]);
+
+  if (isHidden) return null;
 
   const isActive = (href) => {
     if (href === '/') return pathname === '/';
