@@ -194,8 +194,18 @@ export default function MusicianProfileClient({ musicianId }) {
   if (isLoading) {
     return (
       <div className="musician-public-page page-below-fixed-nav">
-        <main className="container musician-public-shell">
-          <div className="state-box">Učitavanje profila muzičara…</div>
+        <main className="container musician-public-shell" style={{ maxWidth: 860, margin: '4rem auto', padding: '0 1.5rem' }}>
+          <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '2rem', alignItems: 'center' }}>
+            <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'rgba(255,255,255,0.07)', animation: 'skeleton-pulse 1.4s ease infinite', flexShrink: 0 }} />
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <div style={{ height: 26, width: '50%', borderRadius: 8, background: 'rgba(255,255,255,0.07)', animation: 'skeleton-pulse 1.4s ease infinite' }} />
+              <div style={{ height: 15, width: '30%', borderRadius: 6, background: 'rgba(255,255,255,0.05)', animation: 'skeleton-pulse 1.4s ease infinite 0.1s' }} />
+            </div>
+          </div>
+          {[1,2,3,4].map((i) => (
+            <div key={i} style={{ height: 16, borderRadius: 6, marginBottom: '0.65rem', width: `${90 - i * 8}%`, background: 'rgba(255,255,255,0.05)', animation: `skeleton-pulse 1.4s ease infinite ${i * 0.1}s` }} />
+          ))}
+          <style>{`@keyframes skeleton-pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }`}</style>
         </main>
       </div>
     );

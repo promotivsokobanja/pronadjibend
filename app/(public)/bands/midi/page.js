@@ -3,7 +3,12 @@ import { Search, Music, Download, Lock, X, ChevronLeft, ChevronRight, Play, Uplo
 import Link from 'next/link';
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import MidiKaraokePlayer from '../../../../components/MidiKaraokePlayer';
+import dynamic from 'next/dynamic';
+
+const MidiKaraokePlayer = dynamic(() => import('../../../../components/MidiKaraokePlayer'), {
+  ssr: false,
+  loading: () => <div style={{ padding: '2rem', color: '#9ca3af', textAlign: 'center' }}>Učitavanje playera…</div>,
+});
 
 const CATEGORIES = ['Sve', 'Zabavna', 'Narodna', 'Kola', 'Mixevi', 'Decije'];
 const ALPHABET = 'ABCČĆDĐEFGHIJKLMNOPRSTUVZŽ'.split('');

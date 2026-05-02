@@ -21,6 +21,8 @@ export default function MusiciansSearchClient() {
   const [musicians, setMusicians] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isHydratedFromUrl, setIsHydratedFromUrl] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(9);
+  const MUSICIANS_PER_PAGE = 9;
   const lastSyncedQueryRef = useRef('');
 
   const fetchMusicians = useCallback(async () => {
@@ -39,9 +41,11 @@ export default function MusiciansSearchClient() {
       if (!res.ok) throw new Error('Network response was not ok');
       const data = await res.json();
       setMusicians(Array.isArray(data) ? data : []);
+      setVisibleCount(9);
     } catch (error) {
       console.error('Greška pri preuzimanju muzičara:', error);
       setMusicians([]);
+      setVisibleCount(9);
     } finally {
       setIsLoading(false);
     }
@@ -170,8 +174,9 @@ export default function MusiciansSearchClient() {
             ))}
           </div>
         ) : musicians.length > 0 ? (
+          <>
           <div className="results-grid">
-            {musicians.map((musician) => (
+            {musicians.slice(0, visibleCount).map((musician) => (
               <article key={musician.id} className="result-card group">
                 <Link href={`/muzicari/${musician.id}`}>
                   <div className="result-image-wrap relative aspect-[1/0.72] overflow-hidden">
@@ -225,6 +230,17 @@ export default function MusiciansSearchClient() {
               </article>
             ))}
           </div>
+          {visibleCount < musicians.length && (
+            <div style={{ textAlign: 'center', marginTop: '2rem' }}>
+              <button
+                onClick={() => setVisibleCount((v) => v + 9)}
+                style={{ padding: '0.75rem 2.5rem', borderRadius: 12, background: 'rgba(0,122,255,0.12)', border: '1px solid rgba(0,122,255,0.3)', color: '#007AFF', fontWeight: 700, fontSize: '0.9rem', cursor: 'pointer', transition: 'background 0.15s' }}
+              >
+                Učitaj još ({musicians.length - visibleCount} preostalo)
+              </button>
+            </div>
+          )}
+          </>
         ) : (
           <div className="empty-state">
             <div className="flex h-14 w-14 items-center justify-center rounded-full border border-slate-200 bg-white">

@@ -8,7 +8,34 @@ import { sendBookingNotificationToBand } from '../../../lib/sendBookingNotificat
 const BOOKING_MESSAGE_MAX = 500;
 const MAX_BOOKING_DATES = 14;
 
+// In-memory rate limiter — max 5 booking submissions per IP per 10 minutes
+const rateLimitMap = new Map();
+const RATE_LIMIT_MAX = 5;
+const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
+
+function checkRateLimit(ip) {
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip) || { count: 0, resetAt: now + RATE_LIMIT_WINDOW_MS };
+  if (now > entry.resetAt) {
+    entry.count = 0;
+    entry.resetAt = now + RATE_LIMIT_WINDOW_MS;
+  }
+  entry.count += 1;
+  rateLimitMap.set(ip, entry);
+  return entry.count <= RATE_LIMIT_MAX;
+}
+
 export async function POST(request) {
+  const ip =
+    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+    request.headers.get('x-real-ip') ||
+    'unknown';
+  if (!checkRateLimit(ip)) {
+    return NextResponse.json(
+      { error: 'Previše zahteva. Pokušajte ponovo za nekoliko minuta.' },
+      { status: 429 }
+    );
+  }
   try {
     const body = await request.json();
     const { bandId, clientName, clientEmail, clientPhone, date, dates, message, location } = body;

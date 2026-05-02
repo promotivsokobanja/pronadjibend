@@ -176,7 +176,21 @@ export default function BandProfileClient({ params }) {
     }
   };
 
-  if (isLoading) return <div className="loading">Učitavanje profila...</div>;
+  if (isLoading) return (
+    <div style={{ maxWidth: 900, margin: '6rem auto', padding: '0 1.5rem' }}>
+      <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '2rem', alignItems: 'center' }}>
+        <div style={{ width: 90, height: 90, borderRadius: '50%', background: 'rgba(255,255,255,0.07)', animation: 'skeleton-pulse 1.4s ease infinite' }} />
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <div style={{ height: 28, width: '55%', borderRadius: 8, background: 'rgba(255,255,255,0.07)', animation: 'skeleton-pulse 1.4s ease infinite' }} />
+          <div style={{ height: 16, width: '35%', borderRadius: 6, background: 'rgba(255,255,255,0.05)', animation: 'skeleton-pulse 1.4s ease infinite 0.1s' }} />
+        </div>
+      </div>
+      {[1,2,3].map((i) => (
+        <div key={i} style={{ height: 18, borderRadius: 6, marginBottom: '0.75rem', width: `${85 - i * 10}%`, background: 'rgba(255,255,255,0.05)', animation: `skeleton-pulse 1.4s ease infinite ${i * 0.1}s` }} />
+      ))}
+      <style>{`@keyframes skeleton-pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }`}</style>
+    </div>
+  );
   if (!band) return <div className="error">Bend nije pronađen.</div>;
 
   const isDemo = typeof params?.id === 'string' && params.id.startsWith('demo-');

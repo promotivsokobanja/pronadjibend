@@ -1,7 +1,16 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import LiveDashboard from '../../../../components/LiveDashboard';
+import dynamic from 'next/dynamic';
+
+const LiveDashboard = dynamic(() => import('../../../../components/LiveDashboard'), {
+  ssr: false,
+  loading: () => (
+    <div style={{ padding: '6rem 1rem', color: '#fff', textAlign: 'center' }}>
+      Učitavanje Live režima…
+    </div>
+  ),
+});
 
 export default function LivePage() {
   const router = useRouter();
