@@ -108,9 +108,23 @@ export default function DashboardHelpModal({ onClose, role = 'band' }) {
             <div className="help-text">
               <h3>Kalendar & Upiti / Rezervacije</h3>
               <p>
-                <strong>Predstojeći upiti</strong> su zahtevi klijenata za termin. Možete ih prihvatiti,
-                odbiti ili označiti kao završene. U kalendaru obeležavate zauzete dane da biste izbegli
+                <strong>Predstojeći upiti</strong> su zahtevi klijenata za termin. Možete ih <strong>prihvatiti</strong>,
+                zatim <strong>potvrditi</strong> (klijent dobija email potvrdu), <strong>odbiti</strong> ili označiti kao
+                <strong> završene</strong> nakon nastupa. U kalendaru obeležavate zauzete dane da biste izbegli
                 duple rezervacije.
+              </p>
+            </div>
+          </section>
+
+          <section className="help-item">
+            <div className="help-icon"><MessageSquare size={20} /></div>
+            <div className="help-text">
+              <h3>Pozivi muzičarima</h3>
+              <p>
+                Šaljete pozive muzičarima za saradnju — navedite datum, lokaciju i honorar.
+                Muzičar može prihvatiti ili odbiti. Isto tako, muzičar može poslati poziv vama
+                — vi ga prihvatate ili odbijate.
+                {' '}<strong>Premium članovi</strong> imaju pristup ugrađenom chatu za direktnu komunikaciju.
               </p>
             </div>
           </section>
@@ -131,6 +145,7 @@ export default function DashboardHelpModal({ onClose, role = 'band' }) {
             <span>
               <strong>Savet:</strong> Pre nastupa, odštampajte QR poster i proverite set liste u Live panelu.
               Za stalne klijente — uredite profil i javite dostupne datume u kalendaru.
+              Kada klijent pošalje upit, prihvatite ga i potvrdite — klijent automatski dobija email potvrdu.
             </span>
           </div>
         </div>
@@ -146,7 +161,7 @@ export default function DashboardHelpModal({ onClose, role = 'band' }) {
           display: flex;
           align-items: center;
           justify-content: center;
-          z-index: 2000;
+          z-index: 999999;
           padding: 1rem;
           overflow-y: auto;
           -webkit-overflow-scrolling: touch;
