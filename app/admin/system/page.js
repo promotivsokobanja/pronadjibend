@@ -11,9 +11,12 @@ export default function AdminSystemPage() {
   const [savingDemo, setSavingDemo] = useState(false);
   const [savingMaintenance, setSavingMaintenance] = useState(false);
   const [savingKorg, setSavingKorg] = useState(false);
+  const [savingContact, setSavingContact] = useState(false);
   const [demoMsg, setDemoMsg] = useState('');
   const [maintenanceMsg, setMaintenanceMsg] = useState('');
   const [korgMsg, setKorgMsg] = useState('');
+  const [contactMsg, setContactMsg] = useState('');
+  const [contactForm, setContactForm] = useState({ email: '', instagram: '', facebook: '' });
   const [korgItems, setKorgItems] = useState([createEmptyKorgItem()]);
   const [isCompactKorgEditor, setIsCompactKorgEditor] = useState(false);
 
@@ -34,6 +37,9 @@ export default function AdminSystemPage() {
       setData(j);
       const loadedItems = Array.isArray(j.korgPaItems) && j.korgPaItems.length ? j.korgPaItems : j.korgPaDriveUrl ? [{ id: 'korg-legacy', name: 'Korg PA setovi', url: j.korgPaDriveUrl }] : [createEmptyKorgItem()];
       setKorgItems(loadedItems);
+      if (j.contactInfo) {
+        setContactForm({ email: j.contactInfo.email || '', instagram: j.contactInfo.instagram || '', facebook: j.contactInfo.facebook || '' });
+      }
     } catch (e) {
       setError(e.message);
     }
@@ -106,6 +112,26 @@ export default function AdminSystemPage() {
       const next = prev.filter((item) => item.id !== id);
       return next.length ? next : [createEmptyKorgItem()];
     });
+  };
+
+  const saveContactInfo = async () => {
+    setSavingContact(true);
+    setContactMsg('');
+    try {
+      const r = await adminFetch('/api/admin/system/settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contactInfo: contactForm }),
+      });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error || 'Greška pri čuvanju');
+      setData((prev) => (prev ? { ...prev, contactInfo: j.contactInfo } : prev));
+      setContactMsg('Sačuvano.');
+    } catch (e) {
+      setContactMsg(e.message);
+    } finally {
+      setSavingContact(false);
+    }
   };
 
   const toggleMaintenanceMode = async () => {
@@ -317,6 +343,54 @@ export default function AdminSystemPage() {
             </span>
           </div>
           {korgMsg ? <p style={{ margin: 0, fontSize: '0.875rem', color: '#94a3b8' }}>{korgMsg}</p> : null}
+        </div>
+      </div>
+
+      <div
+        className="admin-table-wrap"
+        style={{
+          maxWidth: 560,
+          marginBottom: '1.75rem',
+          padding: '1.25rem',
+          borderRadius: 12,
+          border: '1px solid rgba(148, 163, 184, 0.35)',
+          background: 'rgba(15, 23, 42, 0.35)',
+        }}
+      >
+        <h2 style={{ fontSize: '1rem', margin: '0 0 0.5rem', fontWeight: 800 }}>Kontakt informacije (O nama stranica)</h2>
+        <p style={{ color: '#94a3b8', fontSize: '0.875rem', margin: '0 0 1rem', lineHeight: 1.5 }}>
+          Prikazuje se na javnoj &ldquo;O nama&rdquo; stranici. Ostavite prazno da bi se koristile podrazumevane vrednosti.
+        </p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          {[
+            { key: 'email', label: 'Email', placeholder: 'info@pronadjibend.rs', type: 'email' },
+            { key: 'instagram', label: 'Instagram URL', placeholder: 'https://www.instagram.com/pronadjibend', type: 'url' },
+            { key: 'facebook', label: 'Facebook URL', placeholder: 'https://www.facebook.com/pronadjibend', type: 'url' },
+          ].map(({ key, label, placeholder, type }) => (
+            <div key={key} style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+              <label style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 600 }}>{label}</label>
+              <input
+                type={type}
+                value={contactForm[key]}
+                onChange={(e) => setContactForm((prev) => ({ ...prev, [key]: e.target.value }))}
+                placeholder={placeholder}
+                style={{
+                  width: '100%',
+                  borderRadius: 10,
+                  border: '1px solid rgba(148, 163, 184, 0.45)',
+                  background: 'rgba(255, 255, 255, 0.96)',
+                  color: '#0f172a',
+                  padding: '0.8rem 0.9rem',
+                  fontSize: '0.95rem',
+                  boxSizing: 'border-box',
+                }}
+              />
+            </div>
+          ))}
+          <button type="button" className="admin-btn" disabled={savingContact} onClick={saveContactInfo} style={{ alignSelf: 'flex-start', marginTop: '0.25rem' }}>
+            {savingContact ? 'Čuvanje…' : 'Sačuvaj kontakt info'}
+          </button>
+          {contactMsg ? <p style={{ margin: 0, fontSize: '0.875rem', color: contactMsg === 'Sačuvano.' ? '#4ade80' : '#f87171' }}>{contactMsg}</p> : null}
         </div>
       </div>
 

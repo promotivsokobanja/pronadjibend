@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '../../../../../lib/adminAuth';
-import { getDemoBandsEnvOverrideHint, getShowDemoBands, setShowDemoBands, getMaintenanceMode, setMaintenanceMode, getKorgPaDriveUrl, setKorgPaDriveUrl, getKorgPaItems, setKorgPaItems } from '../../../../../lib/siteConfig';
+import { getDemoBandsEnvOverrideHint, getShowDemoBands, setShowDemoBands, getMaintenanceMode, setMaintenanceMode, getKorgPaDriveUrl, setKorgPaDriveUrl, getKorgPaItems, setKorgPaItems, getContactInfo, setContactInfo } from '../../../../../lib/siteConfig';
 
 export const dynamic = 'force-dynamic';
 
@@ -99,9 +99,26 @@ export async function PATCH(request) {
     }
   }
 
+  if (Object.prototype.hasOwnProperty.call(body, 'contactInfo')) {
+    const ci = body.contactInfo || {};
+    const email = String(ci.email || '').trim();
+    const instagram = String(ci.instagram || '').trim();
+    const facebook = String(ci.facebook || '').trim();
+    if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+      return NextResponse.json({ error: 'Email adresa nije ispravna.' }, { status: 400 });
+    }
+    try {
+      await setContactInfo({ email, instagram, facebook });
+    } catch (e) {
+      console.error('SiteConfig contactInfo update:', e);
+      return NextResponse.json({ error: 'Nije moguće sačuvati kontakt info.' }, { status: 500 });
+    }
+  }
+
   const showDemoBands = await getShowDemoBands();
   const maintenanceMode = await getMaintenanceMode();
   const korgPaDriveUrl = await getKorgPaDriveUrl();
   const korgPaItems = await getKorgPaItems();
-  return NextResponse.json({ ok: true, showDemoBands, maintenanceMode, korgPaDriveUrl, korgPaItems });
+  const contactInfo = await getContactInfo();
+  return NextResponse.json({ ok: true, showDemoBands, maintenanceMode, korgPaDriveUrl, korgPaItems, contactInfo });
 }

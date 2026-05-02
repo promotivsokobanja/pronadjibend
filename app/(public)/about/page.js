@@ -1,5 +1,6 @@
 import AboutClient from './AboutClient';
 import { getSiteUrl } from '@/lib/siteUrl';
+import { getContactInfo } from '@/lib/siteConfig';
 
 const siteUrl = getSiteUrl();
 
@@ -15,6 +16,7 @@ export const metadata = {
   },
 };
 
-export default function AboutPage() {
-  return <AboutClient />;
+export default async function AboutPage() {
+  const contactInfo = await getContactInfo();
+  return <AboutClient contactInfo={contactInfo} />;
 }

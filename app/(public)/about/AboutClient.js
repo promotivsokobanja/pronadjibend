@@ -1,11 +1,23 @@
 'use client';
-import { Shield, Zap, Music } from 'lucide-react';
+import { Shield, Zap, Music, Search, CalendarCheck, Handshake, Mail, Instagram, Facebook } from 'lucide-react';
+import Link from 'next/link';
 
-export default function AboutClient() {
+export default function AboutClient({ contactInfo = {} }) {
+  const email = contactInfo.email || 'info@pronadjibend.rs';
+  const instagramUrl = contactInfo.instagram || 'https://www.instagram.com/pronadjibend';
+  const facebookUrl = contactInfo.facebook || 'https://www.facebook.com/pronadjibend';
+  const instagramHandle = instagramUrl.replace(/\/+$/, '').split('/').pop() || 'pronadjibend';
+  const facebookHandle = facebookUrl.replace(/\/+$/, '').split('/').pop() || 'PronadjiBend';
   const values = [
     { icon: Shield, title: 'Sigurnost i Poverenje', desc: 'Svi naši bendovi su provereni, a klijenti zaštićeni jasnim ugovorima o nastupu.' },
     { icon: Zap, title: 'Brza Rezervacija', desc: 'Od prvog klika do dogovorenog termina u manje od 24 časa.' },
     { icon: Music, title: 'Kvalitetna Muzika', desc: 'Partneri smo samo sa vrhunskim muzičarima koji garantuju atmosferu.' },
+  ];
+
+  const steps = [
+    { icon: Search, num: '01', title: 'Pretraži', desc: 'Filtriraj bendove po žanru, gradu, budžetu i tipu događaja.' },
+    { icon: CalendarCheck, num: '02', title: 'Rezerviši', desc: 'Pošalji upit direktno bendu — odgovor u roku od 24 sata.' },
+    { icon: Handshake, num: '03', title: 'Uživaj', desc: 'Dogovori detalje nastupa i prepusti se muzici na svom događaju.' },
   ];
 
   return (
@@ -15,14 +27,14 @@ export default function AboutClient() {
 
       <section className="about-hero">
         <h1>Naša Misija: Muzika <span className="gradient-text">Bez Barijera</span></h1>
-        <p className="hero-subtitle">Digitalni most između umetnika i najboljih lokala u regionu.</p>
+        <p className="hero-subtitle">Digitalni most između muzičara i onih koji traže živu muziku u Srbiji.</p>
       </section>
 
       <section className="about-showcase">
         <div className="showcase-media glass-card">
           <img
-            src="https://upload.wikimedia.org/wikipedia/commons/2/23/Madness_at_Main_stage%2C_Exit_festival.jpg"
-            alt="Nastup benda na Exit festivalu u Novom Sadu — primer žive muzike na velikoj bini"
+            src="https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&w=1200&q=80"
+            alt="Bend nastupa pred publikom — živa muzika na proslavi"
             className="showcase-image"
             loading="lazy"
             decoding="async"
@@ -73,6 +85,22 @@ export default function AboutClient() {
         </div>
       </section>
 
+      <section className="steps-section">
+        <h2 className="steps-title">Kako funkcioniše?</h2>
+        <div className="steps-grid">
+          {steps.map((s, i) => (
+            <div key={i} className="step-card glass-card">
+              <div className="step-num">{s.num}</div>
+              <div className="step-icon-box">
+                <s.icon size={22} color="var(--accent-primary)" />
+              </div>
+              <h3>{s.title}</h3>
+              <p>{s.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
       <section className="about-gallery">
         <article className="gallery-card glass-card">
           <img
@@ -98,6 +126,36 @@ export default function AboutClient() {
             <p>Od tehničkih detalja do repertoara, sve je usklađeno pre samog izlaska na scenu.</p>
           </div>
         </article>
+      </section>
+
+      <section className="cta-section">
+        <div className="cta-card glass-card">
+          <h2>Spreman/a za pravu atmosferu?</h2>
+          <p>Pregledaj dostupne bendove i muzičare i pronađi savršenog izvođača za svoju proslavu.</p>
+          <div className="cta-btns">
+            <Link href="/clients" className="cta-btn-primary">Pronađi bend</Link>
+            <Link href="/muzicari" className="cta-btn-secondary">Pronađi muzičara</Link>
+          </div>
+        </div>
+      </section>
+
+      <section className="contact-section">
+        <h2 className="contact-title">Kontaktiraj nas</h2>
+        <p className="contact-sub">Imaš pitanje, predlog ili partnersku ideju? Javi nam se.</p>
+        <div className="contact-links">
+          <a href={`mailto:${email}`} className="contact-link">
+            <Mail size={18} />
+            {email}
+          </a>
+          <a href={instagramUrl} target="_blank" rel="noopener noreferrer" className="contact-link">
+            <Instagram size={18} />
+            @{instagramHandle}
+          </a>
+          <a href={facebookUrl} target="_blank" rel="noopener noreferrer" className="contact-link">
+            <Facebook size={18} />
+            {facebookHandle}
+          </a>
+        </div>
       </section>
 
       <style jsx>{`
@@ -223,6 +281,88 @@ export default function AboutClient() {
           line-height: 1.6;
         }
 
+        /* Kako funkcioniše */
+        .steps-section { max-width: 1100px; margin: 6rem auto 0; }
+        .steps-title { font-size: 2rem; font-weight: 800; text-align: center; margin-bottom: 2.5rem; letter-spacing: -0.03em; }
+        .steps-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+        .step-card {
+          padding: 2.5rem 2rem;
+          border: 1px solid rgba(255,255,255,0.08);
+          background: rgba(8,8,18,0.9);
+          position: relative;
+          transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+        .step-card:hover { transform: translateY(-4px); border-color: rgba(255,255,255,0.18); }
+        .step-num {
+          font-size: 3rem;
+          font-weight: 900;
+          color: rgba(205,166,103,0.18);
+          line-height: 1;
+          margin-bottom: 1rem;
+          letter-spacing: -2px;
+        }
+        .step-icon-box {
+          width: 44px; height: 44px; border-radius: 12px;
+          background: rgba(205,166,103,0.08);
+          display: flex; align-items: center; justify-content: center;
+          margin-bottom: 1.25rem;
+        }
+        .step-card h3 { font-size: 1.25rem; margin-bottom: 0.5rem; }
+        .step-card p { font-size: 0.93rem; color: var(--text-muted); line-height: 1.65; }
+
+        /* CTA */
+        .cta-section { max-width: 860px; margin: 6rem auto 0; }
+        .cta-card {
+          padding: 4rem 3rem;
+          text-align: center;
+          border: 1px solid rgba(205,166,103,0.2);
+          background: linear-gradient(135deg, rgba(205,166,103,0.06), rgba(77,93,232,0.08));
+          box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+        }
+        .cta-card h2 { font-size: 2.2rem; font-weight: 800; margin-bottom: 1rem; letter-spacing: -0.03em; }
+        .cta-card p { font-size: 1.05rem; color: var(--text-muted); margin-bottom: 2.5rem; max-width: 500px; margin-left: auto; margin-right: auto; }
+        .cta-btns { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+        .cta-btn-primary {
+          padding: 0.85rem 2.25rem;
+          background: var(--accent-primary);
+          color: #000;
+          font-weight: 700;
+          border-radius: 100px;
+          text-decoration: none;
+          font-size: 0.95rem;
+          transition: opacity 0.2s;
+        }
+        .cta-btn-primary:hover { opacity: 0.85; }
+        .cta-btn-secondary {
+          padding: 0.85rem 2.25rem;
+          background: rgba(255,255,255,0.06);
+          color: var(--text);
+          font-weight: 600;
+          border-radius: 100px;
+          text-decoration: none;
+          font-size: 0.95rem;
+          border: 1px solid rgba(255,255,255,0.15);
+          transition: background 0.2s;
+        }
+        .cta-btn-secondary:hover { background: rgba(255,255,255,0.1); }
+
+        /* Kontakt */
+        .contact-section { max-width: 700px; margin: 5rem auto 0; text-align: center; }
+        .contact-title { font-size: 1.75rem; font-weight: 800; margin-bottom: 0.75rem; }
+        .contact-sub { color: var(--text-muted); margin-bottom: 2rem; font-size: 1rem; }
+        .contact-links { display: flex; justify-content: center; gap: 1.5rem; flex-wrap: wrap; }
+        .contact-link {
+          display: flex; align-items: center; gap: 0.5rem;
+          color: var(--text-muted);
+          text-decoration: none;
+          font-size: 0.95rem;
+          padding: 0.6rem 1.25rem;
+          border-radius: 100px;
+          border: 1px solid rgba(255,255,255,0.1);
+          transition: color 0.2s, border-color 0.2s;
+        }
+        .contact-link:hover { color: var(--accent-primary); border-color: var(--accent-primary); }
+
         @media (max-width: 968px) {
           .about-hero h1 { font-size: 2.5rem; }
           .about-showcase { grid-template-columns: 1fr; }
@@ -232,6 +372,10 @@ export default function AboutClient() {
           .values-grid { grid-template-columns: 1fr; }
           .about-gallery { grid-template-columns: 1fr; }
           .stats-row { gap: 2rem; }
+          .steps-grid { grid-template-columns: 1fr; }
+          .cta-card { padding: 2.5rem 1.5rem; }
+          .cta-card h2 { font-size: 1.6rem; }
+          .contact-links { flex-direction: column; align-items: center; }
         }
       `}</style>
     </div>

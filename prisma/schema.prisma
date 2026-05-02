@@ -311,5 +311,6 @@ model SiteConfig {
   maintenanceMode      Boolean  @default(false)
   korgPaDriveUrl       String?
   korgPaItemsJson      String?
+  contactInfoJson      String?
   updatedAt            DateTime @updatedAt
 }
