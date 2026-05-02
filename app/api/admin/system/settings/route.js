@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '../../../../../lib/adminAuth';
-import { getDemoBandsEnvOverrideHint, getShowDemoBands, setShowDemoBands, getMaintenanceMode, setMaintenanceMode, getKorgPaDriveUrl, setKorgPaDriveUrl, getKorgPaItems, setKorgPaItems, getContactInfo, setContactInfo } from '../../../../../lib/siteConfig';
+import { getDemoBandsEnvOverrideHint, getShowDemoBands, setShowDemoBands, getMaintenanceMode, setMaintenanceMode, getKorgPaDriveUrl, setKorgPaDriveUrl, getKorgPaItems, setKorgPaItems, getContactInfo, setContactInfo, getBandProfileLimits, setBandProfileLimits } from '../../../../../lib/siteConfig';
 
 export const dynamic = 'force-dynamic';
 
@@ -99,6 +99,20 @@ export async function PATCH(request) {
     }
   }
 
+  if (Object.prototype.hasOwnProperty.call(body, 'bandProfileLimits')) {
+    const bpl = body.bandProfileLimits || {};
+    try {
+      await setBandProfileLimits({
+        maxImages: bpl.maxImages,
+        maxVideos: bpl.maxVideos,
+        maxLinks: bpl.maxLinks,
+      });
+    } catch (e) {
+      console.error('SiteConfig bandProfileLimits update:', e);
+      return NextResponse.json({ error: 'Nije moguće sačuvati limite profila.' }, { status: 500 });
+    }
+  }
+
   if (Object.prototype.hasOwnProperty.call(body, 'contactInfo')) {
     const ci = body.contactInfo || {};
     const email = String(ci.email || '').trim();
@@ -120,5 +134,6 @@ export async function PATCH(request) {
   const korgPaDriveUrl = await getKorgPaDriveUrl();
   const korgPaItems = await getKorgPaItems();
   const contactInfo = await getContactInfo();
-  return NextResponse.json({ ok: true, showDemoBands, maintenanceMode, korgPaDriveUrl, korgPaItems, contactInfo });
+  const bandProfileLimits = await getBandProfileLimits();
+  return NextResponse.json({ ok: true, showDemoBands, maintenanceMode, korgPaDriveUrl, korgPaItems, contactInfo, bandProfileLimits });
 }

@@ -45,6 +45,9 @@ export async function PATCH(request, { params }) {
 
     // If items array is provided, replace all items
     if (Array.isArray(body.items)) {
+      if (body.items.length > 300) {
+        return NextResponse.json({ error: 'Set lista ne može imati više od 300 pesama.' }, { status: 400 });
+      }
       // Delete existing items
       await prisma.setListItem.deleteMany({ where: { setListId: id } });
 

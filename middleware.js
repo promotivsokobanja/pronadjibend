@@ -5,6 +5,10 @@ const bookingPostStore = new Map();
 const messagesPostStore = new Map();
 const invitesPostStore = new Map();
 
+let maintenanceCachedValue = null;
+let maintenanceCachedAt = 0;
+const MAINTENANCE_CACHE_TTL_MS = 30 * 1000;
+
 const AUTH_WINDOW_MS = 60 * 1000;
 const AUTH_MAX_REQUESTS = 12;
 
@@ -315,16 +319,25 @@ export async function middleware(request) {
     // ── Maintenance mode gate ──────────────────────────────────
     if (isMaintenancePath(pathname) && !getAdminRoleFromCookie(request)) {
       try {
-        const statusUrl = new URL('/api/site/maintenance', request.url);
-        const statusRes = await fetch(statusUrl, { cache: 'no-store' });
-        if (statusRes.ok) {
-          const statusData = await statusRes.json();
-          if (statusData?.maintenanceMode) {
-            const maintenanceUrl = new URL('/under-construction', request.url);
-            const redir = NextResponse.redirect(maintenanceUrl);
-            applySecurityHeaders(redir);
-            return redir;
+        const now = Date.now();
+        let isMaintenanceActive = maintenanceCachedValue;
+
+        if (maintenanceCachedValue === null || now - maintenanceCachedAt > MAINTENANCE_CACHE_TTL_MS) {
+          const statusUrl = new URL('/api/site/maintenance', request.url);
+          const statusRes = await fetch(statusUrl, { cache: 'no-store' });
+          if (statusRes.ok) {
+            const statusData = await statusRes.json();
+            isMaintenanceActive = Boolean(statusData?.maintenanceMode);
+            maintenanceCachedValue = isMaintenanceActive;
+            maintenanceCachedAt = now;
           }
+        }
+
+        if (isMaintenanceActive) {
+          const maintenanceUrl = new URL('/under-construction', request.url);
+          const redir = NextResponse.redirect(maintenanceUrl);
+          applySecurityHeaders(redir);
+          return redir;
         }
       } catch {
         // Ako provera ne uspe, pustimo korisnika kroz (fail open)

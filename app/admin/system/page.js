@@ -12,11 +12,14 @@ export default function AdminSystemPage() {
   const [savingMaintenance, setSavingMaintenance] = useState(false);
   const [savingKorg, setSavingKorg] = useState(false);
   const [savingContact, setSavingContact] = useState(false);
+  const [savingLimits, setSavingLimits] = useState(false);
   const [demoMsg, setDemoMsg] = useState('');
   const [maintenanceMsg, setMaintenanceMsg] = useState('');
   const [korgMsg, setKorgMsg] = useState('');
   const [contactMsg, setContactMsg] = useState('');
+  const [limitsMsg, setLimitsMsg] = useState('');
   const [contactForm, setContactForm] = useState({ email: '', instagram: '', facebook: '' });
+  const [limitsForm, setLimitsForm] = useState({ maxImages: 5, maxVideos: 3, maxLinks: 5 });
   const [korgItems, setKorgItems] = useState([createEmptyKorgItem()]);
   const [isCompactKorgEditor, setIsCompactKorgEditor] = useState(false);
 
@@ -39,6 +42,9 @@ export default function AdminSystemPage() {
       setKorgItems(loadedItems);
       if (j.contactInfo) {
         setContactForm({ email: j.contactInfo.email || '', instagram: j.contactInfo.instagram || '', facebook: j.contactInfo.facebook || '' });
+      }
+      if (j.bandProfileLimits) {
+        setLimitsForm({ maxImages: j.bandProfileLimits.maxImages ?? 5, maxVideos: j.bandProfileLimits.maxVideos ?? 3, maxLinks: j.bandProfileLimits.maxLinks ?? 5 });
       }
     } catch (e) {
       setError(e.message);
@@ -112,6 +118,26 @@ export default function AdminSystemPage() {
       const next = prev.filter((item) => item.id !== id);
       return next.length ? next : [createEmptyKorgItem()];
     });
+  };
+
+  const saveLimits = async () => {
+    setSavingLimits(true);
+    setLimitsMsg('');
+    try {
+      const r = await adminFetch('/api/admin/system/settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bandProfileLimits: limitsForm }),
+      });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error || 'Greška pri čuvanju');
+      setData((prev) => (prev ? { ...prev, bandProfileLimits: j.bandProfileLimits } : prev));
+      setLimitsMsg('Sačuvano.');
+    } catch (e) {
+      setLimitsMsg(e.message);
+    } finally {
+      setSavingLimits(false);
+    }
   };
 
   const saveContactInfo = async () => {
@@ -343,6 +369,57 @@ export default function AdminSystemPage() {
             </span>
           </div>
           {korgMsg ? <p style={{ margin: 0, fontSize: '0.875rem', color: '#94a3b8' }}>{korgMsg}</p> : null}
+        </div>
+      </div>
+
+      <div
+        className="admin-table-wrap"
+        style={{
+          maxWidth: 560,
+          marginBottom: '1.75rem',
+          padding: '1.25rem',
+          borderRadius: 12,
+          border: '1px solid rgba(148, 163, 184, 0.35)',
+          background: 'rgba(15, 23, 42, 0.35)',
+        }}
+      >
+        <h2 style={{ fontSize: '1rem', margin: '0 0 0.5rem', fontWeight: 800 }}>Limiti bend profila</h2>
+        <p style={{ color: '#94a3b8', fontSize: '0.875rem', margin: '0 0 1rem', lineHeight: 1.5 }}>
+          Maksimalan broj slika, video linkova i spoljnih linkova koje bend može da doda na profil.
+        </p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem' }}>
+          {[
+            { key: 'maxImages', label: 'Slike (maks.)', min: 1, max: 20 },
+            { key: 'maxVideos', label: 'Video linkovi (maks.)', min: 0, max: 10 },
+            { key: 'maxLinks', label: 'Spoljni linkovi (maks.)', min: 0, max: 10 },
+          ].map(({ key, label, min, max }) => (
+            <div key={key} style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+              <label style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 600 }}>{label}</label>
+              <input
+                type="number"
+                min={min}
+                max={max}
+                value={limitsForm[key]}
+                onChange={(e) => setLimitsForm((prev) => ({ ...prev, [key]: Number(e.target.value) }))}
+                style={{
+                  width: '100%',
+                  borderRadius: 10,
+                  border: '1px solid rgba(148, 163, 184, 0.45)',
+                  background: 'rgba(255, 255, 255, 0.96)',
+                  color: '#0f172a',
+                  padding: '0.8rem 0.9rem',
+                  fontSize: '0.95rem',
+                  boxSizing: 'border-box',
+                }}
+              />
+            </div>
+          ))}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.75rem', flexWrap: 'wrap' }}>
+          <button type="button" className="admin-btn" disabled={savingLimits} onClick={saveLimits}>
+            {savingLimits ? 'Čuvanje…' : 'Sačuvaj limite'}
+          </button>
+          {limitsMsg ? <span style={{ fontSize: '0.875rem', color: limitsMsg === 'Sačuvano.' ? '#4ade80' : '#f87171' }}>{limitsMsg}</span> : null}
         </div>
       </div>
 
