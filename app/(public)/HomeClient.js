@@ -75,7 +75,6 @@ export default function HomeClient() {
   const submitBooking = (e) => {
     e.preventDefault();
     setBookingStep(2);
-    console.log(`Sending inquiry to ${selectedBand?.name}`);
   };
 
   return (

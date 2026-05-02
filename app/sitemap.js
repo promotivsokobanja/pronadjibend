@@ -9,6 +9,7 @@ export default async function sitemap() {
   const staticRoutes = [
     { url: `${baseUrl}/`, lastModified: now, changeFrequency: 'weekly', priority: 1 },
     { url: `${baseUrl}/clients`, lastModified: now, changeFrequency: 'daily', priority: 0.9 },
+    { url: `${baseUrl}/muzicari`, lastModified: now, changeFrequency: 'daily', priority: 0.85 },
     { url: `${baseUrl}/about`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${baseUrl}/faq`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${baseUrl}/login`, lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
@@ -33,6 +34,21 @@ export default async function sitemap() {
     // DB unavailable — still serve static sitemap
   }
 
+  let dbMusicianRoutes = [];
+  try {
+    const musicians = await prisma.musicianProfile.findMany({
+      select: { id: true, updatedAt: true },
+    });
+    dbMusicianRoutes = musicians.map((m) => ({
+      url: `${baseUrl}/muzicari/${m.id}`,
+      lastModified: m.updatedAt || now,
+      changeFrequency: 'weekly',
+      priority: 0.75,
+    }));
+  } catch {
+    // DB unavailable
+  }
+
   let demoBandRoutes = [];
   try {
     const demos = getDemoBands();
@@ -46,5 +62,5 @@ export default async function sitemap() {
     // Demo bands unavailable
   }
 
-  return [...staticRoutes, ...dbBandRoutes, ...demoBandRoutes];
+  return [...staticRoutes, ...dbBandRoutes, ...dbMusicianRoutes, ...demoBandRoutes];
 }

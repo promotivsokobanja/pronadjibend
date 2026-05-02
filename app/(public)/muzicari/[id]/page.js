@@ -1,4 +1,5 @@
 import MusicianProfileClient from './MusicianProfileClient';
+import { MusicianSchema } from '@/components/JsonLd';
 import { getSiteUrl } from '@/lib/siteUrl';
 
 async function fetchMusician(id) {
@@ -41,6 +42,12 @@ export async function generateMetadata({ params }) {
   };
 }
 
-export default function MusicianProfilePage({ params }) {
-  return <MusicianProfileClient musicianId={params.id} />;
+export default async function MusicianProfilePage({ params }) {
+  const musician = await fetchMusician(params.id);
+  return (
+    <>
+      {musician && <MusicianSchema musician={musician} />}
+      <MusicianProfileClient musicianId={params.id} />
+    </>
+  );
 }

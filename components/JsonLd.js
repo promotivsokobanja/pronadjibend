@@ -182,6 +182,53 @@ export function BandSchema({ band }) {
   return <JsonLd data={data} />;
 }
 
+/**
+ * MusicianSchema — koristi Person tip sa MusicGroup specijalnosti.
+ * Muzičar je individualna osoba, ne bend, pa Person > MusicGroup ovde.
+ */
+export function MusicianSchema({ musician }) {
+  const site = getSiteUrl();
+  const rawImg = musician.img && String(musician.img).trim();
+  const imageUrl = rawImg
+    ? rawImg.startsWith('http')
+      ? rawImg
+      : `${site}${rawImg.startsWith('/') ? '' : '/'}${rawImg}`
+    : `${site}/images/logo.png`;
+
+  const data = {
+    '@context': 'https://schema.org',
+    '@type': 'Person',
+    name: musician.name,
+    description:
+      musician.bio ||
+      `${musician.name} — profesionalni muzičar, ${musician.primaryInstrument}, ${musician.city}`,
+    image: imageUrl,
+    url: `${site}/muzicari/${musician.id}`,
+    jobTitle: musician.primaryInstrument || 'Muzičar',
+    address: {
+      '@type': 'PostalAddress',
+      addressLocality: musician.city || musician.location,
+      addressCountry: 'RS',
+    },
+    knowsAbout: [musician.primaryInstrument, musician.genre].filter(Boolean),
+    worksFor: {
+      '@type': 'Organization',
+      name: 'Pronađi Bend',
+      url: site,
+    },
+    ...(musician.rating > 0 && {
+      aggregateRating: {
+        '@type': 'AggregateRating',
+        ratingValue: musician.rating,
+        bestRating: 5,
+        worstRating: 1,
+        ratingCount: musician.reviewCount || 1,
+      },
+    }),
+  };
+  return <JsonLd data={data} />;
+}
+
 /** Vodič na početnoj — SEO Article */
 export function HomeGuideArticleSchema() {
   const site = getSiteUrl();
