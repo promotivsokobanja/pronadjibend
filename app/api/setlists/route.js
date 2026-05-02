@@ -24,7 +24,7 @@ async function resolveOwner(request) {
 // GET /api/setlists?bandId=X or ?musicianId=X
 export async function GET(request) {
   try {
-    const { owner, error } = await resolveOwner(request);
+    const { owner, user, error } = await resolveOwner(request);
     if (error) return error;
 
     const { searchParams } = new URL(request.url);
@@ -35,9 +35,9 @@ export async function GET(request) {
       return NextResponse.json({ error: 'bandId ili musicianId je obavezan.' }, { status: 400 });
     }
 
-    const isAdmin = owner?.user?.role === 'ADMIN';
-    const ownsBand = bandId && owner?.owner?.bandId === bandId;
-    const ownsMusician = musicianId && owner?.owner?.musicianProfileId === musicianId;
+    const isAdmin = user?.role === 'ADMIN';
+    const ownsBand = bandId && owner?.bandId === bandId;
+    const ownsMusician = musicianId && owner?.musicianProfileId === musicianId;
     if (!isAdmin && !ownsBand && !ownsMusician) {
       return NextResponse.json({ error: 'Nemate dozvolu.' }, { status: 403 });
     }
