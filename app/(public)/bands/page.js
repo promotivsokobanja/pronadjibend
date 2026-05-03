@@ -19,6 +19,7 @@ import {
   HelpCircle,
   ChevronDown,
   ExternalLink,
+  Disc3,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useEffect, useMemo, useCallback } from 'react';
@@ -431,7 +432,39 @@ export default function BandDashboard() {
     setTimeout(() => setActiveRequest(null), 10000);
   };
 
-  if (isLoading) return <div className="loading">Učitavanje...</div>;
+  if (isLoading) return (
+    <div className="band-dashboard theme-dark">
+      <div className="dashboard-gradient gradient-primary" aria-hidden="true" />
+      <div className="dashboard-gradient gradient-accent" aria-hidden="true" />
+      <div className="dashboard-container container">
+        <div className="dash-loader">
+          <Music size={36} className="dash-loader-icon" />
+          <span>Učitavanje kontrolne table…</span>
+        </div>
+        <style jsx>{`
+          .dash-loader {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1.25rem;
+            min-height: 50vh;
+            color: rgba(248, 250, 252, 0.6);
+            font-size: 0.95rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+          }
+          .dash-loader :global(.dash-loader-icon) {
+            animation: spin 1.2s linear infinite;
+            color: #8b5cf6;
+          }
+          @keyframes spin {
+            to { transform: rotate(360deg); }
+          }
+        `}</style>
+      </div>
+    </div>
+  );
 
   if (loadError) {
     return (

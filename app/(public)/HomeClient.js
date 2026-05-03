@@ -3,17 +3,30 @@ import { Music, Calendar, Zap, Mail, X, CheckCircle, Star } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
-import { motion } from 'framer-motion';
-import { useState, useEffect, useMemo, useCallback, memo } from 'react';
+import { useState, useEffect, memo } from 'react';
 
 import { DEFAULT_BAND_COVER, resolveBandCoverImage } from '../../lib/bandImages';
 import { nextImageShouldUnoptimize } from '../../lib/remoteImage';
 import { pickFeaturedBands } from '../../lib/featuredBands';
+import Pricing04 from '../../components/ui/ruixen-pricing-04';
 import '../../styles/home.css';
 
 const HomeBlogGuideSection = dynamic(() => import('../../components/home/HomeBlogGuideSection'), { ssr: false });
 const VodicSekcija = dynamic(() => import('../../components/VodicSekcija'), { ssr: false });
 const SocialShareActions = dynamic(() => import('../../components/SocialShareActions'), { ssr: false });
+
+function MotionSection({ initial, whileInView, viewport, transition, ...props }) {
+  return <section {...props} />;
+}
+
+function MotionDiv({ initial, whileInView, viewport, transition, ...props }) {
+  return <div {...props} />;
+}
+
+const motion = {
+  section: MotionSection,
+  div: MotionDiv,
+};
 
 /* SSR: bez opacity 0 u initial (sadržaj ostaje vidljiv pre nego što FM animira). */
 const scrollFade = {
@@ -37,8 +50,10 @@ const FeaturedBandCover = memo(function FeaturedBandCover({ band, priority }) {
       alt={`${band.name} — bend za svadbe i muzika uživo za restorane, ${band.genre}, ${band.location || 'Srbija'}`}
       fill
       className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
+      style={{ background: 'var(--bg, #121214)' }}
       sizes="(max-width: 768px) 100vw, 400px"
       priority={priority}
+      loading={priority ? 'eager' : 'lazy'}
       unoptimized={nextImageShouldUnoptimize(src)}
       onError={() => setSrc(DEFAULT_BAND_COVER)}
     />
@@ -168,7 +183,7 @@ export default function HomeClient() {
               }}
             >
               <div className="band-img">
-                <FeaturedBandCover band={band} priority={idx === 0} />
+                <FeaturedBandCover band={band} priority={idx < 3} />
                 {band.hasEquipment && (
                   <span className="pa-badge">
                     <Zap size={12} /> Rider OK
@@ -317,66 +332,7 @@ export default function HomeClient() {
 
       <HomeBlogGuideSection />
 
-      <motion.section className="pricing container" {...scrollFade}>
-        <div className="section-title reveal">
-          <h2>
-            Transparentni <span className="gradient-text">Paketi</span>
-          </h2>
-          <p>Odaberite plan koji odgovara vašim poslovnim potrebama.</p>
-        </div>
-        <div className="pricing-grid">
-          <motion.div
-            className="glass-card pricing-card reveal delay-1 card-3d-wrap"
-            initial={{ opacity: 1, y: 14 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: '-32px' }}
-            transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-          >
-            <div className="card-3d-content">
-              <h3>Basic</h3>
-              <div className="price">Besplatno</div>
-              <ul className="price-features">
-                <li>
-                  <CheckCircle size={16} color="var(--accent-secondary)" /> Pristup bazi bendova
-                </li>
-                <li>
-                  <CheckCircle size={16} color="var(--accent-secondary)" /> Direktni upiti i booking
-                </li>
-              </ul>
-              <Link href="/login?plan=basic" className="btn btn-secondary btn-full">
-                Započni besplatno
-              </Link>
-            </div>
-          </motion.div>
-          <motion.div
-            className="glass-card pricing-card featured-price reveal delay-2"
-            initial={{ opacity: 1, y: 14 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: '-32px' }}
-            transition={{ duration: 0.45, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
-          >
-            <div className="badge">Preporučeno</div>
-            <h3>Premium Venue</h3>
-            <div className="price">
-              49€<span className="period">/mes</span>
-            </div>
-            <ul className="price-features">
-              <li>
-                <CheckCircle size={16} color="var(--accent-primary)" /> Live Request Sistem
-              </li>
-              <li>
-                <CheckCircle size={16} color="var(--accent-primary)" /> Prioritetni Booking
-              </li>
-              <li>
-                <CheckCircle size={16} color="var(--accent-primary)" /> Promocija na platformi
-              </li>
-            </ul>
-            <Link href="/premium/checkout" className="btn btn-primary btn-full">
-              Odaberi Premium plan
-            </Link>
-          </motion.div>
-        </div>
-      </motion.section>
+      <Pricing04 />
 
       <VodicSekcija />
 

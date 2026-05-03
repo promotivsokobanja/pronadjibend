@@ -161,6 +161,10 @@ export default function BandCard({ band, priority = false }) {
           margin-bottom: 12px;
         }
 
+        .card-media img {
+          background: #121214;
+        }
+
         .hero-media-img,
         .hero-media-video {
           max-width: 100%;

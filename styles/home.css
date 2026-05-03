@@ -24,8 +24,8 @@
 .theme-dark .hero {
   text-align: left;
   padding: 4rem 0 8rem;
-  background: linear-gradient(120deg, rgba(3, 3, 8, 0.9), rgba(6, 6, 16, 0.65)),
-    url('https://images.unsplash.com/photo-1507878866276-a947ef722fee?auto=format&fit=crop&w=1600&q=80') center/cover;
+  background: linear-gradient(120deg, rgba(3, 3, 8, 0.72), rgba(6, 6, 16, 0.55)),
+    url('https://images.unsplash.com/photo-1552422535-c45813c61732?auto=format&fit=crop&w=1920&q=80') center/cover;
   border-bottom: none;
 }
 
@@ -183,6 +183,62 @@
 .theme-dark .pricing-card .badge {
   background: linear-gradient(120deg, var(--accent-secondary), var(--accent-ambient));
   color: #050505;
+}
+
+.theme-dark .band-card,
+.theme-dark .testimonial-grid .glass-card,
+.theme-dark .pricing-card {
+  color: #f8fafc !important;
+}
+
+.theme-dark .band-card .band-header-row h3,
+.theme-dark .band-card:hover .band-header-row h3,
+.theme-dark .band-card .text-muted,
+.theme-dark .band-card:hover .text-muted,
+.theme-dark .band-card .price-info,
+.theme-dark .band-card:hover .price-info,
+.theme-dark .testimonial-grid .quote,
+.theme-dark .testimonial-grid .glass-card:hover .quote,
+.theme-dark .pricing-card h3,
+.theme-dark .pricing-card:hover h3,
+.theme-dark .pricing-card .price,
+.theme-dark .pricing-card:hover .price,
+.theme-dark .pricing-card .period,
+.theme-dark .pricing-card:hover .period,
+.theme-dark .pricing-card .price-features li,
+.theme-dark .pricing-card:hover .price-features li,
+.theme-dark .featured-price h3,
+.theme-dark .featured-price .price,
+.theme-dark .featured-price .period,
+.theme-dark .featured-price .price-features li {
+  color: #f8fafc !important;
+}
+
+.theme-dark .band-card .text-muted,
+.theme-dark .band-card:hover .text-muted,
+.theme-dark .pricing-card .period,
+.theme-dark .pricing-card:hover .period,
+.theme-dark .pricing-card .price-features li,
+.theme-dark .pricing-card:hover .price-features li,
+.theme-dark .testimonial-grid .quote,
+.theme-dark .testimonial-grid .glass-card:hover .quote {
+  color: #dbe4ff !important;
+}
+
+.theme-dark .testimonial-grid .author,
+.theme-dark .testimonial-grid .glass-card:hover .author,
+.theme-dark .rating-tag {
+  color: #f6c56f !important;
+}
+
+.theme-dark .pricing-card .btn,
+.theme-dark .band-card .btn {
+  color: #f8fafc !important;
+}
+
+.theme-dark .pricing-card .btn-primary,
+.theme-dark .band-card .btn-primary {
+  color: #ffffff !important;
 }
 
 .theme-dark .home-blog-guide__eyebrow,
@@ -608,13 +664,13 @@
 }
 
 .band-card {
-  background: linear-gradient(155deg, #ffffff 0%, #f8f9ff 45%, #eef2ff 100%);
+  background: linear-gradient(150deg, rgba(13, 13, 25, 0.95), rgba(5, 5, 12, 0.95));
   padding: 0;
   overflow: hidden;
   border-radius: 24px;
   transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-  border: 1px solid rgba(148, 163, 184, 0.28);
-  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.55);
   transform-style: preserve-3d;
   perspective: 1000px;
   position: relative;
@@ -642,7 +698,7 @@
   left: -20%;
   width: 75%;
   height: 80%;
-  background: linear-gradient(120deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0));
+  background: linear-gradient(120deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0));
   border-radius: 40px;
   pointer-events: none;
   z-index: 1;
@@ -669,7 +725,7 @@
 .band-card:hover .band-header-row h3,
 .band-card:hover .price-info,
 .band-card:hover .text-muted {
-  color: #0f172a;
+  color: #f8fafc;
 }
 
 .band-card .band-img {
@@ -684,7 +740,11 @@
   height: 220px;
   position: relative;
   overflow: hidden;
-  background: #e2e8f0;
+  background: #121214;
+}
+
+.band-img img {
+  background: #121214;
 }
 
 .pa-badge {
@@ -789,6 +849,233 @@
 
 .pricing {
   background: #f8f6ff;
+}
+
+.ruixen-pricing {
+  padding: 6rem 0 8rem;
+  position: relative;
+  color: #f8fafc;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+}
+
+.ruixen-pricing::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(77, 93, 232, 0.08), transparent 65%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.ruixen-pricing__header,
+.ruixen-pricing__grid {
+  position: relative;
+  z-index: 1;
+}
+
+.ruixen-pricing__header {
+  text-align: center;
+  max-width: 720px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.ruixen-pricing::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.3), transparent);
+}
+
+.ruixen-pricing h2 {
+  color: #f8fafc;
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+}
+
+.ruixen-pricing h2 span {
+  background: linear-gradient(120deg, #cda667, #f3ede2, #8b5cf6);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.ruixen-pricing p {
+  color: #dbe4ff;
+  line-height: 1.7;
+}
+
+.ruixen-pricing__grid {
+  width: 100%;
+  max-width: 940px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: clamp(1rem, 3vw, 1.5rem);
+}
+
+.billing-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #f8fafc;
+  font-weight: 600;
+}
+
+.billing-switch__toggle {
+  position: relative;
+  width: 56px;
+  height: 26px;
+  border-radius: 999px;
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+.switch-track {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: linear-gradient(120deg, #8b5cf6, #4d5de8);
+  box-shadow: 0 10px 30px rgba(77, 93, 232, 0.35);
+}
+
+.switch-thumb {
+  position: absolute;
+  top: 3px;
+  left: 4px;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: #ffffff;
+  transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ruixen-plan-card {
+  background:
+    radial-gradient(600px 220px at 20% 0%, rgba(139, 92, 246, 0.15), transparent 62%),
+    linear-gradient(155deg, rgba(12, 12, 26, 0.98), rgba(6, 6, 16, 0.98));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.ruixen-plan-card.is-featured {
+  border-color: rgba(205, 166, 103, 0.5);
+  box-shadow: 0 30px 90px rgba(79, 70, 229, 0.28), 0 18px 40px rgba(0, 0, 0, 0.5);
+}
+
+.ruixen-plan-card h3 {
+  color: #f8fafc;
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  margin-bottom: 0.35rem;
+}
+
+.ruixen-plan-card .plan-price {
+  color: #f8fafc;
+}
+
+.ruixen-plan-card .plan-desc,
+.ruixen-plan-card .plan-billing {
+  color: #dbe4ff;
+}
+
+.plan-body {
+  padding: 2.5rem 2.5rem 1.25rem;
+  flex: 1;
+}
+
+.plan-cta {
+  padding: 0 2.5rem 1rem;
+}
+
+.plan-features {
+  color: #dbe4ff;
+  padding: 0.5rem 2.5rem 2.25rem;
+}
+
+.plan-badge {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 2;
+  border-radius: 999px;
+  padding: 0.4rem 0.9rem;
+  background: linear-gradient(120deg, #cda667, #f3ede2);
+  color: #050505;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
+}
+
+.plan-button {
+  min-height: 3rem;
+  border-radius: 999px;
+  background: linear-gradient(120deg, #8b5cf6, #4d5de8) !important;
+  color: #ffffff !important;
+  font-weight: 900;
+  box-shadow: 0 14px 30px rgba(79, 70, 229, 0.25);
+}
+
+.ruixen-plan-card:not(.is-featured) .plan-button {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.feature-icon {
+  color: #f3ede2;
+}
+
+@media (max-width: 768px) {
+  .ruixen-pricing {
+    padding: 4rem 1rem;
+  }
+  .ruixen-pricing__header h2 {
+    font-size: clamp(1.5rem, 6vw, 2.25rem);
+  }
+  .plan-body {
+    padding: 1.75rem 1.5rem 1rem;
+  }
+  .plan-cta {
+    padding: 0 1.5rem 0.75rem;
+  }
+  .plan-features {
+    padding: 0.5rem 1.5rem 1.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .ruixen-pricing {
+    padding: 3rem 0.75rem;
+  }
+  .plan-body {
+    padding: 1.5rem 1.25rem 0.75rem;
+  }
+  .plan-cta {
+    padding: 0 1.25rem 0.5rem;
+  }
+  .plan-features {
+    padding: 0.5rem 1.25rem 1.5rem;
+  }
+  .ruixen-plan-card h3 {
+    font-size: 1rem;
+  }
 }
 
 /* ── Blog / Vodič (početna) ── */
@@ -1317,7 +1604,7 @@
   }
   .search-field {
     padding: 1.25rem 0;
-    border-bottom: 1px solid #f1f5f9;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   }
   .search-btn {
     margin-top: 1rem;
@@ -1343,7 +1630,7 @@
   .pricing,
   .home-container > .vodic-sekcija {
     padding: 4rem 0;
-    background: #e0d8ff;
+    background: transparent;
   }
 }
 

@@ -119,7 +119,7 @@ export default function Navbar() {
     return () => {
       cancelled = true;
     };
-  }, [pathname]);
+  }, []);
 
   return (
     <nav className="navbar">
@@ -144,19 +144,19 @@ export default function Navbar() {
 
         {/* Desktop Menu */}
         <div className="nav-links desktop-only">
-          <Link href="/clients" prefetch={false} className={`nav-link ${isActive('/clients') ? 'active' : ''}`}>
+          <Link href="/clients" className={`nav-link ${isActive('/clients') ? 'active' : ''}`}>
             Pretraži Bendove
           </Link>
-          <Link href="/muzicari" prefetch={false} className={`nav-link ${isActive('/muzicari') ? 'active' : ''}`}>
+          <Link href="/muzicari" className={`nav-link ${isActive('/muzicari') ? 'active' : ''}`}>
             Pretraži Muzičare
           </Link>
           {isMusician ? (
-            <Link href="/muzicari/profil" prefetch={false} className={`nav-link ${isActive('/muzicari/profil') ? 'active' : ''}`}>Moj panel</Link>
+            <Link href="/muzicari/profil" className={`nav-link ${isActive('/muzicari/profil') ? 'active' : ''}`}>Moj panel</Link>
           ) : (
-            <Link href="/bands" prefetch={false} className={`nav-link ${isActive('/bands') ? 'active' : ''}`}>Portal za Muzičare</Link>
+            <Link href="/bands" className={`nav-link ${isActive('/bands') ? 'active' : ''}`}>Portal za Muzičare</Link>
           )}
-          <Link href="/about" prefetch={false} className={`nav-link ${isActive('/about') ? 'active' : ''}`}>O nama</Link>
-          <Link href="/#vodic" prefetch={false} className="nav-link">
+          <Link href="/about" className={`nav-link ${isActive('/about') ? 'active' : ''}`}>O nama</Link>
+          <Link href="/#vodic" className="nav-link">
             Vodič
           </Link>
           {isAdmin && (
