@@ -76,8 +76,9 @@ export default function BandDashboard() {
   const [profileSavedNotice, setProfileSavedNotice] = useState(false);
   /** Prve 2 pesme za karticu „Digitalni Repertoar“ (iz baze, ne demo) */
   const [repertoirePreview, setRepertoirePreview] = useState([]);
-  const [sentMusicianInvites, setSentMusicianInvites] = useState([]);
+  const [allMusicianInvites, setAllMusicianInvites] = useState([]);
   const [inviteView, setInviteView] = useState('active');
+  const [inviteMutation, setInviteMutation] = useState(null);
   const [korgPaItems, setKorgPaItems] = useState([]);
   const [showKorgDownloads, setShowKorgDownloads] = useState(false);
 
@@ -169,7 +170,7 @@ export default function BandDashboard() {
         const musicianInvitesData = await safeResponseJson(musicianInvitesRes, { invites: [], mode: 'none' });
         const bookingsList = Array.isArray(bookingsData) ? bookingsData : [];
         const invitesList =
-          musicianInvitesData?.mode === 'sent' && Array.isArray(musicianInvitesData?.invites)
+          (musicianInvitesData?.mode === 'band' || musicianInvitesData?.mode === 'sent') && Array.isArray(musicianInvitesData?.invites)
             ? musicianInvitesData.invites
             : [];
 
@@ -177,7 +178,7 @@ export default function BandDashboard() {
         setBookings(bookingsList);
         applyCalendarData(calendarData);
         setRepertoirePreview(Array.isArray(songsRaw) ? songsRaw : []);
-        setSentMusicianInvites(invitesList);
+        setAllMusicianInvites(invitesList);
         setKorgPaItems(korgResult.ok && Array.isArray(korgResult.data?.items) ? korgResult.data.items : []);
         setStats([
           { label: 'Digitalni Repertoar', value: String(bandData._count?.songs ?? 0), icon: Music },
@@ -479,18 +480,38 @@ export default function BandDashboard() {
     return <div className="loading">Učitavanje...</div>;
   }
 
-  const visibleMusicianInvites = sentMusicianInvites.filter((invite) => {
+  const visibleMusicianInvites = allMusicianInvites.filter((invite) => {
     const status = String(invite?.status || '').toUpperCase();
     return inviteView === 'archive' ? !ACTIVE_INVITE_STATUSES.has(status) : ACTIVE_INVITE_STATUSES.has(status);
   });
 
-  const activeInviteCount = sentMusicianInvites.filter((invite) =>
+  const activeInviteCount = allMusicianInvites.filter((invite) =>
     ACTIVE_INVITE_STATUSES.has(String(invite?.status || '').toUpperCase())
   ).length;
 
-  const archivedInviteCount = sentMusicianInvites.filter((invite) =>
+  const archivedInviteCount = allMusicianInvites.filter((invite) =>
     !ACTIVE_INVITE_STATUSES.has(String(invite?.status || '').toUpperCase())
   ).length;
+
+  const patchInvite = async (inviteId, status) => {
+    setInviteMutation({ id: inviteId, op: 'patch' });
+    try {
+      const res = await fetch(`/api/musicians/invites/${encodeURIComponent(inviteId)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || 'Greška pri promeni statusa.');
+      setAllMusicianInvites((prev) =>
+        prev.map((inv) => (inv.id === inviteId ? { ...inv, status } : inv))
+      );
+    } catch (e) {
+      setBookingActionError(e.message || 'Greška.');
+    } finally {
+      setInviteMutation(null);
+    }
+  };
 
   return (
     <div className="band-dashboard theme-dark">
@@ -916,27 +937,70 @@ export default function BandDashboard() {
           </div>
           <div className="booking-list">
             {visibleMusicianInvites.length > 0 ? (
-              visibleMusicianInvites.slice(0, 12).map((invite) => (
-                <div key={invite.id} className="booking-item">
-                  <div className="booking-item-row">
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p className="venue">{invite.musician?.name || 'Muzičar'}</p>
-                      <p className="status text-muted">
-                        {invite.musician?.primaryInstrument || 'Instrument'}
-                        {invite.musician?.city ? ` • ${invite.musician.city}` : ''}
-                      </p>
-                      {invite.message ? <p className="booking-hint text-muted">{invite.message}</p> : null}
+              visibleMusicianInvites.slice(0, 12).map((invite) => {
+                const isReceived = invite.senderType === 'MUSICIAN';
+                const isBusy = inviteMutation?.id === invite.id;
+                return (
+                  <div key={invite.id} className="booking-item">
+                    <div className="booking-item-row">
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p className="venue">
+                          {invite.musician?.name || 'Muzičar'}
+                          {isReceived && (
+                            <span style={{ fontSize: '0.75rem', color: '#94a3b8', marginLeft: '0.5rem' }}>
+                              (primljen poziv)
+                            </span>
+                          )}
+                        </p>
+                        <p className="status text-muted">
+                          {invite.musician?.primaryInstrument || 'Instrument'}
+                          {invite.musician?.city ? ` • ${invite.musician.city}` : ''}
+                        </p>
+                        {invite.message ? <p className="booking-hint text-muted">{invite.message}</p> : null}
+                      </div>
+                      <span className={`invite-status-pill invite-status-${String(invite.status || '').toLowerCase()}`}>
+                        {invite.status}
+                      </span>
                     </div>
-                    <span className={`invite-status-pill invite-status-${String(invite.status || '').toLowerCase()}`}>
-                      {invite.status}
-                    </span>
+                    {isReceived && invite.status === 'PENDING' && (
+                      <div className="booking-item-actions">
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-primary"
+                          disabled={isBusy}
+                          onClick={() => patchInvite(invite.id, 'ACCEPTED')}
+                        >
+                          {isBusy ? 'Čuvanje...' : 'Prihvati'}
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-secondary"
+                          disabled={isBusy}
+                          onClick={() => patchInvite(invite.id, 'REJECTED')}
+                        >
+                          {isBusy ? 'Čuvanje...' : 'Odbij'}
+                        </button>
+                      </div>
+                    )}
+                    {!isReceived && invite.status === 'PENDING' && (
+                      <div className="booking-item-actions">
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-secondary booking-btn-danger"
+                          disabled={isBusy}
+                          onClick={() => patchInvite(invite.id, 'CANCELLED')}
+                        >
+                          {isBusy ? 'Čuvanje...' : 'Otkaži'}
+                        </button>
+                      </div>
+                    )}
+                    <details className="invite-chat-panel">
+                      <summary className="invite-chat-toggle">Poruke</summary>
+                      <ChatThread inviteId={invite.id} />
+                    </details>
                   </div>
-                  <details className="invite-chat-panel">
-                    <summary className="invite-chat-toggle">Poruke</summary>
-                    <ChatThread inviteId={invite.id} />
-                  </details>
-                </div>
-              ))
+                );
+              })
             ) : (
               <div className="no-bookings">
                 {inviteView === 'archive' ? 'Nema arhiviranih poziva muzičarima.' : 'Još nema aktivnih poziva muzičarima.'}
