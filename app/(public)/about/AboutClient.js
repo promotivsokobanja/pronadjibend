@@ -165,6 +165,7 @@ export default function AboutClient({ contactInfo = {} }) {
           min-height: 100vh;
           position: relative;
           color: var(--text);
+          overflow-x: hidden;
         }
         .about-container::after {
           content: '';
@@ -376,6 +377,24 @@ export default function AboutClient({ contactInfo = {} }) {
           .cta-card { padding: 2.5rem 1.5rem; }
           .cta-card h2 { font-size: 1.6rem; }
           .contact-links { flex-direction: column; align-items: center; }
+        }
+        @media (max-width: 480px) {
+          .about-container { padding-top: 7rem; }
+          .about-hero h1 { font-size: 1.85rem; letter-spacing: -1px; }
+          .hero-subtitle { font-size: 1rem; }
+          .about-hero { margin-bottom: 3.5rem; }
+          .showcase-copy { padding: 1.15rem; }
+          .showcase-copy h2 { font-size: 1.3rem; }
+          .vision-card { padding: 1.5rem; }
+          .vision-card h2 { font-size: 1.75rem; }
+          .vision-card p { font-size: 1rem; margin-bottom: 2rem; }
+          .stat-num { font-size: 2.2rem; }
+          .stats-row { gap: 1.5rem; padding-top: 2rem; }
+          .value-card { padding: 1.75rem; }
+          .step-card { padding: 1.5rem 1.25rem; }
+          .cta-card { padding: 1.75rem 1.15rem; }
+          .cta-card h2 { font-size: 1.4rem; }
+          .contact-title { font-size: 1.4rem; }
         }
       `}</style>
     </div>

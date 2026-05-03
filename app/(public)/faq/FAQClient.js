@@ -43,24 +43,24 @@ export default function FAQClient() {
       </section>
 
       <style jsx>{`
-        .faq-container { padding-top: 10rem; padding-bottom: 8rem; min-height: 100vh; }
+        .faq-container { padding-top: 10rem; padding-bottom: 8rem; min-height: 100vh; overflow-x: hidden; }
         .faq-hero { text-align: center; margin-bottom: 5rem; }
-        .faq-hero h1 { font-size: 4rem; font-weight: 800; margin-bottom: 1rem; letter-spacing: -2px; color: #0f172a; }
-        .hero-subtitle { font-size: 1.2rem; color: #64748b; }
+        .faq-hero h1 { font-size: 4rem; font-weight: 800; margin-bottom: 1rem; letter-spacing: -2px; color: #f8fafc; }
+        .hero-subtitle { font-size: 1.2rem; color: #94a3b8; }
 
         .faq-list { max-width: 800px; margin: 0 auto 6rem; }
 
         .faq-item {
-          border: 1px solid #e2e8f0;
+          border: 1px solid rgba(255, 255, 255, 0.08);
           border-radius: 16px;
           margin-bottom: 1rem;
           overflow: hidden;
           cursor: pointer;
           transition: all 0.3s ease;
-          background: #ffffff;
+          background: rgba(255, 255, 255, 0.03);
         }
-        .faq-item:hover { border-color: #a855f7; box-shadow: 0 4px 20px rgba(168, 85, 247, 0.08); }
-        .faq-item.open { border-color: #a855f7; background: #faf5ff; }
+        .faq-item:hover { border-color: rgba(139, 92, 246, 0.4); box-shadow: 0 4px 20px rgba(139, 92, 246, 0.1); }
+        .faq-item.open { border-color: rgba(139, 92, 246, 0.5); background: rgba(139, 92, 246, 0.06); }
 
         .faq-question {
           display: flex;
@@ -71,7 +71,7 @@ export default function FAQClient() {
         .faq-question h2 {
           font-size: 1.05rem;
           font-weight: 700;
-          color: #0f172a;
+          color: #f1f5f9;
           margin: 0;
           flex: 1;
           padding-right: 1rem;
@@ -93,19 +93,20 @@ export default function FAQClient() {
         .faq-answer p {
           font-size: 0.95rem;
           line-height: 1.7;
-          color: #475569;
+          color: #cbd5e1;
           margin: 0;
         }
 
         .faq-cta { max-width: 700px; margin: 0 auto; text-align: center; }
         .cta-card {
-          background: #f8fafc;
-          border: 1px solid #e2e8f0;
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid rgba(255, 255, 255, 0.08);
           border-radius: 24px;
           padding: 4rem;
+          box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
         }
-        .cta-card h2 { font-size: 2rem; font-weight: 800; color: #0f172a; margin-bottom: 0.75rem; }
-        .cta-card p { color: #64748b; font-size: 1.05rem; margin-bottom: 2rem; }
+        .cta-card h2 { font-size: 2rem; font-weight: 800; color: #f8fafc; margin-bottom: 0.75rem; }
+        .cta-card p { color: #94a3b8; font-size: 1.05rem; margin-bottom: 2rem; }
 
         .cta-contacts {
           display: flex;
@@ -118,13 +119,13 @@ export default function FAQClient() {
           display: flex;
           align-items: center;
           gap: 10px;
-          color: #475569;
+          color: #cbd5e1;
           font-size: 0.95rem;
           font-weight: 600;
           text-decoration: none;
           transition: color 0.2s;
         }
-        .cta-contacts a:hover { color: #a855f7; }
+        .cta-contacts a:hover { color: #a78bfa; }
 
         .cta-btn { border-radius: 100px; padding: 1rem 3rem; font-size: 1rem; }
 
@@ -135,6 +136,18 @@ export default function FAQClient() {
           .faq-answer { padding-left: 1.5rem; padding-right: 1.5rem; }
           .faq-answer.visible { padding: 0 1.5rem 1.25rem; }
           .cta-card { padding: 2.5rem 1.5rem; }
+        }
+        @media (max-width: 480px) {
+          .faq-container { padding-top: 7rem; }
+          .faq-hero { margin-bottom: 3rem; }
+          .faq-hero h1 { font-size: 1.85rem; }
+          .hero-subtitle { font-size: 1rem; }
+          .faq-question { padding: 1rem 1.1rem; }
+          .faq-question h2 { font-size: 0.9rem; }
+          .faq-answer.visible { padding: 0 1.1rem 1rem; }
+          .cta-card { padding: 2rem 1.15rem; border-radius: 18px; }
+          .cta-card h2 { font-size: 1.5rem; }
+          .cta-btn { padding: 0.85rem 2rem; }
         }
       `}</style>
     </div>

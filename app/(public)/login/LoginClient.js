@@ -571,12 +571,14 @@ export default function LoginClient() {
         }
         .input-group.textarea textarea {
           width: 100%;
-          border: 1px solid #dbe1ea;
+          border: 1px solid rgba(255, 255, 255, 0.1);
           border-radius: 12px;
           padding: 0.75rem 0.85rem;
           font-size: 0.9rem;
           resize: vertical;
           min-height: 96px;
+          background: rgba(255, 255, 255, 0.04);
+          color: var(--text);
         }
         .input-group.duo {
           display: grid;
@@ -587,8 +589,8 @@ export default function LoginClient() {
           background: transparent;
         }
         .input-group.duo > div {
-          background: #ffffff;
-          border: 1px solid #dbe1ea;
+          background: rgba(255, 255, 255, 0.04);
+          border: 1px solid rgba(255, 255, 255, 0.08);
           border-radius: 12px;
           padding: 0.75rem 1rem;
           display: flex;
@@ -598,7 +600,7 @@ export default function LoginClient() {
         .input-group.duo label {
           font-size: 0.75rem;
           font-weight: 700;
-          color: #64748b;
+          color: #94a3b8;
           text-transform: uppercase;
           letter-spacing: 0.04em;
         }
@@ -607,7 +609,8 @@ export default function LoginClient() {
           padding: 0;
           font-size: 0.95rem;
           outline: none;
-          color: #0f172a;
+          color: var(--text);
+          background: transparent;
         }
         .price-inputs {
           display: grid;
@@ -616,12 +619,14 @@ export default function LoginClient() {
           align-items: center;
         }
         .price-inputs input {
-          border: 1px solid #dbe1ea;
+          border: 1px solid rgba(255, 255, 255, 0.1);
           border-radius: 10px;
           padding: 0.4rem 0.55rem;
           font-size: 0.9rem;
           width: 100%;
           min-width: 0;
+          background: rgba(255, 255, 255, 0.04);
+          color: var(--text);
         }
         .price-inputs span {
           font-weight: 700;
@@ -631,10 +636,10 @@ export default function LoginClient() {
           display: flex;
           align-items: center;
           gap: 0.4rem;
-          border: 1px solid #dbe1ea;
+          border: 1px solid rgba(255, 255, 255, 0.1);
           border-radius: 10px;
           padding: 0.35rem 0.5rem;
-          background: #ffffff;
+          background: rgba(255, 255, 255, 0.04);
           min-width: 0;
         }
         .price-input-with-icon :global(svg) {
@@ -676,7 +681,7 @@ export default function LoginClient() {
           transition: color 0.2s ease;
         }
         .password-toggle:hover {
-          color: #0f172a;
+          color: #f1f5f9;
         }
         .password-toggle:focus-visible {
           outline: 2px solid #007aff;

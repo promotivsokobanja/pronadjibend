@@ -464,6 +464,22 @@ export default function MusiciansSearchClient() {
           }
           .search-hero-card {
             padding: 1.25rem;
+            border-radius: 18px;
+          }
+        }
+        @media (max-width: 420px) {
+          .musician-search-main {
+            padding-top: 6.5rem;
+          }
+          .filters-grid {
+            grid-template-columns: 1fr;
+          }
+          .search-hero-card {
+            padding: 1rem;
+          }
+          .filter-input,
+          .filter-select-wrap {
+            min-height: 44px;
           }
         }
       `}</style>

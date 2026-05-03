@@ -1095,7 +1095,8 @@ export default function BandDashboard() {
             radial-gradient(circle at 80% 0%, rgba(59, 130, 246, 0.18), transparent 60%),
             #03030b;
           color: #f8fafc;
-          overflow: hidden;
+          overflow-x: hidden;
+          width: 100%;
         }
 
         .band-dashboard :global(.text-muted) {
@@ -1140,6 +1141,9 @@ export default function BandDashboard() {
           padding-top: clamp(7rem, 10vw, 10rem);
           padding-bottom: clamp(4rem, 8vw, 6.5rem);
           min-height: 100vh;
+          padding-left: max(1rem, env(safe-area-inset-left, 0px));
+          padding-right: max(1rem, env(safe-area-inset-right, 0px));
+          box-sizing: border-box;
         }
         .hero-panel {
           position: relative;
@@ -1214,8 +1218,8 @@ export default function BandDashboard() {
 
         .stats-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-          gap: 1.5rem;
+          grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+          gap: 1rem;
           margin-bottom: clamp(2rem, 4vw, 3.5rem);
         }
         .stat-card {
@@ -1329,22 +1333,25 @@ export default function BandDashboard() {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: 1.35rem 1.5rem;
+          padding: clamp(0.85rem, 2.5vw, 1.35rem) clamp(0.9rem, 2.5vw, 1.5rem);
           background: rgba(12, 12, 24, 0.85);
           border: 1px solid rgba(255, 255, 255, 0.06);
           border-radius: var(--radius-lg);
+          gap: 0.75rem;
+          min-width: 0;
         }
-        .song-title { font-weight: 700; font-size: 1.1rem; color: #f8fafc; }
-        .song-artist { color: rgba(226, 232, 240, 0.65); }
+        .song-title { font-weight: 700; font-size: clamp(0.92rem, 2.5vw, 1.1rem); color: #f8fafc; overflow: hidden; text-overflow: ellipsis; }
+        .song-artist { color: rgba(226, 232, 240, 0.65); font-size: clamp(0.8rem, 2vw, 0.88rem); }
         .booking-item {
           display: flex;
           flex-direction: column;
           align-items: stretch;
-          gap: 1rem;
-          padding: 1.5rem;
+          gap: 0.85rem;
+          padding: clamp(1rem, 3vw, 1.5rem);
           background: rgba(12, 13, 26, 0.78);
           border: 1px solid rgba(255, 255, 255, 0.06);
           border-radius: var(--radius-lg);
+          min-width: 0;
         }
         .invite-chat-panel {
           margin-top: 0.15rem;
@@ -1363,7 +1370,9 @@ export default function BandDashboard() {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          gap: 1rem;
+          gap: 0.75rem;
+          flex-wrap: wrap;
+          min-width: 0;
         }
         .booking-hint {
           font-size: 0.78rem;
@@ -1483,6 +1492,26 @@ export default function BandDashboard() {
             align-items: stretch;
             margin-bottom: 3rem;
           }
+          .stat-card {
+            padding: 1.15rem;
+            gap: 1rem;
+          }
+          .dashboard-panel {
+            padding: clamp(1rem, 3vw, 1.5rem);
+          }
+        }
+
+        @media (max-width: 480px) {
+          .dash-header h1 { font-size: 1.85rem; }
+          .stat-value { font-size: 1.5rem; }
+          .stat-label { font-size: 0.68rem; letter-spacing: 0.1em; }
+          .stat-icon-box { width: 42px; height: 42px; border-radius: 12px; }
+          .hero-panel { padding: 1rem; border-radius: 16px; }
+          .section-header h3 { font-size: 1.1rem; }
+          .date-box { width: 44px; height: 44px; margin-right: 0.75rem; }
+          .day { font-size: 1rem; }
+          .venue { font-size: 0.95rem; }
+          .booking-contact-row { flex-direction: column; gap: 0.4rem; }
         }
 
         .header-actions {
