@@ -80,6 +80,7 @@ export default function BandDashboard() {
   const [inviteView, setInviteView] = useState('active');
   const [inviteMutation, setInviteMutation] = useState(null);
   const [inviteBlockMutation, setInviteBlockMutation] = useState(null);
+  const [openChatId, setOpenChatId] = useState(null);
   const [korgPaItems, setKorgPaItems] = useState([]);
   const [showKorgDownloads, setShowKorgDownloads] = useState(false);
 
@@ -527,6 +528,7 @@ export default function BandDashboard() {
       setAllMusicianInvites((prev) =>
         prev.map((inv) => (inv.id === inviteId ? { ...inv, status } : inv))
       );
+      if (status === 'ACCEPTED') setOpenChatId(inviteId);
     } catch (e) {
       setBookingActionError(e.message || 'Greška.');
     } finally {
@@ -1029,10 +1031,17 @@ export default function BandDashboard() {
                         {inviteBlockMutation === invite.musician?.id ? 'Čuvanje...' : 'Blokiraj muzičara'}
                       </button>
                     </div>
-                    <details className="invite-chat-panel">
-                      <summary className="invite-chat-toggle">Poruke</summary>
-                      <ChatThread inviteId={invite.id} />
-                    </details>
+                    <div className="invite-chat-panel">
+                      <button
+                        type="button"
+                        className="invite-chat-toggle"
+                        onClick={() => setOpenChatId(openChatId === invite.id ? null : invite.id)}
+                        style={{ cursor: 'pointer', background: 'none', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '0.3rem 0.7rem', width: '100%', textAlign: 'left', color: 'inherit', fontSize: 'inherit', fontWeight: 'inherit' }}
+                      >
+                        {openChatId === invite.id ? '▴ Poruke' : '▾ Poruke'}
+                      </button>
+                      {openChatId === invite.id && <ChatThread inviteId={invite.id} />}
+                    </div>
                   </div>
                 );
               })

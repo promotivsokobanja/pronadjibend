@@ -50,6 +50,7 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
   const [inviteView, setInviteView] = useState('active');
   const [inviteMutation, setInviteMutation] = useState(null);
   const [inviteDeleteId, setInviteDeleteId] = useState(null);
+  const [openChatId, setOpenChatId] = useState(null);
   const [panelStats, setPanelStats] = useState({ repertoireCount: 0, liveTodayCount: 0 });
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadingVideo, setUploadingVideo] = useState(false);
@@ -382,6 +383,7 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
 
       setInvites((prev) => prev.map((item) => (item.id === inviteId ? { ...item, status } : item)));
       setSuccess(status === 'ACCEPTED' ? 'Poziv je prihvaćen.' : 'Poziv je odbijen.');
+      if (status === 'ACCEPTED') setOpenChatId(inviteId);
     } catch (err) {
       setError(err?.message || 'Greška pri izmeni statusa poziva.');
     } finally {
@@ -822,10 +824,16 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
                     <Trash2 size={14} /> {deleteLoading ? 'Brisanje...' : 'Obriši'}
                   </button>
                 </div>
-                <details style={{ marginTop: '0.15rem' }}>
-                  <summary style={{ cursor: 'pointer', fontSize: '0.82rem', fontWeight: 800, color: 'rgba(226, 232, 240, 0.6)' }}>Poruke</summary>
-                  <ChatThread inviteId={inv.id} />
-                </details>
+                <div style={{ marginTop: '0.15rem' }}>
+                  <button
+                    type="button"
+                    onClick={() => setOpenChatId(openChatId === inv.id ? null : inv.id)}
+                    style={{ cursor: 'pointer', fontSize: '0.82rem', fontWeight: 800, color: 'rgba(226, 232, 240, 0.6)', background: 'none', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '0.3rem 0.7rem', width: '100%', textAlign: 'left' }}
+                  >
+                    {openChatId === inv.id ? '▴ Poruke' : '▾ Poruke'}
+                  </button>
+                  {openChatId === inv.id && <ChatThread inviteId={inv.id} />}
+                </div>
               </li>
             );
           })}
