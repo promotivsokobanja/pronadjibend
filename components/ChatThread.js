@@ -202,7 +202,7 @@ function ChatThread({ inviteId }) {
           disabled={!text.trim() || sending}
           aria-label="Pošalji"
         >
-          <Send size={16} />
+          <Send size={20} />
         </button>
       </form>
 
@@ -346,6 +346,21 @@ const chatStyles = `
     border-top: 1px solid #e2e8f0;
     background: #f8fafc;
   }
+  @media (max-width: 640px) {
+    .chat-input-row {
+      padding: 0.65rem;
+      gap: 0.4rem;
+    }
+    .chat-send-btn {
+      width: 48px;
+      height: 48px;
+      min-width: 48px;
+      min-height: 48px;
+    }
+    .chat-input {
+      padding: 0.55rem 0.65rem;
+    }
+  }
   .chat-input {
     flex: 1;
     border: 1px solid #e2e8f0;
@@ -365,8 +380,8 @@ const chatStyles = `
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 36px;
-    height: 36px;
+    width: 44px;
+    height: 44px;
     border-radius: 8px;
     border: none;
     background: #3b82f6;
@@ -374,6 +389,8 @@ const chatStyles = `
     cursor: pointer;
     transition: background 0.15s, transform 0.1s;
     flex-shrink: 0;
+    min-width: 44px;
+    min-height: 44px;
   }
   .chat-send-btn:hover:not(:disabled) {
     background: #2563eb;
