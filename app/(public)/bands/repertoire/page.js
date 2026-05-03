@@ -184,7 +184,8 @@ export default function RepertoirePage() {
       const body = {
         title: masterSong.title,
         artist: masterSong.artist,
-        category: masterSong.type,
+        lyrics: masterSong.lyrics || '',
+        category: masterSong.category || masterSong.type || '',
         type: 'Standard',
       };
       if (bandId) body.bandId = bandId;
