@@ -4,7 +4,7 @@
   "description": "Pronađite i rezervišite bend za svadbu, restoran ili event. Uživo muzika Srbija.",
   "start_url": "/",
   "display": "standalone",
-  "orientation": "portrait",
+  "orientation": "any",
   "theme_color": "#0a0a0c",
   "background_color": "#0a0a0c",
   "icons": [
