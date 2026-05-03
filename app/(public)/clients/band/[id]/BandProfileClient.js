@@ -513,20 +513,22 @@ export default function BandProfileClient({ params, initialBand = null }) {
       <style jsx>{`
         .profile-container { 
           padding-bottom: 8rem; 
-          background: #f8fafc;
+          background: var(--bg, #030308);
           min-height: 100vh;
+          overflow-x: hidden;
+          width: 100%;
         }
         
         .profile-hero { 
           padding: 8rem 0 3rem; 
-          background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
-          border-bottom: 1px solid rgba(148, 163, 184, 0.22);
+          background: linear-gradient(180deg, rgba(5, 5, 12, 0.95), rgba(3, 3, 8, 0.9));
+          border-bottom: 1px solid rgba(255, 255, 255, 0.06);
         }
         .back-link-public {
           display: inline-flex;
           align-items: center;
           gap: 0.4rem;
-          color: #334155;
+          color: #e2e8f0;
           font-weight: 800;
           text-transform: uppercase;
           letter-spacing: 0.08em;
@@ -534,8 +536,8 @@ export default function BandProfileClient({ params, initialBand = null }) {
           margin-bottom: 1rem;
           padding: 0.45rem 0.7rem;
           border-radius: 999px;
-          border: 1px solid rgba(148, 163, 184, 0.45);
-          background: rgba(255, 255, 255, 0.9);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          background: rgba(255, 255, 255, 0.05);
           text-decoration: none;
         }
         
@@ -547,8 +549,8 @@ export default function BandProfileClient({ params, initialBand = null }) {
         }
         
         .hero-content .badge {
-          background: #eff6ff;
-          color: #1d4ed8;
+          background: rgba(139, 92, 246, 0.12);
+          color: #a78bfa;
           padding: 6px 14px; 
           border-radius: 100px; 
           font-weight: 700; 
@@ -564,8 +566,9 @@ export default function BandProfileClient({ params, initialBand = null }) {
           margin: 0.5rem 0 1rem;
           font-weight: 800; 
           letter-spacing: -0.03em;
-          color: #0f172a;
+          color: #f8fafc;
           line-height: 1.04;
+          word-break: break-word;
         }
         
         .rating-pill {
@@ -575,18 +578,18 @@ export default function BandProfileClient({ params, initialBand = null }) {
           font-weight: 700; 
           font-size: 1rem;
           margin-bottom: 1rem;
-          color: #0f172a; 
+          color: #f1f5f9; 
         }
         
         .review-count { 
-          color: #64748b; 
+          color: #94a3b8; 
           font-size: 0.9rem; 
           font-weight: 400; 
         }
         
         .description {
           font-size: 1.15rem; 
-          color: #475569; 
+          color: #cbd5e1; 
           line-height: 1.72;
           margin-bottom: 1.1rem;
           max-width: 600px;
@@ -601,7 +604,7 @@ export default function BandProfileClient({ params, initialBand = null }) {
         }
         .hero-share-row {
           margin-top: 1rem;
-          border-top: 1px solid #e2e8f0;
+          border-top: 1px solid rgba(255,255,255,0.06);
           padding-top: 0.9rem;
         }
         
@@ -610,16 +613,16 @@ export default function BandProfileClient({ params, initialBand = null }) {
           align-items: center; 
           gap: 8px;
           font-weight: 700;
-          color: #475569;
+          color: #cbd5e1;
           font-size: 0.88rem;
         }
 
         .booking-card { 
           padding: 1.25rem;
-          background: #ffffff;
+          background: rgba(255, 255, 255, 0.03);
           border-radius: 20px;
-          border: 1px solid #e2e8f0;
-          box-shadow: 0 6px 24px rgba(15, 23, 42, 0.04);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3);
           position: sticky; 
           top: 100px; 
         }
@@ -628,7 +631,7 @@ export default function BandProfileClient({ params, initialBand = null }) {
           margin-bottom: 1.5rem; 
           font-size: 1.06rem;
           font-weight: 900;
-          color: #0f172a;
+          color: #f1f5f9;
         }
         
         .calendar-section { margin-bottom: 1.5rem; }
@@ -669,24 +672,24 @@ export default function BandProfileClient({ params, initialBand = null }) {
           align-items: center; 
           gap: 0.75rem; 
           padding: 0.85rem 1rem; 
-          background: #f8fafc; 
-          border: 1px solid #e2e8f0; 
+          background: rgba(255,255,255,0.03); 
+          border: 1px solid rgba(255,255,255,0.1); 
           border-radius: 12px; 
           margin-bottom: 0.75rem; 
           transition: var(--transition);
         }
         
         .input-group:focus-within {
-          border-color: #007aff;
-          background: #fff;
-          box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
+          border-color: #8b5cf6;
+          background: rgba(255,255,255,0.05);
+          box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.12);
         }
 
         .input-group svg { color: #94a3b8; }
         .input-group input { 
           background: none; 
           border: none; 
-          color: #0f172a; 
+          color: #f1f5f9; 
           width: 100%; 
           outline: none; 
           font-size: 0.95rem; 
@@ -713,7 +716,7 @@ export default function BandProfileClient({ params, initialBand = null }) {
         .input-group textarea {
           background: none;
           border: none;
-          color: #0f172a;
+          color: #f1f5f9;
           width: 100%;
           outline: none;
           font-size: 0.95rem;
@@ -754,7 +757,7 @@ export default function BandProfileClient({ params, initialBand = null }) {
         .section-header h2 { 
           font-size: 1.45rem;
           font-weight: 800; 
-          color: #0f172a;
+          color: #f8fafc;
           letter-spacing: -0.02em;
         }
 
@@ -762,20 +765,20 @@ export default function BandProfileClient({ params, initialBand = null }) {
           padding: 1.15rem;
           margin-bottom: 1rem;
           border-radius: 20px;
-          border: 1px solid #e2e8f0;
-          background: #fff;
-          box-shadow: 0 6px 24px rgba(15, 23, 42, 0.04);
+          border: 1px solid rgba(255,255,255,0.08);
+          background: rgba(255,255,255,0.03);
+          box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3);
         }
         .review-compose-title {
           margin: 0 0 0.5rem;
           font-size: 1.1rem;
           font-weight: 800;
-          color: #0f172a;
+          color: #f1f5f9;
         }
         .review-compose-intro {
           margin: 0 0 1.25rem;
           font-size: 0.85rem;
-          color: #64748b;
+          color: #94a3b8;
           line-height: 1.45;
         }
         .review-field {
@@ -788,17 +791,18 @@ export default function BandProfileClient({ params, initialBand = null }) {
           font-weight: 800;
           text-transform: uppercase;
           letter-spacing: 0.06em;
-          color: #64748b;
+          color: #94a3b8;
           margin-bottom: 0.45rem;
         }
         .review-field input,
         .review-field textarea {
           width: 100%;
-          border: 1px solid #e2e8f0;
+          border: 1px solid rgba(255,255,255,0.1);
           border-radius: 12px;
           padding: 0.75rem 0.9rem;
           font-size: 0.95rem;
-          color: #0f172a;
+          color: #f1f5f9;
+          background: rgba(255,255,255,0.04);
           outline: none;
           font-family: inherit;
           box-sizing: border-box;
@@ -810,8 +814,8 @@ export default function BandProfileClient({ params, initialBand = null }) {
         }
         .review-field input:focus,
         .review-field textarea:focus {
-          border-color: #007aff;
-          box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.12);
+          border-color: #8b5cf6;
+          box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
         }
         .star-picker {
           display: flex;
@@ -857,8 +861,8 @@ export default function BandProfileClient({ params, initialBand = null }) {
         .video-grid { 
           border-radius: 20px;
           overflow: hidden; 
-          border: 1px solid #e2e8f0;
-          box-shadow: 0 6px 24px rgba(15, 23, 42, 0.04);
+          border: 1px solid rgba(255,255,255,0.08);
+          box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3);
         }
         
         .reviews-grid { 
@@ -869,10 +873,10 @@ export default function BandProfileClient({ params, initialBand = null }) {
         
         .review-card { 
           padding: 1.15rem;
-          background: #fff;
+          background: rgba(255, 255, 255, 0.03);
           border-radius: 20px;
-          border: 1px solid #e2e8f0;
-          box-shadow: 0 6px 24px rgba(15, 23, 42, 0.04);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3);
         }
         
         .rev-header { 
@@ -882,11 +886,11 @@ export default function BandProfileClient({ params, initialBand = null }) {
           align-items: center;
         }
         
-        .rev-header strong { color: #1e293b; font-size: 1rem; }
+        .rev-header strong { color: #f1f5f9; font-size: 1rem; }
         .rev-rating { display: flex; gap: 2px; }
         
         .review-card p { 
-          color: #475569; 
+          color: #cbd5e1; 
           line-height: 1.6; 
           margin-bottom: 1.25rem; 
           font-size: 0.95rem;
@@ -904,13 +908,24 @@ export default function BandProfileClient({ params, initialBand = null }) {
 
         @media (max-width: 640px) {
           .profile-hero {
-            padding-top: 7.2rem;
+            padding-top: 6.5rem;
+            padding-left: 0.85rem;
+            padding-right: 0.85rem;
           }
           .band-name {
-            font-size: 1.95rem;
+            font-size: 1.75rem;
           }
           .description {
             font-size: 1rem;
+          }
+          .booking-card {
+            padding: 1rem;
+            border-radius: 16px;
+          }
+          .review-compose,
+          .review-card {
+            padding: 0.9rem;
+            border-radius: 14px;
           }
         }
       `}</style>

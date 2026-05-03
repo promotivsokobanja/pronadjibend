@@ -405,31 +405,40 @@ export default function MusicianProfileClient({ musicianId, initialMusician = nu
       <style jsx>{`
         .musician-public-page {
           min-height: 100vh;
-          background: #f8fafc;
+          background: var(--bg, #030308);
           padding-bottom: 4rem;
+          overflow-x: hidden;
+          width: 100%;
         }
         .musician-public-shell {
           padding-top: 8rem;
           padding-bottom: 2rem;
+          max-width: 860px;
+          margin: 0 auto;
+          padding-left: 1.25rem;
+          padding-right: 1.25rem;
+          box-sizing: border-box;
+          width: 100%;
+          min-width: 0;
         }
         .state-box {
-          border: 1px dashed #cbd5e1;
+          border: 1px dashed rgba(255,255,255,0.1);
           border-radius: 14px;
           padding: 1.2rem;
-          color: #64748b;
-          background: #fff;
+          color: #94a3b8;
+          background: rgba(255,255,255,0.03);
           font-weight: 700;
         }
         .state-box.error {
-          color: #b91c1c;
-          border-color: #fecaca;
-          background: #fef2f2;
+          color: #fca5a5;
+          border-color: rgba(239,68,68,0.3);
+          background: rgba(239,68,68,0.06);
         }
         .back-link-public {
           display: inline-flex;
           align-items: center;
           gap: 0.4rem;
-          color: #334155;
+          color: #e2e8f0;
           font-weight: 800;
           text-transform: uppercase;
           letter-spacing: 0.08em;
@@ -437,29 +446,33 @@ export default function MusicianProfileClient({ musicianId, initialMusician = nu
           margin-bottom: 1rem;
           padding: 0.45rem 0.7rem;
           border-radius: 999px;
-          border: 1px solid rgba(148, 163, 184, 0.5);
-          background: rgba(255, 255, 255, 0.9);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          background: rgba(255, 255, 255, 0.05);
           text-decoration: none;
         }
         .musician-public-grid {
           display: grid;
-          grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
+          grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
           gap: 1.5rem;
           align-items: start;
+          width: 100%;
+          min-width: 0;
         }
         .profile-main-card,
         .side-card {
-          background: #fff;
-          border: 1px solid #e2e8f0;
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid rgba(255, 255, 255, 0.08);
           border-radius: 20px;
           padding: 1rem;
-          box-shadow: 0 6px 24px rgba(15, 23, 42, 0.04);
+          box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3);
+          min-width: 0;
+          overflow: hidden;
         }
         .profile-image-wrap {
           aspect-ratio: 16 / 10;
           border-radius: 14px;
           overflow: hidden;
-          background: #e2e8f0;
+          background: rgba(255,255,255,0.04);
         }
         .profile-image {
           width: 100%;
@@ -480,12 +493,13 @@ export default function MusicianProfileClient({ musicianId, initialMusician = nu
           justify-content: space-between;
           align-items: flex-start;
           gap: 0.75rem;
+          flex-wrap: wrap;
         }
         .profile-name {
           margin: 0;
           font-size: clamp(1.7rem, 3vw, 2.3rem);
           font-weight: 900;
-          color: #0f172a;
+          color: #f8fafc;
           line-height: 1.05;
         }
         .profile-instrument {
@@ -532,15 +546,15 @@ export default function MusicianProfileClient({ musicianId, initialMusician = nu
           display: inline-flex;
           align-items: center;
           gap: 0.45rem;
-          color: #475569;
+          color: #cbd5e1;
           font-size: 0.86rem;
           font-weight: 700;
         }
         .genres-block {
           margin-top: 0.95rem;
           border-radius: 12px;
-          border: 1px solid #e2e8f0;
-          background: #f8fafc;
+          border: 1px solid rgba(255,255,255,0.06);
+          background: rgba(255,255,255,0.03);
           padding: 0.8rem;
         }
         .block-label {
@@ -549,22 +563,22 @@ export default function MusicianProfileClient({ musicianId, initialMusician = nu
           text-transform: uppercase;
           letter-spacing: 0.06em;
           font-weight: 800;
-          color: #64748b;
+          color: #94a3b8;
         }
         .block-value {
           margin: 0.35rem 0 0;
           font-size: 0.92rem;
           font-weight: 700;
-          color: #0f172a;
+          color: #e2e8f0;
         }
         .bio-block {
           margin-top: 0.95rem;
-          border-top: 1px solid #f1f5f9;
+          border-top: 1px solid rgba(255,255,255,0.06);
           padding-top: 0.95rem;
         }
         .bio-block p {
           margin: 0;
-          color: #334155;
+          color: #cbd5e1;
           line-height: 1.72;
           font-size: 1.01rem;
           white-space: pre-line;
@@ -578,7 +592,7 @@ export default function MusicianProfileClient({ musicianId, initialMusician = nu
         }
         .share-row {
           margin-top: 0.95rem;
-          border-top: 1px solid #f1f5f9;
+          border-top: 1px solid rgba(255,255,255,0.06);
           padding-top: 0.9rem;
         }
         .profile-side-stack {
@@ -590,7 +604,7 @@ export default function MusicianProfileClient({ musicianId, initialMusician = nu
           margin: 0;
           font-size: 1rem;
           font-weight: 900;
-          color: #0f172a;
+          color: #f1f5f9;
         }
         .availability-list {
           list-style: none;
@@ -607,8 +621,8 @@ export default function MusicianProfileClient({ musicianId, initialMusician = nu
           gap: 0.5rem;
           padding: 0.55rem 0.7rem;
           border-radius: 10px;
-          border: 1px solid #e2e8f0;
-          background: #f8fafc;
+          border: 1px solid rgba(255,255,255,0.06);
+          background: rgba(255,255,255,0.03);
         }
         .date-text {
           display: inline-flex;
@@ -616,7 +630,7 @@ export default function MusicianProfileClient({ musicianId, initialMusician = nu
           gap: 0.35rem;
           font-size: 0.84rem;
           font-weight: 700;
-          color: #334155;
+          color: #e2e8f0;
         }
         .date-status {
           border-radius: 999px;
@@ -635,7 +649,7 @@ export default function MusicianProfileClient({ musicianId, initialMusician = nu
         }
         .muted-copy {
           margin: 0.68rem 0 0;
-          color: #64748b;
+          color: #94a3b8;
           font-size: 0.86rem;
           line-height: 1.5;
         }
@@ -648,8 +662,8 @@ export default function MusicianProfileClient({ musicianId, initialMusician = nu
           background: #0f172a;
         }
         .invite-card {
-          border-color: rgba(59, 130, 246, 0.18);
-          background: linear-gradient(180deg, #ffffff 0%, #f5faff 100%);
+          border-color: rgba(139, 92, 246, 0.2);
+          background: linear-gradient(180deg, rgba(139, 92, 246, 0.04) 0%, rgba(5, 5, 12, 0.6) 100%);
         }
         .invite-form {
           margin-top: 0.75rem;
@@ -661,18 +675,18 @@ export default function MusicianProfileClient({ musicianId, initialMusician = nu
         .invite-form textarea {
           width: 100%;
           box-sizing: border-box;
-          border: 1px solid #dbe4ef;
+          border: 1px solid rgba(255,255,255,0.1);
           border-radius: 12px;
-          background: #fff;
-          color: #0f172a;
+          background: rgba(255,255,255,0.04);
+          color: #f1f5f9;
           padding: 0.62rem 0.72rem;
           font-size: 0.86rem;
           outline: none;
         }
         .invite-form input:focus,
         .invite-form textarea:focus {
-          border-color: #007aff;
-          box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.12);
+          border-color: #8b5cf6;
+          box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
         }
         .invite-form textarea {
           resize: vertical;
@@ -691,14 +705,14 @@ export default function MusicianProfileClient({ musicianId, initialMusician = nu
           font-weight: 700;
         }
         .feedback.error {
-          background: #fef2f2;
-          border: 1px solid #fecaca;
-          color: #b91c1c;
+          background: rgba(239,68,68,0.08);
+          border: 1px solid rgba(239,68,68,0.25);
+          color: #fca5a5;
         }
         .feedback.success {
-          background: #ecfdf5;
-          border: 1px solid #a7f3d0;
-          color: #047857;
+          background: rgba(16,185,129,0.08);
+          border: 1px solid rgba(16,185,129,0.25);
+          color: #6ee7b7;
         }
         .invite-submit-btn {
           width: fit-content;
@@ -708,7 +722,7 @@ export default function MusicianProfileClient({ musicianId, initialMusician = nu
         .invite-required-hint {
           margin: 0;
           font-size: 0.76rem;
-          color: #b45309;
+          color: #fbbf24;
           font-weight: 700;
         }
         .invite-form .invite-missing {
@@ -728,21 +742,37 @@ export default function MusicianProfileClient({ musicianId, initialMusician = nu
 
         @media (max-width: 640px) {
           .musician-public-shell {
-            padding-top: 7.2rem;
+            padding-top: 6.5rem;
+            padding-left: 0.85rem;
+            padding-right: 0.85rem;
           }
           .profile-meta-grid,
           .invite-inline-grid {
             grid-template-columns: 1fr;
           }
           .profile-name {
-            font-size: 1.75rem;
+            font-size: 1.5rem;
+            word-break: break-word;
+          }
+          .profile-title-row {
+            flex-direction: column;
+            gap: 0.5rem;
           }
           .availability-pill {
             font-size: 0.66rem;
             padding-inline: 0.55rem;
+            align-self: flex-start;
           }
           .video-frame {
-            min-height: 190px;
+            min-height: 180px;
+          }
+          .profile-main-card,
+          .side-card {
+            padding: 0.85rem;
+            border-radius: 14px;
+          }
+          .profile-image-wrap {
+            border-radius: 10px;
           }
         }
       `}</style>
