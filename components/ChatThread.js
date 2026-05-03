@@ -77,7 +77,7 @@ function ChatThread({ inviteId }) {
   }, [messages]);
 
   const handleSend = async (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
     const body = text.trim();
     if (!body || sending || locked) return;
     setSending(true);
@@ -186,25 +186,27 @@ function ChatThread({ inviteId }) {
 
       {error && <div className="chat-error">{error}</div>}
 
-      <form className="chat-input-row" onSubmit={handleSend}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 0.75rem', borderTop: '1px solid #e2e8f0', background: '#f8fafc', flexShrink: 0 }}>
         <input
           type="text"
-          className="chat-input"
           placeholder="Napišite poruku..."
           value={text}
           onChange={(e) => setText(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(e); } }}
           maxLength={2000}
           disabled={sending}
+          style={{ flex: 1, minWidth: 0, border: '1px solid #e2e8f0', borderRadius: '8px', padding: '0.55rem 0.75rem', fontSize: '1rem', fontFamily: 'inherit', outline: 'none', background: '#fff', color: '#1e293b', WebkitAppearance: 'none' }}
         />
         <button
-          type="submit"
-          className="chat-send-btn"
+          type="button"
+          onClick={handleSend}
           disabled={!text.trim() || sending}
           aria-label="Pošalji"
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '48px', height: '48px', minWidth: '48px', minHeight: '48px', borderRadius: '10px', border: 'none', background: text.trim() && !sending ? '#3b82f6' : '#94a3b8', color: '#ffffff', cursor: text.trim() && !sending ? 'pointer' : 'not-allowed', flexShrink: 0, WebkitTapHighlightColor: 'transparent' }}
         >
-          <Send size={20} />
+          <Send size={22} color="#ffffff" />
         </button>
-      </form>
+      </div>
 
       <style jsx>{chatStyles}</style>
     </div>
