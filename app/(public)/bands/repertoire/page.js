@@ -143,19 +143,18 @@ export default function RepertoirePage() {
       if (searchTerm.trim().length > 1 && Array.isArray(data)) {
         const globalParams = new URLSearchParams({
           search: searchTerm.trim(),
-          limit: '20',
+          page: '1',
         }).toString();
-        const globalResp = await fetch(`/api/songs?${globalParams}`, { cache: 'no-store' });
+        const globalResp = await fetch(`/api/pesmarica?${globalParams}`, { cache: 'no-store' });
         const globalData = await globalResp.json();
         const ownerSongKeys = new Set(
           data.map((existing) => `${String(existing.title || '').trim().toLowerCase()}::${String(existing.artist || '').trim().toLowerCase()}`)
         );
-        const matches = Array.isArray(globalData)
-          ? globalData.filter((song) => {
+        const allGlobal = Array.isArray(globalData?.songs) ? globalData.songs : [];
+        const matches = allGlobal.filter((song) => {
               const key = `${String(song.title || '').trim().toLowerCase()}::${String(song.artist || '').trim().toLowerCase()}`;
               return !ownerSongKeys.has(key);
-            })
-          : [];
+            });
         setGlobalMatches(matches);
       } else {
         setGlobalMatches([]);
