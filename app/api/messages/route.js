@@ -80,13 +80,6 @@ export async function GET(request) {
       return NextResponse.json({ error: 'Niste prijavljeni.' }, { status: 401 });
     }
 
-    if (!isPremiumOrAdmin(user)) {
-      return NextResponse.json(
-        { error: 'Chat je dostupan samo za Premium članove.' },
-        { status: 403 }
-      );
-    }
-
     const { searchParams } = new URL(request.url);
     const inviteId = searchParams.get('inviteId');
     if (!inviteId) {
@@ -99,12 +92,6 @@ export async function GET(request) {
     }
     if (invite.status === 'EXPIRED') {
       return NextResponse.json({ error: 'Poziv je istekao i chat više nije dostupan.' }, { status: 403 });
-    }
-    if (!inviteParticipantsArePremium(invite)) {
-      return NextResponse.json(
-        { error: 'Chat je dostupan samo kada su i bend i muzičar Premium članovi.' },
-        { status: 403 }
-      );
     }
 
     const messages = await prisma.message.findMany({
@@ -139,13 +126,6 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Niste prijavljeni.' }, { status: 401 });
     }
 
-    if (!isPremiumOrAdmin(user)) {
-      return NextResponse.json(
-        { error: 'Chat je dostupan samo za Premium članove.' },
-        { status: 403 }
-      );
-    }
-
     const reqBody = await request.json();
     const inviteId = String(reqBody.inviteId || '').trim();
     const body = String(reqBody.body || '').trim();
@@ -169,12 +149,6 @@ export async function POST(request) {
     }
     if (invite.status === 'EXPIRED') {
       return NextResponse.json({ error: 'Poziv je istekao i više nije moguće slati poruke.' }, { status: 403 });
-    }
-    if (!inviteParticipantsArePremium(invite)) {
-      return NextResponse.json(
-        { error: 'Chat je dostupan samo kada su i bend i muzičar Premium članovi.' },
-        { status: 403 }
-      );
     }
 
     const message = await prisma.message.create({
