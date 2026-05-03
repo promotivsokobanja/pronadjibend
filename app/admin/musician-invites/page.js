@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import ChatThread from '@/components/ChatThread';
 import { adminFetch } from '@/lib/adminFetch';
 
-const STATUSES = ['', 'PENDING', 'ACCEPTED', 'REJECTED', 'CANCELLED'];
+const STATUSES = ['', 'PENDING', 'ACCEPTED', 'REJECTED', 'CANCELLED', 'EXPIRED'];
 
 function formatDate(value) {
   const d = new Date(value);
@@ -17,6 +17,7 @@ export default function AdminMusicianInvitesPage() {
   const [error, setError] = useState('');
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState('');
+  const [query, setQuery] = useState('');
   const [premiumOnly, setPremiumOnly] = useState(false);
   const [saving, setSaving] = useState(null);
 
@@ -25,6 +26,7 @@ export default function AdminMusicianInvitesPage() {
     try {
       const params = new URLSearchParams({ page: String(page), limit: '12' });
       if (statusFilter) params.set('status', statusFilter);
+      if (query.trim()) params.set('q', query.trim());
       const r = await adminFetch(`/api/admin/musician-invites?${params}`);
       const j = await r.json();
       if (!r.ok) throw new Error(j.error || 'Greška');
@@ -32,7 +34,7 @@ export default function AdminMusicianInvitesPage() {
     } catch (e) {
       setError(e.message || 'Greška pri učitavanju.');
     }
-  }, [page, statusFilter]);
+  }, [page, query, statusFilter]);
 
   useEffect(() => {
     load();
@@ -46,6 +48,22 @@ export default function AdminMusicianInvitesPage() {
       const r = await adminFetch(`/api/admin/musician-invites?id=${encodeURIComponent(id)}`, {
         method: 'DELETE',
       });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error || 'Greška');
+      await load();
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setSaving(null);
+    }
+  };
+
+  const cleanupArchive = async () => {
+    if (!window.confirm('Obrisati staru arhivu komunikacija prema podešenom roku čuvanja?')) return;
+    setSaving('cleanup');
+    setError('');
+    try {
+      const r = await adminFetch('/api/admin/musician-invites?cleanup=1', { method: 'DELETE' });
       const j = await r.json();
       if (!r.ok) throw new Error(j.error || 'Greška');
       await load();
@@ -86,6 +104,16 @@ export default function AdminMusicianInvitesPage() {
       <p className="admin-sub">Admin pregled poziva i komunikacije bend ↔ muzičar.</p>
 
       <div className="admin-toolbar" style={{ marginBottom: '1rem' }}>
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setPage(1);
+          }}
+          placeholder="Pretraga bend / muzičar / poruka..."
+          style={{ minWidth: 260 }}
+        />
         <label style={{ color: '#94a3b8', fontSize: '0.85rem' }}>
           Status:{' '}
           <select
@@ -112,6 +140,15 @@ export default function AdminMusicianInvitesPage() {
           />
           Samo aktivan Premium chat
         </label>
+        <button
+          type="button"
+          className="admin-btn"
+          disabled={saving === 'cleanup'}
+          onClick={cleanupArchive}
+          style={{ marginLeft: 'auto', background: '#7f1d1d', borderColor: '#991b1b' }}
+        >
+          {saving === 'cleanup' ? 'Čišćenje…' : 'Očisti staru arhivu'}
+        </button>
       </div>
 
       {error && <p style={{ color: '#f87171', marginBottom: '1rem' }}>{error}</p>}

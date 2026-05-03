@@ -79,6 +79,7 @@ export default function BandDashboard() {
   const [allMusicianInvites, setAllMusicianInvites] = useState([]);
   const [inviteView, setInviteView] = useState('active');
   const [inviteMutation, setInviteMutation] = useState(null);
+  const [inviteBlockMutation, setInviteBlockMutation] = useState(null);
   const [korgPaItems, setKorgPaItems] = useState([]);
   const [showKorgDownloads, setShowKorgDownloads] = useState(false);
 
@@ -243,6 +244,26 @@ export default function BandDashboard() {
       setBookingActionError(e.message || 'Greška.');
     } finally {
       setBookingMutation(null);
+    }
+  };
+
+  const blockMusician = async (musicianId) => {
+    if (!musicianId) return;
+    if (!window.confirm('Blokirati ovog muzičara za buduću komunikaciju?')) return;
+    setInviteBlockMutation(musicianId);
+    setBookingActionError('');
+    try {
+      const res = await fetch('/api/musicians/blocks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetMusicianId: musicianId }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || 'Greška pri blokiranju.');
+    } catch (e) {
+      setBookingActionError(e.message || 'Greška.');
+    } finally {
+      setInviteBlockMutation(null);
     }
   };
 
@@ -956,6 +977,10 @@ export default function BandDashboard() {
                           {invite.musician?.primaryInstrument || 'Instrument'}
                           {invite.musician?.city ? ` • ${invite.musician.city}` : ''}
                         </p>
+                        <p className="status text-muted">
+                          {invite._count?.messages ?? 0} poruka
+                          {invite.status === 'EXPIRED' ? ' • Poziv je istekao' : ''}
+                        </p>
                         {invite.message ? <p className="booking-hint text-muted">{invite.message}</p> : null}
                       </div>
                       <span className={`invite-status-pill invite-status-${String(invite.status || '').toLowerCase()}`}>
@@ -994,6 +1019,16 @@ export default function BandDashboard() {
                         </button>
                       </div>
                     )}
+                    <div className="booking-item-actions">
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-secondary"
+                        disabled={inviteBlockMutation === invite.musician?.id}
+                        onClick={() => blockMusician(invite.musician?.id)}
+                      >
+                        {inviteBlockMutation === invite.musician?.id ? 'Čuvanje...' : 'Blokiraj muzičara'}
+                      </button>
+                    </div>
                     <details className="invite-chat-panel">
                       <summary className="invite-chat-toggle">Poruke</summary>
                       <ChatThread inviteId={invite.id} />
@@ -1361,6 +1396,7 @@ export default function BandDashboard() {
         .invite-status-accepted { background: rgba(16, 185, 129, 0.12); color: #10b981; }
         .invite-status-rejected,
         .invite-status-cancelled { background: rgba(248, 113, 113, 0.12); color: #f87171; }
+        .invite-status-expired { background: rgba(148, 163, 184, 0.12); color: #94a3b8; }
         .booking-btn-danger {
           border-color: rgba(248, 113, 113, 0.45) !important;
           color: #f87171 !important;

@@ -13,13 +13,22 @@ export default function AdminSystemPage() {
   const [savingKorg, setSavingKorg] = useState(false);
   const [savingContact, setSavingContact] = useState(false);
   const [savingLimits, setSavingLimits] = useState(false);
+  const [savingInviteCommunication, setSavingInviteCommunication] = useState(false);
   const [demoMsg, setDemoMsg] = useState('');
   const [maintenanceMsg, setMaintenanceMsg] = useState('');
   const [korgMsg, setKorgMsg] = useState('');
   const [contactMsg, setContactMsg] = useState('');
   const [limitsMsg, setLimitsMsg] = useState('');
+  const [inviteCommunicationMsg, setInviteCommunicationMsg] = useState('');
   const [contactForm, setContactForm] = useState({ email: '', instagram: '', facebook: '' });
   const [limitsForm, setLimitsForm] = useState({ maxImages: 5, maxVideos: 3, maxLinks: 5 });
+  const [inviteCommunicationForm, setInviteCommunicationForm] = useState({
+    inviteMaxActiveBasic: 5,
+    inviteMaxActivePremium: 20,
+    inviteExpireDays: 14,
+    inviteCleanupDays: 180,
+    inviteEmailNotifications: true,
+  });
   const [korgItems, setKorgItems] = useState([createEmptyKorgItem()]);
   const [isCompactKorgEditor, setIsCompactKorgEditor] = useState(false);
 
@@ -45,6 +54,15 @@ export default function AdminSystemPage() {
       }
       if (j.bandProfileLimits) {
         setLimitsForm({ maxImages: j.bandProfileLimits.maxImages ?? 5, maxVideos: j.bandProfileLimits.maxVideos ?? 3, maxLinks: j.bandProfileLimits.maxLinks ?? 5 });
+      }
+      if (j.inviteCommunication) {
+        setInviteCommunicationForm({
+          inviteMaxActiveBasic: j.inviteCommunication.inviteMaxActiveBasic ?? 5,
+          inviteMaxActivePremium: j.inviteCommunication.inviteMaxActivePremium ?? 20,
+          inviteExpireDays: j.inviteCommunication.inviteExpireDays ?? 14,
+          inviteCleanupDays: j.inviteCommunication.inviteCleanupDays ?? 180,
+          inviteEmailNotifications: j.inviteCommunication.inviteEmailNotifications !== false,
+        });
       }
     } catch (e) {
       setError(e.message);
@@ -157,6 +175,33 @@ export default function AdminSystemPage() {
       setContactMsg(e.message);
     } finally {
       setSavingContact(false);
+    }
+  };
+
+  const saveInviteCommunication = async () => {
+    setSavingInviteCommunication(true);
+    setInviteCommunicationMsg('');
+    try {
+      const r = await adminFetch('/api/admin/system/settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ inviteCommunication: inviteCommunicationForm }),
+      });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error || 'Greška pri čuvanju');
+      setData((prev) => (prev ? { ...prev, inviteCommunication: j.inviteCommunication } : prev));
+      setInviteCommunicationForm({
+        inviteMaxActiveBasic: j.inviteCommunication.inviteMaxActiveBasic ?? 5,
+        inviteMaxActivePremium: j.inviteCommunication.inviteMaxActivePremium ?? 20,
+        inviteExpireDays: j.inviteCommunication.inviteExpireDays ?? 14,
+        inviteCleanupDays: j.inviteCommunication.inviteCleanupDays ?? 180,
+        inviteEmailNotifications: j.inviteCommunication.inviteEmailNotifications !== false,
+      });
+      setInviteCommunicationMsg('Sačuvano.');
+    } catch (e) {
+      setInviteCommunicationMsg(e.message);
+    } finally {
+      setSavingInviteCommunication(false);
     }
   };
 
@@ -420,6 +465,66 @@ export default function AdminSystemPage() {
             {savingLimits ? 'Čuvanje…' : 'Sačuvaj limite'}
           </button>
           {limitsMsg ? <span style={{ fontSize: '0.875rem', color: limitsMsg === 'Sačuvano.' ? '#4ade80' : '#f87171' }}>{limitsMsg}</span> : null}
+        </div>
+      </div>
+
+      <div
+        className="admin-table-wrap"
+        style={{
+          maxWidth: 720,
+          marginBottom: '1.75rem',
+          padding: '1.25rem',
+          borderRadius: 12,
+          border: '1px solid rgba(148, 163, 184, 0.35)',
+          background: 'rgba(15, 23, 42, 0.35)',
+        }}
+      >
+        <h2 style={{ fontSize: '1rem', margin: '0 0 0.5rem', fontWeight: 800 }}>Komunikacija bend ↔ muzičar</h2>
+        <p style={{ color: '#94a3b8', fontSize: '0.875rem', margin: '0 0 1rem', lineHeight: 1.5 }}>
+          Podešavanja limita aktivnih poziva, automatskog isteka, perioda čišćenja arhive i email obaveštenja za nove pozive.
+        </p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(120px, 1fr))', gap: '0.75rem' }}>
+          {[
+            { key: 'inviteMaxActiveBasic', label: 'Free aktivni pozivi', min: 1, max: 100 },
+            { key: 'inviteMaxActivePremium', label: 'Premium aktivni pozivi', min: 1, max: 500 },
+            { key: 'inviteExpireDays', label: 'Istek PENDING (dana)', min: 1, max: 365 },
+            { key: 'inviteCleanupDays', label: 'Čišćenje arhive (dana)', min: 7, max: 3650 },
+          ].map(({ key, label, min, max }) => (
+            <div key={key} style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+              <label style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 600 }}>{label}</label>
+              <input
+                type="number"
+                min={min}
+                max={max}
+                value={inviteCommunicationForm[key]}
+                onChange={(e) => setInviteCommunicationForm((prev) => ({ ...prev, [key]: Number(e.target.value) }))}
+                style={{
+                  width: '100%',
+                  borderRadius: 10,
+                  border: '1px solid rgba(148, 163, 184, 0.45)',
+                  background: 'rgba(255, 255, 255, 0.96)',
+                  color: '#0f172a',
+                  padding: '0.8rem 0.9rem',
+                  fontSize: '0.95rem',
+                  boxSizing: 'border-box',
+                }}
+              />
+            </div>
+          ))}
+        </div>
+        <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.55rem', marginTop: '0.9rem', color: '#e2e8f0', fontSize: '0.9rem' }}>
+          <input
+            type="checkbox"
+            checked={inviteCommunicationForm.inviteEmailNotifications}
+            onChange={(e) => setInviteCommunicationForm((prev) => ({ ...prev, inviteEmailNotifications: e.target.checked }))}
+          />
+          Šalji email obaveštenje za nove pozive
+        </label>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.75rem', flexWrap: 'wrap' }}>
+          <button type="button" className="admin-btn" disabled={savingInviteCommunication} onClick={saveInviteCommunication}>
+            {savingInviteCommunication ? 'Čuvanje…' : 'Sačuvaj pravila komunikacije'}
+          </button>
+          {inviteCommunicationMsg ? <span style={{ fontSize: '0.875rem', color: inviteCommunicationMsg === 'Sačuvano.' ? '#4ade80' : '#f87171' }}>{inviteCommunicationMsg}</span> : null}
         </div>
       </div>
 

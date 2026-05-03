@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '../../../../lib/prisma';
 import { requireAdmin } from '../../../../lib/adminAuth';
 import { responseFromDatabaseError } from '../../../../lib/dbClientErrors';
+import { cleanupArchivedInvites, expireStaleInvites } from '../../../../lib/inviteCommunication';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,10 +24,24 @@ export async function GET(request) {
     Math.max(1, parseInt(searchParams.get('limit') || '20', 10) || 20)
   );
   const status = String(searchParams.get('status') || '').trim().toUpperCase();
+  const q = String(searchParams.get('q') || '').trim();
   const skip = (page - 1) * limit;
 
   try {
-    const where = status ? { status } : {};
+    await expireStaleInvites();
+    const where = {
+      ...(status ? { status } : {}),
+      ...(q
+        ? {
+            OR: [
+              { message: { contains: q, mode: 'insensitive' } },
+              { band: { name: { contains: q, mode: 'insensitive' } } },
+              { musician: { name: { contains: q, mode: 'insensitive' } } },
+              { senderMusician: { name: { contains: q, mode: 'insensitive' } } },
+            ],
+          }
+        : {}),
+    };
 
     const [total, invites] = await Promise.all([
       prisma.musicianInvite.count({ where }),
@@ -91,6 +106,19 @@ export async function DELETE(request) {
 
   const { searchParams } = new URL(request.url);
   const id = searchParams.get('id');
+  const cleanup = searchParams.get('cleanup');
+  if (cleanup === '1') {
+    try {
+      const days = searchParams.get('days');
+      const result = await cleanupArchivedInvites(days);
+      return NextResponse.json({ success: true, ...result });
+    } catch (error) {
+      console.error('admin/musician-invites cleanup', error);
+      const safe = responseFromDatabaseError(error);
+      if (safe) return safe;
+      return NextResponse.json({ error: 'Greška pri čišćenju arhive poziva.' }, { status: 500 });
+    }
+  }
   if (!id) {
     return NextResponse.json({ error: 'Nedostaje id poziva.' }, { status: 400 });
   }
@@ -121,7 +149,7 @@ export async function DELETE(request) {
   }
 }
 
-const INVITE_STATUSES = new Set(['PENDING', 'ACCEPTED', 'REJECTED', 'CANCELLED']);
+const INVITE_STATUSES = new Set(['PENDING', 'ACCEPTED', 'REJECTED', 'CANCELLED', 'EXPIRED']);
 
 export async function PATCH(request) {
   const gate = await requireAdmin(request);

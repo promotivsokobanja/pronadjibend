@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '../../../../../lib/adminAuth';
-import { getDemoBandsEnvOverrideHint, getShowDemoBands, setShowDemoBands, getMaintenanceMode, setMaintenanceMode, getKorgPaDriveUrl, setKorgPaDriveUrl, getKorgPaItems, setKorgPaItems, getContactInfo, setContactInfo, getBandProfileLimits, setBandProfileLimits } from '../../../../../lib/siteConfig';
+import { getDemoBandsEnvOverrideHint, getShowDemoBands, setShowDemoBands, getMaintenanceMode, setMaintenanceMode, getKorgPaDriveUrl, setKorgPaDriveUrl, getKorgPaItems, setKorgPaItems, getContactInfo, setContactInfo, getBandProfileLimits, setBandProfileLimits, getInviteCommunicationSettings, setInviteCommunicationSettings } from '../../../../../lib/siteConfig';
 
 export const dynamic = 'force-dynamic';
 
@@ -113,6 +113,15 @@ export async function PATCH(request) {
     }
   }
 
+  if (Object.prototype.hasOwnProperty.call(body, 'inviteCommunication')) {
+    try {
+      await setInviteCommunicationSettings(body.inviteCommunication || {});
+    } catch (e) {
+      console.error('SiteConfig inviteCommunication update:', e);
+      return NextResponse.json({ error: 'Nije moguće sačuvati pravila komunikacije.' }, { status: 500 });
+    }
+  }
+
   if (Object.prototype.hasOwnProperty.call(body, 'contactInfo')) {
     const ci = body.contactInfo || {};
     const email = String(ci.email || '').trim();
@@ -135,5 +144,6 @@ export async function PATCH(request) {
   const korgPaItems = await getKorgPaItems();
   const contactInfo = await getContactInfo();
   const bandProfileLimits = await getBandProfileLimits();
-  return NextResponse.json({ ok: true, showDemoBands, maintenanceMode, korgPaDriveUrl, korgPaItems, contactInfo, bandProfileLimits });
+  const inviteCommunication = await getInviteCommunicationSettings();
+  return NextResponse.json({ ok: true, showDemoBands, maintenanceMode, korgPaDriveUrl, korgPaItems, contactInfo, bandProfileLimits, inviteCommunication });
 }

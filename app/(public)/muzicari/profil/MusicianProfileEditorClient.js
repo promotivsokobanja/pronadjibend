@@ -130,7 +130,9 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
         }
 
         if (invitesRes.ok && invitesData?.mode === 'received' && Array.isArray(invitesData.invites)) {
-          setInvites(invitesData.invites);
+          setInvites(invitesData.invites.filter((item) => item?.band));
+        } else if (invitesRes.ok && invitesData?.mode === 'musician' && Array.isArray(invitesData.invites)) {
+          setInvites(invitesData.invites.filter((item) => item?.band));
         } else {
           setInvites([]);
         }
@@ -301,6 +303,25 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
       localStorage.setItem(LS_MUSICIAN_CAL_QUICK, value ? '1' : '0');
     } catch {
       /* ignore */
+    }
+  };
+
+  const handleBlockBand = async (bandId) => {
+    if (!bandId) return;
+    if (!window.confirm('Blokirati ovaj bend za buduću komunikaciju?')) return;
+    setError('');
+    setSuccess('');
+    try {
+      const res = await fetch('/api/musicians/blocks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetBandId: bandId }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || 'Blokiranje nije uspelo.');
+      setSuccess('Bend je blokiran za buduće pozive.');
+    } catch (err) {
+      setError(err?.message || 'Greška pri blokiranju benda.');
     }
   };
 
@@ -704,6 +725,7 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
     display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: '999px', padding: '0.22rem 0.58rem', fontSize: '0.68rem', fontWeight: 800, letterSpacing: '0.04em',
     ...(status === 'ACCEPTED' ? { background: 'rgba(16,185,129,0.12)', color: '#10b981' }
       : status === 'REJECTED' || status === 'CANCELLED' ? { background: 'rgba(248,113,113,0.12)', color: '#f87171' }
+      : status === 'EXPIRED' ? { background: 'rgba(148,163,184,0.12)', color: '#94a3b8' }
       : { background: 'rgba(250,204,21,0.12)', color: '#f59e0b' })
   });
 
@@ -774,35 +796,29 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
                   <span style={sPill(statusText)}>{statusText}</span>
                 </div>
                 <div style={sMeta}>
-                  {inv.eventDate ? <p style={{ margin: 0, display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}><CalendarDays size={13} /> {formatDate(inv.eventDate)}</p> : null}
-                  {inv.location ? <p style={{ margin: 0, display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}><MapPin size={13} /> {inv.location}</p> : null}
-                  {inv.feeEur != null ? <p style={{ margin: 0, display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}><Euro size={13} /> {inv.feeEur}€</p> : null}
+                  <span>{formatDate(inv.eventDate) || 'Termin po dogovoru'}</span>
+                  {inv.location ? <span>{inv.location}</span> : null}
+                  {inv.feeEur != null ? <span>{inv.feeEur} EUR</span> : null}
+                  <span>{inv._count?.messages ?? 0} poruka</span>
                 </div>
                 {inv.message ? <p style={sMsg}>{inv.message}</p> : null}
                 <div style={sActions}>
-                  <button
-                    type="button"
-                    disabled={!isPending || statusLoading || deleteLoading}
-                    onClick={() => handleInviteStatus(inv.id, 'ACCEPTED')}
-                    className="btn btn-sm btn-primary"
-                  >
-                    Prihvati
-                  </button>
-                  <button
-                    type="button"
-                    disabled={!isPending || statusLoading || deleteLoading}
-                    onClick={() => handleInviteStatus(inv.id, 'REJECTED')}
-                    className="btn btn-sm btn-secondary"
-                  >
-                    Odbij
-                  </button>
-                  <button
-                    type="button"
-                    disabled={statusLoading || deleteLoading}
-                    onClick={() => handleInviteDelete(inv.id)}
-                    className="btn btn-sm"
-                    style={{ borderColor: 'rgba(248,113,113,0.45)', color: '#f87171', background: 'rgba(255,255,255,0.9)' }}
-                  >
+                  {isPending ? (
+                    <>
+                      <button type="button" className="btn btn-sm btn-primary" onClick={() => handleInviteStatus(inv.id, 'ACCEPTED')} disabled={statusLoading}>
+                        Prihvati
+                      </button>
+                      <button type="button" className="btn btn-sm btn-secondary" onClick={() => handleInviteStatus(inv.id, 'REJECTED')} disabled={statusLoading}>
+                        Odbij
+                      </button>
+                    </>
+                  ) : null}
+                  {inv.band?.id ? (
+                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => handleBlockBand(inv.band.id)}>
+                      Blokiraj bend
+                    </button>
+                  ) : null}
+                  <button type="button" className="btn btn-secondary btn-sm" onClick={() => handleInviteDelete(inv.id)} disabled={deleteLoading}>
                     <Trash2 size={14} /> {deleteLoading ? 'Brisanje...' : 'Obriši'}
                   </button>
                 </div>

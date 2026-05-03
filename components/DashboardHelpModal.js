@@ -125,6 +125,7 @@ export default function DashboardHelpModal({ onClose, role = 'band' }) {
                 Muzičar može prihvatiti ili odbiti. Isto tako, muzičar može poslati poziv vama
                 — vi ga prihvatate ili odbijate.
                 {' '}<strong>Premium članovi</strong> imaju pristup ugrađenom chatu za direktnu komunikaciju.
+                Pozivi koji dugo čekaju odgovor automatski ističu, a neželjenu komunikaciju možete blokirati.
               </p>
             </div>
           </section>
@@ -146,6 +147,7 @@ export default function DashboardHelpModal({ onClose, role = 'band' }) {
               <strong>Savet:</strong> Pre nastupa, odštampajte QR poster i proverite set liste u Live panelu.
               Za stalne klijente — uredite profil i javite dostupne datume u kalendaru.
               Kada klijent pošalje upit, prihvatite ga i potvrdite — klijent automatski dobija email potvrdu.
+              Za saradnje sa muzičarima, redovno odgovorite na pozive jer stari PENDING pozivi automatski ističu.
             </span>
           </div>
         </div>

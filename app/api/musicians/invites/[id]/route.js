@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getAuthUserFromRequest } from '@/lib/auth';
+import { expireStaleInvites } from '@/lib/inviteCommunication';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,6 +29,7 @@ export async function DELETE(request, { params } = {}) {
   }
 
   try {
+    await expireStaleInvites();
     const currentUser = await getCurrentUser(request);
     if (!currentUser) {
       return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
@@ -67,6 +69,7 @@ export async function PATCH(request, { params } = {}) {
   }
 
   try {
+    await expireStaleInvites();
     const currentUser = await getCurrentUser(request);
     if (!currentUser) {
       return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
@@ -121,6 +124,10 @@ export async function PATCH(request, { params } = {}) {
 
     if (bandIsReceiver && !['ACCEPTED', 'REJECTED'].includes(nextStatus) && !isAdmin) {
       return NextResponse.json({ error: 'Bend može prihvatiti ili odbiti primljeni poziv.' }, { status: 403 });
+    }
+
+    if (existing.status === 'EXPIRED' && !isAdmin) {
+      return NextResponse.json({ error: 'Poziv je istekao i više ne može da se menja.' }, { status: 400 });
     }
 
     if (existing.status !== 'PENDING' && !isAdmin) {

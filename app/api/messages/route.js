@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getAuthUserFromRequest } from '@/lib/auth';
+import { expireStaleInvites } from '@/lib/inviteCommunication';
 
 export const dynamic = 'force-dynamic';
 
@@ -54,6 +55,7 @@ async function verifyInviteAccess(user, inviteId) {
       bandId: true,
       musicianId: true,
       senderMusicianId: true,
+      status: true,
       band: { select: { user: { select: { plan: true } } } },
       musician: { select: { user: { select: { plan: true } } } },
     },
@@ -72,6 +74,7 @@ async function verifyInviteAccess(user, inviteId) {
 // GET /api/messages?inviteId=xxx
 export async function GET(request) {
   try {
+    await expireStaleInvites();
     const user = await getAuthenticatedUser(request);
     if (!user) {
       return NextResponse.json({ error: 'Niste prijavljeni.' }, { status: 401 });
@@ -93,6 +96,9 @@ export async function GET(request) {
     const invite = await verifyInviteAccess(user, inviteId);
     if (!invite) {
       return NextResponse.json({ error: 'Poziv nije pronađen ili nemate pristup.' }, { status: 404 });
+    }
+    if (invite.status === 'EXPIRED') {
+      return NextResponse.json({ error: 'Poziv je istekao i chat više nije dostupan.' }, { status: 403 });
     }
     if (!inviteParticipantsArePremium(invite)) {
       return NextResponse.json(
@@ -127,6 +133,7 @@ export async function GET(request) {
 // POST /api/messages  { inviteId, body }
 export async function POST(request) {
   try {
+    await expireStaleInvites();
     const user = await getAuthenticatedUser(request);
     if (!user) {
       return NextResponse.json({ error: 'Niste prijavljeni.' }, { status: 401 });
@@ -159,6 +166,9 @@ export async function POST(request) {
     const invite = await verifyInviteAccess(user, inviteId);
     if (!invite) {
       return NextResponse.json({ error: 'Poziv nije pronađen ili nemate pristup.' }, { status: 404 });
+    }
+    if (invite.status === 'EXPIRED') {
+      return NextResponse.json({ error: 'Poziv je istekao i više nije moguće slati poruke.' }, { status: 403 });
     }
     if (!inviteParticipantsArePremium(invite)) {
       return NextResponse.json(
@@ -195,6 +205,7 @@ export async function POST(request) {
 // DELETE /api/messages?messageId=xxx
 export async function DELETE(request) {
   try {
+    await expireStaleInvites();
     const user = await getAuthenticatedUser(request);
     if (!user) {
       return NextResponse.json({ error: 'Niste prijavljeni.' }, { status: 401 });

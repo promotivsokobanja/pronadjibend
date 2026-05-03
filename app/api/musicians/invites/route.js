@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getAuthUserFromRequest } from '@/lib/auth';
+import { countActiveInvitesForSender, expireStaleInvites, findInviteBlock, getInviteCommunicationSettings, getInviteLimitForPlan } from '@/lib/inviteCommunication';
+import { sendMusicianInviteNotificationEmail } from '@/lib/sendMusicianInviteNotificationEmail';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,15 +14,19 @@ async function getCurrentUser(request) {
     where: { id: authUser.userId },
     select: {
       id: true,
+      email: true,
       role: true,
+      plan: true,
       bandId: true,
-      musicianProfile: { select: { id: true } },
+      band: { select: { id: true, name: true, user: { select: { email: true } } } },
+      musicianProfile: { select: { id: true, name: true, user: { select: { email: true } } } },
     },
   });
 }
 
 export async function POST(request) {
   try {
+    await expireStaleInvites();
     const currentUser = await getCurrentUser(request);
     if (!currentUser) {
       return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
@@ -66,12 +72,29 @@ export async function POST(request) {
     }
 
     const normalizedFee = Number.isFinite(feeEur) && feeEur > 0 ? Math.floor(feeEur) : null;
+    const settings = await getInviteCommunicationSettings();
+
+    if (isBandAccount) {
+      const activeCount = await countActiveInvitesForSender({ bandId: currentUser.bandId });
+      const maxAllowed = getInviteLimitForPlan(currentUser.plan, settings);
+      if (activeCount >= maxAllowed) {
+        return NextResponse.json({ error: `Dostigli ste limit od ${maxAllowed} aktivnih poziva.` }, { status: 429 });
+      }
+    }
+
+    if (isMusicianAccount) {
+      const activeCount = await countActiveInvitesForSender({ musicianId: currentUser.musicianProfile.id });
+      const maxAllowed = getInviteLimitForPlan(currentUser.plan, settings);
+      if (activeCount >= maxAllowed) {
+        return NextResponse.json({ error: `Dostigli ste limit od ${maxAllowed} aktivnih poziva.` }, { status: 429 });
+      }
+    }
 
     // --- BAND → MUSICIAN ---
     if (isBandAccount && targetMusicianId) {
       const musician = await prisma.musicianProfile.findUnique({
         where: { id: targetMusicianId },
-        select: { id: true, userId: true, name: true, primaryInstrument: true, city: true },
+        select: { id: true, userId: true, name: true, primaryInstrument: true, city: true, user: { select: { email: true } } },
       });
       if (!musician) {
         return NextResponse.json({ error: 'Muzičar nije pronađen.' }, { status: 404 });
@@ -84,6 +107,14 @@ export async function POST(request) {
           { error: 'Za slanje poziva obavezni su datum, lokacija i honorar.' },
           { status: 400 }
         );
+      }
+
+      const blocked = await findInviteBlock({
+        actorBandId: currentUser.bandId,
+        targetMusicianId,
+      });
+      if (blocked) {
+        return NextResponse.json({ error: 'Komunikacija sa ovim muzičarem je blokirana.' }, { status: 403 });
       }
 
       const invite = await prisma.musicianInvite.create({
@@ -101,6 +132,18 @@ export async function POST(request) {
           musician: { select: { id: true, name: true, primaryInstrument: true } },
         },
       });
+      try {
+        await sendMusicianInviteNotificationEmail({
+          recipientEmail: musician.user?.email,
+          recipientName: musician.name,
+          senderLabel: currentUser.band?.name || 'Bend',
+          targetLabel: musician.name,
+          invite,
+          dashboardUrl: `${(process.env.NEXTAUTH_URL || 'https://pronadjibend.rs').replace(/\/$/, '')}/muzicari/profil`,
+        });
+      } catch (error) {
+        console.error('Musician invite email (band->musician):', error);
+      }
       return NextResponse.json({ success: true, invite });
     }
 
@@ -108,13 +151,21 @@ export async function POST(request) {
     if (isMusicianAccount && targetBandId) {
       const band = await prisma.band.findUnique({
         where: { id: targetBandId },
-        select: { id: true, name: true, location: true, user: { select: { id: true } } },
+        select: { id: true, name: true, location: true, user: { select: { id: true, email: true } } },
       });
       if (!band) {
         return NextResponse.json({ error: 'Bend nije pronađen.' }, { status: 404 });
       }
       if (band.user?.id === currentUser.id) {
         return NextResponse.json({ error: 'Ne možete poslati poziv sopstvenom bendu.' }, { status: 400 });
+      }
+
+      const blocked = await findInviteBlock({
+        actorMusicianId: currentUser.musicianProfile.id,
+        targetBandId,
+      });
+      if (blocked) {
+        return NextResponse.json({ error: 'Komunikacija sa ovim bendom je blokirana.' }, { status: 403 });
       }
 
       const invite = await prisma.musicianInvite.create({
@@ -134,6 +185,18 @@ export async function POST(request) {
           senderMusician: { select: { id: true, name: true, primaryInstrument: true } },
         },
       });
+      try {
+        await sendMusicianInviteNotificationEmail({
+          recipientEmail: band.user?.email,
+          recipientName: band.name,
+          senderLabel: currentUser.musicianProfile?.name || 'Muzičar',
+          targetLabel: band.name,
+          invite,
+          dashboardUrl: `${(process.env.NEXTAUTH_URL || 'https://pronadjibend.rs').replace(/\/$/, '')}/bands`,
+        });
+      } catch (error) {
+        console.error('Musician invite email (musician->band):', error);
+      }
       return NextResponse.json({ success: true, invite });
     }
 
@@ -144,10 +207,18 @@ export async function POST(request) {
       }
       const targetMusician = await prisma.musicianProfile.findUnique({
         where: { id: targetMusicianId },
-        select: { id: true, name: true },
+        select: { id: true, name: true, user: { select: { email: true } } },
       });
       if (!targetMusician) {
         return NextResponse.json({ error: 'Muzičar nije pronađen.' }, { status: 404 });
+      }
+
+      const blocked = await findInviteBlock({
+        actorMusicianId: currentUser.musicianProfile.id,
+        targetMusicianId,
+      });
+      if (blocked) {
+        return NextResponse.json({ error: 'Komunikacija sa ovim muzičarem je blokirana.' }, { status: 403 });
       }
 
       const invite = await prisma.musicianInvite.create({
@@ -166,6 +237,18 @@ export async function POST(request) {
           senderMusician: { select: { id: true, name: true, primaryInstrument: true } },
         },
       });
+      try {
+        await sendMusicianInviteNotificationEmail({
+          recipientEmail: targetMusician.user?.email,
+          recipientName: targetMusician.name,
+          senderLabel: currentUser.musicianProfile?.name || 'Muzičar',
+          targetLabel: targetMusician.name,
+          invite,
+          dashboardUrl: `${(process.env.NEXTAUTH_URL || 'https://pronadjibend.rs').replace(/\/$/, '')}/muzicari/profil`,
+        });
+      } catch (error) {
+        console.error('Musician invite email (musician->musician):', error);
+      }
       return NextResponse.json({ success: true, invite });
     }
 
@@ -178,6 +261,7 @@ export async function POST(request) {
 
 export async function GET(request) {
   try {
+    await expireStaleInvites();
     const currentUser = await getCurrentUser(request);
     if (!currentUser) {
       return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
@@ -205,6 +289,7 @@ export async function GET(request) {
         band: { select: { id: true, name: true, location: true, genre: true } },
         musician: { select: { id: true, name: true, primaryInstrument: true, city: true } },
         senderMusician: { select: { id: true, name: true, primaryInstrument: true, city: true } },
+        _count: { select: { messages: true } },
       },
       orderBy: { createdAt: 'desc' },
       take: 100,

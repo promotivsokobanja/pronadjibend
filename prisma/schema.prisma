@@ -55,7 +55,9 @@ model Band {
   liveRequests       LiveRequest[]
   reviews            Review[]
   busyDates          BusyDate[]
-  musicianInvites    MusicianInvite[]  // invites where this band is involved
+  musicianInvites    MusicianInvite[]
+  inviteBlocksMade   InviteBlock[]      @relation("InviteBlockerBand")
+  inviteBlocksOnMe   InviteBlock[]      @relation("InviteBlockedBand")
   user               User?
   deletedAt          DateTime?
   MidiFile           MidiFile[]
@@ -215,6 +217,8 @@ model MusicianProfile {
   availabilities    MusicianAvailability[]
   receivedInvites    MusicianInvite[] @relation("receivedInvites")
   sentInvites        MusicianInvite[] @relation("sentInvites")
+  inviteBlocksMade   InviteBlock[]         @relation("InviteBlockerMusician")
+  inviteBlocksOnMe   InviteBlock[]         @relation("InviteBlockedMusician")
   songs             Song[]
   liveRequests      LiveRequest[]
   midiFiles         MidiFile[]
@@ -239,7 +243,7 @@ model MusicianAvailability {
 
 model MusicianInvite {
   id               String           @id @default(cuid())
-  status           String           @default("PENDING") // "PENDING", "ACCEPTED", "REJECTED", "CANCELLED"
+  status           String           @default("PENDING") // "PENDING", "ACCEPTED", "REJECTED", "CANCELLED", "EXPIRED"
   senderType       String           @default("BAND")    // "BAND" or "MUSICIAN"
   eventDate        DateTime?
   location         String?
@@ -261,10 +265,28 @@ model MusicianInvite {
   @@index([status])
 }
 
+model InviteBlock {
+  id                String           @id @default(cuid())
+  blockerBand       Band?            @relation("InviteBlockerBand", fields: [blockerBandId], references: [id])
+  blockerBandId     String?
+  blockerMusician   MusicianProfile? @relation("InviteBlockerMusician", fields: [blockerMusicianId], references: [id])
+  blockerMusicianId String?
+  blockedBand       Band?            @relation("InviteBlockedBand", fields: [blockedBandId], references: [id])
+  blockedBandId     String?
+  blockedMusician   MusicianProfile? @relation("InviteBlockedMusician", fields: [blockedMusicianId], references: [id])
+  blockedMusicianId String?
+  createdAt         DateTime         @default(now())
+
+  @@index([blockerBandId, createdAt])
+  @@index([blockerMusicianId, createdAt])
+  @@index([blockedBandId, createdAt])
+  @@index([blockedMusicianId, createdAt])
+}
+
 model Message {
   id        String         @id @default(cuid())
   body      String
-  invite    MusicianInvite @relation(fields: [inviteId], references: [id])
+  invite    MusicianInvite @relation(fields: [inviteId], references: [id], onDelete: Cascade)
   inviteId  String
   sender    User           @relation(fields: [senderId], references: [id])
   senderId  String
@@ -312,5 +334,6 @@ model SiteConfig {
   korgPaDriveUrl       String?
   korgPaItemsJson      String?
   contactInfoJson      String?
+  inviteCommunicationJson String?
   updatedAt            DateTime @updatedAt
 }
