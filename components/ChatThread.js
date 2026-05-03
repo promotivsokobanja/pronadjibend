@@ -355,6 +355,7 @@ const chatStyles = `
     font-family: inherit;
     outline: none;
     background: #fff;
+    color: #1e293b;
     transition: border-color 0.15s;
   }
   .chat-input:focus {
