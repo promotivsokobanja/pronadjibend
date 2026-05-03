@@ -134,9 +134,9 @@
 
 .navbar .mobile-toggle {
   display: none;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  color: var(--text) !important;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1.5px solid rgba(255, 255, 255, 0.22);
+  color: #f8fafc !important;
   cursor: pointer;
   min-width: 48px;
   min-height: 48px;
@@ -146,33 +146,33 @@
   border-radius: 14px;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
-.navbar .mobile-menu {
+.mobile-menu {
   position: fixed;
   top: 0;
   left: 0;
-  bottom: 0;
   right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
   gap: 2rem;
   padding: max(5rem, calc(env(safe-area-inset-top, 0px) + 4rem)) 1.5rem max(2rem, env(safe-area-inset-bottom, 0px));
-  background: rgba(5, 5, 12, 0.98);
+  background: rgba(5, 5, 12, 0.99);
   z-index: 10000;
-  width: 100%;
-  max-width: 100%;
   overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   box-sizing: border-box;
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
 }
 
-.navbar .mobile-menu a {
+.mobile-menu a {
   font-weight: 800;
   color: var(--text) !important;
   font-size: 1.4rem;
@@ -181,7 +181,7 @@
   letter-spacing: 0.1em;
 }
 
-.navbar .btn-prijava-mobile {
+.mobile-menu .btn-prijava-mobile {
   font-weight: 800;
   color: var(--accent-primary) !important;
   font-size: 1.4rem;
@@ -193,7 +193,7 @@
   font-family: inherit;
 }
 
-.navbar .mobile-menu a.active-mobile {
+.mobile-menu a.active-mobile {
   color: #8b5cf6 !important;
 }
 

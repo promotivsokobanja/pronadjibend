@@ -122,63 +122,67 @@ export default function Navbar() {
   }, []);
 
   return (
-    <nav className="navbar">
-      <div className="container nav-content">
-        <Link href="/" className="logo-link">
-          <div className="logo-group">
-            <div className="logo-wrapper">
-              <Image
-                src="/images/logo.png"
-                alt="Logo"
-                className="logo-img"
-                width={44}
-                height={44}
-                sizes="44px"
-                priority
-                quality={70}
-              />
+    <>
+      <nav className="navbar">
+        <div className="container nav-content">
+          <Link href="/" className="logo-link">
+            <div className="logo-group">
+              <div className="logo-wrapper">
+                <Image
+                  src="/images/logo.png"
+                  alt="Logo"
+                  className="logo-img"
+                  width={44}
+                  height={44}
+                  sizes="44px"
+                  priority
+                  quality={70}
+                />
+              </div>
+              <span className="logo-text">Pronadji<span className="accent">Bend</span></span>
             </div>
-            <span className="logo-text">Pronadji<span className="accent">Bend</span></span>
-          </div>
-        </Link>
+          </Link>
 
-        {/* Desktop Menu */}
-        <div className="nav-links desktop-only">
-          <Link href="/clients" className={`nav-link ${isActive('/clients') ? 'active' : ''}`}>
-            Pretraži Bendove
-          </Link>
-          <Link href="/muzicari" className={`nav-link ${isActive('/muzicari') ? 'active' : ''}`}>
-            Pretraži Muzičare
-          </Link>
-          {isMusician ? (
-            <Link href="/muzicari/profil" className={`nav-link ${isActive('/muzicari/profil') ? 'active' : ''}`}>Moj panel</Link>
-          ) : (
-            <Link href="/bands" className={`nav-link ${isActive('/bands') ? 'active' : ''}`}>Portal za Muzičare</Link>
-          )}
-          <Link href="/about" className={`nav-link ${isActive('/about') ? 'active' : ''}`}>O nama</Link>
-          <Link href="/#vodic" className="nav-link">
-            Vodič
-          </Link>
-          {isAdmin && (
-            <Link href="/admin" className={`nav-link ${isActive('/admin') ? 'active' : ''}`}>
-              Admin
+          {/* Desktop Menu */}
+          <div className="nav-links desktop-only">
+            <Link href="/clients" className={`nav-link ${isActive('/clients') ? 'active' : ''}`}>
+              Pretraži Bendove
             </Link>
-          )}
-          {sessionUser ? (
-            <button type="button" className="btn-prijava" onClick={() => logoutAndRedirect()}>
-              Odjava
-            </button>
-          ) : (
-            <Link href="/login" className="btn-prijava">PRIJAVA</Link>
-          )}
+            <Link href="/muzicari" className={`nav-link ${isActive('/muzicari') ? 'active' : ''}`}>
+              Pretraži Muzičare
+            </Link>
+            {isMusician ? (
+              <Link href="/muzicari/profil" className={`nav-link ${isActive('/muzicari/profil') ? 'active' : ''}`}>Moj panel</Link>
+            ) : (
+              <Link href="/bands" className={`nav-link ${isActive('/bands') ? 'active' : ''}`}>Portal za Muzičare</Link>
+            )}
+            <Link href="/about" className={`nav-link ${isActive('/about') ? 'active' : ''}`}>O nama</Link>
+            <Link href="/#vodic" className="nav-link">
+              Vodič
+            </Link>
+            {isAdmin && (
+              <Link href="/admin" className={`nav-link ${isActive('/admin') ? 'active' : ''}`}>
+                Admin
+              </Link>
+            )}
+            {sessionUser ? (
+              <button type="button" className="btn-prijava" onClick={() => logoutAndRedirect()}>
+                Odjava
+              </button>
+            ) : (
+              <Link href="/login" className="btn-prijava">PRIJAVA</Link>
+            )}
+          </div>
+
+          <button className="mobile-toggle" onClick={() => setIsOpen(!isOpen)}>
+            {isOpen ? <X size={28} /> : <Menu size={28} />}
+          </button>
         </div>
 
-        <button className="mobile-toggle" onClick={() => setIsOpen(!isOpen)}>
-          {isOpen ? <X size={28} /> : <Menu size={28} />}
-        </button>
-      </div>
+        {pathname === '/clients' && <ClientsNavSearchPanel />}
+      </nav>
 
-      {/* Mobile Menu */}
+      {/* Mobile Menu — rendered OUTSIDE <nav> to avoid backdrop-filter containing block on Safari iOS */}
       {isOpen && (
         <div className="mobile-menu">
           <Link
@@ -221,8 +225,6 @@ export default function Navbar() {
           )}
         </div>
       )}
-
-      {pathname === '/clients' && <ClientsNavSearchPanel />}
-    </nav>
+    </>
   );
 }
