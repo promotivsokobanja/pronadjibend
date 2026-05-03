@@ -142,7 +142,6 @@ export default function RepertoirePage() {
 
       if (searchTerm.trim().length > 1 && Array.isArray(data)) {
         const globalParams = new URLSearchParams({
-          category: activeTab,
           search: searchTerm.trim(),
           limit: '20',
         }).toString();
