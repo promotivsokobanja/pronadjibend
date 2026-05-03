@@ -80,9 +80,16 @@ export const metadata = {
     images: ['/images/og-cover.png'],
   },
   manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    title: 'Pronađi Bend',
+    statusBarStyle: 'black-translucent',
+  },
   icons: {
     icon: '/favicon.ico',
-    apple: '/images/logo.png',
+    apple: [
+      { url: '/images/logo.png', sizes: '180x180', type: 'image/png' },
+    ],
   },
   ...(googleVerify
     ? {
