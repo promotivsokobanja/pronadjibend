@@ -2,6 +2,7 @@ import '../styles/globals.css';
 import { Inter, Montserrat, Playfair_Display } from 'next/font/google';
 import StrictModeProvider from '@/components/providers/StrictModeProvider';
 import { getSiteUrl, getSiteMetadataBaseUrl } from '@/lib/siteUrl';
+import ServiceWorkerRegister from '@/components/ServiceWorkerRegister';
 
 const siteUrl = getSiteUrl();
 const siteOrigin = getSiteMetadataBaseUrl();
@@ -117,6 +118,7 @@ export default function RootLayout({ children }) {
     >
       <body style={{ margin: 0 }}>
         <StrictModeProvider>{children}</StrictModeProvider>
+        <ServiceWorkerRegister />
         <div id="notifications" />
       </body>
     </html>
