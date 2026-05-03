@@ -144,6 +144,7 @@ export default function RepertoirePage() {
         const globalParams = new URLSearchParams({
           search: searchTerm.trim(),
           page: '1',
+          suggest: '1',
         }).toString();
         const globalResp = await fetch(`/api/pesmarica?${globalParams}`, { cache: 'no-store' });
         const globalData = await globalResp.json();

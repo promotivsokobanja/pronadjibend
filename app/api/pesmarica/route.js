@@ -10,13 +10,14 @@ export async function GET(request) {
     const search = searchParams.get('search') || '';
     const category = searchParams.get('category') || '';
     const letter = searchParams.get('letter') || '';
+    const suggest = searchParams.get('suggest') === '1';
     const page = parseInt(searchParams.get('page') || '1', 10);
-    const limit = 50;
+    const limit = suggest ? 20 : 50;
     const skip = (page - 1) * limit;
 
     const where = {
-      lyrics: { not: null },
       bandId: null,
+      ...(suggest ? {} : { lyrics: { not: null } }),
     };
 
     if (category && category !== 'Sve') {
