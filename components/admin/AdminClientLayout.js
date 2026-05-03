@@ -14,6 +14,8 @@ import {
   MessageSquare,
   CreditCard,
   Settings,
+  Menu,
+  X,
 } from 'lucide-react';
 
 const NAV = [
@@ -39,6 +41,7 @@ function isDatabaseErrorResponse(status, data) {
 export default function AdminClientLayout({ children }) {
   const pathname = usePathname();
   const [state, setState] = useState('loading');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -183,21 +186,36 @@ export default function AdminClientLayout({ children }) {
   return (
     <div className="admin-app">
       <aside className="admin-sidebar">
-        <div style={{ padding: '0 1.25rem 0.75rem', fontSize: '0.7rem', color: '#64748b', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-          Administracija
+        <div className="admin-sidebar-header">
+          <span className="admin-sidebar-label">Administracija</span>
+          <button
+            type="button"
+            className="admin-sidebar-toggle"
+            onClick={() => setSidebarOpen((o) => !o)}
+            aria-label={sidebarOpen ? 'Zatvori meni' : 'Otvori meni'}
+          >
+            {sidebarOpen ? <X size={18} /> : <Menu size={18} />}
+          </button>
         </div>
-        {NAV.map(({ href, label, icon: Icon, exact }) => {
-          const active = exact ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
-          return (
-            <Link key={href} href={href} className={active ? 'active' : ''}>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Icon size={16} strokeWidth={2.2} />
-                {label}
-              </span>
-            </Link>
-          );
-        })}
-        <div style={{ marginTop: '1.5rem', padding: '0 1.25rem' }}>
+        <nav className={`admin-sidebar-nav${sidebarOpen ? '' : ' collapsed'}`}>
+          {NAV.map(({ href, label, icon: Icon, exact }) => {
+            const active = exact ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
+            return (
+              <Link
+                key={href}
+                href={href}
+                className={active ? 'active' : ''}
+                onClick={() => setSidebarOpen(false)}
+              >
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Icon size={16} strokeWidth={2.2} />
+                  {label}
+                </span>
+              </Link>
+            );
+          })}
+        </nav>
+        <div className="admin-sidebar-back">
           <Link
             href="/"
             style={{ color: '#64748b', fontSize: '0.8rem', fontWeight: 600 }}

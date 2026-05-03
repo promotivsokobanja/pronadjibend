@@ -364,33 +364,17 @@ export default function AdminSystemPage() {
             >
               <input
                 type="text"
+                className="admin-field"
                 value={item.name}
                 onChange={(e) => updateKorgItem(item.id, 'name', e.target.value)}
                 placeholder={`Naziv seta ${index + 1}`}
-                style={{
-                  width: '100%',
-                  borderRadius: 10,
-                  border: '1px solid rgba(148, 163, 184, 0.45)',
-                  background: 'rgba(255, 255, 255, 0.96)',
-                  color: '#0f172a',
-                  padding: '0.8rem 0.9rem',
-                  fontSize: '0.95rem',
-                }}
               />
               <input
                 type="url"
+                className="admin-field"
                 value={item.url}
                 onChange={(e) => updateKorgItem(item.id, 'url', e.target.value)}
                 placeholder="https://drive.google.com/..."
-                style={{
-                  width: '100%',
-                  borderRadius: 10,
-                  border: '1px solid rgba(148, 163, 184, 0.45)',
-                  background: 'rgba(255, 255, 255, 0.96)',
-                  color: '#0f172a',
-                  padding: '0.8rem 0.9rem',
-                  fontSize: '0.95rem',
-                }}
               />
               <button
                 type="button"
@@ -432,7 +416,7 @@ export default function AdminSystemPage() {
         <p style={{ color: '#94a3b8', fontSize: '0.875rem', margin: '0 0 1rem', lineHeight: 1.5 }}>
           Maksimalan broj slika, video linkova i spoljnih linkova koje bend može da doda na profil.
         </p>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '0.75rem' }}>
           {[
             { key: 'maxImages', label: 'Slike (maks.)', min: 1, max: 20 },
             { key: 'maxVideos', label: 'Video linkovi (maks.)', min: 0, max: 10 },
@@ -442,20 +426,11 @@ export default function AdminSystemPage() {
               <label style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 600 }}>{label}</label>
               <input
                 type="number"
+                className="admin-field"
                 min={min}
                 max={max}
                 value={limitsForm[key]}
                 onChange={(e) => setLimitsForm((prev) => ({ ...prev, [key]: Number(e.target.value) }))}
-                style={{
-                  width: '100%',
-                  borderRadius: 10,
-                  border: '1px solid rgba(148, 163, 184, 0.45)',
-                  background: 'rgba(255, 255, 255, 0.96)',
-                  color: '#0f172a',
-                  padding: '0.8rem 0.9rem',
-                  fontSize: '0.95rem',
-                  boxSizing: 'border-box',
-                }}
               />
             </div>
           ))}
@@ -483,7 +458,7 @@ export default function AdminSystemPage() {
         <p style={{ color: '#94a3b8', fontSize: '0.875rem', margin: '0 0 1rem', lineHeight: 1.5 }}>
           Podešavanja limita aktivnih poziva, automatskog isteka, perioda čišćenja arhive i email obaveštenja za nove pozive.
         </p>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(120px, 1fr))', gap: '0.75rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.75rem' }}>
           {[
             { key: 'inviteMaxActiveBasic', label: 'Free aktivni pozivi', min: 1, max: 100 },
             { key: 'inviteMaxActivePremium', label: 'Premium aktivni pozivi', min: 1, max: 500 },
@@ -494,20 +469,11 @@ export default function AdminSystemPage() {
               <label style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 600 }}>{label}</label>
               <input
                 type="number"
+                className="admin-field"
                 min={min}
                 max={max}
                 value={inviteCommunicationForm[key]}
                 onChange={(e) => setInviteCommunicationForm((prev) => ({ ...prev, [key]: Number(e.target.value) }))}
-                style={{
-                  width: '100%',
-                  borderRadius: 10,
-                  border: '1px solid rgba(148, 163, 184, 0.45)',
-                  background: 'rgba(255, 255, 255, 0.96)',
-                  color: '#0f172a',
-                  padding: '0.8rem 0.9rem',
-                  fontSize: '0.95rem',
-                  boxSizing: 'border-box',
-                }}
               />
             </div>
           ))}
@@ -553,19 +519,10 @@ export default function AdminSystemPage() {
               <label style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 600 }}>{label}</label>
               <input
                 type={type}
+                className="admin-field"
                 value={contactForm[key]}
                 onChange={(e) => setContactForm((prev) => ({ ...prev, [key]: e.target.value }))}
                 placeholder={placeholder}
-                style={{
-                  width: '100%',
-                  borderRadius: 10,
-                  border: '1px solid rgba(148, 163, 184, 0.45)',
-                  background: 'rgba(255, 255, 255, 0.96)',
-                  color: '#0f172a',
-                  padding: '0.8rem 0.9rem',
-                  fontSize: '0.95rem',
-                  boxSizing: 'border-box',
-                }}
               />
             </div>
           ))}
