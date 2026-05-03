@@ -53,6 +53,7 @@ export async function GET(request) {
               primaryInstrument: true,
             },
           },
+          _count: { select: { messages: true } },
         },
       }),
     ]);
@@ -81,6 +82,42 @@ export async function GET(request) {
     const safe = responseFromDatabaseError(error);
     if (safe) return safe;
     return NextResponse.json({ error: 'Greška pri učitavanju poziva muzičarima.' }, { status: 500 });
+  }
+}
+
+export async function DELETE(request) {
+  const gate = await requireAdmin(request);
+  if (!gate.ok) return gate.response;
+
+  const { searchParams } = new URL(request.url);
+  const id = searchParams.get('id');
+  if (!id) {
+    return NextResponse.json({ error: 'Nedostaje id poziva.' }, { status: 400 });
+  }
+
+  try {
+    const existing = await prisma.musicianInvite.findUnique({
+      where: { id },
+      select: { id: true, _count: { select: { messages: true } } },
+    });
+    if (!existing) {
+      return NextResponse.json({ error: 'Poziv nije pronađen.' }, { status: 404 });
+    }
+
+    await prisma.$transaction([
+      prisma.message.deleteMany({ where: { inviteId: id } }),
+      prisma.musicianInvite.delete({ where: { id } }),
+    ]);
+
+    return NextResponse.json({ success: true, deletedMessages: existing._count.messages });
+  } catch (error) {
+    if (error?.code === 'P2025') {
+      return NextResponse.json({ error: 'Poziv nije pronađen.' }, { status: 404 });
+    }
+    console.error('admin/musician-invites DELETE', error);
+    const safe = responseFromDatabaseError(error);
+    if (safe) return safe;
+    return NextResponse.json({ error: 'Greška pri brisanju poziva.' }, { status: 500 });
   }
 }
 

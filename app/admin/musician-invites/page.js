@@ -38,6 +38,24 @@ export default function AdminMusicianInvitesPage() {
     load();
   }, [load]);
 
+  const deleteInvite = async (id) => {
+    if (!window.confirm('Obrisati ovaj poziv i sve njegove poruke? Ova radnja se ne može poništiti.')) return;
+    setSaving(id);
+    setError('');
+    try {
+      const r = await adminFetch(`/api/admin/musician-invites?id=${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+      });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error || 'Greška');
+      await load();
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setSaving(null);
+    }
+  };
+
   const updateStatus = async (id, status) => {
     setSaving(id);
     setError('');
@@ -132,6 +150,7 @@ export default function AdminMusicianInvitesPage() {
                   <p style={{ margin: '0.45rem 0 0', color: '#94a3b8', fontSize: '0.78rem' }}>
                     Smer: {invite.senderType === 'MUSICIAN' ? 'Muzičar → Bend' : 'Bend → Muzičar'}
                     {invite.senderMusician ? ` (poslao: ${invite.senderMusician.name})` : ''}
+                    {' • '}Poruka: {invite._count?.messages ?? 0}
                     {' • '}Premium chat: {invite.premiumChatEnabled ? 'DA' : 'NE'}
                   </p>
                 </div>
@@ -184,6 +203,15 @@ export default function AdminMusicianInvitesPage() {
                         Vrati na PENDING
                       </button>
                     )}
+                    <button
+                      type="button"
+                      className="admin-btn"
+                      style={{ fontSize: '0.72rem', padding: '0.25rem 0.5rem', background: '#7f1d1d', marginTop: '0.25rem' }}
+                      disabled={saving === invite.id}
+                      onClick={() => deleteInvite(invite.id)}
+                    >
+                      Obriši poziv
+                    </button>
                   </div>
                 </div>
               </div>
