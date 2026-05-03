@@ -1,8 +1,12 @@
 ALTER TABLE "SiteConfig"
 ADD COLUMN IF NOT EXISTS "inviteCommunicationJson" TEXT;
 
-ALTER TABLE "MusicianInvite"
-ALTER COLUMN "status" SET DEFAULT 'PENDING';
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'MusicianInvite') THEN
+    ALTER TABLE "MusicianInvite"
+    ALTER COLUMN "status" SET DEFAULT 'PENDING';
+  END IF;
+END $$;
 
 CREATE TABLE IF NOT EXISTS "InviteBlock" (
   "id" TEXT NOT NULL,
@@ -47,7 +51,11 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
-ALTER TABLE "Message" DROP CONSTRAINT IF EXISTS "Message_inviteId_fkey";
-ALTER TABLE "Message"
-  ADD CONSTRAINT "Message_inviteId_fkey"
-  FOREIGN KEY ("inviteId") REFERENCES "MusicianInvite"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'Message') THEN
+    ALTER TABLE "Message" DROP CONSTRAINT IF EXISTS "Message_inviteId_fkey";
+    ALTER TABLE "Message"
+      ADD CONSTRAINT "Message_inviteId_fkey"
+      FOREIGN KEY ("inviteId") REFERENCES "MusicianInvite"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+  END IF;
+END $$;
