@@ -344,6 +344,185 @@
   color: #64748b;
 }
 
+/* --- Settings section cards --- */
+.admin-section {
+  position: relative;
+  margin-bottom: 1.5rem;
+  padding: 1.5rem;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.55) 100%);
+  overflow: hidden;
+}
+
+.admin-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+  border-radius: 14px 14px 0 0;
+}
+
+.admin-section h2 {
+  font-size: 1.05rem;
+  font-weight: 800;
+  margin: 0 0 0.4rem;
+  color: #f1f5f9;
+  letter-spacing: -0.01em;
+}
+
+.admin-section > p {
+  color: #94a3b8;
+  font-size: 0.85rem;
+  margin: 0 0 1.15rem;
+  line-height: 1.55;
+}
+
+.admin-section-footer {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+
+.admin-section-footer .admin-btn {
+  min-height: 38px;
+}
+
+/* status on/off pill inside section */
+.admin-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.admin-status-on {
+  background: rgba(74, 222, 128, 0.12);
+  color: #4ade80;
+}
+
+.admin-status-off {
+  background: rgba(248, 113, 113, 0.12);
+  color: #f87171;
+}
+
+.admin-status-warn {
+  background: rgba(251, 191, 36, 0.12);
+  color: #fbbf24;
+}
+
+/* dot indicator before status text */
+.admin-status::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+/* korg PA item row */
+.admin-korg-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 220px) minmax(0, 1fr) auto;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.65rem 0.75rem;
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.45);
+  border: 1px solid rgba(148, 163, 184, 0.08);
+  transition: border-color 0.15s;
+}
+
+.admin-korg-row:hover {
+  border-color: rgba(148, 163, 184, 0.2);
+}
+
+/* inline form grid */
+.admin-form-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.admin-form-grid label {
+  display: block;
+  font-size: 0.78rem;
+  color: #94a3b8;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* small muted hint */
+.admin-hint {
+  font-size: 0.75rem;
+  color: #64748b;
+  line-height: 1.45;
+  margin: 0;
+}
+
+/* success / error message inline */
+.admin-msg-ok {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #4ade80;
+}
+
+.admin-msg-err {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #f87171;
+}
+
+/* checkbox label */
+.admin-check-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: #e2e8f0;
+  font-size: 0.88rem;
+  cursor: pointer;
+  margin-top: 0.6rem;
+}
+
+.admin-check-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #3b82f6;
+  cursor: pointer;
+}
+
+/* btn outline variant (ghost) */
+.admin-btn-ghost {
+  background: transparent;
+  color: #94a3b8;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.admin-btn-ghost:hover:not(:disabled) {
+  background: rgba(148, 163, 184, 0.08);
+  color: #e2e8f0;
+  border-color: rgba(148, 163, 184, 0.4);
+}
+
+.admin-btn-purple {
+  background: #7c3aed;
+}
+
+.admin-btn-purple:hover:not(:disabled) {
+  background: #6d28d9;
+}
+
 /* ============================================================
    Responsive: Tablet (≤900px) — sidebar → horizontal pills
    ============================================================ */
@@ -399,6 +578,14 @@
 
   .admin-main h1 {
     font-size: 1.4rem;
+  }
+
+  .admin-section {
+    padding: 1.15rem;
+  }
+
+  .admin-korg-row {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -485,6 +672,19 @@
   .admin-field {
     padding: 0.55rem 0.7rem;
     font-size: 0.85rem;
+  }
+
+  .admin-section {
+    padding: 1rem 0.85rem;
+    border-radius: 12px;
+  }
+
+  .admin-section h2 {
+    font-size: 0.95rem;
+  }
+
+  .admin-korg-row {
+    padding: 0.5rem 0.6rem;
   }
 }
 

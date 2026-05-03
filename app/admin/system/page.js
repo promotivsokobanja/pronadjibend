@@ -250,31 +250,22 @@ export default function AdminSystemPage() {
         variables ili .env lokalno.
       </p>
 
-      <div
-        className="admin-table-wrap"
-        style={{
-          maxWidth: 560,
-          marginBottom: '1.75rem',
-          padding: '1.25rem',
-          borderRadius: 12,
-          border: '1px solid rgba(148, 163, 184, 0.35)',
-          background: 'rgba(15, 23, 42, 0.35)',
-        }}
-      >
-        <h2 style={{ fontSize: '1rem', margin: '0 0 0.5rem', fontWeight: 800 }}>Demo bendovi (javna pretraga i početna)</h2>
-        <p style={{ color: '#94a3b8', fontSize: '0.875rem', margin: '0 0 1rem', lineHeight: 1.5 }}>
+      {/* ── Demo bendovi ── */}
+      <div className="admin-section">
+        <h2>Demo bendovi (javna pretraga i početna)</h2>
+        <p>
           Kada su uključeni, demo profili se prikazuju zajedno sa pravim bendovima. Isključite ih kada želite samo
           registrovane izvođače.
         </p>
         {data.demoBandsEnvLocked ? (
-          <p style={{ color: '#fbbf24', fontSize: '0.875rem', margin: 0 }}>
+          <p className="admin-hint" style={{ color: '#fbbf24' }}>
             <strong>SHOW_DEMO_BANDS</strong> u .env je postavljen na <code>{data.demoBandsEnvValue}</code> — to ima
             prednost nad ovim prekidačem. Uklonite promenljivu iz .env da biste koristili podešavanje ispod.
           </p>
         ) : (
           <>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-              <span style={{ fontWeight: 700, color: data.showDemoBands ? '#4ade80' : '#f87171' }}>
+            <div className="admin-section-footer" style={{ marginTop: 0 }}>
+              <span className={`admin-status ${data.showDemoBands ? 'admin-status-on' : 'admin-status-off'}`}>
                 {data.showDemoBands ? 'Uključeno' : 'Isključeno'}
               </span>
               <button
@@ -285,11 +276,9 @@ export default function AdminSystemPage() {
               >
                 {savingDemo ? 'Čuvanje…' : data.showDemoBands ? 'Isključi demo bendove' : 'Uključi demo bendove'}
               </button>
+              {demoMsg ? <span className="admin-msg-ok">{demoMsg}</span> : null}
             </div>
-            {demoMsg ? (
-              <p style={{ margin: '0.75rem 0 0', fontSize: '0.875rem', color: '#94a3b8' }}>{demoMsg}</p>
-            ) : null}
-            <p style={{ margin: '1rem 0 0', fontSize: '0.75rem', color: '#64748b' }}>
+            <p className="admin-hint" style={{ marginTop: '1rem' }}>
               Hitno isključivanje bez baze: u .env postavite <code>SHOW_DEMO_BANDS=false</code> (ili{' '}
               <code>true</code>).
             </p>
@@ -297,70 +286,42 @@ export default function AdminSystemPage() {
         )}
       </div>
 
-      <div
-        className="admin-table-wrap"
-        style={{
-          maxWidth: 560,
-          marginBottom: '1.75rem',
-          padding: '1.25rem',
-          borderRadius: 12,
-          border: '1px solid rgba(148, 163, 184, 0.35)',
-          background: 'rgba(15, 23, 42, 0.35)',
-        }}
-      >
-        <h2 style={{ fontSize: '1rem', margin: '0 0 0.5rem', fontWeight: 800 }}>Maintenance Mode (Under Construction)</h2>
-        <p style={{ color: '#94a3b8', fontSize: '0.875rem', margin: '0 0 1rem', lineHeight: 1.5 }}>
+      {/* ── Maintenance ── */}
+      <div className="admin-section">
+        <h2>Maintenance Mode (Under Construction)</h2>
+        <p>
           Kada je uključen, sajt je nevidljiv za sve posetioce osim za admine. Svi ostali će biti
           preusmereni na &ldquo;Under Construction&rdquo; stranicu.
         </p>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-          <span style={{ fontWeight: 700, color: data.maintenanceMode ? '#fbbf24' : '#4ade80' }}>
-            {data.maintenanceMode ? 'AKTIVAN (Sajt je zaključan)' : 'NEAKTIVAN (Sajt je javan)'}
+        <div className="admin-section-footer" style={{ marginTop: 0 }}>
+          <span className={`admin-status ${data.maintenanceMode ? 'admin-status-warn' : 'admin-status-on'}`}>
+            {data.maintenanceMode ? 'AKTIVAN — sajt zaključan' : 'NEAKTIVAN — sajt javan'}
           </span>
           <button
             type="button"
-            className="admin-btn"
+            className={`admin-btn ${data.maintenanceMode ? 'admin-btn-ghost' : 'admin-btn-purple'}`}
             disabled={savingMaintenance}
             onClick={toggleMaintenanceMode}
-            style={{
-              backgroundColor: data.maintenanceMode ? '#1e293b' : '#7c3aed',
-              borderColor: data.maintenanceMode ? '#475569' : '#8b5cf6',
-            }}
           >
             {savingMaintenance ? 'Čuvanje…' : data.maintenanceMode ? 'Onemogući Maintenance' : 'Omogući Maintenance'}
           </button>
+          {maintenanceMsg ? <span className="admin-msg-ok">{maintenanceMsg}</span> : null}
         </div>
-        {maintenanceMsg ? (
-          <p style={{ margin: '0.75rem 0 0', fontSize: '0.875rem', color: '#94a3b8' }}>{maintenanceMsg}</p>
-        ) : null}
       </div>
 
-      <div
-        className="admin-table-wrap"
-        style={{
-          maxWidth: 700,
-          marginBottom: '1.75rem',
-          padding: '1.25rem',
-          borderRadius: 12,
-          border: '1px solid rgba(148, 163, 184, 0.35)',
-          background: 'rgba(15, 23, 42, 0.35)',
-        }}
-      >
-        <h2 style={{ fontSize: '1rem', margin: '0 0 0.5rem', fontWeight: 800 }}>Korg PA setovi</h2>
-        <p style={{ color: '#94a3b8', fontSize: '0.875rem', margin: '0 0 1rem', lineHeight: 1.5 }}>
+      {/* ── Korg PA setovi ── */}
+      <div className="admin-section">
+        <h2>Korg PA setovi</h2>
+        <p>
           Dodajte više Google Drive linkova za različite Korg PA setove, sound pakete ili fajlove. Stavke se prikazuju
           samo Premium Venue korisnicima na bend i muzičar portalu.
         </p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
           {korgItems.map((item, index) => (
             <div
               key={item.id}
-              style={{
-                display: 'grid',
-                gridTemplateColumns: isCompactKorgEditor ? '1fr' : 'minmax(180px, 220px) minmax(0, 1fr) auto',
-                gap: '0.75rem',
-                alignItems: 'center',
-              }}
+              className="admin-korg-row"
+              style={isCompactKorgEditor ? { gridTemplateColumns: '1fr' } : undefined}
             >
               <input
                 type="text"
@@ -378,52 +339,43 @@ export default function AdminSystemPage() {
               />
               <button
                 type="button"
-                className="admin-btn"
+                className="admin-btn admin-btn-danger"
                 onClick={() => removeKorgItem(item.id)}
-                style={{ backgroundColor: '#1e293b', borderColor: '#475569', width: isCompactKorgEditor ? '100%' : 'auto' }}
+                style={isCompactKorgEditor ? { width: '100%' } : undefined}
               >
                 Obriši
               </button>
             </div>
           ))}
-          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
-            <button type="button" className="admin-btn" onClick={addKorgItem} style={{ backgroundColor: '#1e293b', borderColor: '#475569' }}>
-              Dodaj stavku
-            </button>
-            <button type="button" className="admin-btn" disabled={savingKorg} onClick={saveKorgDriveLink}>
-              {savingKorg ? 'Čuvanje…' : 'Sačuvaj stavke'}
-            </button>
-            <span style={{ color: data.korgPaItems?.length ? '#4ade80' : '#fbbf24', fontWeight: 700, fontSize: '0.875rem' }}>
-              {data.korgPaItems?.length ? `${data.korgPaItems.length} stavki podešeno` : 'Nema podešenih stavki'}
-            </span>
-          </div>
-          {korgMsg ? <p style={{ margin: 0, fontSize: '0.875rem', color: '#94a3b8' }}>{korgMsg}</p> : null}
         </div>
+        <div className="admin-section-footer">
+          <button type="button" className="admin-btn admin-btn-ghost" onClick={addKorgItem}>
+            + Dodaj stavku
+          </button>
+          <button type="button" className="admin-btn" disabled={savingKorg} onClick={saveKorgDriveLink}>
+            {savingKorg ? 'Čuvanje…' : 'Sačuvaj stavke'}
+          </button>
+          <span className={data.korgPaItems?.length ? 'admin-msg-ok' : 'admin-msg-err'} style={{ fontSize: '0.82rem' }}>
+            {data.korgPaItems?.length ? `${data.korgPaItems.length} stavki podešeno` : 'Nema podešenih stavki'}
+          </span>
+        </div>
+        {korgMsg ? <p className="admin-hint" style={{ marginTop: '0.65rem' }}>{korgMsg}</p> : null}
       </div>
 
-      <div
-        className="admin-table-wrap"
-        style={{
-          maxWidth: 560,
-          marginBottom: '1.75rem',
-          padding: '1.25rem',
-          borderRadius: 12,
-          border: '1px solid rgba(148, 163, 184, 0.35)',
-          background: 'rgba(15, 23, 42, 0.35)',
-        }}
-      >
-        <h2 style={{ fontSize: '1rem', margin: '0 0 0.5rem', fontWeight: 800 }}>Limiti bend profila</h2>
-        <p style={{ color: '#94a3b8', fontSize: '0.875rem', margin: '0 0 1rem', lineHeight: 1.5 }}>
+      {/* ── Limiti bend profila ── */}
+      <div className="admin-section">
+        <h2>Limiti bend profila</h2>
+        <p>
           Maksimalan broj slika, video linkova i spoljnih linkova koje bend može da doda na profil.
         </p>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '0.75rem' }}>
+        <div className="admin-form-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))' }}>
           {[
             { key: 'maxImages', label: 'Slike (maks.)', min: 1, max: 20 },
             { key: 'maxVideos', label: 'Video linkovi (maks.)', min: 0, max: 10 },
             { key: 'maxLinks', label: 'Spoljni linkovi (maks.)', min: 0, max: 10 },
           ].map(({ key, label, min, max }) => (
-            <div key={key} style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-              <label style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 600 }}>{label}</label>
+            <div key={key}>
+              <label>{label}</label>
               <input
                 type="number"
                 className="admin-field"
@@ -435,38 +387,29 @@ export default function AdminSystemPage() {
             </div>
           ))}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.75rem', flexWrap: 'wrap' }}>
+        <div className="admin-section-footer">
           <button type="button" className="admin-btn" disabled={savingLimits} onClick={saveLimits}>
             {savingLimits ? 'Čuvanje…' : 'Sačuvaj limite'}
           </button>
-          {limitsMsg ? <span style={{ fontSize: '0.875rem', color: limitsMsg === 'Sačuvano.' ? '#4ade80' : '#f87171' }}>{limitsMsg}</span> : null}
+          {limitsMsg ? <span className={limitsMsg === 'Sačuvano.' ? 'admin-msg-ok' : 'admin-msg-err'}>{limitsMsg}</span> : null}
         </div>
       </div>
 
-      <div
-        className="admin-table-wrap"
-        style={{
-          maxWidth: 720,
-          marginBottom: '1.75rem',
-          padding: '1.25rem',
-          borderRadius: 12,
-          border: '1px solid rgba(148, 163, 184, 0.35)',
-          background: 'rgba(15, 23, 42, 0.35)',
-        }}
-      >
-        <h2 style={{ fontSize: '1rem', margin: '0 0 0.5rem', fontWeight: 800 }}>Komunikacija bend ↔ muzičar</h2>
-        <p style={{ color: '#94a3b8', fontSize: '0.875rem', margin: '0 0 1rem', lineHeight: 1.5 }}>
+      {/* ── Komunikacija bend ↔ muzičar ── */}
+      <div className="admin-section">
+        <h2>Komunikacija bend ↔ muzičar</h2>
+        <p>
           Podešavanja limita aktivnih poziva, automatskog isteka, perioda čišćenja arhive i email obaveštenja za nove pozive.
         </p>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.75rem' }}>
+        <div className="admin-form-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))' }}>
           {[
             { key: 'inviteMaxActiveBasic', label: 'Free aktivni pozivi', min: 1, max: 100 },
             { key: 'inviteMaxActivePremium', label: 'Premium aktivni pozivi', min: 1, max: 500 },
             { key: 'inviteExpireDays', label: 'Istek PENDING (dana)', min: 1, max: 365 },
             { key: 'inviteCleanupDays', label: 'Čišćenje arhive (dana)', min: 7, max: 3650 },
           ].map(({ key, label, min, max }) => (
-            <div key={key} style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-              <label style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 600 }}>{label}</label>
+            <div key={key}>
+              <label>{label}</label>
               <input
                 type="number"
                 className="admin-field"
@@ -478,7 +421,7 @@ export default function AdminSystemPage() {
             </div>
           ))}
         </div>
-        <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.55rem', marginTop: '0.9rem', color: '#e2e8f0', fontSize: '0.9rem' }}>
+        <label className="admin-check-label">
           <input
             type="checkbox"
             checked={inviteCommunicationForm.inviteEmailNotifications}
@@ -486,37 +429,28 @@ export default function AdminSystemPage() {
           />
           Šalji email obaveštenje za nove pozive
         </label>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.75rem', flexWrap: 'wrap' }}>
+        <div className="admin-section-footer">
           <button type="button" className="admin-btn" disabled={savingInviteCommunication} onClick={saveInviteCommunication}>
             {savingInviteCommunication ? 'Čuvanje…' : 'Sačuvaj pravila komunikacije'}
           </button>
-          {inviteCommunicationMsg ? <span style={{ fontSize: '0.875rem', color: inviteCommunicationMsg === 'Sačuvano.' ? '#4ade80' : '#f87171' }}>{inviteCommunicationMsg}</span> : null}
+          {inviteCommunicationMsg ? <span className={inviteCommunicationMsg === 'Sačuvano.' ? 'admin-msg-ok' : 'admin-msg-err'}>{inviteCommunicationMsg}</span> : null}
         </div>
       </div>
 
-      <div
-        className="admin-table-wrap"
-        style={{
-          maxWidth: 560,
-          marginBottom: '1.75rem',
-          padding: '1.25rem',
-          borderRadius: 12,
-          border: '1px solid rgba(148, 163, 184, 0.35)',
-          background: 'rgba(15, 23, 42, 0.35)',
-        }}
-      >
-        <h2 style={{ fontSize: '1rem', margin: '0 0 0.5rem', fontWeight: 800 }}>Kontakt informacije (O nama stranica)</h2>
-        <p style={{ color: '#94a3b8', fontSize: '0.875rem', margin: '0 0 1rem', lineHeight: 1.5 }}>
+      {/* ── Kontakt informacije ── */}
+      <div className="admin-section">
+        <h2>Kontakt informacije (O nama stranica)</h2>
+        <p>
           Prikazuje se na javnoj &ldquo;O nama&rdquo; stranici. Ostavite prazno da bi se koristile podrazumevane vrednosti.
         </p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+        <div className="admin-form-grid" style={{ gridTemplateColumns: '1fr' }}>
           {[
             { key: 'email', label: 'Email', placeholder: 'info@pronadjibend.rs', type: 'email' },
             { key: 'instagram', label: 'Instagram URL', placeholder: 'https://www.instagram.com/pronadjibend', type: 'url' },
             { key: 'facebook', label: 'Facebook URL', placeholder: 'https://www.facebook.com/pronadjibend', type: 'url' },
           ].map(({ key, label, placeholder, type }) => (
-            <div key={key} style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-              <label style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 600 }}>{label}</label>
+            <div key={key}>
+              <label>{label}</label>
               <input
                 type={type}
                 className="admin-field"
@@ -526,14 +460,21 @@ export default function AdminSystemPage() {
               />
             </div>
           ))}
-          <button type="button" className="admin-btn" disabled={savingContact} onClick={saveContactInfo} style={{ alignSelf: 'flex-start', marginTop: '0.25rem' }}>
+        </div>
+        <div className="admin-section-footer">
+          <button type="button" className="admin-btn" disabled={savingContact} onClick={saveContactInfo}>
             {savingContact ? 'Čuvanje…' : 'Sačuvaj kontakt info'}
           </button>
-          {contactMsg ? <p style={{ margin: 0, fontSize: '0.875rem', color: contactMsg === 'Sačuvano.' ? '#4ade80' : '#f87171' }}>{contactMsg}</p> : null}
+          {contactMsg ? <span className={contactMsg === 'Sačuvano.' ? 'admin-msg-ok' : 'admin-msg-err'}>{contactMsg}</span> : null}
         </div>
       </div>
 
-      <div className="admin-table-wrap" style={{ maxWidth: 560 }}>
+      {/* ── Sistemski status ── */}
+      <div className="admin-section" style={{ padding: 0, overflow: 'hidden' }}>
+        <div style={{ padding: '1.5rem 1.5rem 0' }}>
+          <h2>Sistemski status</h2>
+          <p style={{ color: '#94a3b8', fontSize: '0.85rem', margin: '0 0 1rem', lineHeight: 1.55 }}>Provera konfigurisanosti ključnih servisa.</p>
+        </div>
         <table className="admin-table">
           <thead>
             <tr>
@@ -549,9 +490,9 @@ export default function AdminSystemPage() {
                   {row.text ? (
                     row.text
                   ) : row.ok ? (
-                    <span style={{ color: '#4ade80', fontWeight: 700 }}>OK</span>
+                    <span className="admin-status admin-status-on">OK</span>
                   ) : (
-                    <span style={{ color: '#f87171', fontWeight: 700 }}>Nedostaje</span>
+                    <span className="admin-status admin-status-off">Nedostaje</span>
                   )}
                 </td>
               </tr>
