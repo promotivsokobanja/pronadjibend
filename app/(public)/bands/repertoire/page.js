@@ -132,7 +132,7 @@ export default function RepertoirePage() {
     }
     setIsLoading(true);
     try {
-      const params = { category: activeTab, search: searchTerm };
+      const params = searchTerm.trim() ? { search: searchTerm.trim() } : { category: activeTab };
       if (bandId) params.bandId = bandId;
       else if (musicianId) params.musicianId = musicianId;
       const qs = new URLSearchParams(params).toString();
