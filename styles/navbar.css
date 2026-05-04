@@ -128,6 +128,26 @@
   filter: brightness(1.05);
 }
 
+.navbar .btn-upgrade-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-weight: 800;
+  font-size: 0.8rem;
+  color: #fff !important;
+  text-decoration: none !important;
+  background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+  padding: 0.45rem 0.85rem;
+  border-radius: 8px;
+  letter-spacing: 0.03em;
+  transition: transform 0.15s, box-shadow 0.15s;
+  box-shadow: 0 2px 12px rgba(139, 92, 246, 0.3);
+}
+.navbar .btn-upgrade-nav:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 18px rgba(139, 92, 246, 0.45);
+}
+
 .navbar .desktop-only {
   display: flex;
 }
@@ -179,6 +199,22 @@
   text-decoration: none !important;
   text-transform: uppercase;
   letter-spacing: 0.1em;
+}
+
+.mobile-menu .btn-upgrade-mobile {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-weight: 800;
+  color: #fff !important;
+  font-size: 1.1rem;
+  text-decoration: none !important;
+  background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+  padding: 0.65rem 1.4rem;
+  border-radius: 10px;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  box-shadow: 0 4px 16px rgba(139, 92, 246, 0.35);
 }
 
 .mobile-menu .btn-prijava-mobile {

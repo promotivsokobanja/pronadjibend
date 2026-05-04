@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, Crown } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { adminFetch } from '../lib/adminFetch';
@@ -165,6 +165,11 @@ export default function Navbar() {
                 Admin
               </Link>
             )}
+            {sessionUser && !['PREMIUM', 'PREMIUM_VENUE'].includes(sessionUser.plan) && (
+              <Link href="/upgrade" className="btn-upgrade-nav">
+                <Crown size={14} /> Premium
+              </Link>
+            )}
             {sessionUser ? (
               <button type="button" className="btn-prijava" onClick={() => logoutAndRedirect()}>
                 Odjava
@@ -207,6 +212,11 @@ export default function Navbar() {
           {isAdmin && (
             <Link href="/admin" className={isActive('/admin') ? 'active-mobile' : ''} onClick={() => setIsOpen(false)}>
               Admin
+            </Link>
+          )}
+          {sessionUser && !['PREMIUM', 'PREMIUM_VENUE'].includes(sessionUser.plan) && (
+            <Link href="/upgrade" className="btn-upgrade-mobile" onClick={() => setIsOpen(false)}>
+              <Crown size={16} /> Nadogradi na Premium
             </Link>
           )}
           {sessionUser ? (
