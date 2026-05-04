@@ -131,10 +131,10 @@ export async function POST(request) {
     });
     const invoiceNumber = generateInvoiceNumber(confirmedCount);
 
-    // ── Datum isteka: +365 dana od danas ──
+    // ── Datum isteka: +30 dana od danas (mesečna pretplata) ──
     const now = new Date();
     const planUntil = new Date(now);
-    planUntil.setDate(planUntil.getDate() + 365);
+    planUntil.setDate(planUntil.getDate() + 30);
 
     // ── Učitaj kurs za PDF ──
     const config = await prisma.siteConfig.findUnique({ where: { id: 1 } });

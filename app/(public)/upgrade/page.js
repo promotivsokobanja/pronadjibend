@@ -167,7 +167,7 @@ export default function UpgradePage() {
                       <span style={styles.priceEur}>{getPriceEur(plan.id)} EUR</span>
                       <span style={styles.priceRsd}>{getPriceRsd(plan.id).toLocaleString('sr-RS')} RSD</span>
                     </div>
-                    <p style={styles.pricePeriod}>godišnje</p>
+                    <p style={styles.pricePeriod}>mesečno</p>
                     <ul style={styles.featureList}>
                       {plan.features.map((f) => (
                         <li key={f} style={styles.featureItem}>

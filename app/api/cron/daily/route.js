@@ -12,7 +12,7 @@ import QRCode from 'qrcode';
 export const dynamic = 'force-dynamic';
 
 const CRON_SECRET = process.env.CRON_SECRET || '';
-const REMINDER_DAYS_BEFORE = 7;
+const REMINDER_DAYS_BEFORE = 3;
 const NUDGE_PROFILE_THRESHOLD = 50; // procenat
 
 /**
@@ -21,7 +21,7 @@ const NUDGE_PROFILE_THRESHOLD = 50; // procenat
  * Zaštićena CRON_SECRET headerom.
  *
  * Zadaci:
- * 1. Slanje email podsetnika 7 dana pre isteka pretplate (sa QR za obnovu)
+ * 1. Slanje email podsetnika 3 dana pre isteka pretplate (sa QR za obnovu)
  * 2. Automatski downgrade na BASIC kad planUntil prođe
  * 3. Nudge email Free korisnicima sa < 50% popunjenim profilom
  */

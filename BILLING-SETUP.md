@@ -14,7 +14,7 @@ Korisnik → /upgrade → bira plan → POST /api/billing/generate-qr → QR kod
                                    ┌─────────────────────────────────────────────────┐
                                    │  ATOMARNA TRANSAKCIJA ($transaction):           │
                                    │  1. User.plan → PREMIUM / PREMIUM_VENUE        │
-                                   │  2. User.planUntil → +365 dana                 │
+                                   │  2. User.planUntil → +30 dana                 │
                                    │  3. Payment.status → CONFIRMED                 │
                                    │  4. Band.plan sync                             │
                                    └─────────────────────────────────────────────────┘
@@ -101,7 +101,7 @@ EMAIL_FROM=PronadjiBend <noreply@pronadjibend.rs>
 
 ### 4. Šta se dešava pri potvrdi
 1. `User.plan` → PREMIUM ili PREMIUM_VENUE
-2. `User.planUntil` → danas + 365 dana
+2. `User.planUntil` → danas + 30 dana
 3. `Payment.status` → CONFIRMED
 4. `Band.plan` sync + `isPaid = true`
 5. PDF račun se generiše
@@ -112,7 +112,7 @@ Ako email ne uspe — korisnik JE nadograđen, ali admin dobija poruku da račun
 
 ### 5. Dnevni cron
 Poziva se `GET /api/cron/daily` sa headerom `Authorization: Bearer {CRON_SECRET}`:
-- **7 dana pre isteka** → email podsetnik sa QR za obnovu
+- **3 dana pre isteka** → email podsetnik sa QR za obnovu
 - **Istekao planUntil** → automatski downgrade na BASIC
 - **Free korisnici** sa < 50% profila → nudge email
 
