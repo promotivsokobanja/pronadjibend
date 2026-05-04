@@ -17,6 +17,8 @@ model User {
   role            String // "ADMIN", "BAND", "CLIENT"
   plan            String           @default("BASIC")
   planUntil       DateTime?
+  lastPaymentId   String?
+  billingDataJson String?          // JSON: { companyName, pib, mb, address }
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
   deletedAt       DateTime?
@@ -24,6 +26,7 @@ model User {
   bandId          String?          @unique
   musicianProfile MusicianProfile?
   messages        Message[]
+  payments        Payment[]
 }
 
 model Band {
@@ -335,5 +338,33 @@ model SiteConfig {
   korgPaItemsJson      String?
   contactInfoJson      String?
   inviteCommunicationJson String?
+  /// Fiksni kurs EUR → RSD za IPS QR plaćanja
+  eurToRsdRate          Float    @default(117.5)
+  /// Cena Premium plana u EUR
+  premiumPriceEur       Float    @default(49)
+  /// Cena Premium Venue plana u EUR
+  premiumVenuePriceEur  Float    @default(79)
   updatedAt            DateTime @updatedAt
+}
+
+/// Evidencija uplata putem IPS QR koda
+model Payment {
+  id                String    @id @default(cuid())
+  userId            String
+  userEmail         String
+  plan              String    // "PREMIUM" ili "PREMIUM_VENUE"
+  amountRsd         Float
+  amountEur         Float
+  referenceId       String    @unique  // Poziv na broj — jedinstven po uplati
+  status            String    @default("PENDING_QR") // PENDING_QR → CONFIRMED → INVOICE_SENT
+  invoiceNumber     String?   // Broj računa, npr. "2026-0001"
+  invoicePdfUrl     String?   // Putanja do generisanog PDF-a
+  confirmedAt       DateTime?
+  confirmedByUserId String?   // Admin koji je potvrdio uplatu
+  createdAt         DateTime  @default(now())
+
+  user              User      @relation(fields: [userId], references: [id])
+
+  @@index([userId, createdAt])
+  @@index([status])
 }

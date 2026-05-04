@@ -14,12 +14,14 @@ export default function AdminSystemPage() {
   const [savingContact, setSavingContact] = useState(false);
   const [savingLimits, setSavingLimits] = useState(false);
   const [savingInviteCommunication, setSavingInviteCommunication] = useState(false);
+  const [savingPricing, setSavingPricing] = useState(false);
   const [demoMsg, setDemoMsg] = useState('');
   const [maintenanceMsg, setMaintenanceMsg] = useState('');
   const [korgMsg, setKorgMsg] = useState('');
   const [contactMsg, setContactMsg] = useState('');
   const [limitsMsg, setLimitsMsg] = useState('');
   const [inviteCommunicationMsg, setInviteCommunicationMsg] = useState('');
+  const [pricingMsg, setPricingMsg] = useState('');
   const [contactForm, setContactForm] = useState({ email: '', instagram: '', facebook: '' });
   const [limitsForm, setLimitsForm] = useState({ maxImages: 5, maxVideos: 3, maxLinks: 5 });
   const [inviteCommunicationForm, setInviteCommunicationForm] = useState({
@@ -29,6 +31,7 @@ export default function AdminSystemPage() {
     inviteCleanupDays: 180,
     inviteEmailNotifications: true,
   });
+  const [pricingForm, setPricingForm] = useState({ eurToRsdRate: 117.5, premiumPriceEur: 49, premiumVenuePriceEur: 79 });
   const [korgItems, setKorgItems] = useState([createEmptyKorgItem()]);
   const [isCompactKorgEditor, setIsCompactKorgEditor] = useState(false);
 
@@ -54,6 +57,13 @@ export default function AdminSystemPage() {
       }
       if (j.bandProfileLimits) {
         setLimitsForm({ maxImages: j.bandProfileLimits.maxImages ?? 5, maxVideos: j.bandProfileLimits.maxVideos ?? 3, maxLinks: j.bandProfileLimits.maxLinks ?? 5 });
+      }
+      if (j.pricingConfig) {
+        setPricingForm({
+          eurToRsdRate: j.pricingConfig.eurToRsdRate ?? 117.5,
+          premiumPriceEur: j.pricingConfig.premiumPriceEur ?? 49,
+          premiumVenuePriceEur: j.pricingConfig.premiumVenuePriceEur ?? 79,
+        });
       }
       if (j.inviteCommunication) {
         setInviteCommunicationForm({
@@ -205,6 +215,26 @@ export default function AdminSystemPage() {
     }
   };
 
+  const savePricing = async () => {
+    setSavingPricing(true);
+    setPricingMsg('');
+    try {
+      const r = await adminFetch('/api/admin/system/settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pricingConfig: pricingForm }),
+      });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error || 'Greška pri čuvanju');
+      setData((prev) => (prev ? { ...prev, pricingConfig: j.pricingConfig } : prev));
+      setPricingMsg('Sačuvano.');
+    } catch (e) {
+      setPricingMsg(e.message);
+    } finally {
+      setSavingPricing(false);
+    }
+  };
+
   const toggleMaintenanceMode = async () => {
     if (!data) return;
     setSavingMaintenance(true);
@@ -306,6 +336,46 @@ export default function AdminSystemPage() {
             {savingMaintenance ? 'Čuvanje…' : data.maintenanceMode ? 'Onemogući Maintenance' : 'Omogući Maintenance'}
           </button>
           {maintenanceMsg ? <span className="admin-msg-ok">{maintenanceMsg}</span> : null}
+        </div>
+      </div>
+
+      {/* ── Cene i kurs ── */}
+      <div className="admin-section">
+        <h2>Cene pretplata i kurs</h2>
+        <p>
+          Fiksni kurs EUR → RSD za IPS QR plaćanja i cene Premium planova.
+          Ove vrednosti se koriste pri generisanju QR koda za uplatu.
+        </p>
+        <div className="admin-form-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))' }}>
+          {[
+            { key: 'eurToRsdRate', label: 'Kurs EUR → RSD', min: 1, max: 500, step: 0.01 },
+            { key: 'premiumPriceEur', label: 'Premium (EUR)', min: 1, max: 10000, step: 1 },
+            { key: 'premiumVenuePriceEur', label: 'Premium Venue (EUR)', min: 1, max: 10000, step: 1 },
+          ].map(({ key, label, min, max, step }) => (
+            <div key={key}>
+              <label>{label}</label>
+              <input
+                type="number"
+                className="admin-field"
+                min={min}
+                max={max}
+                step={step}
+                value={pricingForm[key]}
+                onChange={(e) => setPricingForm((prev) => ({ ...prev, [key]: Number(e.target.value) }))}
+              />
+            </div>
+          ))}
+        </div>
+        <p className="admin-hint" style={{ marginTop: '0.65rem' }}>
+          Premium: {pricingForm.premiumPriceEur} EUR × {pricingForm.eurToRsdRate} = <strong>{(pricingForm.premiumPriceEur * pricingForm.eurToRsdRate).toFixed(2)} RSD</strong>
+          {' | '}
+          Premium Venue: {pricingForm.premiumVenuePriceEur} EUR × {pricingForm.eurToRsdRate} = <strong>{(pricingForm.premiumVenuePriceEur * pricingForm.eurToRsdRate).toFixed(2)} RSD</strong>
+        </p>
+        <div className="admin-section-footer">
+          <button type="button" className="admin-btn" disabled={savingPricing} onClick={savePricing}>
+            {savingPricing ? 'Čuvanje…' : 'Sačuvaj cene'}
+          </button>
+          {pricingMsg ? <span className={pricingMsg === 'Sačuvano.' ? 'admin-msg-ok' : 'admin-msg-err'}>{pricingMsg}</span> : null}
         </div>
       </div>
 

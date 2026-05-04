@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '../../../../lib/adminAuth';
 import { hasDatabaseUrl } from '../../../../lib/dbClientErrors';
-import { getDemoBandsEnvOverrideHint, getShowDemoBands, getMaintenanceMode, getKorgPaDriveUrl, getKorgPaItems, getContactInfo, getBandProfileLimits, getInviteCommunicationSettings } from '../../../../lib/siteConfig';
+import { getDemoBandsEnvOverrideHint, getShowDemoBands, getMaintenanceMode, getKorgPaDriveUrl, getKorgPaItems, getContactInfo, getBandProfileLimits, getInviteCommunicationSettings, getPricingConfig } from '../../../../lib/siteConfig';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,6 +17,7 @@ export async function GET(request) {
   const demoBandsEnv = getDemoBandsEnvOverrideHint();
   const contactInfo = await getContactInfo();
   const bandProfileLimits = await getBandProfileLimits();
+  const pricingConfig = await getPricingConfig();
 
   return NextResponse.json({
     databaseUrl: hasDatabaseUrl(),
@@ -33,6 +34,7 @@ export async function GET(request) {
     inviteCommunication,
     contactInfo,
     bandProfileLimits,
+    pricingConfig,
     demoBandsEnvLocked: Boolean(demoBandsEnv),
     demoBandsEnvValue: demoBandsEnv,
   });

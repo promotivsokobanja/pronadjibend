@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '../../../../../lib/adminAuth';
-import { getDemoBandsEnvOverrideHint, getShowDemoBands, setShowDemoBands, getMaintenanceMode, setMaintenanceMode, getKorgPaDriveUrl, setKorgPaDriveUrl, getKorgPaItems, setKorgPaItems, getContactInfo, setContactInfo, getBandProfileLimits, setBandProfileLimits, getInviteCommunicationSettings, setInviteCommunicationSettings } from '../../../../../lib/siteConfig';
+import { getDemoBandsEnvOverrideHint, getShowDemoBands, setShowDemoBands, getMaintenanceMode, setMaintenanceMode, getKorgPaDriveUrl, setKorgPaDriveUrl, getKorgPaItems, setKorgPaItems, getContactInfo, setContactInfo, getBandProfileLimits, setBandProfileLimits, getInviteCommunicationSettings, setInviteCommunicationSettings, getPricingConfig, setPricingConfig } from '../../../../../lib/siteConfig';
 
 export const dynamic = 'force-dynamic';
 
@@ -122,6 +122,15 @@ export async function PATCH(request) {
     }
   }
 
+  if (Object.prototype.hasOwnProperty.call(body, 'pricingConfig')) {
+    try {
+      await setPricingConfig(body.pricingConfig || {});
+    } catch (e) {
+      console.error('SiteConfig pricingConfig update:', e);
+      return NextResponse.json({ error: 'Nije moguće sačuvati cene.' }, { status: 500 });
+    }
+  }
+
   if (Object.prototype.hasOwnProperty.call(body, 'contactInfo')) {
     const ci = body.contactInfo || {};
     const email = String(ci.email || '').trim();
@@ -145,5 +154,6 @@ export async function PATCH(request) {
   const contactInfo = await getContactInfo();
   const bandProfileLimits = await getBandProfileLimits();
   const inviteCommunication = await getInviteCommunicationSettings();
-  return NextResponse.json({ ok: true, showDemoBands, maintenanceMode, korgPaDriveUrl, korgPaItems, contactInfo, bandProfileLimits, inviteCommunication });
+  const pricingConfig = await getPricingConfig();
+  return NextResponse.json({ ok: true, showDemoBands, maintenanceMode, korgPaDriveUrl, korgPaItems, contactInfo, bandProfileLimits, inviteCommunication, pricingConfig });
 }
