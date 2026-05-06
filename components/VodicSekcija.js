@@ -67,7 +67,7 @@ export default function VodicSekcija() {
         </ul>
 
         <div className="vodic-sekcija__cta-wrap">
-          <Link href="/bands/profile" className="btn btn-primary vodic-sekcija__cta">
+          <Link href="/upgrade" className="btn btn-primary vodic-sekcija__cta">
             Aktiviraj svoj PRO sistem
           </Link>
           <p className="vodic-sekcija__cta-note">
