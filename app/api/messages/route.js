@@ -9,6 +9,7 @@ const PREMIUM_PLANS = new Set(['PREMIUM', 'PREMIUM_VENUE']);
 const MESSAGE_MAX = 2000;
 const PAGE_SIZE = 50;
 const DELETED_MESSAGE_BODY = 'Poruka je obrisana';
+const BASIC_MAX_CONVERSATIONS = 2;
 
 function toErrorMessage(error, fallback) {
   if (error instanceof Error && error.message) return error.message;
@@ -149,6 +150,22 @@ export async function POST(request) {
     }
     if (invite.status === 'EXPIRED') {
       return NextResponse.json({ error: 'Poziv je istekao i više nije moguće slati poruke.' }, { status: 403 });
+    }
+
+    // ── Chat limit za Basic korisnike: max 2 aktivne konverzacije ──
+    if (!isPremiumOrAdmin(user)) {
+      const existingConversations = await prisma.message.findMany({
+        where: { senderId: user.id },
+        select: { inviteId: true },
+        distinct: ['inviteId'],
+      });
+      const activeInviteIds = existingConversations.map(m => m.inviteId);
+      if (!activeInviteIds.includes(inviteId) && activeInviteIds.length >= BASIC_MAX_CONVERSATIONS) {
+        return NextResponse.json(
+          { error: `Besplatni plan dozvoljava chat u najviše ${BASIC_MAX_CONVERSATIONS} konverzacije. Nadogradite na Premium: /upgrade` },
+          { status: 429 }
+        );
+      }
     }
 
     const message = await prisma.message.create({
