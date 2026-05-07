@@ -340,6 +340,19 @@ export default function BandProfilePage() {
     handleUpload(file, kind);
   };
 
+  if (loading) {
+    return (
+      <div className="container" style={{ paddingTop: '9.5rem', paddingBottom: '5rem' }}>
+        <div className="profile-wrap">
+          <div className="state-box" style={{ textAlign: 'center', padding: '3rem 1rem' }}>
+            <div className="spinner" />
+            <p style={{ marginTop: '1rem', color: 'var(--text-muted, #94a3b8)' }}>Učitavanje profila...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container" style={{ paddingTop: '9.5rem', paddingBottom: '5rem' }}>
       <div className="profile-wrap">
@@ -351,7 +364,7 @@ export default function BandProfilePage() {
             </Link>
             <h1>Moj Profil Benda</h1>
             <p>Ovde uređujete slike, video i opis koji klijenti vide na platformi.</p>
-            {!loading && bandId && !adminNoBand ? (
+            {bandId && !adminNoBand ? (
               <div style={{ margin: '0.8rem 0 0.25rem' }}>
                 <SocialShareActions
                   url={publicBandProfileUrl || publicBandProfilePath}
@@ -360,7 +373,7 @@ export default function BandProfilePage() {
                 />
               </div>
             ) : null}
-            {!loading && bandId && !adminNoBand ? (
+            {bandId && !adminNoBand ? (
               <p className="profile-poster-hint">
                 <a
                   href={`/api/bands/${encodeURIComponent(bandId)}/marketing-poster`}
@@ -374,9 +387,7 @@ export default function BandProfilePage() {
           </div>
         </div>
 
-        {loading ? (
-          <div className="state-box">Učitavanje profila...</div>
-        ) : adminNoBand ? (
+        {adminNoBand ? (
           <div className="profile-card state-box" style={{ maxWidth: 520 }}>
             <p style={{ marginBottom: '1rem', color: 'var(--text-muted, #94a3b8)' }}>
               Ulogovani ste kao administrator — ovaj ekran služi za uređivanje javnog profila benda. Bez povezanog
@@ -1151,6 +1162,18 @@ export default function BandProfilePage() {
           color: #64748b;
           background: #f8fafc;
           font-weight: 600;
+        }
+        .spinner {
+          width: 32px;
+          height: 32px;
+          border: 3px solid #e2e8f0;
+          border-top-color: #3b82f6;
+          border-radius: 50%;
+          animation: spin 0.7s linear infinite;
+          margin: 0 auto;
+        }
+        @keyframes spin {
+          to { transform: rotate(360deg); }
         }
         .alert {
           border-radius: 10px;
