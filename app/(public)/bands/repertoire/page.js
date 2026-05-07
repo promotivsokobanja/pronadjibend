@@ -1,5 +1,5 @@
 'use client';
-import { Music, Search, Plus, Trash2, ArrowLeft, Edit2, X, FileText } from 'lucide-react';
+import { Music, Search, Plus, Trash2, ArrowLeft, Edit2, X, FileText, Lock, FileDown } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
@@ -97,6 +97,7 @@ export default function RepertoirePage() {
   const [globalMatches, setGlobalMatches] = useState([]);
   const [bandId, setBandId] = useState(null);
   const [musicianId, setMusicianId] = useState(null);
+  const [userPlan, setUserPlan] = useState('BASIC');
   const [showGlobalDropdown, setShowGlobalDropdown] = useState(false);
   const [showBulkImportModal, setShowBulkImportModal] = useState(false);
   const [bulkSongList, setBulkSongList] = useState('');
@@ -118,6 +119,7 @@ export default function RepertoirePage() {
         const { user } = await r.json();
         if (user?.bandId) setBandId(user.bandId);
         else if (user?.musicianProfileId) setMusicianId(user.musicianProfileId);
+        setUserPlan(String(user?.plan || 'BASIC').toUpperCase());
       } catch {
         /* ignore */
       }
@@ -434,6 +436,81 @@ export default function RepertoirePage() {
     }
   };
 
+  const handlePrintRepertoire = async () => {
+    if (!ownerId) return;
+    try {
+      const ownerParam = bandId ? `bandId=${encodeURIComponent(bandId)}` : `musicianId=${encodeURIComponent(musicianId)}`;
+      const [songsResp, profileResp] = await Promise.all([
+        fetch(`/api/songs?${ownerParam}&all=1`, { cache: 'no-store' }),
+        bandId ? fetch(`/api/bands/${bandId}`, { cache: 'no-store' }) : fetch(`/api/musicians/${musicianId}`, { cache: 'no-store' }),
+      ]);
+      const allSongs = await songsResp.json().then(d => Array.isArray(d) ? d : []);
+      const profile = await profileResp.json().catch(() => ({}));
+      const name = profile?.name || 'Moj repertoar';
+      const city = profile?.city || '';
+      const phone = profile?.phone || profile?.contactPhone || '';
+      const email = profile?.email || profile?.contactEmail || '';
+
+      const grouped = {};
+      allSongs.forEach(s => {
+        const cat = s.category || 'Ostalo';
+        if (!grouped[cat]) grouped[cat] = [];
+        grouped[cat].push(s);
+      });
+
+      const catOrder = ['Muške Zabavne', 'Ženske Zabavne', 'Muške Narodne', 'Ženske Narodne', 'Strane', 'Ostalo'];
+      const sortedCats = Object.keys(grouped).sort((a, b) => {
+        const ia = catOrder.indexOf(a), ib = catOrder.indexOf(b);
+        return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+      });
+
+      let tableHtml = '';
+      sortedCats.forEach(cat => {
+        const catSongs = grouped[cat].sort((a, b) => (a.title || '').localeCompare(b.title || '', 'sr'));
+        tableHtml += `<tr class="cat-row"><td colspan="3"><strong>${cat}</strong> (${catSongs.length})</td></tr>`;
+        catSongs.forEach((s, i) => {
+          tableHtml += `<tr><td class="num">${i + 1}.</td><td>${s.title || ''}</td><td class="artist">${s.artist || ''}</td></tr>`;
+        });
+      });
+
+      const w = window.open('', '_blank');
+      const today = new Date().toLocaleDateString('sr-RS');
+      w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Repertoar - ${name}</title>
+        <style>
+          body{font-family:system-ui,-apple-system,sans-serif;padding:1.5rem;max-width:800px;margin:0 auto;color:#1e293b;font-size:13px}
+          h1{font-size:1.4rem;margin:0 0 0.2rem}
+          .meta{color:#64748b;font-size:0.85rem;margin-bottom:1.25rem;line-height:1.6}
+          .meta span{margin-right:1.5rem}
+          table{width:100%;border-collapse:collapse;margin-bottom:1rem}
+          td{padding:0.3rem 0.5rem;border-bottom:1px solid #f1f5f9;vertical-align:top}
+          .num{width:30px;color:#94a3b8;text-align:right;font-size:0.8rem}
+          .artist{color:#64748b;font-style:italic}
+          .cat-row td{background:#f8fafc;padding:0.5rem;border-bottom:2px solid #e2e8f0;font-size:0.9rem}
+          .footer{margin-top:1rem;font-size:0.75rem;color:#94a3b8;text-align:center;border-top:1px solid #e2e8f0;padding-top:0.75rem}
+          .total{font-weight:700;font-size:0.9rem;margin-bottom:1rem;color:#334155}
+          @media print{body{padding:0.5rem;font-size:11px}td{padding:0.2rem 0.4rem}}
+        </style>
+      </head><body>
+        <h1>${name}</h1>
+        <div class="meta">
+          ${city ? `<span>📍 ${city}</span>` : ''}
+          ${phone ? `<span>📞 ${phone}</span>` : ''}
+          ${email ? `<span>✉ ${email}</span>` : ''}
+        </div>
+        <div class="total">Ukupno pesama: ${allSongs.length}</div>
+        <table>${tableHtml}</table>
+        <div class="footer">
+          <p>Repertoar generisan: ${today} · PronadjiBend.rs</p>
+        </div>
+        <script>setTimeout(()=>window.print(),400)<\/script>
+      </body></html>`);
+      w.document.close();
+    } catch (err) {
+      console.error('Print repertoire error:', err);
+      alert('Greška pri generisanju repertoara za štampu.');
+    }
+  };
+
   return (
     <div className="repertoire-container container">
       <div className="blob" style={{ top: '10%', right: '0' }}></div>
@@ -482,13 +559,15 @@ export default function RepertoirePage() {
                         key={`global-${m.id}`}
                         type="button"
                         className="global-dropdown-item"
-                        onClick={() => handleQuickAdd(m)}
+                        onClick={() => userPlan.startsWith('PREMIUM') ? handleQuickAdd(m) : router.push('/upgrade')}
                       >
                         <span className="global-dropdown-copy">
                           <span className="global-dropdown-title">{m.title}</span>
                           <span className="global-dropdown-artist">{m.artist}</span>
                         </span>
-                        <span className="global-dropdown-cta">Dodaj</span>
+                        <span className="global-dropdown-cta">
+                          {userPlan.startsWith('PREMIUM') ? 'Dodaj' : <Lock size={12} />}
+                        </span>
                       </button>
                     ))
                   ) : (
@@ -501,22 +580,41 @@ export default function RepertoirePage() {
           <div className="header-cta-group">
             <button
               type="button"
+              className="btn btn-secondary"
+              onClick={handlePrintRepertoire}
+              disabled={!ownerId}
+              title="Preuzmi repertoar za štampu"
+            >
+              <FileDown size={18} /> Štampaj repertoar
+            </button>
+            <button
+              type="button"
               className="btn btn-danger-outline"
               onClick={removeAllSongs}
               disabled={isDeletingAllSongs || songs.length === 0}
             >
               {isDeletingAllSongs ? 'Brišem listu...' : 'Obriši ceo repertoar'}
             </button>
-            <button
-              type="button"
-              className="btn btn-secondary bulk-add-btn"
-              onClick={() => setShowBulkImportModal(true)}
-            >
-              <FileText size={18} /> Dodaj listu pesama
-            </button>
-            <Link href="/bands/song/new">
-              <button className="btn btn-primary"><Plus size={18} /> Dodaj Novu</button>
-            </Link>
+            {userPlan.startsWith('PREMIUM') ? (
+              <>
+                <button
+                  type="button"
+                  className="btn btn-secondary bulk-add-btn"
+                  onClick={() => setShowBulkImportModal(true)}
+                >
+                  <FileText size={18} /> Dodaj listu pesama
+                </button>
+                <Link href="/bands/song/new">
+                  <button className="btn btn-primary"><Plus size={18} /> Dodaj Novu</button>
+                </Link>
+              </>
+            ) : (
+              <Link href="/upgrade">
+                <button className="btn btn-primary" title="Dodavanje pesama zahteva Premium plan">
+                  <Lock size={16} /> Dodaj (Premium)
+                </button>
+              </Link>
+            )}
           </div>
         </div>
         <div className="gender-tabs-container">

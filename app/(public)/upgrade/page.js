@@ -11,9 +11,11 @@ const PLANS = [
     color: '#3b82f6',
     gradient: 'linear-gradient(135deg, #3b82f6, #2563eb)',
     features: [
-      'MIDI biblioteka',
-      'Više aktivnih poziva muzičarima',
-      'Chat komunikacija',
+      'Live Request (neograničeno)',
+      'MIDI biblioteka (download + upload)',
+      'Dodavanje pesama u repertoar',
+      'Neograničen chat',
+      'Do 20 pozivnica muzičarima',
       'Prioritet u pretrazi',
     ],
   },
@@ -28,7 +30,7 @@ const PLANS = [
       'Korg PA setovi (download)',
       'Video upload na profil',
       'Audio (MP3) upload',
-      'Maksimalan broj poziva',
+      'Maksimalan broj pozivnica',
     ],
   },
 ];
@@ -307,7 +309,7 @@ export default function UpgradePage() {
 
         {/* ── Rezultat: Podaci za uplatu ── */}
         {paymentResult && (
-          <div style={styles.paymentCard}>
+          <div style={styles.paymentCard} className="upgrade-payment-card">
             <div style={styles.paymentHeader}>
               <CreditCard size={20} color="#3b82f6" />
               <h2 style={styles.paymentTitle}>Podaci za uplatu</h2>
@@ -328,7 +330,7 @@ export default function UpgradePage() {
                 { label: 'Svrha uplate', value: `PronadjiBend ${paymentResult.payment.plan === 'PREMIUM_VENUE' ? 'Premium Venue' : 'Premium'}`, key: 'purpose' },
                 { label: 'Šifra plaćanja', value: '289', key: 'code' },
               ].map(({ label, value, key }) => (
-                <div key={key} style={styles.dataRow}>
+                <div key={key} style={styles.dataRow} className="upgrade-data-row">
                   <span style={styles.dataLabel}>{label}</span>
                   <span style={styles.dataValue}>
                     {value}
@@ -380,7 +382,7 @@ export default function UpgradePage() {
             </div>
 
             {/* ── Dugmad ── */}
-            <div style={styles.actionRow}>
+            <div style={styles.actionRow} className="upgrade-action-row">
               <button type="button" style={styles.pdfBtn} onClick={handleDownloadPdf}>
                 <FileDown size={16} />
                 Odštampaj nalog za uplatu
@@ -401,6 +403,12 @@ export default function UpgradePage() {
         @keyframes spin {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
+        }
+        @media (max-width: 480px) {
+          .upgrade-payment-card { padding: 1.25rem 1rem !important; }
+          .upgrade-data-row { flex-direction: column; align-items: flex-start !important; gap: 0.2rem !important; }
+          .upgrade-action-row { flex-direction: column; }
+          .upgrade-action-row button { width: 100%; justify-content: center; }
         }
       `}</style>
     </div>

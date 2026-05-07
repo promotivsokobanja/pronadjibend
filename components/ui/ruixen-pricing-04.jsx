@@ -10,27 +10,30 @@ const PLANS = [
   {
     id: 'basic',
     title: 'Basic',
-    desc: 'Za klijente kojima je potreban brz pristup bazi bendova i direktan upit bez mesečne pretplate.',
+    desc: 'Za bendove koji žele da se predstave online i prime zahteve publike na nastupima.',
     price: 0,
     buttonText: 'Započni besplatno',
     features: [
-      'Pristup bazi bendova',
-      'Direktni upiti i booking',
-      'Osnovna pretraga bendova',
-      'Kontakt kroz platformu',
+      'Profil benda sa kontaktom',
+      'Live Request (do 3 po sesiji)',
+      'Pregled MIDI biblioteke (bez downloada)',
+      'Do 2 chat konverzacije',
+      'Do 5 pozivnica muzičarima',
     ],
     link: '/login?plan=basic',
   },
   {
     id: 'premium',
     title: 'Premium',
-    desc: 'Za muzičare koji žele napredne alate — MIDI biblioteku, chat i prioritet u pretrazi.',
+    desc: 'Za aktivne muzičare — neograničen Live Request, MIDI download, chat i dodavanje pesama.',
     price: 49,
     buttonText: 'Odaberi Premium',
     features: [
-      'MIDI biblioteka',
-      'Više aktivnih poziva muzičarima',
-      'Chat komunikacija',
+      'Live Request (neograničeno)',
+      'MIDI biblioteka (download + upload)',
+      'Dodavanje pesama u repertoar',
+      'Neograničen chat',
+      'Do 20 pozivnica muzičarima',
       'Prioritet u pretrazi',
     ],
     link: '/upgrade',
@@ -38,7 +41,7 @@ const PLANS = [
   {
     id: 'premium_venue',
     title: 'Premium Venue',
-    desc: 'Za bendove i prostore koji žele maksimalne mogućnosti — Korg PA setovi, video i audio upload.',
+    desc: 'Za bendove i lokale koji žele sve — Korg PA setovi, video, audio i maksimalne mogućnosti.',
     price: 79,
     badge: 'Preporučeno',
     buttonText: 'Odaberi Premium Venue',
@@ -47,7 +50,7 @@ const PLANS = [
       'Korg PA setovi (download)',
       'Video upload na profil',
       'Audio (MP3) upload',
-      'Maksimalan broj poziva',
+      'Maksimalan broj pozivnica',
     ],
     link: '/upgrade',
   },
@@ -60,10 +63,10 @@ export default function Pricing_04() {
         <h2>
           Transparentni <span>Paketi</span>
         </h2>
-        <p>Odaberite plan koji odgovara vašim potrebama. Plaćanje putem IPS QR koda — mesečno.</p>
+        <p>Odaberite plan koji odgovara vašim potrebama. Mesečna pretplata — uplata putem banke.</p>
         <div className="ruixen-pricing__qr-note">
           <QrCode size={15} aria-hidden />
-          Uplata putem mobilnog bankarstva · NBS IPS standard · PDF račun na email
+          Mobilno bankarstvo ili šalter · IPS QR · PDF nalog za uplatu
         </div>
       </div>
 
