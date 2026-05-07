@@ -10,6 +10,40 @@ const BOOKING_MESSAGE_MAX = 500;
 const MAX_BOOKING_DATES = 14;
 const REVIEW_COMMENT_MAX = 250;
 
+function getVideoEmbedUrl(url) {
+  if (!url) return '';
+  try {
+    const parsed = new URL(url);
+    const host = parsed.hostname.toLowerCase();
+    if (host.includes('youtu.be')) {
+      const id = parsed.pathname.split('/').filter(Boolean)[0];
+      return id ? `https://www.youtube.com/embed/${id}` : '';
+    }
+    if (host.includes('youtube.com') || host.includes('youtube-nocookie.com')) {
+      const id = parsed.searchParams.get('v');
+      if (id) return `https://www.youtube.com/embed/${id}`;
+      const short = parsed.pathname.split('/embed/')[1];
+      return short ? `https://www.youtube.com/embed/${short}` : '';
+    }
+    if (host.includes('vimeo.com')) {
+      const segments = parsed.pathname.split('/').filter(Boolean);
+      const id = segments[segments.length - 1];
+      return id && /^\d+$/.test(id) ? `https://player.vimeo.com/video/${id}` : '';
+    }
+    return '';
+  } catch {
+    return '';
+  }
+}
+
+function isCloudinaryVideo(url) {
+  try {
+    return new URL(url).hostname.toLowerCase().includes('res.cloudinary.com');
+  } catch {
+    return false;
+  }
+}
+
 function formatDateKeySr(ymd) {
   const m = String(ymd).match(/^(\d{4})-(\d{2})-(\d{2})/);
   if (!m) return String(ymd);
@@ -382,17 +416,43 @@ export default function BandProfileClient({ params, initialBand = null }) {
           <h2><Video size={24} /> Video Nastupi</h2>
         </div>
         <div className="video-grid">
-          {band.videoUrl ? (
-             <iframe 
-                width="100%" 
-                height="315" 
-                src={`https://www.youtube.com/embed/${band.videoUrl.split('v=')[1]}`} 
-                title={`Video nastup benda ${band.name}`}
-                frameBorder="0" 
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                allowFullScreen
-              ></iframe>
-          ) : (
+          {band.videoUrl ? (() => {
+            const embedUrl = getVideoEmbedUrl(band.videoUrl);
+            if (embedUrl && embedUrl.includes('youtube')) {
+              return (
+                <iframe
+                  width="100%"
+                  height="315"
+                  src={embedUrl}
+                  title={`Video nastup benda ${band.name}`}
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              );
+            }
+            if (embedUrl && embedUrl.includes('vimeo')) {
+              return (
+                <iframe
+                  width="100%"
+                  height="315"
+                  src={embedUrl}
+                  title={`Video nastup benda ${band.name}`}
+                  frameBorder="0"
+                  allow="autoplay; fullscreen; picture-in-picture"
+                  allowFullScreen
+                />
+              );
+            }
+            if (isCloudinaryVideo(band.videoUrl)) {
+              return (
+                <video width="100%" height="315" controls preload="metadata" src={band.videoUrl}>
+                  Vaš browser ne podržava video.
+                </video>
+              );
+            }
+            return <div className="no-media glass-card">Format videa nije prepoznat.</div>;
+          })() : (
             <div className="no-media glass-card">Trenutno nema video zapisa.</div>
           )}
         </div>
