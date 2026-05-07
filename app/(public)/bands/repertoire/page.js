@@ -107,6 +107,7 @@ export default function RepertoirePage() {
   const [bulkImportSaving, setBulkImportSaving] = useState(false);
   const [bulkImportCategory, setBulkImportCategory] = useState('Muške Zabavne');
   const [isDeletingAllSongs, setIsDeletingAllSongs] = useState(false);
+  const [pageReady, setPageReady] = useState(false);
   const ownerId = bandId || musicianId;
   const searchBoxRef = useRef(null);
   const dashboardHref = musicianId ? '/muzicari/profil' : '/bands';
@@ -122,6 +123,8 @@ export default function RepertoirePage() {
         setUserPlan(String(user?.plan || 'BASIC').toUpperCase());
       } catch {
         /* ignore */
+      } finally {
+        setPageReady(true);
       }
     })();
   }, []);
@@ -436,12 +439,12 @@ export default function RepertoirePage() {
     }
   };
 
-  const handlePrintRepertoire = async () => {
+  const handleDownloadRepertoire = async () => {
     if (!ownerId) return;
     try {
       const ownerParam = bandId ? `bandId=${encodeURIComponent(bandId)}` : `musicianId=${encodeURIComponent(musicianId)}`;
       const [songsResp, profileResp] = await Promise.all([
-        fetch(`/api/songs?${ownerParam}&all=1`, { cache: 'no-store' }),
+        fetch(`/api/songs?${ownerParam}`, { cache: 'no-store' }),
         bandId ? fetch(`/api/bands/${bandId}`, { cache: 'no-store' }) : fetch(`/api/musicians/${musicianId}`, { cache: 'no-store' }),
       ]);
       const allSongs = await songsResp.json().then(d => Array.isArray(d) ? d : []);
@@ -464,52 +467,60 @@ export default function RepertoirePage() {
         return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
       });
 
-      let tableHtml = '';
+      const today = new Date().toLocaleDateString('sr-RS');
+      let lines = [];
+      lines.push(`REPERTOAR — ${name}`);
+      lines.push('='.repeat(40));
+      if (city || phone || email) {
+        const meta = [city, phone, email].filter(Boolean).join(' | ');
+        lines.push(meta);
+      }
+      lines.push(`Ukupno pesama: ${allSongs.length}`);
+      lines.push(`Datum: ${today}`);
+      lines.push('');
+
       sortedCats.forEach(cat => {
         const catSongs = grouped[cat].sort((a, b) => (a.title || '').localeCompare(b.title || '', 'sr'));
-        tableHtml += `<tr class="cat-row"><td colspan="3"><strong>${cat}</strong> (${catSongs.length})</td></tr>`;
+        lines.push('');
+        lines.push(`── ${cat} (${catSongs.length}) ──`);
+        lines.push('-'.repeat(30));
         catSongs.forEach((s, i) => {
-          tableHtml += `<tr><td class="num">${i + 1}.</td><td>${s.title || ''}</td><td class="artist">${s.artist || ''}</td></tr>`;
+          const artist = s.artist ? ` — ${s.artist}` : '';
+          lines.push(`${String(i + 1).padStart(3)}. ${s.title || ''}${artist}`);
         });
       });
 
-      const w = window.open('', '_blank');
-      const today = new Date().toLocaleDateString('sr-RS');
-      w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Repertoar - ${name}</title>
-        <style>
-          body{font-family:system-ui,-apple-system,sans-serif;padding:1.5rem;max-width:800px;margin:0 auto;color:#1e293b;font-size:13px}
-          h1{font-size:1.4rem;margin:0 0 0.2rem}
-          .meta{color:#64748b;font-size:0.85rem;margin-bottom:1.25rem;line-height:1.6}
-          .meta span{margin-right:1.5rem}
-          table{width:100%;border-collapse:collapse;margin-bottom:1rem}
-          td{padding:0.3rem 0.5rem;border-bottom:1px solid #f1f5f9;vertical-align:top}
-          .num{width:30px;color:#94a3b8;text-align:right;font-size:0.8rem}
-          .artist{color:#64748b;font-style:italic}
-          .cat-row td{background:#f8fafc;padding:0.5rem;border-bottom:2px solid #e2e8f0;font-size:0.9rem}
-          .footer{margin-top:1rem;font-size:0.75rem;color:#94a3b8;text-align:center;border-top:1px solid #e2e8f0;padding-top:0.75rem}
-          .total{font-weight:700;font-size:0.9rem;margin-bottom:1rem;color:#334155}
-          @media print{body{padding:0.5rem;font-size:11px}td{padding:0.2rem 0.4rem}}
-        </style>
-      </head><body>
-        <h1>${name}</h1>
-        <div class="meta">
-          ${city ? `<span>📍 ${city}</span>` : ''}
-          ${phone ? `<span>📞 ${phone}</span>` : ''}
-          ${email ? `<span>✉ ${email}</span>` : ''}
-        </div>
-        <div class="total">Ukupno pesama: ${allSongs.length}</div>
-        <table>${tableHtml}</table>
-        <div class="footer">
-          <p>Repertoar generisan: ${today} · PronadjiBend.rs</p>
-        </div>
-        <script>setTimeout(()=>window.print(),400)<\/script>
-      </body></html>`);
-      w.document.close();
+      lines.push('');
+      lines.push('-'.repeat(40));
+      lines.push(`PronadjiBend.rs | ${today}`);
+
+      const text = lines.join('\n');
+      const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Repertoar - ${name}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
     } catch (err) {
-      console.error('Print repertoire error:', err);
-      alert('Greška pri generisanju repertoara za štampu.');
+      console.error('Download repertoire error:', err);
+      alert('Greška pri preuzimanju repertoara.');
     }
   };
+
+  if (!pageReady) {
+    return (
+      <div className="repertoire-container container" style={{ paddingTop: '8rem', minHeight: '100vh' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1.5rem', paddingTop: '6rem' }}>
+          <div style={{ width: 36, height: 36, border: '3px solid rgba(99,102,241,0.2)', borderTopColor: '#6366f1', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+          <p style={{ color: '#94a3b8', fontSize: '0.9rem', fontWeight: 600 }}>Učitavanje repertoara...</p>
+        </div>
+        <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
 
   return (
     <div className="repertoire-container container">
@@ -581,11 +592,11 @@ export default function RepertoirePage() {
             <button
               type="button"
               className="btn btn-secondary"
-              onClick={handlePrintRepertoire}
+              onClick={handleDownloadRepertoire}
               disabled={!ownerId}
               title="Preuzmi repertoar za štampu"
             >
-              <FileDown size={18} /> Štampaj repertoar
+              <FileDown size={18} /> Preuzmi repertoar
             </button>
             <button
               type="button"
