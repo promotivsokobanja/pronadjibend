@@ -1164,18 +1164,32 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
                       </div>
                     ) : null}
                   </div>
-                  {form.img ? <img src={form.img} alt="Preview" className="preview-image" /> : null}
+                  {form.img ? (
+                    <>
+                      <img src={form.img} alt="Preview" className="preview-image" />
+                      <button type="button" className="btn-remove-media" onClick={() => onChange('img', '')}>
+                        <Trash2 size={14} /> Obriši sliku
+                      </button>
+                    </>
+                  ) : null}
                 </div>
                 <div className="field">
                   <label>
                     <Video size={14} /> URL videa
                   </label>
                   <input value={form.videoUrl} onChange={(e) => onChange('videoUrl', e.target.value)} placeholder="https://www.youtube.com/watch?v=..." />
-                  <small className="field-hint">
-                    {isPremiumVenue
-                      ? 'Prihvaćeni su YouTube, Vimeo i Cloudinary video linkovi.'
-                      : 'Upload videa je dostupan samo za Premium Venue članove.'}
-                  </small>
+                  <div className="field-hint-row">
+                    <small className="field-hint">
+                      {isPremiumVenue
+                        ? 'Prihvaćeni su YouTube, Vimeo i Cloudinary video linkovi.'
+                        : 'Upload videa je dostupan samo za Premium Venue članove.'}
+                    </small>
+                    {form.videoUrl && (
+                      <button type="button" className="btn-remove-media" onClick={() => onChange('videoUrl', '')}>
+                        <Trash2 size={14} /> Obriši video
+                      </button>
+                    )}
+                  </div>
                   <div className="upload-row">
                     <input
                       ref={videoInputRef}
@@ -2193,6 +2207,31 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
           object-fit: cover;
           border-radius: 18px;
           border: 1px solid #e2e8f0;
+        }
+        .btn-remove-media {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.35rem;
+          margin-top: 0.4rem;
+          padding: 0.35rem 0.7rem;
+          font-size: 0.78rem;
+          font-weight: 700;
+          color: #dc2626;
+          background: rgba(220, 38, 38, 0.08);
+          border: 1px solid rgba(220, 38, 38, 0.2);
+          border-radius: 8px;
+          cursor: pointer;
+          transition: background 0.15s;
+        }
+        .btn-remove-media:hover {
+          background: rgba(220, 38, 38, 0.15);
+        }
+        .field-hint-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          flex-wrap: wrap;
+          gap: 0.4rem;
         }
         .upload-row {
           display: flex;
