@@ -421,7 +421,7 @@ export default function LoginClient() {
           </p>
 
           {selectedPlan === 'premium' && (
-            <a href="/premium/checkout" className="btn btn-secondary btn-full premium-link-btn">
+            <a href="/upgrade" className="btn btn-secondary btn-full premium-link-btn">
               Nastavi na Premium plaćanje
             </a>
           )}

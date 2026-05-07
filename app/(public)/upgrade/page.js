@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Crown, Zap, QrCode, CheckCircle2, Loader2 } from 'lucide-react';
+import { useEffect, useState, useRef } from 'react';
+import { Crown, Zap, CheckCircle2, Loader2, Copy, Check, ChevronDown, FileDown, CreditCard } from 'lucide-react';
 
 const PLANS = [
   {
@@ -33,14 +33,21 @@ const PLANS = [
   },
 ];
 
+// Podaci za prenos — isti su kao u lib/ipsQr.js
+const FIRM_ACCOUNT = '325-9500700031761-69';
+const FIRM_NAME = 'ProMotiv';
+const FIRM_BANK = 'OTP Banka';
+
 export default function UpgradePage() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [generating, setGenerating] = useState(false);
-  const [qrResult, setQrResult] = useState(null);
+  const [paymentResult, setPaymentResult] = useState(null);
   const [error, setError] = useState('');
   const [pricing, setPricing] = useState(null);
+  const [showQr, setShowQr] = useState(false);
+  const [copied, setCopied] = useState('');
   const [billingData, setBillingData] = useState({
     companyName: '',
     pib: '',
@@ -48,6 +55,7 @@ export default function UpgradePage() {
     address: '',
   });
   const [showBilling, setShowBilling] = useState(false);
+  const pdfLinkRef = useRef(null);
 
   useEffect(() => {
     (async () => {
@@ -76,11 +84,12 @@ export default function UpgradePage() {
     })();
   }, []);
 
-  const generateQr = async (planId) => {
+  const handleSelectPlan = async (planId) => {
     setError('');
     setGenerating(true);
     setSelectedPlan(planId);
-    setQrResult(null);
+    setPaymentResult(null);
+    setShowQr(false);
     try {
       const r = await fetch('/api/billing/generate-qr', {
         method: 'POST',
@@ -92,7 +101,7 @@ export default function UpgradePage() {
       });
       const j = await r.json();
       if (!r.ok) throw new Error(j.error || 'Greška');
-      setQrResult(j);
+      setPaymentResult(j);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -109,6 +118,61 @@ export default function UpgradePage() {
     const eur = getPriceEur(planId);
     const rate = pricing?.eurToRsdRate || 117.5;
     return Math.round(eur * rate * 100) / 100;
+  };
+
+  const copyToClipboard = (text, field) => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(field);
+      setTimeout(() => setCopied(''), 2000);
+    });
+  };
+
+  const handleDownloadPdf = () => {
+    if (!paymentResult) return;
+    // Otvara print-friendly verziju sa QR kodom
+    const w = window.open('', '_blank');
+    const p = paymentResult.payment;
+    const planLabel = p.plan === 'PREMIUM_VENUE' ? 'Premium Venue' : 'Premium';
+    w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Nalog za uplatu - PronadjiBend ${planLabel}</title>
+      <style>
+        body{font-family:system-ui,sans-serif;padding:2rem;max-width:600px;margin:0 auto;color:#1e293b}
+        h1{font-size:1.4rem;margin-bottom:0.5rem}
+        .subtitle{color:#64748b;margin-bottom:1.5rem}
+        table{width:100%;border-collapse:collapse;margin-bottom:1.5rem}
+        td{padding:0.6rem 0.4rem;border-bottom:1px solid #e2e8f0}
+        td:first-child{font-weight:600;color:#475569;width:40%}
+        td:last-child{font-weight:700;font-family:ui-monospace,monospace}
+        .qr-section{text-align:center;margin-top:1.5rem;padding-top:1.5rem;border-top:2px dashed #cbd5e1}
+        .qr-section img{width:220px;height:220px}
+        .qr-section p{color:#64748b;font-size:0.85rem;margin-top:0.5rem}
+        .footer{margin-top:2rem;font-size:0.8rem;color:#94a3b8;text-align:center}
+        @media print{body{padding:1rem}}
+      </style>
+    </head><body>
+      <h1>Nalog za uplatu — PronadjiBend</h1>
+      <p class="subtitle">Plan: ${planLabel} · Mesečna pretplata</p>
+      <table>
+        <tr><td>Primalac</td><td>${FIRM_NAME}</td></tr>
+        <tr><td>Banka</td><td>${FIRM_BANK}</td></tr>
+        <tr><td>Broj računa</td><td>${FIRM_ACCOUNT}</td></tr>
+        <tr><td>Iznos</td><td>${Number(p.amountRsd).toLocaleString('sr-RS')} RSD (${p.amountEur} EUR)</td></tr>
+        <tr><td>Poziv na broj</td><td>00${p.referenceId}</td></tr>
+        <tr><td>Model</td><td>00</td></tr>
+        <tr><td>Svrha uplate</td><td>PronadjiBend ${planLabel}</td></tr>
+        <tr><td>Šifra plaćanja</td><td>289</td></tr>
+      </table>
+      <div class="qr-section">
+        <p><strong>IPS QR kod</strong> — skenirajte za automatsko popunjavanje naloga</p>
+        <img src="${paymentResult.qrDataUrl}" alt="IPS QR kod"/>
+        <p>Skenirajte ovaj kod kamerom u mobilnom bankarstvu za brzo plaćanje.</p>
+      </div>
+      <div class="footer">
+        <p>PronadjiBend.rs · ProMotiv · PIB: 108191504 · MB: 63280801</p>
+        <p>Rok za uplatu: 7 dana od generisanja naloga</p>
+      </div>
+      <script>setTimeout(()=>window.print(),500)<\/script>
+    </body></html>`);
+    w.document.close();
   };
 
   if (loading) {
@@ -147,11 +211,11 @@ export default function UpgradePage() {
         <p style={styles.subtitle}>
           {isPremium && !isExpired
             ? `Trenutno ste na ${currentPlan === 'PREMIUM_VENUE' ? 'Premium Venue' : 'Premium'} planu${planUntil ? ` do ${planUntil.toLocaleDateString('sr-RS')}` : ''}.`
-            : 'Izaberite plan i skenirajte QR kod za uplatu putem mobilnog bankarstva.'}
+            : 'Izaberite plan i izvršite uplatu putem mobilnog bankarstva ili šaltera.'}
         </p>
 
         {/* ── Plan kartice ── */}
-        {!qrResult && (
+        {!paymentResult && (
           <div style={styles.plansGrid}>
             {PLANS.map((plan) => {
               const Icon = plan.icon;
@@ -185,14 +249,14 @@ export default function UpgradePage() {
                         type="button"
                         style={{ ...styles.selectBtn, background: plan.gradient }}
                         disabled={generating}
-                        onClick={() => generateQr(plan.id)}
+                        onClick={() => handleSelectPlan(plan.id)}
                       >
                         {generating && selectedPlan === plan.id ? (
                           <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} />
                         ) : (
                           <>
-                            <QrCode size={16} />
-                            Generiši QR za uplatu
+                            <CreditCard size={16} />
+                            Izaberi i plati
                           </>
                         )}
                       </button>
@@ -205,7 +269,7 @@ export default function UpgradePage() {
         )}
 
         {/* ── Billing data toggle ── */}
-        {!qrResult && (
+        {!paymentResult && (
           <div style={styles.billingToggle}>
             <label style={styles.checkLabel}>
               <input
@@ -241,59 +305,94 @@ export default function UpgradePage() {
 
         {error && <p style={styles.error}>{error}</p>}
 
-        {/* ── QR rezultat ── */}
-        {qrResult && (
-          <div style={styles.qrCard}>
-            <h2 style={styles.qrTitle}>
-              Skenirajte QR kod za uplatu
-            </h2>
-            <p style={styles.qrSubtitle}>
-              Otvorite mobilno bankarstvo, izaberite &ldquo;Plati putem QR koda&rdquo; i skenirajte.
-            </p>
-            <div style={styles.qrImageWrap}>
-              <img
-                src={qrResult.qrDataUrl}
-                alt="IPS QR kod za uplatu"
-                width={260}
-                height={260}
-                style={styles.qrImage}
-              />
+        {/* ── Rezultat: Podaci za uplatu ── */}
+        {paymentResult && (
+          <div style={styles.paymentCard}>
+            <div style={styles.paymentHeader}>
+              <CreditCard size={20} color="#3b82f6" />
+              <h2 style={styles.paymentTitle}>Podaci za uplatu</h2>
             </div>
-            <div style={styles.qrDetails}>
-              <div style={styles.qrDetailRow}>
-                <span style={styles.qrLabel}>Plan:</span>
-                <span style={styles.qrValue}>
-                  {qrResult.payment.plan === 'PREMIUM_VENUE' ? 'Premium Venue' : 'Premium'}
-                </span>
-              </div>
-              <div style={styles.qrDetailRow}>
-                <span style={styles.qrLabel}>Iznos:</span>
-                <span style={styles.qrValue}>
-                  {Number(qrResult.payment.amountRsd).toLocaleString('sr-RS')} RSD ({qrResult.payment.amountEur} EUR)
-                </span>
-              </div>
-              <div style={styles.qrDetailRow}>
-                <span style={styles.qrLabel}>Poziv na broj:</span>
-                <span style={{ ...styles.qrValue, fontFamily: 'ui-monospace, monospace' }}>
-                  {qrResult.payment.referenceId}
-                </span>
-              </div>
-              <div style={styles.qrDetailRow}>
-                <span style={styles.qrLabel}>Primalac:</span>
-                <span style={styles.qrValue}>ProMotiv — OTP Banka</span>
-              </div>
-            </div>
-            <p style={styles.qrNote}>
-              Nakon uplate, admin će potvrditi prijem i vaš nalog će automatski biti nadograđen.
-              PDF račun će biti poslat na vaš email.
+            <p style={styles.paymentSubtitle}>
+              Otvorite mobilno bankarstvo → Novo plaćanje → Unesite podatke ispod.
             </p>
-            <button
-              type="button"
-              style={styles.backBtn}
-              onClick={() => { setQrResult(null); setSelectedPlan(null); }}
-            >
-              ← Nazad na izbor plana
-            </button>
+
+            {/* ── Tabela podataka ── */}
+            <div style={styles.dataTable}>
+              {[
+                { label: 'Primalac', value: FIRM_NAME, key: 'name' },
+                { label: 'Banka', value: FIRM_BANK, key: 'bank' },
+                { label: 'Broj računa', value: FIRM_ACCOUNT, key: 'account' },
+                { label: 'Iznos', value: `${Number(paymentResult.payment.amountRsd).toLocaleString('sr-RS')} RSD`, key: 'amount' },
+                { label: 'Poziv na broj', value: `00${paymentResult.payment.referenceId}`, key: 'ref' },
+                { label: 'Model', value: '00', key: 'model' },
+                { label: 'Svrha uplate', value: `PronadjiBend ${paymentResult.payment.plan === 'PREMIUM_VENUE' ? 'Premium Venue' : 'Premium'}`, key: 'purpose' },
+                { label: 'Šifra plaćanja', value: '289', key: 'code' },
+              ].map(({ label, value, key }) => (
+                <div key={key} style={styles.dataRow}>
+                  <span style={styles.dataLabel}>{label}</span>
+                  <span style={styles.dataValue}>
+                    {value}
+                    <button
+                      type="button"
+                      style={styles.copyBtn}
+                      onClick={() => copyToClipboard(value, key)}
+                      title="Kopiraj"
+                    >
+                      {copied === key ? <Check size={13} color="#22c55e" /> : <Copy size={13} />}
+                    </button>
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <p style={styles.noteBox}>
+              <strong>Rok za uplatu:</strong> 7 dana · Nakon uplate admin potvrđuje prijem i vaš nalog se automatski nadograđuje.
+              PDF račun stiže na vaš email.
+            </p>
+
+            {/* ── QR sekcija (sklopiva) ── */}
+            <div style={styles.qrToggleWrap}>
+              <button
+                type="button"
+                style={styles.qrToggleBtn}
+                onClick={() => setShowQr(!showQr)}
+              >
+                <ChevronDown size={16} style={{ transform: showQr ? 'rotate(180deg)' : 'rotate(0)', transition: '0.2s' }} />
+                {showQr ? 'Sakrij QR kod' : 'Prikaži QR kod za skeniranje'}
+              </button>
+
+              {showQr && (
+                <div style={styles.qrSection}>
+                  <p style={styles.qrHint}>
+                    Skenirajte ovaj kod kamerom u mobilnom bankarstvu za automatsko popunjavanje naloga.
+                  </p>
+                  <div style={styles.qrImageWrap}>
+                    <img
+                      src={paymentResult.qrDataUrl}
+                      alt="IPS QR kod za uplatu"
+                      width={240}
+                      height={240}
+                      style={styles.qrImage}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* ── Dugmad ── */}
+            <div style={styles.actionRow}>
+              <button type="button" style={styles.pdfBtn} onClick={handleDownloadPdf}>
+                <FileDown size={16} />
+                Odštampaj nalog za uplatu
+              </button>
+              <button
+                type="button"
+                style={styles.backBtn}
+                onClick={() => { setPaymentResult(null); setSelectedPlan(null); setShowQr(false); }}
+              >
+                ← Nazad na izbor plana
+              </button>
+            </div>
           </div>
         )}
       </div>
@@ -479,77 +578,149 @@ const styles = {
     marginBottom: '1rem',
     textAlign: 'center',
   },
-  qrCard: {
+  // ── Payment result card ──
+  paymentCard: {
     width: '100%',
-    maxWidth: 480,
+    maxWidth: 560,
     background: '#111827',
     borderRadius: 16,
     border: '1px solid rgba(148,163,184,0.15)',
     padding: '2rem 1.5rem',
+  },
+  paymentHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.6rem',
+    marginBottom: '0.4rem',
+  },
+  paymentTitle: {
+    fontSize: '1.25rem',
+    fontWeight: 800,
+    color: '#f1f5f9',
+    margin: 0,
+  },
+  paymentSubtitle: {
+    color: '#94a3b8',
+    fontSize: '0.88rem',
+    lineHeight: 1.5,
+    marginBottom: '1.25rem',
+  },
+  dataTable: {
+    width: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+    marginBottom: '1rem',
+  },
+  dataRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: '0.6rem 0',
+    borderBottom: '1px solid rgba(148,163,184,0.08)',
+    gap: '0.5rem',
+    flexWrap: 'wrap',
+  },
+  dataLabel: {
+    color: '#94a3b8',
+    fontSize: '0.82rem',
+    fontWeight: 600,
+    flexShrink: 0,
+  },
+  dataValue: {
+    color: '#e2e8f0',
+    fontSize: '0.88rem',
+    fontWeight: 700,
+    fontFamily: 'ui-monospace, SFMono-Regular, monospace',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.4rem',
+    wordBreak: 'break-all',
+  },
+  copyBtn: {
+    background: 'transparent',
+    border: 'none',
+    color: '#64748b',
+    cursor: 'pointer',
+    padding: '2px',
+    flexShrink: 0,
+  },
+  noteBox: {
+    background: 'rgba(59,130,246,0.08)',
+    border: '1px solid rgba(59,130,246,0.2)',
+    borderRadius: 10,
+    padding: '0.75rem 1rem',
+    color: '#94a3b8',
+    fontSize: '0.8rem',
+    lineHeight: 1.6,
+    marginBottom: '1.25rem',
+  },
+  // ── QR toggle ──
+  qrToggleWrap: {
+    width: '100%',
+    marginBottom: '1.25rem',
+  },
+  qrToggleBtn: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    background: 'rgba(148,163,184,0.06)',
+    border: '1px solid rgba(148,163,184,0.15)',
+    borderRadius: 10,
+    padding: '0.65rem 1rem',
+    color: '#94a3b8',
+    fontSize: '0.85rem',
+    fontWeight: 600,
+    cursor: 'pointer',
+    width: '100%',
+    justifyContent: 'center',
+  },
+  qrSection: {
+    marginTop: '1rem',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
   },
-  qrTitle: {
-    fontSize: '1.25rem',
-    fontWeight: 800,
-    color: '#f1f5f9',
-    marginBottom: '0.4rem',
+  qrHint: {
+    color: '#64748b',
+    fontSize: '0.8rem',
     textAlign: 'center',
-  },
-  qrSubtitle: {
-    color: '#94a3b8',
-    fontSize: '0.88rem',
-    textAlign: 'center',
-    marginBottom: '1.25rem',
+    marginBottom: '0.75rem',
     lineHeight: 1.5,
   },
   qrImageWrap: {
     background: '#fff',
     borderRadius: 12,
     padding: '1rem',
-    marginBottom: '1.25rem',
   },
   qrImage: {
     display: 'block',
   },
-  qrDetails: {
-    width: '100%',
+  // ── Action buttons ──
+  actionRow: {
     display: 'flex',
-    flexDirection: 'column',
-    gap: '0.55rem',
-    marginBottom: '1rem',
+    gap: '0.75rem',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
   },
-  qrDetailRow: {
+  pdfBtn: {
     display: 'flex',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    padding: '0.45rem 0',
-    borderBottom: '1px solid rgba(148,163,184,0.08)',
-  },
-  qrLabel: {
-    color: '#94a3b8',
-    fontSize: '0.82rem',
-    fontWeight: 600,
-  },
-  qrValue: {
-    color: '#e2e8f0',
-    fontSize: '0.88rem',
+    gap: '0.5rem',
+    padding: '0.7rem 1.25rem',
+    background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+    border: 'none',
+    borderRadius: 10,
+    color: '#fff',
     fontWeight: 700,
-  },
-  qrNote: {
-    color: '#64748b',
-    fontSize: '0.8rem',
-    textAlign: 'center',
-    lineHeight: 1.55,
-    marginBottom: '1rem',
+    fontSize: '0.85rem',
+    cursor: 'pointer',
   },
   backBtn: {
     background: 'transparent',
     border: '1px solid rgba(148,163,184,0.25)',
     color: '#94a3b8',
-    borderRadius: 8,
-    padding: '0.6rem 1.25rem',
+    borderRadius: 10,
+    padding: '0.7rem 1.25rem',
     fontSize: '0.85rem',
     fontWeight: 600,
     cursor: 'pointer',
