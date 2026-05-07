@@ -1,9 +1,27 @@
 'use client';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Mail, Phone, MapPin, Instagram, Facebook, Twitter } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Mail, Phone, MapPin, Instagram, Facebook } from 'lucide-react';
+
+const DEFAULTS = {
+  email: 'office@pronadjibend.rs',
+  phone: '+381 64 339 2339',
+  location: 'Sokobanja, Srbija',
+  instagram: 'https://instagram.com/pronadjiband',
+  facebook: '',
+};
 
 export default function Footer() {
+  const [contact, setContact] = useState(DEFAULTS);
+
+  useEffect(() => {
+    fetch('/api/site/contact')
+      .then((r) => r.ok ? r.json() : DEFAULTS)
+      .then((data) => setContact({ ...DEFAULTS, ...data }))
+      .catch(() => {});
+  }, []);
+
   return (
     <footer className="footer">
       <div className="container">
@@ -28,9 +46,8 @@ export default function Footer() {
               Povezujemo najbolje bendove sa klijentima kroz moderan i inovativan sistem.
             </p>
             <div className="social-links">
-              <a href="https://instagram.com/pronadjiband" target="_blank" rel="noopener noreferrer"><Instagram size={20} /></a>
-              <a href="/" aria-label="Facebook"><Facebook size={20} /></a>
-              <a href="#"><Twitter size={20} /></a>
+              {contact.instagram && <a href={contact.instagram} target="_blank" rel="noopener noreferrer" aria-label="Instagram"><Instagram size={20} /></a>}
+              {contact.facebook && <a href={contact.facebook} target="_blank" rel="noopener noreferrer" aria-label="Facebook"><Facebook size={20} /></a>}
             </div>
           </div>
 
@@ -53,9 +70,9 @@ export default function Footer() {
           <div className="footer-contact">
             <h4>Kontakt</h4>
             <ul>
-              <li><Mail size={16} /> office@pronadjibend.rs</li>
-              <li><Phone size={16} /> +381 64 339 2339</li>
-              <li><MapPin size={16} /> Sokobanja, Srbija</li>
+              {contact.email && <li><Mail size={16} /> {contact.email}</li>}
+              {contact.phone && <li><Phone size={16} /> {contact.phone}</li>}
+              {contact.location && <li><MapPin size={16} /> {contact.location}</li>}
             </ul>
           </div>
         </div>

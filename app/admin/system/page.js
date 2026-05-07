@@ -22,7 +22,7 @@ export default function AdminSystemPage() {
   const [limitsMsg, setLimitsMsg] = useState('');
   const [inviteCommunicationMsg, setInviteCommunicationMsg] = useState('');
   const [pricingMsg, setPricingMsg] = useState('');
-  const [contactForm, setContactForm] = useState({ email: '', instagram: '', facebook: '' });
+  const [contactForm, setContactForm] = useState({ email: '', phone: '', location: '', instagram: '', facebook: '' });
   const [limitsForm, setLimitsForm] = useState({ maxImages: 5, maxVideos: 3, maxLinks: 5 });
   const [inviteCommunicationForm, setInviteCommunicationForm] = useState({
     inviteMaxActiveBasic: 5,
@@ -53,7 +53,7 @@ export default function AdminSystemPage() {
       const loadedItems = Array.isArray(j.korgPaItems) && j.korgPaItems.length ? j.korgPaItems : j.korgPaDriveUrl ? [{ id: 'korg-legacy', name: 'Korg PA setovi', url: j.korgPaDriveUrl }] : [createEmptyKorgItem()];
       setKorgItems(loadedItems);
       if (j.contactInfo) {
-        setContactForm({ email: j.contactInfo.email || '', instagram: j.contactInfo.instagram || '', facebook: j.contactInfo.facebook || '' });
+        setContactForm({ email: j.contactInfo.email || '', phone: j.contactInfo.phone || '', location: j.contactInfo.location || '', instagram: j.contactInfo.instagram || '', facebook: j.contactInfo.facebook || '' });
       }
       if (j.bandProfileLimits) {
         setLimitsForm({ maxImages: j.bandProfileLimits.maxImages ?? 5, maxVideos: j.bandProfileLimits.maxVideos ?? 3, maxLinks: j.bandProfileLimits.maxLinks ?? 5 });
@@ -509,14 +509,16 @@ export default function AdminSystemPage() {
 
       {/* ── Kontakt informacije ── */}
       <div className="admin-section">
-        <h2>Kontakt informacije (O nama stranica)</h2>
+        <h2>Kontakt informacije (Footer, O nama)</h2>
         <p>
-          Prikazuje se na javnoj &ldquo;O nama&rdquo; stranici. Ostavite prazno da bi se koristile podrazumevane vrednosti.
+          Prikazuje se u footeru sajta i na &ldquo;O nama&rdquo; stranici. Ostavite prazno da bi se koristile podrazumevane vrednosti.
         </p>
         <div className="admin-form-grid" style={{ gridTemplateColumns: '1fr' }}>
           {[
-            { key: 'email', label: 'Email', placeholder: 'info@pronadjibend.rs', type: 'email' },
-            { key: 'instagram', label: 'Instagram URL', placeholder: 'https://www.instagram.com/pronadjibend', type: 'url' },
+            { key: 'email', label: 'Email', placeholder: 'office@pronadjibend.rs', type: 'email' },
+            { key: 'phone', label: 'Telefon', placeholder: '+381 64 339 2339', type: 'tel' },
+            { key: 'location', label: 'Lokacija', placeholder: 'Sokobanja, Srbija', type: 'text' },
+            { key: 'instagram', label: 'Instagram URL', placeholder: 'https://instagram.com/pronadjiband', type: 'url' },
             { key: 'facebook', label: 'Facebook URL', placeholder: 'https://www.facebook.com/pronadjibend', type: 'url' },
           ].map(({ key, label, placeholder, type }) => (
             <div key={key}>
