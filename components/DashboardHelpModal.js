@@ -53,7 +53,7 @@ export default function DashboardHelpModal({ onClose, role = 'band' }) {
               <h3>Moj repertoar</h3>
               <p>
                 Vaš lični izbor pesama — pesme koje izvodite. Gosti ih vide kad otvore vaš live link.
-                Dugme <strong>„Preuzmi repertoar"</strong> generiše .txt fajl sa celim spiskom pesama
+                Dugme <strong>&bdquo;Preuzmi repertoar&ldquo;</strong> generiše .txt fajl sa celim spiskom pesama
                 grupisan po kategorijama — možete ga odštampati ili podeliti.
                 {' '}<strong>Premium</strong> korisnici mogu dodavati pesme iz globalne baze i bulk unos liste.
               </p>
