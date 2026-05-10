@@ -1,5 +1,5 @@
 'use client';
-import { Mail, Lock, User, ArrowRight, Music, Users, Download, Eye, EyeOff, MapPin, DollarSign } from 'lucide-react';
+import { Mail, Lock, User, ArrowRight, Music, Users, Download, Eye, EyeOff, MapPin } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
@@ -13,11 +13,6 @@ export default function LoginClient() {
     role: 'BAND',
     primaryInstrument: '',
     city: '',
-    genres: '',
-    experienceYears: '',
-    priceFromEur: '',
-    priceToEur: '',
-    bio: '',
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -98,13 +93,6 @@ export default function LoginClient() {
               ? {
                   primaryInstrument: String(formData.primaryInstrument || '').trim(),
                   city: String(formData.city || '').trim(),
-                  genres: String(formData.genres || '').trim(),
-                  experienceYears: formData.experienceYears
-                    ? Number(formData.experienceYears)
-                    : undefined,
-                  priceFromEur: formData.priceFromEur ? Number(formData.priceFromEur) : undefined,
-                  priceToEur: formData.priceToEur ? Number(formData.priceToEur) : undefined,
-                  bio: String(formData.bio || '').trim(),
                 }
               : {}),
           }),
@@ -202,11 +190,6 @@ export default function LoginClient() {
                         role: 'BAND',
                         primaryInstrument: '',
                         city: '',
-                        genres: '',
-                        experienceYears: '',
-                        priceFromEur: '',
-                        priceToEur: '',
-                        bio: '',
                       }))
                     }
                   >
@@ -228,11 +211,6 @@ export default function LoginClient() {
                         role: 'CLIENT',
                         primaryInstrument: '',
                         city: '',
-                        genres: '',
-                        experienceYears: '',
-                        priceFromEur: '',
-                        priceToEur: '',
-                        bio: '',
                       }))
                     }
                   >
@@ -272,61 +250,6 @@ export default function LoginClient() {
                       value={formData.city}
                       onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                       required
-                    />
-                  </div>
-                  <div className="input-group">
-                    <User size={18} className="text-muted" />
-                    <input
-                      type="text"
-                      placeholder="Žanrovi (opciono)"
-                      value={formData.genres}
-                      onChange={(e) => setFormData({ ...formData, genres: e.target.value })}
-                    />
-                  </div>
-                  <div className="input-group duo">
-                    <div>
-                      <label>Iskustvo (god.)</label>
-                      <input
-                        type="number"
-                        min="0"
-                        placeholder="npr. 5"
-                        value={formData.experienceYears}
-                        onChange={(e) => setFormData({ ...formData, experienceYears: e.target.value })}
-                      />
-                    </div>
-                    <div>
-                      <label>Cachet (€)</label>
-                      <div className="price-inputs">
-                        <div className="price-input-with-icon">
-                          <DollarSign size={16} />
-                          <input
-                            type="number"
-                            min="0"
-                            placeholder="Od"
-                            value={formData.priceFromEur}
-                            onChange={(e) => setFormData({ ...formData, priceFromEur: e.target.value })}
-                          />
-                        </div>
-                        <span>—</span>
-                        <div className="price-input-with-icon">
-                          <DollarSign size={16} />
-                          <input
-                            type="number"
-                            min="0"
-                            placeholder="Do"
-                            value={formData.priceToEur}
-                            onChange={(e) => setFormData({ ...formData, priceToEur: e.target.value })}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="input-group textarea">
-                    <textarea
-                      placeholder="Kratak opis (opciono)"
-                      value={formData.bio}
-                      onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                      rows={3}
                     />
                   </div>
                 </div>
@@ -579,81 +502,6 @@ export default function LoginClient() {
           min-height: 96px;
           background: rgba(255, 255, 255, 0.04);
           color: var(--text);
-        }
-        .input-group.duo {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
-          gap: 1rem;
-          padding: 0;
-          border: none;
-          background: transparent;
-        }
-        .input-group.duo > div {
-          background: rgba(255, 255, 255, 0.04);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          border-radius: 12px;
-          padding: 0.75rem 1rem;
-          display: flex;
-          flex-direction: column;
-          gap: 0.4rem;
-        }
-        .input-group.duo label {
-          font-size: 0.75rem;
-          font-weight: 700;
-          color: #94a3b8;
-          text-transform: uppercase;
-          letter-spacing: 0.04em;
-        }
-        .input-group.duo input {
-          border: none;
-          padding: 0;
-          font-size: 0.95rem;
-          outline: none;
-          color: var(--text);
-          background: transparent;
-        }
-        .price-inputs {
-          display: grid;
-          grid-template-columns: 1fr auto 1fr;
-          gap: 0.45rem;
-          align-items: center;
-        }
-        .price-inputs input {
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 10px;
-          padding: 0.4rem 0.55rem;
-          font-size: 0.9rem;
-          width: 100%;
-          min-width: 0;
-          background: rgba(255, 255, 255, 0.04);
-          color: var(--text);
-        }
-        .price-inputs span {
-          font-weight: 700;
-          color: #94a3b8;
-        }
-        .price-input-with-icon {
-          display: flex;
-          align-items: center;
-          gap: 0.4rem;
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 10px;
-          padding: 0.35rem 0.5rem;
-          background: rgba(255, 255, 255, 0.04);
-          min-width: 0;
-        }
-        .price-input-with-icon :global(svg) {
-          color: #94a3b8;
-          flex-shrink: 0;
-        }
-        .price-input-with-icon input {
-          border: none;
-          padding: 0;
-          width: 100%;
-          min-width: 0;
-          outline: none;
-          font-size: 0.9rem;
-          background: transparent;
         }
 
         .input-group { position: relative; display: flex; align-items: center; gap: 0.85rem; padding: 0.85rem 1.1rem; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 14px; margin-bottom: 0.9rem; transition: 0.2s ease; color: var(--text); }
