@@ -1,8 +1,8 @@
 'use client';
 
-import { Save, ArrowLeft, Image as ImageIcon, Video, Mail, Phone, MessageSquare, Download, Lock, Trash2, ChevronDown, ExternalLink } from 'lucide-react';
+import { Save, ArrowLeft, Image as ImageIcon, Video, Mail, Phone, MessageSquare, Download, Lock, Trash2 } from 'lucide-react';
 import Link from 'next/link';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import SocialShareActions from '../../../../components/SocialShareActions';
 
@@ -44,8 +44,6 @@ export default function BandProfilePage() {
   const [deleting, setDeleting] = useState(false);
   const [siteOrigin, setSiteOrigin] = useState('');
   const [viewerPlan, setViewerPlan] = useState('');
-  const [korgPaItems, setKorgPaItems] = useState([]);
-  const [showKorgDownloads, setShowKorgDownloads] = useState(false);
   const publicBandProfilePath = bandId ? `/clients/band/${bandId}` : '';
   const publicBandProfileUrl = publicBandProfilePath ? `${siteOrigin}${publicBandProfilePath}` : '';
   const isPremiumVenue = String(viewerPlan || '').toUpperCase() === 'PREMIUM_VENUE';
@@ -115,15 +113,6 @@ export default function BandProfilePage() {
           allowFullRepertoireLive: band.allowFullRepertoireLive || false,
         });
 
-        if (String(meData?.user?.plan || '').toUpperCase() === 'PREMIUM_VENUE') {
-          try {
-            const korgRes = await fetch('/api/korg-pa-sets', { cache: 'no-store' });
-            if (korgRes.ok) {
-              const korgData = await korgRes.json();
-              if (Array.isArray(korgData?.items)) setKorgPaItems(korgData.items);
-            }
-          } catch {}
-        }
       } catch (err) {
         setError('Ne mogu da učitam profil benda.');
       } finally {
@@ -137,13 +126,6 @@ export default function BandProfilePage() {
     setFormData((prev) => ({ ...prev, [key]: value }));
   };
 
-  const handleKorgDownload = useCallback((url) => {
-    const iframe = document.createElement('iframe');
-    iframe.style.display = 'none';
-    iframe.src = url;
-    document.body.appendChild(iframe);
-    setTimeout(() => iframe.remove(), 10000);
-  }, []);
 
   const handlePasswordChange = async (e) => {
     e.preventDefault();
@@ -452,60 +434,6 @@ export default function BandProfilePage() {
                   })}
                 </ul>
               </section>
-            )}
-
-            {isPremiumVenue && korgPaItems.length > 0 && (
-              <div className="korg-accordion">
-                <button
-                  type="button"
-                  className="korg-accordion-toggle"
-                  onClick={() => setShowKorgDownloads((prev) => !prev)}
-                >
-                  <div className="korg-toggle-icon">
-                    <Download size={18} />
-                  </div>
-                  <div style={{ flex: 1, textAlign: 'left' }}>
-                    <h3 className="korg-toggle-title">Korg PA setovi</h3>
-                    <p className="korg-toggle-sub">
-                      {korgPaItems.length} {korgPaItems.length === 1 ? 'set dostupan' : 'setova dostupno'} za download
-                    </p>
-                  </div>
-                  <ChevronDown
-                    size={18}
-                    style={{
-                      color: 'rgba(226,232,240,0.5)',
-                      transition: 'transform 0.25s ease',
-                      transform: showKorgDownloads ? 'rotate(180deg)' : 'rotate(0)',
-                    }}
-                  />
-                </button>
-                {showKorgDownloads && (
-                  <div className="korg-download-list">
-                    {korgPaItems.map((item) => (
-                      <div key={item.id || item.url} className="korg-download-item">
-                        <Download size={15} style={{ flexShrink: 0, color: '#8b5cf6' }} />
-                        <span className="korg-item-name">{item.name}</span>
-                        <button
-                          type="button"
-                          className="korg-dl-btn"
-                          onClick={() => handleKorgDownload(item.url)}
-                        >
-                          Preuzmi
-                        </button>
-                        <a
-                          href={item.url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="korg-ext-btn"
-                          title="Otvori u pregledaču"
-                        >
-                          <ExternalLink size={13} />
-                        </a>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
             )}
 
             <form onSubmit={handleSave} className="profile-card">
