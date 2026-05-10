@@ -113,20 +113,21 @@ export default function LoginClient() {
       }
 
       if (isLogin) {
+        try { sessionStorage.removeItem('pb_nav_session_v1'); } catch {}
         const next =
           typeof window !== 'undefined'
             ? new URLSearchParams(window.location.search).get('next')
             : null;
         if (next && next.startsWith('/') && !next.startsWith('//')) {
-          router.push(next);
+          window.location.href = next;
         } else if (data.user.role === 'ADMIN') {
-          router.push('/admin');
+          window.location.href = '/admin';
         } else if (data.user.role === 'BAND') {
-          router.push('/bands');
+          window.location.href = '/bands';
         } else if (data.user.role === 'MUSICIAN') {
-          router.push('/muzicari/profil');
+          window.location.href = '/muzicari/profil';
         } else {
-          router.push('/clients');
+          window.location.href = '/clients';
         }
       } else {
         setSuccess('Registracija uspešna! Prijavite se sa svojim nalogom.');

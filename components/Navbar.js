@@ -27,8 +27,7 @@ async function logoutAndRedirect() {
   } catch {
     /* ignore */
   }
-  const home = encodeURIComponent('/');
-  window.location.href = `/api/auth/signout?callbackUrl=${home}`;
+  window.location.href = '/';
 }
 
 export default function Navbar() {
