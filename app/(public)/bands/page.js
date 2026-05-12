@@ -20,6 +20,9 @@ import {
   ChevronDown,
   ExternalLink,
   Disc3,
+  Eye,
+  BarChart3,
+  Calendar,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useEffect, useMemo, useCallback } from 'react';
@@ -61,6 +64,7 @@ export default function BandDashboard() {
     { label: 'Novi Upiti', value: '0', icon: Bell },
     { label: 'Ocena', value: '0.0', icon: Star },
   ]);
+  const [dashStats, setDashStats] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAdminUser, setIsAdminUser] = useState(false);
   const [busyDates, setBusyDates] = useState([]);
@@ -188,6 +192,11 @@ export default function BandDashboard() {
           { label: 'Novi Upiti', value: bookingsList.filter(b => b.status === 'PENDING').length, icon: Bell },
           { label: 'Vaša Ocena', value: bandData.rating != null ? bandData.rating.toFixed(1) : '—', icon: Star },
         ]);
+        // Fetch enhanced dashboard stats
+        fetch('/api/bands/stats', { cache: 'no-store' })
+          .then(r => r.ok ? r.json() : null)
+          .then(d => { if (d && !cancelled) setDashStats(d); })
+          .catch(() => {});
       } catch (err) {
         console.error('Error fetching dashboard data:', err);
         if (!cancelled) setLoadError('Ne možemo učitati podatke. Pokušajte ponovo.');
@@ -685,6 +694,20 @@ export default function BandDashboard() {
               <span className="action-caption">Javni profil, slike, video i opis</span>
             )}
           </div>
+          {bandId && (
+            <div className="header-action-item">
+              <a
+                href={`/api/bands/${encodeURIComponent(bandId)}/calendar-export`}
+                className="btn btn-secondary"
+                style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}
+              >
+                <Calendar size={18} style={{ marginRight: '8px' }} /> Izvezi kalendar (.ics)
+              </a>
+              {SHOW_HEADER_ACTION_HINTS && (
+                <span className="action-caption">Google Calendar / Outlook import</span>
+              )}
+            </div>
+          )}
         </div>
       </header>
 
@@ -777,6 +800,61 @@ export default function BandDashboard() {
           </div>
         ))}
       </div>
+
+      {dashStats && (
+        <section className="dashboard-panel glass-card" style={{ marginBottom: '1.5rem', padding: '1.2rem' }}>
+          <div className="section-header" style={{ marginBottom: '1rem' }}>
+            <h3><BarChart3 size={18} style={{ marginRight: 6 }} /> Statistika</h3>
+          </div>
+          <div className="dash-stats-extended">
+            <div className="dash-stat-mini">
+              <Eye size={16} color="#8b5cf6" />
+              <span className="dash-stat-num">{dashStats.profileViews}</span>
+              <span className="dash-stat-lbl">Pregledi profila</span>
+            </div>
+            <div className="dash-stat-mini">
+              <Bell size={16} color="#f59e0b" />
+              <span className="dash-stat-num">{dashStats.totalBookings}</span>
+              <span className="dash-stat-lbl">Ukupno upita</span>
+            </div>
+            <div className="dash-stat-mini">
+              <CheckCircle size={16} color="#10b981" />
+              <span className="dash-stat-num">{dashStats.confirmedBookings}</span>
+              <span className="dash-stat-lbl">Potvrđenih</span>
+            </div>
+            <div className="dash-stat-mini">
+              <Star size={16} color="#eab308" />
+              <span className="dash-stat-num">{dashStats.totalReviews}</span>
+              <span className="dash-stat-lbl">Recenzija</span>
+            </div>
+            <div className="dash-stat-mini">
+              <MessageSquare size={16} color="#3b82f6" />
+              <span className="dash-stat-num">{dashStats.unreadMessages}</span>
+              <span className="dash-stat-lbl">Nepročitanih poruka</span>
+            </div>
+          </div>
+          {dashStats.monthlyData && dashStats.monthlyData.length > 0 && (
+            <div className="dash-chart">
+              <p style={{ fontSize: '0.78rem', fontWeight: 700, color: '#94a3b8', marginBottom: '0.5rem' }}>Upiti po mesecima (poslednjih 6)</p>
+              <div className="dash-chart-bars">
+                {dashStats.monthlyData.map((m) => {
+                  const maxVal = Math.max(1, ...dashStats.monthlyData.map(x => x.bookings));
+                  const pct = Math.round((m.bookings / maxVal) * 100);
+                  return (
+                    <div key={m.month} className="dash-chart-col">
+                      <div className="dash-chart-bar-wrap">
+                        <div className="dash-chart-bar" style={{ height: `${Math.max(pct, 4)}%` }} />
+                      </div>
+                      <span className="dash-chart-val">{m.bookings}</span>
+                      <span className="dash-chart-label">{m.label}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </section>
+      )}
 
       <div className="dash-content">
         <section className="repertoire-preview dashboard-panel">
@@ -1257,6 +1335,73 @@ export default function BandDashboard() {
           font-weight: 700;
           letter-spacing: 0.18em;
         }
+        .dash-stats-extended {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 1rem;
+          margin-bottom: 1rem;
+        }
+        .dash-stat-mini {
+          display: flex;
+          align-items: center;
+          gap: 0.45rem;
+          padding: 0.55rem 0.8rem;
+          border-radius: 10px;
+          background: rgba(255,255,255,0.03);
+          border: 1px solid rgba(255,255,255,0.06);
+        }
+        .dash-stat-num {
+          font-size: 1.15rem;
+          font-weight: 800;
+          color: #f1f5f9;
+        }
+        .dash-stat-lbl {
+          font-size: 0.72rem;
+          color: #94a3b8;
+          font-weight: 600;
+        }
+        .dash-chart {
+          margin-top: 0.5rem;
+        }
+        .dash-chart-bars {
+          display: flex;
+          gap: 0.5rem;
+          align-items: flex-end;
+          height: 120px;
+        }
+        .dash-chart-col {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 0.2rem;
+        }
+        .dash-chart-bar-wrap {
+          flex: 1;
+          width: 100%;
+          display: flex;
+          align-items: flex-end;
+          justify-content: center;
+        }
+        .dash-chart-bar {
+          width: 70%;
+          max-width: 36px;
+          border-radius: 6px 6px 0 0;
+          background: linear-gradient(180deg, #8b5cf6, #6d28d9);
+          min-height: 4px;
+          transition: height 0.3s ease;
+        }
+        .dash-chart-val {
+          font-size: 0.7rem;
+          font-weight: 800;
+          color: #e2e8f0;
+        }
+        .dash-chart-label {
+          font-size: 0.62rem;
+          color: #64748b;
+          font-weight: 600;
+          text-align: center;
+        }
 
         .dash-content {
           display: grid;
@@ -1704,6 +1849,31 @@ export default function BandDashboard() {
         .korg-ext-btn:hover {
           color: #a78bfa;
           background: rgba(139, 92, 246, 0.1);
+        }
+
+        @media (max-width: 640px) {
+          .dash-stats-extended {
+            gap: 0.5rem;
+          }
+          .dash-stat-mini {
+            padding: 0.4rem 0.6rem;
+            flex: 1 1 calc(50% - 0.25rem);
+            min-width: 0;
+          }
+          .dash-stat-num { font-size: 1rem; }
+          .dash-stat-lbl { font-size: 0.65rem; }
+          .dash-chart-bars {
+            height: 80px;
+            gap: 0.3rem;
+          }
+          .dash-chart-bar { max-width: 24px; }
+          .dash-chart-val { font-size: 0.6rem; }
+          .dash-chart-label { font-size: 0.55rem; }
+          .stats-grid {
+            grid-template-columns: 1fr !important;
+            gap: 0.75rem;
+          }
+          .stat-value { font-size: 1.5rem; }
         }
       `}</style>
     </div>

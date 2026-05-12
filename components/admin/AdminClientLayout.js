@@ -12,7 +12,6 @@ import {
   Calendar,
   Star,
   MessageSquare,
-  CreditCard,
   Wallet,
   Settings,
   Menu,
@@ -29,7 +28,6 @@ const NAV = [
   { href: '/admin/musician-invites', label: 'Chat pozivi', icon: MessageSquare },
   { href: '/admin/reviews', label: 'Recenzije', icon: Star },
   { href: '/admin/payments', label: 'Uplate', icon: Wallet },
-  { href: '/admin/billing', label: 'Naplate (Stripe)', icon: CreditCard },
   { href: '/admin/system', label: 'Sistem', icon: Settings },
 ];
 

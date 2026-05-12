@@ -4,6 +4,7 @@ import { getAuthUserFromRequest } from '../../../lib/auth';
 import { parseCalendarDateParam } from '../../../lib/calendarDate';
 import { isDemoBandId } from '../../../lib/demoBands';
 import { sendBookingNotificationToBand } from '../../../lib/sendBookingNotificationEmail';
+import { createNotification } from '../../../lib/notifications';
 
 const BOOKING_MESSAGE_MAX = 500;
 const MAX_BOOKING_DATES = 14;
@@ -159,8 +160,22 @@ export async function POST(request) {
 
     const band = await prisma.band.findUnique({
       where: { id: bandId },
-      select: { name: true, user: { select: { email: true } } },
+      select: { name: true, user: { select: { id: true, email: true } } },
     });
+
+    // In-app notification for band owner
+    if (band?.user?.id) {
+      const dateLabel = parsedSlots.length === 1
+        ? parsedSlots[0].toISOString().split('T')[0]
+        : `${parsedSlots.length} datuma`;
+      createNotification({
+        userId: band.user.id,
+        type: 'BOOKING_NEW',
+        title: `Nova rezervacija od ${clientName || clientEmail}`,
+        body: `Datum: ${dateLabel}${location ? ` • ${location}` : ''}`,
+        link: '/bands#bookings',
+      }).catch(() => {});
+    }
 
     try {
       await sendBookingNotificationToBand({

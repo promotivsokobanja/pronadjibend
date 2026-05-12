@@ -1,6 +1,6 @@
 'use client';
 import Image from 'next/image';
-import { Star, Zap, MapPin, Play } from 'lucide-react';
+import { Star, Zap, MapPin, Play, BadgeCheck } from 'lucide-react';
 import { useRef, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { DEFAULT_BAND_COVER, resolveBandCoverImage } from '../lib/bandImages';
@@ -97,7 +97,7 @@ export default function BandCard({ band, priority = false }) {
 
         <div className="card-content">
           <div className="card-header">
-            <h3>{band.name}</h3>
+            <h3>{band.name}{band.verified && <BadgeCheck size={16} style={{ color: '#3b82f6', marginLeft: 4, flexShrink: 0 }} />}</h3>
             <div className={`action-indicator ${isHovered ? 'visible' : ''}`}>
               <Play size={14} fill="currentColor" />
             </div>

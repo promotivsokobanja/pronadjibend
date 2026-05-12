@@ -43,6 +43,9 @@ export async function GET(request) {
       return NextResponse.json({ error: 'Band not found' }, { status: 404 });
     }
 
+    // Increment profile views (fire-and-forget, safe if column doesn't exist yet)
+    try { prisma.band.update({ where: { id }, data: { profileViews: { increment: 1 } } }).catch(() => {}); } catch {};
+
     return NextResponse.json(band);
   } catch (error) {
     console.error('API Error:', error);
@@ -93,6 +96,35 @@ export async function PUT(request) {
     const allowFullRepertoireLive =
       body?.allowFullRepertoireLive === undefined ? undefined : Boolean(body.allowFullRepertoireLive);
 
+    // Gallery: validate JSON array of URLs, max 8
+    let galleryJson = undefined;
+    if (body?.galleryJson !== undefined) {
+      try {
+        const parsed = JSON.parse(body.galleryJson || '[]');
+        if (Array.isArray(parsed) && parsed.length <= 8) {
+          galleryJson = JSON.stringify(parsed.filter((u) => typeof u === 'string' && u.trim()));
+        }
+      } catch {
+        galleryJson = '[]';
+      }
+    }
+
+    // Packages: validate JSON array of {name, description, priceEur}, max 10
+    let packagesJson = undefined;
+    if (body?.packagesJson !== undefined) {
+      try {
+        const parsed = JSON.parse(body.packagesJson || '[]');
+        if (Array.isArray(parsed) && parsed.length <= 10) {
+          packagesJson = JSON.stringify(
+            parsed.filter((p) => p && typeof p.name === 'string' && p.name.trim())
+              .map((p) => ({ name: p.name.trim(), description: (p.description || '').trim(), priceEur: p.priceEur || '' }))
+          );
+        }
+      } catch {
+        packagesJson = '[]';
+      }
+    }
+
     if (!name) {
       return NextResponse.json({ error: 'Naziv benda je obavezan.' }, { status: 400 });
     }
@@ -125,6 +157,8 @@ export async function PUT(request) {
         ...(allowTips !== undefined ? { allowTips } : {}),
         ...(showRepertoire !== undefined ? { showRepertoire } : {}),
         ...(allowFullRepertoireLive !== undefined ? { allowFullRepertoireLive } : {}),
+        ...(galleryJson !== undefined ? { galleryJson } : {}),
+        ...(packagesJson !== undefined ? { packagesJson } : {}),
       },
       create: {
         id,
@@ -136,6 +170,8 @@ export async function PUT(request) {
         videoUrl: videoUrl || null,
         priceRange: priceRange || null,
         allowTips: allowTips !== undefined ? allowTips : true,
+        ...(galleryJson !== undefined ? { galleryJson } : {}),
+        ...(packagesJson !== undefined ? { packagesJson } : {}),
       },
     });
 

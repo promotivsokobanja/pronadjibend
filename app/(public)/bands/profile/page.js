@@ -1,8 +1,8 @@
 'use client';
 
-import { Save, ArrowLeft, Image as ImageIcon, Video, Mail, Phone, MessageSquare, Download, Lock, Trash2, ChevronDown, ExternalLink } from 'lucide-react';
+import { Save, ArrowLeft, Image as ImageIcon, Video, Mail, Phone, MessageSquare, Download, Lock, Trash2 } from 'lucide-react';
 import Link from 'next/link';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import SocialShareActions from '../../../../components/SocialShareActions';
 
@@ -25,6 +25,8 @@ export default function BandProfilePage() {
     showRepertoire: false,
     allowFullRepertoireLive: false,
   });
+  const [gallery, setGallery] = useState([]);
+  const [uploadingGallery, setUploadingGallery] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadingVideo, setUploadingVideo] = useState(false);
   const [imageProgress, setImageProgress] = useState(0);
@@ -33,6 +35,7 @@ export default function BandProfilePage() {
   const [confirmedBookings, setConfirmedBookings] = useState([]);
   const imageInputRef = useRef(null);
   const videoInputRef = useRef(null);
+  const galleryInputRef = useRef(null);
   
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [passwordData, setPasswordData] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
@@ -44,8 +47,6 @@ export default function BandProfilePage() {
   const [deleting, setDeleting] = useState(false);
   const [siteOrigin, setSiteOrigin] = useState('');
   const [viewerPlan, setViewerPlan] = useState('');
-  const [korgPaItems, setKorgPaItems] = useState([]);
-  const [showKorgDownloads, setShowKorgDownloads] = useState(false);
   const publicBandProfilePath = bandId ? `/clients/band/${bandId}` : '';
   const publicBandProfileUrl = publicBandProfilePath ? `${siteOrigin}${publicBandProfilePath}` : '';
   const isPremiumVenue = String(viewerPlan || '').toUpperCase() === 'PREMIUM_VENUE';
@@ -114,16 +115,11 @@ export default function BandProfilePage() {
           showRepertoire: band.showRepertoire || false,
           allowFullRepertoireLive: band.allowFullRepertoireLive || false,
         });
+        try {
+          const g = band.galleryJson ? JSON.parse(band.galleryJson) : [];
+          setGallery(Array.isArray(g) ? g : []);
+        } catch { setGallery([]); }
 
-        if (String(meData?.user?.plan || '').toUpperCase() === 'PREMIUM_VENUE') {
-          try {
-            const korgRes = await fetch('/api/korg-pa-sets', { cache: 'no-store' });
-            if (korgRes.ok) {
-              const korgData = await korgRes.json();
-              if (Array.isArray(korgData?.items)) setKorgPaItems(korgData.items);
-            }
-          } catch {}
-        }
       } catch (err) {
         setError('Ne mogu da učitam profil benda.');
       } finally {
@@ -137,13 +133,6 @@ export default function BandProfilePage() {
     setFormData((prev) => ({ ...prev, [key]: value }));
   };
 
-  const handleKorgDownload = useCallback((url) => {
-    const iframe = document.createElement('iframe');
-    iframe.style.display = 'none';
-    iframe.src = url;
-    document.body.appendChild(iframe);
-    setTimeout(() => iframe.remove(), 10000);
-  }, []);
 
   const handlePasswordChange = async (e) => {
     e.preventDefault();
@@ -207,7 +196,7 @@ export default function BandProfilePage() {
       const res = await fetch(`/api/bands/${resolvedBandId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, galleryJson: JSON.stringify(gallery) }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -340,6 +329,19 @@ export default function BandProfilePage() {
     handleUpload(file, kind);
   };
 
+  if (loading) {
+    return (
+      <div className="container" style={{ paddingTop: '9.5rem', paddingBottom: '5rem' }}>
+        <div className="profile-wrap">
+          <div className="state-box" style={{ textAlign: 'center', padding: '3rem 1rem' }}>
+            <div className="spinner" />
+            <p style={{ marginTop: '1rem', color: 'var(--text-muted, #94a3b8)' }}>Učitavanje profila...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container" style={{ paddingTop: '9.5rem', paddingBottom: '5rem' }}>
       <div className="profile-wrap">
@@ -351,7 +353,7 @@ export default function BandProfilePage() {
             </Link>
             <h1>Moj Profil Benda</h1>
             <p>Ovde uređujete slike, video i opis koji klijenti vide na platformi.</p>
-            {!loading && bandId && !adminNoBand ? (
+            {bandId && !adminNoBand ? (
               <div style={{ margin: '0.8rem 0 0.25rem' }}>
                 <SocialShareActions
                   url={publicBandProfileUrl || publicBandProfilePath}
@@ -360,7 +362,7 @@ export default function BandProfilePage() {
                 />
               </div>
             ) : null}
-            {!loading && bandId && !adminNoBand ? (
+            {bandId && !adminNoBand ? (
               <p className="profile-poster-hint">
                 <a
                   href={`/api/bands/${encodeURIComponent(bandId)}/marketing-poster`}
@@ -374,9 +376,7 @@ export default function BandProfilePage() {
           </div>
         </div>
 
-        {loading ? (
-          <div className="state-box">Učitavanje profila...</div>
-        ) : adminNoBand ? (
+        {adminNoBand ? (
           <div className="profile-card state-box" style={{ maxWidth: 520 }}>
             <p style={{ marginBottom: '1rem', color: 'var(--text-muted, #94a3b8)' }}>
               Ulogovani ste kao administrator — ovaj ekran služi za uređivanje javnog profila benda. Bez povezanog
@@ -441,60 +441,6 @@ export default function BandProfilePage() {
                   })}
                 </ul>
               </section>
-            )}
-
-            {isPremiumVenue && korgPaItems.length > 0 && (
-              <div className="korg-accordion">
-                <button
-                  type="button"
-                  className="korg-accordion-toggle"
-                  onClick={() => setShowKorgDownloads((prev) => !prev)}
-                >
-                  <div className="korg-toggle-icon">
-                    <Download size={18} />
-                  </div>
-                  <div style={{ flex: 1, textAlign: 'left' }}>
-                    <h3 className="korg-toggle-title">Korg PA setovi</h3>
-                    <p className="korg-toggle-sub">
-                      {korgPaItems.length} {korgPaItems.length === 1 ? 'set dostupan' : 'setova dostupno'} za download
-                    </p>
-                  </div>
-                  <ChevronDown
-                    size={18}
-                    style={{
-                      color: 'rgba(226,232,240,0.5)',
-                      transition: 'transform 0.25s ease',
-                      transform: showKorgDownloads ? 'rotate(180deg)' : 'rotate(0)',
-                    }}
-                  />
-                </button>
-                {showKorgDownloads && (
-                  <div className="korg-download-list">
-                    {korgPaItems.map((item) => (
-                      <div key={item.id || item.url} className="korg-download-item">
-                        <Download size={15} style={{ flexShrink: 0, color: '#8b5cf6' }} />
-                        <span className="korg-item-name">{item.name}</span>
-                        <button
-                          type="button"
-                          className="korg-dl-btn"
-                          onClick={() => handleKorgDownload(item.url)}
-                        >
-                          Preuzmi
-                        </button>
-                        <a
-                          href={item.url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="korg-ext-btn"
-                          title="Otvori u pregledaču"
-                        >
-                          <ExternalLink size={13} />
-                        </a>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
             )}
 
             <form onSubmit={handleSave} className="profile-card">
@@ -658,8 +604,76 @@ export default function BandProfilePage() {
                   )}
                 </div>
                 {formData.img && (
-                  <img src={formData.img} alt="Preview" className="preview-image" />
+                  <>
+                    <img src={formData.img} alt="Preview" className="preview-image" />
+                    <button
+                      type="button"
+                      className="btn-remove-media"
+                      onClick={() => handleChange('img', '')}
+                    >
+                      <Trash2 size={14} /> Obriši sliku
+                    </button>
+                  </>
                 )}
+              </div>
+
+              <div className="field gallery-field">
+                <label>
+                  <ImageIcon size={14} /> Galerija slika ({gallery.length}/8)
+                </label>
+                <div className="gallery-grid">
+                  {gallery.map((url, idx) => (
+                    <div key={idx} className="gallery-thumb">
+                      <img src={url} alt={`Galerija ${idx + 1}`} />
+                      <button
+                        type="button"
+                        className="gallery-remove-btn"
+                        onClick={() => setGallery((prev) => prev.filter((_, i) => i !== idx))}
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
+                  ))}
+                  {gallery.length < 8 && (
+                    <div
+                      className="gallery-add-btn"
+                      onClick={() => galleryInputRef.current?.click()}
+                    >
+                      <ImageIcon size={20} />
+                      <span>Dodaj</span>
+                    </div>
+                  )}
+                </div>
+                <input
+                  ref={galleryInputRef}
+                  type="file"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file || gallery.length >= 8) return;
+                    e.target.value = '';
+                    setUploadingGallery(true);
+                    try {
+                      const fd = new FormData();
+                      fd.append('file', file);
+                      fd.append('type', 'image');
+                      const r = await fetch('/api/media/upload', { method: 'POST', body: fd });
+                      const data = await r.json();
+                      if (r.ok && data.url) {
+                        setGallery((prev) => [...prev, data.url]);
+                      } else {
+                        setError(data?.error || 'Upload slike za galeriju nije uspeo.');
+                      }
+                    } catch {
+                      setError('Upload slike za galeriju nije uspeo.');
+                    } finally {
+                      setUploadingGallery(false);
+                    }
+                  }}
+                />
+                {uploadingGallery && <span className="field-hint">Upload u toku...</span>}
+                <small className="field-hint">Dodajte do 8 slika sa nastupa, svadbi i proslava.</small>
               </div>
 
               <div className="field">
@@ -671,11 +685,22 @@ export default function BandProfilePage() {
                   onChange={(e) => handleChange('videoUrl', e.target.value)}
                   placeholder="https://www.youtube.com/watch?v=..."
                 />
-                <small className="field-hint">
-                  {isPremiumVenue
-                    ? 'Prihvaćeni su YouTube, Vimeo i Cloudinary video linkovi.'
-                    : 'Upload videa je dostupan samo za Premium Venue članove.'}
-                </small>
+                <div className="field-hint-row">
+                  <small className="field-hint">
+                    {isPremiumVenue
+                      ? 'Prihvaćeni su YouTube, Vimeo i Cloudinary video linkovi.'
+                      : 'Upload videa je dostupan samo za Premium Venue članove.'}
+                  </small>
+                  {formData.videoUrl && (
+                    <button
+                      type="button"
+                      className="btn-remove-media"
+                      onClick={() => handleChange('videoUrl', '')}
+                    >
+                      <Trash2 size={14} /> Obriši video
+                    </button>
+                  )}
+                </div>
                 <div className="upload-row">
                   <input
                     ref={videoInputRef}
@@ -1090,6 +1115,62 @@ export default function BandProfilePage() {
           border-radius: 12px;
           border: 1px solid #e2e8f0;
         }
+        .gallery-field { grid-column: 1 / -1; }
+        .gallery-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+          gap: 0.5rem;
+          margin-top: 0.4rem;
+        }
+        .gallery-thumb {
+          position: relative;
+          aspect-ratio: 1;
+          border-radius: 10px;
+          overflow: hidden;
+          border: 1px solid #e2e8f0;
+        }
+        .gallery-thumb img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+        .gallery-remove-btn {
+          position: absolute;
+          top: 4px;
+          right: 4px;
+          width: 22px;
+          height: 22px;
+          border-radius: 50%;
+          background: rgba(220, 38, 38, 0.85);
+          color: #fff;
+          border: none;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          opacity: 0;
+          transition: opacity 0.15s;
+        }
+        .gallery-thumb:hover .gallery-remove-btn { opacity: 1; }
+        .gallery-add-btn {
+          aspect-ratio: 1;
+          border: 2px dashed #cbd5e1;
+          border-radius: 10px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 0.25rem;
+          cursor: pointer;
+          color: #64748b;
+          font-size: 0.72rem;
+          font-weight: 600;
+          transition: border-color 0.15s, color 0.15s;
+        }
+        .gallery-add-btn:hover {
+          border-color: #3b82f6;
+          color: #3b82f6;
+        }
         .video-preview {
           margin-top: 0.4rem;
           width: 100%;
@@ -1097,6 +1178,31 @@ export default function BandProfilePage() {
           border: 1px solid #e2e8f0;
           border-radius: 12px;
           background: #000;
+        }
+        .btn-remove-media {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.35rem;
+          margin-top: 0.4rem;
+          padding: 0.35rem 0.7rem;
+          font-size: 0.78rem;
+          font-weight: 700;
+          color: #dc2626;
+          background: rgba(220, 38, 38, 0.08);
+          border: 1px solid rgba(220, 38, 38, 0.2);
+          border-radius: 8px;
+          cursor: pointer;
+          transition: background 0.15s;
+        }
+        .btn-remove-media:hover {
+          background: rgba(220, 38, 38, 0.15);
+        }
+        .field-hint-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          flex-wrap: wrap;
+          gap: 0.4rem;
         }
         .save-btn { width: fit-content; margin-top: 0.2rem; gap: 0.5rem; }
         .state-box {
@@ -1106,6 +1212,18 @@ export default function BandProfilePage() {
           color: #64748b;
           background: #f8fafc;
           font-weight: 600;
+        }
+        .spinner {
+          width: 32px;
+          height: 32px;
+          border: 3px solid #e2e8f0;
+          border-top-color: #3b82f6;
+          border-radius: 50%;
+          animation: spin 0.7s linear infinite;
+          margin: 0 auto;
+        }
+        @keyframes spin {
+          to { transform: rotate(360deg); }
         }
         .alert {
           border-radius: 10px;

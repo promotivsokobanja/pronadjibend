@@ -184,7 +184,8 @@ export async function GET(request) {
         }));
       }
     } catch (dbErr) {
-      console.error('DB Error (falling back to demos only):', dbErr);
+      console.error('DB Error (falling back to demos only):', dbErr?.message || dbErr);
+      console.error('Full DB Error:', JSON.stringify(dbErr, null, 2));
     }
 
     const demos = includeDemos

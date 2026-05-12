@@ -2,6 +2,8 @@ import AboutClient from './AboutClient';
 import { getSiteUrl } from '@/lib/siteUrl';
 import { getContactInfo } from '@/lib/siteConfig';
 
+export const dynamic = 'force-dynamic';
+
 const siteUrl = getSiteUrl();
 
 export const metadata = {

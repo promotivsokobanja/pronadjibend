@@ -1,5 +1,5 @@
 'use client';
-import { Mail, Phone, MapPin, Calendar, Star, Send, Shield, Music, Video, Info, User, MessageSquare, ArrowLeft } from 'lucide-react';
+import { Mail, Phone, MapPin, Calendar, Star, Send, Shield, Music, Video, Info, User, MessageSquare, ArrowLeft, Image as ImageIcon, BadgeCheck } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import BookingCalendar from '../../../../../components/BookingCalendar';
@@ -9,6 +9,40 @@ import PublicRepertoire from '../../../../../components/PublicRepertoire';
 const BOOKING_MESSAGE_MAX = 500;
 const MAX_BOOKING_DATES = 14;
 const REVIEW_COMMENT_MAX = 250;
+
+function getVideoEmbedUrl(url) {
+  if (!url) return '';
+  try {
+    const parsed = new URL(url);
+    const host = parsed.hostname.toLowerCase();
+    if (host.includes('youtu.be')) {
+      const id = parsed.pathname.split('/').filter(Boolean)[0];
+      return id ? `https://www.youtube.com/embed/${id}` : '';
+    }
+    if (host.includes('youtube.com') || host.includes('youtube-nocookie.com')) {
+      const id = parsed.searchParams.get('v');
+      if (id) return `https://www.youtube.com/embed/${id}`;
+      const short = parsed.pathname.split('/embed/')[1];
+      return short ? `https://www.youtube.com/embed/${short}` : '';
+    }
+    if (host.includes('vimeo.com')) {
+      const segments = parsed.pathname.split('/').filter(Boolean);
+      const id = segments[segments.length - 1];
+      return id && /^\d+$/.test(id) ? `https://player.vimeo.com/video/${id}` : '';
+    }
+    return '';
+  } catch {
+    return '';
+  }
+}
+
+function isCloudinaryVideo(url) {
+  try {
+    return new URL(url).hostname.toLowerCase().includes('res.cloudinary.com');
+  } catch {
+    return false;
+  }
+}
 
 function formatDateKeySr(ymd) {
   const m = String(ymd).match(/^(\d{4})-(\d{2})-(\d{2})/);
@@ -34,6 +68,10 @@ export default function BandProfileClient({ params, initialBand = null }) {
   const [bookingStatus, setBookingStatus] = useState('');
   const [reviewForm, setReviewForm] = useState({ author: '', rating: 5, comment: '' });
   const [reviewStatus, setReviewStatus] = useState('');
+
+  // Contact message state
+  const [contactForm, setContactForm] = useState({ senderName: '', senderEmail: '', subject: '', body: '' });
+  const [contactStatus, setContactStatus] = useState('');
 
   // Musician invite state
   const [isMusicianAccount, setIsMusicianAccount] = useState(false);
@@ -72,6 +110,24 @@ export default function BandProfileClient({ params, initialBand = null }) {
       setInviteResult(err.message);
     } finally {
       setInviteSending(false);
+    }
+  };
+
+  const handleContactSend = async (e) => {
+    e.preventDefault();
+    setContactStatus('sending');
+    try {
+      const resp = await fetch('/api/contact-messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bandId: params.id, ...contactForm }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error || 'Greška');
+      setContactStatus('success');
+      setContactForm({ senderName: '', senderEmail: '', subject: '', body: '' });
+    } catch (err) {
+      setContactStatus(err.message);
     }
   };
 
@@ -244,7 +300,7 @@ export default function BandProfileClient({ params, initialBand = null }) {
           <div className="hero-grid">
             <div className="hero-content">
               <span className="badge">{band.genre}</span>
-              <h1 className="band-name">{band.name}</h1>
+              <h1 className="band-name">{band.name}{band.verified && <BadgeCheck size={28} className="verified-badge" />}</h1>
               <div className="rating-pill">
                 <Star size={16} fill="var(--accent-primary)" />
                 <span>{band.rating.toFixed(1)}</span>
@@ -263,6 +319,13 @@ export default function BandProfileClient({ params, initialBand = null }) {
                   text={`Pogledaj profil benda ${band.name} na platformi Pronađi Bend.`}
                 />
               </div>
+              {band.audioUrl && (
+                <div className="audio-snippet">
+                  <Music size={16} />
+                  <span className="audio-snippet-label">Demo snimak</span>
+                  <audio controls preload="none" src={band.audioUrl} style={{ flex: 1, height: 32, minWidth: 0 }} />
+                </div>
+              )}
             </div>
             
             <div className="booking-card glass-card">
@@ -373,26 +436,130 @@ export default function BandProfileClient({ params, initialBand = null }) {
                 )}
               </div>
             )}
+
+            <div className="booking-card glass-card" style={{ marginTop: '1.2rem' }}>
+              <h2><Mail size={20} /> Pošaljite poruku bendu</h2>
+              <p style={{ color: '#94a3b8', fontSize: '0.82rem', marginBottom: '1rem' }}>Imate pitanje? Kontaktirajte bend direktno.</p>
+              {contactStatus === 'success' ? (
+                <p style={{ color: '#10b981', fontWeight: 700 }}>Poruka je uspešno poslata!</p>
+              ) : (
+                <form onSubmit={handleContactSend}>
+                  <div className="input-group">
+                    <User size={18} />
+                    <input type="text" placeholder="Vaše ime" required value={contactForm.senderName} onChange={e => setContactForm(p => ({ ...p, senderName: e.target.value }))} />
+                  </div>
+                  <div className="input-group">
+                    <Mail size={18} />
+                    <input type="email" placeholder="Vaš email" required value={contactForm.senderEmail} onChange={e => setContactForm(p => ({ ...p, senderEmail: e.target.value }))} />
+                  </div>
+                  <div className="input-group">
+                    <Info size={18} />
+                    <input type="text" placeholder="Naslov (opciono)" value={contactForm.subject} onChange={e => setContactForm(p => ({ ...p, subject: e.target.value }))} />
+                  </div>
+                  <div className="input-group input-group-textarea">
+                    <MessageSquare size={18} className="textarea-icon" />
+                    <div className="textarea-wrap">
+                      <textarea rows={3} maxLength={1000} required placeholder="Vaša poruka..." value={contactForm.body} onChange={e => setContactForm(p => ({ ...p, body: e.target.value }))} />
+                      <span className="char-count">{contactForm.body.length} / 1000</span>
+                    </div>
+                  </div>
+                  {contactStatus && contactStatus !== 'sending' && contactStatus !== 'success' && (
+                    <p style={{ color: '#f87171', fontSize: '0.82rem' }}>{contactStatus}</p>
+                  )}
+                  <button className="btn btn-primary btn-full" type="submit" disabled={contactStatus === 'sending'}>
+                    {contactStatus === 'sending' ? 'Slanje...' : 'Pošalji poruku'}
+                  </button>
+                </form>
+              )}
+            </div>
           </div>
         </div>
       </section>
+
+      {(() => {
+        let galleryImages = [];
+        try { galleryImages = band.galleryJson ? JSON.parse(band.galleryJson) : []; } catch {}
+        if (!Array.isArray(galleryImages) || galleryImages.length === 0) return null;
+        return (
+          <section className="media-section container">
+            <div className="section-header">
+              <h2><ImageIcon size={24} /> Galerija</h2>
+            </div>
+            <div className="public-gallery-grid">
+              {galleryImages.map((url, idx) => (
+                <div key={idx} className="public-gallery-item">
+                  <img src={url} alt={`${band.name} galerija ${idx + 1}`} loading="lazy" />
+                </div>
+              ))}
+            </div>
+          </section>
+        );
+      })()}
+
+      {(() => {
+        let packages = [];
+        try { packages = band.packagesJson ? JSON.parse(band.packagesJson) : []; } catch {}
+        if (!Array.isArray(packages) || packages.length === 0) return null;
+        return (
+          <section className="media-section container">
+            <div className="section-header">
+              <h2><Info size={24} /> Paketi Nastupa</h2>
+            </div>
+            <div className="packages-grid">
+              {packages.map((pkg, idx) => (
+                <div key={idx} className="package-card glass-card">
+                  <h3 className="package-name">{pkg.name}</h3>
+                  {pkg.description && <p className="package-desc">{pkg.description}</p>}
+                  {pkg.priceEur && <div className="package-price">{pkg.priceEur}€</div>}
+                </div>
+              ))}
+            </div>
+          </section>
+        );
+      })()}
 
       <section className="media-section container">
         <div className="section-header">
           <h2><Video size={24} /> Video Nastupi</h2>
         </div>
         <div className="video-grid">
-          {band.videoUrl ? (
-             <iframe 
-                width="100%" 
-                height="315" 
-                src={`https://www.youtube.com/embed/${band.videoUrl.split('v=')[1]}`} 
-                title={`Video nastup benda ${band.name}`}
-                frameBorder="0" 
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                allowFullScreen
-              ></iframe>
-          ) : (
+          {band.videoUrl ? (() => {
+            const embedUrl = getVideoEmbedUrl(band.videoUrl);
+            if (embedUrl && embedUrl.includes('youtube')) {
+              return (
+                <iframe
+                  width="100%"
+                  height="315"
+                  src={embedUrl}
+                  title={`Video nastup benda ${band.name}`}
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              );
+            }
+            if (embedUrl && embedUrl.includes('vimeo')) {
+              return (
+                <iframe
+                  width="100%"
+                  height="315"
+                  src={embedUrl}
+                  title={`Video nastup benda ${band.name}`}
+                  frameBorder="0"
+                  allow="autoplay; fullscreen; picture-in-picture"
+                  allowFullScreen
+                />
+              );
+            }
+            if (isCloudinaryVideo(band.videoUrl)) {
+              return (
+                <video width="100%" height="315" controls preload="metadata" src={band.videoUrl}>
+                  Vaš browser ne podržava video.
+                </video>
+              );
+            }
+            return <div className="no-media glass-card">Format videa nije prepoznat.</div>;
+          })() : (
             <div className="no-media glass-card">Trenutno nema video zapisa.</div>
           )}
         </div>
@@ -569,6 +736,15 @@ export default function BandProfileClient({ params, initialBand = null }) {
           color: #f8fafc;
           line-height: 1.04;
           word-break: break-word;
+          display: flex;
+          align-items: center;
+          gap: 0.4rem;
+          flex-wrap: wrap;
+        }
+        .verified-badge {
+          color: #3b82f6;
+          flex-shrink: 0;
+          filter: drop-shadow(0 0 6px rgba(59, 130, 246, 0.4));
         }
         
         .rating-pill {
@@ -606,6 +782,25 @@ export default function BandProfileClient({ params, initialBand = null }) {
           margin-top: 1rem;
           border-top: 1px solid rgba(255,255,255,0.06);
           padding-top: 0.9rem;
+        }
+        .audio-snippet {
+          display: flex;
+          align-items: center;
+          gap: 0.6rem;
+          margin-top: 0.8rem;
+          padding: 0.6rem 0.8rem;
+          border-radius: 12px;
+          background: rgba(139, 92, 246, 0.08);
+          border: 1px solid rgba(139, 92, 246, 0.15);
+        }
+        .audio-snippet-label {
+          font-size: 0.78rem;
+          font-weight: 700;
+          color: #c4b5fd;
+          white-space: nowrap;
+        }
+        .audio-snippet audio {
+          border-radius: 8px;
         }
         
         .meta-item {
@@ -817,6 +1012,35 @@ export default function BandProfileClient({ params, initialBand = null }) {
           border-color: #8b5cf6;
           box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
         }
+        .packages-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+          gap: 1rem;
+        }
+        .package-card {
+          padding: 1.2rem;
+          border-radius: 16px;
+          border: 1px solid rgba(255,255,255,0.08);
+          background: rgba(255,255,255,0.03);
+          text-align: center;
+        }
+        .package-name {
+          font-size: 1.05rem;
+          font-weight: 800;
+          color: #f1f5f9;
+          margin-bottom: 0.5rem;
+        }
+        .package-desc {
+          font-size: 0.85rem;
+          color: #94a3b8;
+          line-height: 1.5;
+          margin-bottom: 0.75rem;
+        }
+        .package-price {
+          font-size: 1.6rem;
+          font-weight: 800;
+          color: #8b5cf6;
+        }
         .star-picker {
           display: flex;
           gap: 0.2rem;
@@ -858,6 +1082,29 @@ export default function BandProfileClient({ params, initialBand = null }) {
           grid-column: 1 / -1;
         }
         
+        .public-gallery-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+          gap: 0.75rem;
+        }
+        .public-gallery-item {
+          aspect-ratio: 4/3;
+          border-radius: 14px;
+          overflow: hidden;
+          border: 1px solid #e2e8f0;
+          cursor: pointer;
+          transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .public-gallery-item:hover {
+          transform: scale(1.02);
+          box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .public-gallery-item img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
         .video-grid { 
           border-radius: 20px;
           overflow: hidden; 
@@ -904,6 +1151,8 @@ export default function BandProfileClient({ params, initialBand = null }) {
           .band-name { font-size: 2.35rem; }
           .reviews-grid { grid-template-columns: 1fr; }
           .booking-card { position: static; margin-top: 0.4rem; }
+          .packages-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+          .public-gallery-grid { grid-template-columns: repeat(2, 1fr); }
         }
 
         @media (max-width: 640px) {
@@ -927,6 +1176,15 @@ export default function BandProfileClient({ params, initialBand = null }) {
             padding: 0.9rem;
             border-radius: 14px;
           }
+          .packages-grid { grid-template-columns: 1fr; gap: 0.75rem; }
+          .package-card { padding: 1rem; }
+          .package-price { font-size: 1.3rem; }
+          .public-gallery-grid { grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+          .public-gallery-item { border-radius: 10px; height: 140px; }
+          .audio-snippet { padding: 0.6rem 0.8rem; }
+          .audio-snippet audio { height: 32px; }
+          .hero-share-row { flex-wrap: wrap; gap: 0.5rem; }
+          .contact-form-section { padding: 1rem; }
         }
       `}</style>
     </div>

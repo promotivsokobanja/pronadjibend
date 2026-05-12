@@ -7,12 +7,14 @@ const STATUS_LABELS = {
   PENDING_QR: 'Čeka uplatu',
   CONFIRMED: 'Potvrđeno',
   INVOICE_SENT: 'Račun poslat',
+  EXPIRED: 'Isteklo',
 };
 
 const STATUS_CLASS = {
   PENDING_QR: 'admin-status admin-status-warn',
   CONFIRMED: 'admin-status admin-status-on',
   INVOICE_SENT: 'admin-status admin-status-on',
+  EXPIRED: 'admin-status',
 };
 
 export default function AdminPaymentsPage() {
@@ -71,7 +73,7 @@ export default function AdminPaymentsPage() {
     <>
       <h1>Uplate</h1>
       <p className="admin-sub">
-        Evidencija generisanih IPS QR kodova i potvrda uplata.
+        Evidencija svih uplata (IPS QR i ručno bankarstvo). Potvrdite kad novac legne na račun.
       </p>
 
       <div className="admin-toolbar">
@@ -88,6 +90,7 @@ export default function AdminPaymentsPage() {
           <option value="PENDING_QR">Čeka uplatu</option>
           <option value="CONFIRMED">Potvrđeno</option>
           <option value="INVOICE_SENT">Račun poslat</option>
+          <option value="EXPIRED">Isteklo</option>
         </select>
       </div>
 

@@ -1,6 +1,7 @@
 import prisma from '../../../../lib/prisma';
 import { NextResponse } from 'next/server';
 import { isDemoBandId } from '../../../../lib/demoBands';
+import { createNotification } from '../../../../lib/notifications';
 
 export const dynamic = 'force-dynamic';
 
@@ -75,6 +76,21 @@ export async function POST(request) {
       where: { id: bandId },
       data: { rating: averageRating }
     });
+
+    // In-app notification for band owner
+    const bandUser = await prisma.user.findFirst({
+      where: { bandId },
+      select: { id: true },
+    });
+    if (bandUser) {
+      createNotification({
+        userId: bandUser.id,
+        type: 'REVIEW_NEW',
+        title: `Nova recenzija od ${authorTrim}`,
+        body: `Ocena: ${'★'.repeat(r)}${'☆'.repeat(5 - r)}${commentStored ? ` — „${commentStored.slice(0, 60)}${commentStored.length > 60 ? '…' : ''}"` : ''}`,
+        link: `/clients/band/${bandId}`,
+      }).catch(() => {});
+    }
 
     return NextResponse.json({ success: true, review, rating: averageRating });
   } catch (error) {

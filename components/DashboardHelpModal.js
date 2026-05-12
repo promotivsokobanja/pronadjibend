@@ -31,6 +31,7 @@ export default function DashboardHelpModal({ onClose, role = 'band' }) {
                 Ulazak u <strong>Live panel</strong> tokom svirke. Gosti skeniraju vaš QR kod i šalju
                 zahteve za pesme — vi ih prihvatate, preskačete ili označavate kao odsvirane.
                 Ima ugrađenu pesmaricu, set liste, noćni režim i zvučna obaveštenja.
+                {' '}<strong>Basic:</strong> do 3 zahteva po sesiji. <strong>Premium:</strong> neograničeno.
               </p>
             </div>
           </section>
@@ -46,18 +47,18 @@ export default function DashboardHelpModal({ onClose, role = 'band' }) {
             </div>
           </section>
 
-          {isMusician && (
-            <section className="help-item">
-              <div className="help-icon"><Music size={20} /></div>
-              <div className="help-text">
-                <h3>Moj repertoar</h3>
-                <p>
-                  Vaš lični izbor pesama iz pesmarice — pesme koje izvodite. Ovo je lista koju
-                  gosti vide kad otvore vaš live link.
-                </p>
-              </div>
-            </section>
-          )}
+          <section className="help-item">
+            <div className="help-icon"><Music size={20} /></div>
+            <div className="help-text">
+              <h3>Moj repertoar</h3>
+              <p>
+                Vaš lični izbor pesama — pesme koje izvodite. Gosti ih vide kad otvore vaš live link.
+                Dugme <strong>&bdquo;Preuzmi repertoar&ldquo;</strong> generiše .txt fajl sa celim spiskom pesama
+                grupisan po kategorijama — možete ga odštampati ili podeliti.
+                {' '}<strong>Premium</strong> korisnici mogu dodavati pesme iz globalne baze i bulk unos liste.
+              </p>
+            </div>
+          </section>
 
           <section className="help-item">
             <div className="help-icon"><FileMusic size={20} /></div>
@@ -66,6 +67,8 @@ export default function DashboardHelpModal({ onClose, role = 'band' }) {
               <p>
                 Biblioteka vaših <strong>MIDI matrica i sempova</strong>. Možete ih uploadovati,
                 organizovati i brzo preuzeti pre nastupa.
+                {' '}<strong>Basic</strong> korisnici mogu pregledati biblioteku (bez downloada),
+                dok <strong>Premium</strong> omogućava upload i download.
               </p>
             </div>
           </section>
@@ -148,6 +151,8 @@ export default function DashboardHelpModal({ onClose, role = 'band' }) {
               Za stalne klijente — uredite profil i javite dostupne datume u kalendaru.
               Kada klijent pošalje upit, prihvatite ga i potvrdite — klijent automatski dobija email potvrdu.
               Za saradnje sa muzičarima, redovno odgovorite na pozive jer stari PENDING pozivi automatski ističu.
+              Preuzmite svoj repertoar kao .txt fajl za deljenje ili štampu.
+              Za neograničen Live Request, MIDI download i chat — nadogradite na Premium (stranica Upgrade).
             </span>
           </div>
         </div>

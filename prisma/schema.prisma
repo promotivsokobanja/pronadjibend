@@ -27,6 +27,9 @@ model User {
   musicianProfile MusicianProfile?
   messages        Message[]
   payments        Payment[]
+  notifications   Notification[]
+  referralCode    String?          @unique
+  referredBy      String?          // referral code of the user who referred this user
 }
 
 model Band {
@@ -43,6 +46,10 @@ model Band {
   qrToken            String?          @unique // For active session
   rating             Float            @default(0)
   img                String?
+  galleryJson        String?          // JSON array of image URLs for gallery
+  packagesJson       String?          // JSON array of {name, description, priceEur} for pricing packages
+  profileViews       Int              @default(0)
+  verified           Boolean          @default(false)
   isPaid             Boolean          @default(false)
   plan               String           @default("FREE")
   /// Gost na live stranici vidi korak bakšiša uz narudžbinu pesme + „Časti bend”
@@ -367,4 +374,48 @@ model Payment {
 
   @@index([userId, createdAt])
   @@index([status])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String   // "BOOKING_NEW", "BOOKING_CONFIRMED", "INVITE_RECEIVED", "INVITE_ACCEPTED", "REVIEW_NEW", "SYSTEM"
+  title     String
+  body      String?
+  link      String?  // URL to navigate when clicked
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([userId, read, createdAt])
+}
+
+model BlogPost {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  excerpt     String?
+  body        String   // Markdown content
+  coverImage  String?
+  published   Boolean  @default(false)
+  authorName  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([published, createdAt])
+}
+
+model ContactMessage {
+  id          String   @id @default(cuid())
+  bandId      String
+  senderName  String
+  senderEmail String
+  senderPhone String?
+  subject     String?
+  body        String
+  read        Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@index([bandId, createdAt])
 }

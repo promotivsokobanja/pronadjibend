@@ -1,13 +1,15 @@
 'use client';
-import { Shield, Zap, Music, Search, CalendarCheck, Handshake, Mail, Instagram, Facebook } from 'lucide-react';
+import { Shield, Zap, Music, Search, CalendarCheck, Handshake, Mail, Instagram, Facebook, Phone, MapPin } from 'lucide-react';
 import Link from 'next/link';
 
 export default function AboutClient({ contactInfo = {} }) {
-  const email = contactInfo.email || 'info@pronadjibend.rs';
-  const instagramUrl = contactInfo.instagram || 'https://www.instagram.com/pronadjibend';
-  const facebookUrl = contactInfo.facebook || 'https://www.facebook.com/pronadjibend';
-  const instagramHandle = instagramUrl.replace(/\/+$/, '').split('/').pop() || 'pronadjibend';
-  const facebookHandle = facebookUrl.replace(/\/+$/, '').split('/').pop() || 'PronadjiBend';
+  const email = contactInfo.email || 'office@pronadjibend.rs';
+  const phone = contactInfo.phone || '+381 64 339 2339';
+  const location = contactInfo.location || 'Sokobanja, Srbija';
+  const instagramUrl = contactInfo.instagram || '';
+  const facebookUrl = contactInfo.facebook || '';
+  const instagramHandle = instagramUrl ? (instagramUrl.replace(/\/+$/, '').split('/').pop() || '') : '';
+  const facebookHandle = facebookUrl ? (facebookUrl.replace(/\/+$/, '').split('/').pop() || '') : '';
   const values = [
     { icon: Shield, title: 'Sigurnost i Poverenje', desc: 'Svi naši bendovi su provereni, a klijenti zaštićeni jasnim ugovorima o nastupu.' },
     { icon: Zap, title: 'Brza Rezervacija', desc: 'Od prvog klika do dogovorenog termina u manje od 24 časa.' },
@@ -147,14 +149,30 @@ export default function AboutClient({ contactInfo = {} }) {
             <Mail size={18} />
             {email}
           </a>
-          <a href={instagramUrl} target="_blank" rel="noopener noreferrer" className="contact-link">
-            <Instagram size={18} />
-            @{instagramHandle}
-          </a>
-          <a href={facebookUrl} target="_blank" rel="noopener noreferrer" className="contact-link">
-            <Facebook size={18} />
-            {facebookHandle}
-          </a>
+          {phone && (
+            <a href={`tel:${phone.replace(/\s/g, '')}`} className="contact-link">
+              <Phone size={18} />
+              {phone}
+            </a>
+          )}
+          {location && (
+            <span className="contact-link" style={{ cursor: 'default' }}>
+              <MapPin size={18} />
+              {location}
+            </span>
+          )}
+          {instagramUrl && (
+            <a href={instagramUrl} target="_blank" rel="noopener noreferrer" className="contact-link">
+              <Instagram size={18} />
+              @{instagramHandle}
+            </a>
+          )}
+          {facebookUrl && (
+            <a href={facebookUrl} target="_blank" rel="noopener noreferrer" className="contact-link">
+              <Facebook size={18} />
+              {facebookHandle}
+            </a>
+          )}
         </div>
       </section>
 

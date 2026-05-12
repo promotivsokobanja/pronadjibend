@@ -3,6 +3,7 @@ import prisma from '@/lib/prisma';
 import { getAuthUserFromRequest } from '@/lib/auth';
 import { countActiveInvitesForSender, expireStaleInvites, findInviteBlock, getInviteCommunicationSettings, getInviteLimitForPlan } from '@/lib/inviteCommunication';
 import { sendMusicianInviteNotificationEmail } from '@/lib/sendMusicianInviteNotificationEmail';
+import { createNotification } from '@/lib/notifications';
 
 export const dynamic = 'force-dynamic';
 
@@ -132,6 +133,17 @@ export async function POST(request) {
           musician: { select: { id: true, name: true, primaryInstrument: true } },
         },
       });
+      // In-app notification for musician
+      if (musician.userId) {
+        createNotification({
+          userId: musician.userId,
+          type: 'INVITE_RECEIVED',
+          title: `Pozivnica od benda ${currentUser.band?.name || 'Bend'}`,
+          body: eventDate ? `Datum: ${eventDate.toISOString().split('T')[0]}${location ? ` • ${location}` : ''}` : (location || null),
+          link: '/muzicari/profil',
+        }).catch(() => {});
+      }
+
       try {
         await sendMusicianInviteNotificationEmail({
           recipientEmail: musician.user?.email,
@@ -185,6 +197,17 @@ export async function POST(request) {
           senderMusician: { select: { id: true, name: true, primaryInstrument: true } },
         },
       });
+      // In-app notification for band owner
+      if (band.user?.id) {
+        createNotification({
+          userId: band.user.id,
+          type: 'INVITE_RECEIVED',
+          title: `Pozivnica od muzičara ${currentUser.musicianProfile?.name || 'Muzičar'}`,
+          body: eventDate ? `Datum: ${eventDate.toISOString().split('T')[0]}${location ? ` • ${location}` : ''}` : (location || null),
+          link: '/bands',
+        }).catch(() => {});
+      }
+
       try {
         await sendMusicianInviteNotificationEmail({
           recipientEmail: band.user?.email,

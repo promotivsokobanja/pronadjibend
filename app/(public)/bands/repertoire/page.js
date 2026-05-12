@@ -1,5 +1,5 @@
 'use client';
-import { Music, Search, Plus, Trash2, ArrowLeft, Edit2, X, FileText } from 'lucide-react';
+import { Music, Search, Plus, Trash2, ArrowLeft, Edit2, X, FileText, Lock, FileDown } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
@@ -97,6 +97,7 @@ export default function RepertoirePage() {
   const [globalMatches, setGlobalMatches] = useState([]);
   const [bandId, setBandId] = useState(null);
   const [musicianId, setMusicianId] = useState(null);
+  const [userPlan, setUserPlan] = useState('BASIC');
   const [showGlobalDropdown, setShowGlobalDropdown] = useState(false);
   const [showBulkImportModal, setShowBulkImportModal] = useState(false);
   const [bulkSongList, setBulkSongList] = useState('');
@@ -106,6 +107,7 @@ export default function RepertoirePage() {
   const [bulkImportSaving, setBulkImportSaving] = useState(false);
   const [bulkImportCategory, setBulkImportCategory] = useState('Muške Zabavne');
   const [isDeletingAllSongs, setIsDeletingAllSongs] = useState(false);
+  const [pageReady, setPageReady] = useState(false);
   const ownerId = bandId || musicianId;
   const searchBoxRef = useRef(null);
   const dashboardHref = musicianId ? '/muzicari/profil' : '/bands';
@@ -118,8 +120,11 @@ export default function RepertoirePage() {
         const { user } = await r.json();
         if (user?.bandId) setBandId(user.bandId);
         else if (user?.musicianProfileId) setMusicianId(user.musicianProfileId);
+        setUserPlan(String(user?.plan || 'BASIC').toUpperCase());
       } catch {
         /* ignore */
+      } finally {
+        setPageReady(true);
       }
     })();
   }, []);
@@ -434,6 +439,89 @@ export default function RepertoirePage() {
     }
   };
 
+  const handleDownloadRepertoire = async () => {
+    if (!ownerId) return;
+    try {
+      const ownerParam = bandId ? `bandId=${encodeURIComponent(bandId)}` : `musicianId=${encodeURIComponent(musicianId)}`;
+      const [songsResp, profileResp] = await Promise.all([
+        fetch(`/api/songs?${ownerParam}`, { cache: 'no-store' }),
+        bandId ? fetch(`/api/bands/${bandId}`, { cache: 'no-store' }) : fetch(`/api/musicians/${musicianId}`, { cache: 'no-store' }),
+      ]);
+      const allSongs = await songsResp.json().then(d => Array.isArray(d) ? d : []);
+      const profile = await profileResp.json().catch(() => ({}));
+      const name = profile?.name || 'Moj repertoar';
+      const city = profile?.city || '';
+      const phone = profile?.phone || profile?.contactPhone || '';
+      const email = profile?.email || profile?.contactEmail || '';
+
+      const grouped = {};
+      allSongs.forEach(s => {
+        const cat = s.category || 'Ostalo';
+        if (!grouped[cat]) grouped[cat] = [];
+        grouped[cat].push(s);
+      });
+
+      const catOrder = ['Muške Zabavne', 'Ženske Zabavne', 'Muške Narodne', 'Ženske Narodne', 'Strane', 'Ostalo'];
+      const sortedCats = Object.keys(grouped).sort((a, b) => {
+        const ia = catOrder.indexOf(a), ib = catOrder.indexOf(b);
+        return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+      });
+
+      const today = new Date().toLocaleDateString('sr-RS');
+      let lines = [];
+      lines.push(`REPERTOAR — ${name}`);
+      lines.push('='.repeat(40));
+      if (city || phone || email) {
+        const meta = [city, phone, email].filter(Boolean).join(' | ');
+        lines.push(meta);
+      }
+      lines.push(`Ukupno pesama: ${allSongs.length}`);
+      lines.push(`Datum: ${today}`);
+      lines.push('');
+
+      sortedCats.forEach(cat => {
+        const catSongs = grouped[cat].sort((a, b) => (a.title || '').localeCompare(b.title || '', 'sr'));
+        lines.push('');
+        lines.push(`── ${cat} (${catSongs.length}) ──`);
+        lines.push('-'.repeat(30));
+        catSongs.forEach((s, i) => {
+          const artist = s.artist ? ` — ${s.artist}` : '';
+          lines.push(`${String(i + 1).padStart(3)}. ${s.title || ''}${artist}`);
+        });
+      });
+
+      lines.push('');
+      lines.push('-'.repeat(40));
+      lines.push(`PronadjiBend.rs | ${today}`);
+
+      const text = lines.join('\n');
+      const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Repertoar - ${name}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Download repertoire error:', err);
+      alert('Greška pri preuzimanju repertoara.');
+    }
+  };
+
+  if (!pageReady) {
+    return (
+      <div className="repertoire-container container" style={{ paddingTop: '8rem', minHeight: '100vh' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1.5rem', paddingTop: '6rem' }}>
+          <div style={{ width: 36, height: 36, border: '3px solid rgba(99,102,241,0.2)', borderTopColor: '#6366f1', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+          <p style={{ color: '#94a3b8', fontSize: '0.9rem', fontWeight: 600 }}>Učitavanje repertoara...</p>
+        </div>
+        <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
+
   return (
     <div className="repertoire-container container">
       <div className="blob" style={{ top: '10%', right: '0' }}></div>
@@ -482,13 +570,15 @@ export default function RepertoirePage() {
                         key={`global-${m.id}`}
                         type="button"
                         className="global-dropdown-item"
-                        onClick={() => handleQuickAdd(m)}
+                        onClick={() => userPlan.startsWith('PREMIUM') ? handleQuickAdd(m) : router.push('/upgrade')}
                       >
                         <span className="global-dropdown-copy">
                           <span className="global-dropdown-title">{m.title}</span>
                           <span className="global-dropdown-artist">{m.artist}</span>
                         </span>
-                        <span className="global-dropdown-cta">Dodaj</span>
+                        <span className="global-dropdown-cta">
+                          {userPlan.startsWith('PREMIUM') ? 'Dodaj' : <Lock size={12} />}
+                        </span>
                       </button>
                     ))
                   ) : (
@@ -501,22 +591,41 @@ export default function RepertoirePage() {
           <div className="header-cta-group">
             <button
               type="button"
+              className="btn btn-secondary"
+              onClick={handleDownloadRepertoire}
+              disabled={!ownerId}
+              title="Preuzmi repertoar za štampu"
+            >
+              <FileDown size={18} /> Preuzmi repertoar
+            </button>
+            <button
+              type="button"
               className="btn btn-danger-outline"
               onClick={removeAllSongs}
               disabled={isDeletingAllSongs || songs.length === 0}
             >
               {isDeletingAllSongs ? 'Brišem listu...' : 'Obriši ceo repertoar'}
             </button>
-            <button
-              type="button"
-              className="btn btn-secondary bulk-add-btn"
-              onClick={() => setShowBulkImportModal(true)}
-            >
-              <FileText size={18} /> Dodaj listu pesama
-            </button>
-            <Link href="/bands/song/new">
-              <button className="btn btn-primary"><Plus size={18} /> Dodaj Novu</button>
-            </Link>
+            {userPlan.startsWith('PREMIUM') ? (
+              <>
+                <button
+                  type="button"
+                  className="btn btn-secondary bulk-add-btn"
+                  onClick={() => setShowBulkImportModal(true)}
+                >
+                  <FileText size={18} /> Dodaj listu pesama
+                </button>
+                <Link href="/bands/song/new">
+                  <button className="btn btn-primary"><Plus size={18} /> Dodaj Novu</button>
+                </Link>
+              </>
+            ) : (
+              <Link href="/upgrade">
+                <button className="btn btn-primary" title="Dodavanje pesama zahteva Premium plan">
+                  <Lock size={16} /> Dodaj (Premium)
+                </button>
+              </Link>
+            )}
           </div>
         </div>
         <div className="gender-tabs-container">

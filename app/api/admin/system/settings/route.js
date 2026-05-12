@@ -134,13 +134,15 @@ export async function PATCH(request) {
   if (Object.prototype.hasOwnProperty.call(body, 'contactInfo')) {
     const ci = body.contactInfo || {};
     const email = String(ci.email || '').trim();
+    const phone = String(ci.phone || '').trim();
+    const location = String(ci.location || '').trim();
     const instagram = String(ci.instagram || '').trim();
     const facebook = String(ci.facebook || '').trim();
     if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
       return NextResponse.json({ error: 'Email adresa nije ispravna.' }, { status: 400 });
     }
     try {
-      await setContactInfo({ email, instagram, facebook });
+      await setContactInfo({ email, phone, location, instagram, facebook });
     } catch (e) {
       console.error('SiteConfig contactInfo update:', e);
       return NextResponse.json({ error: 'Nije moguće sačuvati kontakt info.' }, { status: 500 });

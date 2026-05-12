@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation';
 import { adminFetch } from '../lib/adminFetch';
 import { useClientSearch } from './clients/ClientSearchContext';
 import ClientsNavSearchPanel from './clients/ClientsNavSearchPanel';
+import NotificationBell from './NotificationBell';
 
 const NAV_SESSION_CACHE_KEY = 'pb_nav_session_v1';
 const NAV_SESSION_CACHE_TTL_MS = 60 * 1000;
@@ -27,8 +28,7 @@ async function logoutAndRedirect() {
   } catch {
     /* ignore */
   }
-  const home = encodeURIComponent('/');
-  window.location.href = `/api/auth/signout?callbackUrl=${home}`;
+  window.location.href = '/';
 }
 
 export default function Navbar() {
@@ -171,9 +171,12 @@ export default function Navbar() {
               </Link>
             )}
             {sessionUser ? (
-              <button type="button" className="btn-prijava" onClick={() => logoutAndRedirect()}>
-                Odjava
-              </button>
+              <>
+                <NotificationBell />
+                <button type="button" className="btn-prijava" onClick={() => logoutAndRedirect()}>
+                  Odjava
+                </button>
+              </>
             ) : (
               <Link href="/login" className="btn-prijava">PRIJAVA</Link>
             )}
@@ -220,16 +223,21 @@ export default function Navbar() {
             </Link>
           )}
           {sessionUser ? (
-            <button
-              type="button"
-              className="btn-prijava-mobile"
-              onClick={() => {
-                setIsOpen(false);
-                logoutAndRedirect();
-              }}
-            >
-              Odjava
-            </button>
+            <>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0.5rem 0' }}>
+                <NotificationBell />
+              </div>
+              <button
+                type="button"
+                className="btn-prijava-mobile"
+                onClick={() => {
+                  setIsOpen(false);
+                  logoutAndRedirect();
+                }}
+              >
+                Odjava
+              </button>
+            </>
           ) : (
             <Link href="/login" className="btn-prijava-mobile" onClick={() => setIsOpen(false)}>Prijava</Link>
           )}

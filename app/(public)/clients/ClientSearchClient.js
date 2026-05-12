@@ -267,6 +267,7 @@ export default function ClientSearchClient() {
             </button>
           </div>
         )}
+
       </main>
 
       <style jsx>{`
