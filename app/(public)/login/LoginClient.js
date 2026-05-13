@@ -66,6 +66,22 @@ export default function LoginClient() {
     setSelectedPlan(plan);
     setAuthMode(mode);
     if (next && next.startsWith('/') && !next.startsWith('//')) setNextPath(next);
+
+    // If user is already logged in, redirect away from login page
+    fetch('/api/auth/me', { cache: 'no-store' })
+      .then(r => r.json())
+      .then(data => {
+        if (data?.user) {
+          const dest = next && next.startsWith('/') && !next.startsWith('//')
+            ? next
+            : data.user.role === 'ADMIN' ? '/admin'
+            : data.user.role === 'BAND' ? '/bands'
+            : data.user.role === 'MUSICIAN' ? '/muzicari/profil'
+            : '/clients';
+          window.location.href = dest;
+        }
+      })
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
