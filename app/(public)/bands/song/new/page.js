@@ -149,7 +149,7 @@ export default function NewSongPage() {
           </div>
 
           <button className="btn btn-primary btn-full shadow-glow" type="submit" disabled={isSaving}>
-            <Save size={18} /> {isSaving ? 'Čuvanje...' : 'Sajvaj Pesmu'}
+            <Save size={18} /> {isSaving ? 'Čuvanje...' : 'Sačuvaj Pesmu'}
           </button>
         </form>
 
