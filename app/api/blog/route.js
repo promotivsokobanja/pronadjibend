@@ -6,21 +6,26 @@ export const dynamic = 'force-dynamic';
 
 // GET — public blog posts list
 export async function GET() {
-  const posts = await prisma.blogPost.findMany({
-    where: { published: true },
-    orderBy: { createdAt: 'desc' },
-    select: {
-      id: true,
-      slug: true,
-      title: true,
-      excerpt: true,
-      coverImage: true,
-      authorName: true,
-      createdAt: true,
-    },
-    take: 50,
-  });
-  return NextResponse.json(posts);
+  try {
+    const posts = await prisma.blogPost.findMany({
+      where: { published: true },
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        slug: true,
+        title: true,
+        excerpt: true,
+        coverImage: true,
+        authorName: true,
+        createdAt: true,
+      },
+      take: 50,
+    });
+    return NextResponse.json(posts);
+  } catch (err) {
+    console.error('Blog GET error:', err);
+    return NextResponse.json([], { status: 200 });
+  }
 }
 
 // POST — admin creates a new blog post
@@ -50,9 +55,13 @@ export async function POST(req) {
     return NextResponse.json({ error: 'Naslov, slug i sadržaj su obavezni.' }, { status: 400 });
   }
 
-  const post = await prisma.blogPost.create({
-    data: { title, slug, excerpt, body: postBody, coverImage, authorName, published },
-  });
-
-  return NextResponse.json(post);
+  try {
+    const post = await prisma.blogPost.create({
+      data: { title, slug, excerpt, body: postBody, coverImage, authorName, published },
+    });
+    return NextResponse.json(post);
+  } catch (err) {
+    console.error('Blog POST error:', err);
+    return NextResponse.json({ error: 'Greška pri kreiranju posta.' }, { status: 500 });
+  }
 }

@@ -2,6 +2,7 @@
 import { Mail, Phone, MapPin, Calendar, Star, Send, Shield, Music, Video, Info, User, MessageSquare, ArrowLeft, Image as ImageIcon, BadgeCheck } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import NextImage from 'next/image';
 import BookingCalendar from '../../../../../components/BookingCalendar';
 import SocialShareActions from '../../../../../components/SocialShareActions';
 import PublicRepertoire from '../../../../../components/PublicRepertoire';
@@ -488,7 +489,7 @@ export default function BandProfileClient({ params, initialBand = null }) {
             <div className="public-gallery-grid">
               {galleryImages.map((url, idx) => (
                 <div key={idx} className="public-gallery-item">
-                  <img src={url} alt={`${band.name} galerija ${idx + 1}`} loading="lazy" />
+                  <NextImage src={url} alt={`${band.name} galerija ${idx + 1}`} width={400} height={300} style={{ objectFit: 'cover', width: '100%', height: '100%' }} sizes="(max-width: 640px) 50vw, 200px" />
                 </div>
               ))}
             </div>

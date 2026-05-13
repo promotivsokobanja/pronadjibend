@@ -15,6 +15,7 @@ export default async function sitemap() {
     { url: `${baseUrl}/login`, lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
     { url: `${baseUrl}/bands`, lastModified: now, changeFrequency: 'weekly', priority: 0.75 },
     { url: `${baseUrl}/bands/profile`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
+    { url: `${baseUrl}/blog`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
     { url: `${baseUrl}/privatnost`, lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
     { url: `${baseUrl}/uslovi-koriscenja`, lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
   ];
@@ -49,6 +50,22 @@ export default async function sitemap() {
     // DB unavailable
   }
 
+  let blogRoutes = [];
+  try {
+    const blogPosts = await prisma.blogPost.findMany({
+      where: { published: true },
+      select: { slug: true, updatedAt: true },
+    });
+    blogRoutes = blogPosts.map((post) => ({
+      url: `${baseUrl}/blog/${post.slug}`,
+      lastModified: post.updatedAt || now,
+      changeFrequency: 'monthly',
+      priority: 0.7,
+    }));
+  } catch {
+    // Blog posts unavailable
+  }
+
   let demoBandRoutes = [];
   try {
     const demos = getDemoBands();
@@ -62,5 +79,5 @@ export default async function sitemap() {
     // Demo bands unavailable
   }
 
-  return [...staticRoutes, ...dbBandRoutes, ...dbMusicianRoutes, ...demoBandRoutes];
+  return [...staticRoutes, ...dbBandRoutes, ...dbMusicianRoutes, ...blogRoutes, ...demoBandRoutes];
 }

@@ -15,6 +15,12 @@ export const metadata = {
     url: `${siteUrl}/muzicari`,
     images: [{ url: '/images/og-cover.png', width: 1200, height: 630, alt: 'Pretraga muzičara na Pronađi Bend platformi' }],
   },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Pretraga Muzičara — Pronađi Bend',
+    description: 'Bubnjar, gitarista, vokal, klavijaturista i drugi muzičari na jednom mestu.',
+    images: ['/images/og-cover.png'],
+  },
 };
 
 export default function MusiciansPage() {

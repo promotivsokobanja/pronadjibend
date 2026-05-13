@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { BookOpen, Calendar, ArrowRight } from 'lucide-react';
 
-export default function BlogListPage() {
+export default function BlogListClient() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
 

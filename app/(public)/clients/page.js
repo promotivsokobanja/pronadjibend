@@ -14,6 +14,12 @@ export const metadata = {
     url: `${siteUrl}/clients`,
     images: [{ url: '/images/og-cover.png', width: 1200, height: 630, alt: 'Pretraga bendova na Pronađi Bend platformi' }],
   },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Pretraži Bendove — Pronađi Bend',
+    description: 'Kuriran izbor proverenih bendova za svadbe, hotele, restorane i proslave širom Srbije.',
+    images: ['/images/og-cover.png'],
+  },
 };
 
 export default function ClientSearchPage() {

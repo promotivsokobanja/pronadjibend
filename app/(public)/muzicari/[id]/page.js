@@ -39,6 +39,13 @@ export async function generateMetadata({ params }) {
         ? [{ url: musician.img, width: 1200, height: 630, alt: `${musician.name} profil` }]
         : [{ url: '/images/og-cover.png', width: 1200, height: 630, alt: 'Pronađi Bend' }],
     },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${musician.name} — ${musician.primaryInstrument}`,
+      description:
+        musician.bio ||
+        `${musician.name} • ${musician.primaryInstrument} • ${musician.city}`,
+    },
   };
 }
 

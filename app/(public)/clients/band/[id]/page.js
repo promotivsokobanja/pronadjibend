@@ -16,7 +16,7 @@ async function fetchBandFromAPI(id) {
   try {
     const baseUrl =
       process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_BASE_URL || getSiteUrl();
-    const res = await fetch(`${baseUrl}/api/bands/show/${id}`, { next: { revalidate: 3600 } });
+    const res = await fetch(`${baseUrl}/api/bands/show/${id}`, { next: { revalidate: 300 } });
     if (!res.ok) return null;
     return await res.json();
   } catch {

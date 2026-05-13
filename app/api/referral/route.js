@@ -18,40 +18,44 @@ export async function GET(req) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  let user = await prisma.user.findUnique({
-    where: { id: authUser.userId },
-    select: { referralCode: true, referredBy: true },
-  });
+  try {
+    let user = await prisma.user.findUnique({
+      where: { id: authUser.userId },
+      select: { referralCode: true, referredBy: true },
+    });
 
-  if (!user.referralCode) {
-    let code = generateCode();
-    let attempts = 0;
-    while (attempts < 5) {
-      try {
-        user = await prisma.user.update({
-          where: { id: authUser.userId },
-          data: { referralCode: code },
-          select: { referralCode: true, referredBy: true },
-        });
-        break;
-      } catch {
-        code = generateCode();
-        attempts++;
+    if (!user.referralCode) {
+      let code = generateCode();
+      let attempts = 0;
+      while (attempts < 5) {
+        try {
+          user = await prisma.user.update({
+            where: { id: authUser.userId },
+            data: { referralCode: code },
+            select: { referralCode: true, referredBy: true },
+          });
+          break;
+        } catch {
+          code = generateCode();
+          attempts++;
+        }
       }
     }
+
+    const referredCount = await prisma.user.count({
+      where: { referredBy: user.referralCode },
+    });
+
+    return NextResponse.json({
+      referralCode: user.referralCode,
+      referredBy: user.referredBy,
+      referredCount,
+      shareUrl: `https://pronadjibend.rs/register?ref=${user.referralCode}`,
+    });
+  } catch (err) {
+    console.error('Referral GET error:', err);
+    return NextResponse.json({ error: 'Greška pri učitavanju referral koda.' }, { status: 500 });
   }
-
-  // Count how many users referred
-  const referredCount = await prisma.user.count({
-    where: { referredBy: user.referralCode },
-  });
-
-  return NextResponse.json({
-    referralCode: user.referralCode,
-    referredBy: user.referredBy,
-    referredCount,
-    shareUrl: `https://pronadjibend.rs/register?ref=${user.referralCode}`,
-  });
 }
 
 // POST — apply a referral code (called during/after registration)
@@ -90,10 +94,14 @@ export async function POST(req) {
     return NextResponse.json({ error: 'Nevažeći referral kod.' }, { status: 404 });
   }
 
-  await prisma.user.update({
-    where: { id: authUser.userId },
-    data: { referredBy: code },
-  });
-
-  return NextResponse.json({ ok: true, appliedCode: code });
+  try {
+    await prisma.user.update({
+      where: { id: authUser.userId },
+      data: { referredBy: code },
+    });
+    return NextResponse.json({ ok: true, appliedCode: code });
+  } catch (err) {
+    console.error('Referral POST error:', err);
+    return NextResponse.json({ error: 'Greška pri primeni referral koda.' }, { status: 500 });
+  }
 }

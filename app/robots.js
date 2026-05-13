@@ -11,7 +11,7 @@ export default function robots() {
       },
       {
         userAgent: 'Googlebot',
-        allow: '/',
+        allow: ['/', '/blog', '/clients', '/muzicari'],
         disallow: ['/admin', '/admin/', '/api/'],
       },
     ],

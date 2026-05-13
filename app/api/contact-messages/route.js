@@ -94,13 +94,17 @@ export async function GET(req) {
     return NextResponse.json({ error: 'Pristup odbijen.' }, { status: 403 });
   }
 
-  const messages = await prisma.contactMessage.findMany({
-    where: { bandId: targetBandId },
-    orderBy: { createdAt: 'desc' },
-    take: 50,
-  });
-
-  return NextResponse.json({ messages });
+  try {
+    const messages = await prisma.contactMessage.findMany({
+      where: { bandId: targetBandId },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+    });
+    return NextResponse.json({ messages });
+  } catch (err) {
+    console.error('[contact-messages] GET error:', err);
+    return NextResponse.json({ error: 'Greška pri učitavanju poruka.' }, { status: 500 });
+  }
 }
 
 // PATCH — označi poruku kao pročitanu
@@ -119,13 +123,18 @@ export async function PATCH(req) {
     select: { bandId: true, role: true },
   });
 
-  const msg = await prisma.contactMessage.findUnique({ where: { id } });
-  if (!msg) return NextResponse.json({ error: 'Poruka nije pronađena.' }, { status: 404 });
+  try {
+    const msg = await prisma.contactMessage.findUnique({ where: { id } });
+    if (!msg) return NextResponse.json({ error: 'Poruka nije pronađena.' }, { status: 404 });
 
-  if (user.role !== 'ADMIN' && msg.bandId !== user.bandId) {
-    return NextResponse.json({ error: 'Pristup odbijen.' }, { status: 403 });
+    if (user.role !== 'ADMIN' && msg.bandId !== user.bandId) {
+      return NextResponse.json({ error: 'Pristup odbijen.' }, { status: 403 });
+    }
+
+    await prisma.contactMessage.update({ where: { id }, data: { read: true } });
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    console.error('[contact-messages] PATCH error:', err);
+    return NextResponse.json({ error: 'Greška pri ažuriranju poruke.' }, { status: 500 });
   }
-
-  await prisma.contactMessage.update({ where: { id }, data: { read: true } });
-  return NextResponse.json({ ok: true });
 }

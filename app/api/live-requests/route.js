@@ -27,7 +27,7 @@ async function resolveLiveOwner({ bandId, musicianId }) {
   if (normalizedBandId) {
     const band = await prisma.band.findUnique({
       where: { id: normalizedBandId },
-      select: { id: true, allowTips: true, maxPendingRequests: true },
+      select: { id: true, allowTips: true, maxPendingRequests: true, plan: true, isPaid: true },
     });
     if (!band) {
       return {
@@ -40,6 +40,7 @@ async function resolveLiveOwner({ bandId, musicianId }) {
         id: band.id,
         allowTips: band.allowTips,
         maxPendingRequests: band.maxPendingRequests,
+        hasPremium: band.isPaid === true || (band.plan && band.plan !== 'FREE'),
       },
     };
   }
@@ -148,6 +149,13 @@ export async function POST(request) {
     if (error) return error;
 
     const ownerFilter = buildOwnerFilter(owner);
+
+    if (owner.type === 'band' && !owner.hasPremium) {
+      return NextResponse.json(
+        { error: 'Live Request sistem je dostupan samo za Premium korisnike. Nadogradite paket da biste aktivirali ovu funkciju.' },
+        { status: 403 }
+      );
+    }
 
     if (requestType === 'WAITER_TIP') {
       const tableNum = body?.tableNum != null ? String(body.tableNum).trim() : '';
