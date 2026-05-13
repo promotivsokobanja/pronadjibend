@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 import { getToken } from 'next-auth/jwt';
+import prisma from '../../../../lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,12 +23,28 @@ export async function GET(request) {
     return NextResponse.redirect(new URL('/login?error=oauth', request.url));
   }
 
+  // Always read fresh user data from database to avoid stale role from JWT cache
+  let role = nextAuthToken.role;
+  let bandId = nextAuthToken.bandId ?? null;
+  try {
+    const dbUser = await prisma.user.findUnique({
+      where: { id: nextAuthToken.userId },
+      select: { role: true, bandId: true },
+    });
+    if (dbUser) {
+      role = dbUser.role;
+      bandId = dbUser.bandId;
+    }
+  } catch (e) {
+    console.error('[sync-session] DB lookup failed:', e.message);
+  }
+
   const token = jwt.sign(
     {
       userId: nextAuthToken.userId,
       email: nextAuthToken.email,
-      role: nextAuthToken.role,
-      bandId: nextAuthToken.bandId ?? null,
+      role,
+      bandId,
     },
     JWT_SECRET,
     { expiresIn: '7d' }
@@ -36,8 +53,9 @@ export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const nextParam = searchParams.get('next');
   let dest = '/clients';
-  if (nextAuthToken.role === 'ADMIN') dest = '/admin';
-  else if (nextAuthToken.role === 'BAND') dest = '/bands';
+  if (role === 'ADMIN') dest = '/admin';
+  else if (role === 'BAND') dest = '/bands';
+  else if (role === 'MUSICIAN') dest = '/muzicari/profil';
 
   if (nextParam && nextParam.startsWith('/') && !nextParam.startsWith('//')) {
     dest = nextParam;
