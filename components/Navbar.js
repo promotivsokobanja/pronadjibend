@@ -36,6 +36,7 @@ export default function Navbar() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isMusician, setIsMusician] = useState(false);
   const [sessionUser, setSessionUser] = useState(null);
+  const [sessionLoaded, setSessionLoaded] = useState(false);
   const pathname = usePathname();
   const { setIsNavSearchOpen } = useClientSearch();
 
@@ -90,6 +91,7 @@ export default function Navbar() {
       setSessionUser(cachedUser);
       setIsAdmin(cachedUser?.role === 'ADMIN');
       setIsMusician(cachedUser?.role === 'MUSICIAN');
+      setSessionLoaded(true);
     }
 
     (async () => {
@@ -107,12 +109,14 @@ export default function Navbar() {
         setSessionUser(data.user || null);
         setIsAdmin(data.user?.role === 'ADMIN');
         setIsMusician(data.user?.role === 'MUSICIAN');
+        setSessionLoaded(true);
         writeCachedSession(data.user || null);
       } catch {
         if (cancelled) return;
         setSessionUser(null);
         setIsAdmin(false);
         setIsMusician(false);
+        setSessionLoaded(true);
         clearCachedSession();
       }
     })();
@@ -170,7 +174,7 @@ export default function Navbar() {
                 <Crown size={14} /> Premium
               </Link>
             )}
-            {sessionUser ? (
+            {sessionLoaded && (sessionUser ? (
               <>
                 <NotificationBell />
                 <button type="button" className="btn-prijava" onClick={() => logoutAndRedirect()}>
@@ -179,7 +183,7 @@ export default function Navbar() {
               </>
             ) : (
               <Link href="/login" className="btn-prijava">PRIJAVA</Link>
-            )}
+            ))}
           </div>
 
           <button className="mobile-toggle" onClick={() => setIsOpen(!isOpen)}>
@@ -222,7 +226,7 @@ export default function Navbar() {
               <Crown size={16} /> Nadogradi na Premium
             </Link>
           )}
-          {sessionUser ? (
+          {sessionLoaded && (sessionUser ? (
             <>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0.5rem 0' }}>
                 <NotificationBell />
@@ -240,7 +244,7 @@ export default function Navbar() {
             </>
           ) : (
             <Link href="/login" className="btn-prijava-mobile" onClick={() => setIsOpen(false)}>Prijava</Link>
-          )}
+          ))}
         </div>
       )}
     </>
