@@ -23,8 +23,10 @@
 [build.environment]
   NODE_VERSION = "20"
   # Bez ovoga, ako je u Netlify UI NODE_ENV=production, npm preskače devDependencies —
-  # nema `prisma` CLI → postinstall (`prisma generate`) i build padaju na „Install dependencies”.
+  # nema `prisma` CLI → postinstall (`prisma generate`) i build padaju na „Install dependencies".
   NPM_CONFIG_PRODUCTION = "false"
+  # Force production URL for NextAuth OAuth callbacks (prevents deploy preview hostname issues)
+  NEXTAUTH_URL = "https://pronadjibend.rs"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"

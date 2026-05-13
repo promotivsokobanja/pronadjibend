@@ -6,6 +6,11 @@ import prisma from '../../../../lib/prisma';
 import { hasDatabaseUrl } from '../../../../lib/dbClientErrors';
 import { isDisposableEmail } from '../../../../lib/emailPolicy';
 
+// Force production URL for OAuth callbacks — deploy previews must not use their own hostname
+if (process.env.NODE_ENV === 'production' && !process.env.NEXTAUTH_URL) {
+  process.env.NEXTAUTH_URL = 'https://pronadjibend.rs';
+}
+
 const hasGoogleConfig =
   !!process.env.GOOGLE_CLIENT_ID && !!process.env.GOOGLE_CLIENT_SECRET;
 
