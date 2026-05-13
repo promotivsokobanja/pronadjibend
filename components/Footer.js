@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { Mail, Phone, MapPin, Instagram, Facebook } from 'lucide-react';
 
 const DEFAULTS = {
-  email: 'office@pronadjibend.rs',
+  email: 'office@pronadjibend.com',
   phone: '+381 64 339 2339',
   location: 'Sokobanja, Srbija',
   instagram: 'https://instagram.com/pronadjiband',

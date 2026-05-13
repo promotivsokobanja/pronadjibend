@@ -40,8 +40,8 @@ export default function PrivatnostPage() {
               <li><strong>Naziv:</strong> Promotiv Sokobanja</li>
               <li><strong>Sedište:</strong> Sokobanja, Srbija</li>
               <li><strong>Email:</strong>{' '}
-                <a className="text-[#007AFF]" href="mailto:office@pronadjibend.rs">
-                  office@pronadjibend.rs
+                <a className="text-[#007AFF]" href="mailto:office@pronadjibend.com">
+                  office@pronadjibend.com
                 </a>
               </li>
               <li><strong>Telefon:</strong> +381 64 339 2339</li>
@@ -104,8 +104,8 @@ export default function PrivatnostPage() {
             Imate pravo na pristup, ispravku, brisanje, ograničenje obrade, prenosivost
             podataka i prigovor. Zahtev možete poslati na
             {' '}
-            <a className="text-[#007AFF]" href="mailto:office@pronadjibend.rs">
-              office@pronadjibend.rs
+            <a className="text-[#007AFF]" href="mailto:office@pronadjibend.com">
+              office@pronadjibend.com
             </a>.
             Takođe imate pravo pritužbe Povereniku za informacije od javnog značaja i
             zaštitu podataka o ličnosti.
