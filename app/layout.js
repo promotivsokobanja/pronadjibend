@@ -110,6 +110,44 @@ export const viewport = {
   themeColor: '#0a0a0c',
 };
 
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Organization',
+      '@id': `${siteUrl}/#organization`,
+      name: 'Pronađi Bend',
+      url: siteUrl,
+      logo: `${siteUrl}/images/logo.png`,
+      contactPoint: {
+        '@type': 'ContactPoint',
+        email: 'office@pronadjibend.com',
+        telephone: '+381643392339',
+        contactType: 'customer service',
+        areaServed: 'RS',
+        availableLanguage: 'Serbian',
+      },
+      sameAs: [
+        'https://www.instagram.com/pronadjibend',
+      ],
+    },
+    {
+      '@type': 'WebSite',
+      '@id': `${siteUrl}/#website`,
+      url: siteUrl,
+      name: 'Pronađi Bend',
+      description: 'Platforma za pronalaženje i rezervaciju bendova i muzičara za svadbe, hotele i proslave u Srbiji.',
+      publisher: { '@id': `${siteUrl}/#organization` },
+      inLanguage: 'sr',
+      potentialAction: {
+        '@type': 'SearchAction',
+        target: { '@type': 'EntryPoint', urlTemplate: `${siteUrl}/clients?search={search_term_string}` },
+        'query-input': 'required name=search_term_string',
+      },
+    },
+  ],
+};
+
 export default function RootLayout({ children }) {
   return (
     <html
@@ -117,6 +155,10 @@ export default function RootLayout({ children }) {
       className={`theme-dark ${inter.variable} ${montserrat.variable} ${playfair.variable}`}
     >
       <body style={{ margin: 0 }}>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
         <StrictModeProvider>{children}</StrictModeProvider>
         <ServiceWorkerRegister />
         <div id="notifications" />

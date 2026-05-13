@@ -213,6 +213,20 @@ export async function GET(request) {
     return NextResponse.json({ error: error.message, results }, { status: 500 });
   }
 
+  // ── 4. Cleanup expired tokens ──
+  try {
+    const delReset = await prisma.$executeRawUnsafe(
+      `DELETE FROM "PasswordReset" WHERE "expiresAt" < NOW() - INTERVAL '7 days'`
+    );
+    const delVerify = await prisma.$executeRawUnsafe(
+      `DELETE FROM "EmailVerification" WHERE "expiresAt" < NOW() - INTERVAL '7 days'`
+    );
+    results.tokenCleanup = { deletedResets: delReset, deletedVerifications: delVerify };
+  } catch (err) {
+    console.error('[cron] Token cleanup error:', err.message);
+    results.tokenCleanup = { error: err.message };
+  }
+
   console.log('[cron/daily] Results:', JSON.stringify(results));
   return NextResponse.json({ ok: true, results });
 }

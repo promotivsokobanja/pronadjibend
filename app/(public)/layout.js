@@ -5,6 +5,7 @@ import BottomNav from '@/components/BottomNav';
 import InstallPrompt from '@/components/InstallPrompt';
 import { ClientSearchProvider } from '@/components/clients/ClientSearchContext';
 import { getMaintenanceMode } from '@/lib/siteConfig';
+import CookieConsent from '@/components/CookieConsent';
 
 /**
  * Javni deo sajta — potpuno izolovan od admin segmenta.
@@ -26,6 +27,7 @@ export default async function PublicLayout({ children }) {
         <Footer />
         <BottomNav />
         <InstallPrompt />
+        <CookieConsent />
       </ClientSearchProvider>
     </ErrorBoundaryClient>
   );

@@ -37,8 +37,17 @@ function isAuthPath(pathname) {
   return pathname === '/api/auth/login' || pathname === '/api/auth/register';
 }
 
+function isSensitiveAuthPath(pathname) {
+  return [
+    '/api/auth/forgot-password',
+    '/api/auth/reset-password',
+    '/api/auth/resend-verification',
+    '/api/auth/change-password',
+  ].includes(pathname);
+}
+
 function shouldRateLimitAuth(request, pathname) {
-  return request.method === 'POST' && isAuthPath(pathname);
+  return request.method === 'POST' && (isAuthPath(pathname) || isSensitiveAuthPath(pathname));
 }
 
 function shouldRateLimitBookingPost(request, pathname) {
@@ -408,5 +417,9 @@ export const config = {
     '/api/bookings/:path*',
     '/api/messages',
     '/api/musicians/invites',
+    '/api/auth/forgot-password',
+    '/api/auth/reset-password',
+    '/api/auth/resend-verification',
+    '/api/auth/change-password',
   ],
 };

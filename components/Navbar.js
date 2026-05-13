@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Menu, X, Crown } from 'lucide-react';
+import { Menu, X, Crown, UserCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { adminFetch } from '../lib/adminFetch';
@@ -176,6 +176,7 @@ export default function Navbar() {
             )}
             {sessionLoaded && (sessionUser ? (
               <>
+                <Link href="/profil" className="nav-link" title="Moj profil"><UserCircle size={20} /></Link>
                 <NotificationBell />
                 <button type="button" className="btn-prijava" onClick={() => logoutAndRedirect()}>
                   Odjava
@@ -228,6 +229,7 @@ export default function Navbar() {
           )}
           {sessionLoaded && (sessionUser ? (
             <>
+              <Link href="/profil" onClick={() => setIsOpen(false)}>Moj profil</Link>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0.5rem 0' }}>
                 <NotificationBell />
               </div>
