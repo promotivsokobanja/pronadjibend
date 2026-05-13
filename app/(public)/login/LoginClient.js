@@ -2,7 +2,6 @@
 import { Mail, Lock, User, ArrowRight, Music, Users, Download, Eye, EyeOff, MapPin } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { signIn } from 'next-auth/react';
 import Image from 'next/image';
 
 export default function LoginClient() {
@@ -29,13 +28,34 @@ export default function LoginClient() {
   const [nextPath, setNextPath] = useState('');
   const isPlanSelected = selectedPlan === 'basic' || selectedPlan === 'premium';
   const googleAuthEnabled = process.env.NEXT_PUBLIC_GOOGLE_AUTH_ENABLED === 'true';
-  const handleGoogleSignIn = () => {
-    const sync =
-      '/api/auth/sync-session' +
-      (nextPath && nextPath.startsWith('/') && !nextPath.startsWith('//')
-        ? `?next=${encodeURIComponent(nextPath)}`
-        : '');
-    signIn('google', { callbackUrl: sync });
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const handleGoogleSignIn = async () => {
+    if (googleLoading) return;
+    setGoogleLoading(true);
+    try {
+      const callbackUrl =
+        '/api/auth/sync-session' +
+        (nextPath && nextPath.startsWith('/') && !nextPath.startsWith('//')
+          ? `?next=${encodeURIComponent(nextPath)}`
+          : '');
+      const csrfRes = await fetch('/api/auth/csrf');
+      const { csrfToken } = await csrfRes.json();
+      const params = new URLSearchParams({ csrfToken, callbackUrl, json: 'true' });
+      const res = await fetch('/api/auth/signin/google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: params.toString(),
+        redirect: 'follow',
+      });
+      const data = await res.json().catch(() => null);
+      if (data?.url) {
+        window.location.href = data.url;
+      } else {
+        setGoogleLoading(false);
+      }
+    } catch {
+      setGoogleLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -353,8 +373,8 @@ export default function LoginClient() {
 
           <div className="social-login">
             {googleAuthEnabled ? (
-              <button type="button" className="btn btn-secondary social-btn google-btn" onClick={handleGoogleSignIn}>
-                Nastavi preko Google
+              <button type="button" className="btn btn-secondary social-btn google-btn" onClick={handleGoogleSignIn} disabled={googleLoading}>
+                {googleLoading ? 'Povezivanje…' : 'Nastavi preko Google'}
               </button>
             ) : (
               <button type="button" className="btn btn-secondary social-btn google-btn" disabled>
