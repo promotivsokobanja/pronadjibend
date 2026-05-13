@@ -26,6 +26,8 @@ export async function GET(request) {
     ),
     stripeSecret: Boolean(process.env.STRIPE_SECRET_KEY),
     stripeWebhook: Boolean(process.env.STRIPE_WEBHOOK_SECRET),
+    smtpConfigured: Boolean(process.env.SMTP_HOST?.trim() && process.env.SMTP_USER?.trim() && process.env.SMTP_PASS?.trim()),
+    cronSecret: Boolean(process.env.CRON_SECRET?.trim()),
     nodeEnv: process.env.NODE_ENV || 'development',
     showDemoBands,
     maintenanceMode,

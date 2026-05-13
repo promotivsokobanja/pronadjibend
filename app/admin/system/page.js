@@ -267,6 +267,8 @@ export default function AdminSystemPage() {
   const rows = [
     { label: 'Baza podataka (DATABASE_URL)', ok: data.databaseUrl },
     { label: 'JWT tajna (JWT_SECRET ili NEXTAUTH_SECRET, min. 32)', ok: data.jwtSecret },
+    { label: 'SMTP email (SMTP_HOST, SMTP_USER, SMTP_PASS)', ok: data.smtpConfigured },
+    { label: 'Cron zaštita (CRON_SECRET)', ok: data.cronSecret },
     { label: 'Stripe secret key', ok: data.stripeSecret },
     { label: 'Stripe webhook secret', ok: data.stripeWebhook },
     { label: 'Okruženje', ok: true, text: data.nodeEnv },

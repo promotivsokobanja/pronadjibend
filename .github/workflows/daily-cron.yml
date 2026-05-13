@@ -1,0 +1,24 @@
+# Dnevni cron: podsetnici za obnovu, downgrade isteklih pretplata, nudge emailovi.
+name: Daily Cron
+
+on:
+  schedule:
+    # Svaki dan u 07:00 UTC (09:00 po srpskom vremenu)
+    - cron: '0 7 * * *'
+  workflow_dispatch: # Dozvoli ručno pokretanje
+
+jobs:
+  cron:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pozovi /api/cron/daily
+        run: |
+          HTTP_STATUS=$(curl -s -o /tmp/cron-response.json -w "%{http_code}" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "${{ secrets.SITE_URL }}/api/cron/daily")
+          echo "HTTP Status: $HTTP_STATUS"
+          cat /tmp/cron-response.json
+          if [ "$HTTP_STATUS" != "200" ]; then
+            echo "::error::Cron failed with status $HTTP_STATUS"
+            exit 1
+          fi

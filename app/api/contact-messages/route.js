@@ -1,7 +1,22 @@
 import { NextResponse } from 'next/server';
+import nodemailer from 'nodemailer';
 import prisma from '../../../lib/prisma';
 import { getAuthUserFromRequest } from '../../../lib/auth';
 import { createNotification } from '../../../lib/notifications';
+
+function getSmtpTransport() {
+  const host = process.env.SMTP_HOST?.trim();
+  if (!host) return null;
+  const port = parseInt(process.env.SMTP_PORT || '587', 10);
+  const secure = process.env.SMTP_SECURE === 'true' || port === 465;
+  const user = process.env.SMTP_USER?.trim();
+  const pass = process.env.SMTP_PASS?.trim();
+  return nodemailer.createTransport({ host, port, secure, auth: user && pass ? { user, pass } : undefined });
+}
+
+function escapeHtml(s) {
+  return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
 
 export const dynamic = 'force-dynamic';
 
@@ -49,19 +64,65 @@ export async function POST(req) {
       data: { bandId, senderName, senderEmail, senderPhone, subject, body: msgBody },
     });
 
-    // In-app notification for band owner
-    const bandUser = await prisma.user.findFirst({
-      where: { bandId },
-      select: { id: true },
+    // In-app notification + email for band owner
+    const bandWithUser = await prisma.band.findUnique({
+      where: { id: bandId },
+      select: { name: true, user: { select: { id: true, email: true } } },
     });
-    if (bandUser) {
+    if (bandWithUser?.user?.id) {
       createNotification({
-        userId: bandUser.id,
+        userId: bandWithUser.user.id,
         type: 'SYSTEM',
         title: `Nova poruka od ${senderName}`,
         body: subject || msgBody.slice(0, 80),
         link: '/bands#messages',
       }).catch(() => {});
+    }
+
+    // Email obaveštenje bendu
+    try {
+      const bandEmail = bandWithUser?.user?.email;
+      if (bandEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(bandEmail)) {
+        const transport = getSmtpTransport();
+        if (transport) {
+          const from = process.env.SMTP_FROM?.trim() || process.env.EMAIL_FROM?.trim() || '"Pronađi Bend" <noreply@pronadjibend.rs>';
+          const baseUrl = (process.env.NEXTAUTH_URL || 'https://pronadjibend.rs').replace(/\/$/, '');
+          await transport.sendMail({
+            from,
+            to: bandEmail,
+            replyTo: senderEmail,
+            subject: `Nova poruka${subject ? ': ' + subject : ''} — ${bandWithUser.name || 'Vaš bend'}`,
+            text: [
+              'Zdravo,',
+              '',
+              `Primili ste novu poruku preko Pronađi Bend platforme.`,
+              '',
+              `Od: ${senderName}`,
+              `Email: ${senderEmail}`,
+              senderPhone ? `Telefon: ${senderPhone}` : null,
+              subject ? `Tema: ${subject}` : null,
+              '',
+              'Poruka:',
+              msgBody,
+              '',
+              `Kontrolna tabla: ${baseUrl}/bands#messages`,
+            ].filter(Boolean).join('\n'),
+            html: `<p>Zdravo,</p>
+<p>Primili ste <strong>novu poruku</strong> preko Pronađi Bend platforme.</p>
+<ul style="line-height:1.6">
+<li><strong>Od:</strong> ${escapeHtml(senderName)}</li>
+<li><strong>Email:</strong> <a href="mailto:${escapeHtml(senderEmail)}">${escapeHtml(senderEmail)}</a></li>
+${senderPhone ? `<li><strong>Telefon:</strong> ${escapeHtml(senderPhone)}</li>` : ''}
+${subject ? `<li><strong>Tema:</strong> ${escapeHtml(subject)}</li>` : ''}
+</ul>
+<p><strong>Poruka:</strong></p>
+<p style="white-space:pre-wrap">${escapeHtml(msgBody)}</p>
+<p><a href="${escapeHtml(baseUrl)}/bands#messages">Otvori kontrolnu tablu</a></p>`,
+          });
+        }
+      }
+    } catch (mailErr) {
+      console.error('[contact-message] Email slanje nije uspelo:', mailErr);
     }
 
     return NextResponse.json({ success: true, id: msg.id });
