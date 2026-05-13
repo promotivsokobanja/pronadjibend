@@ -8,6 +8,7 @@ import {
   responseFromDatabaseError,
 } from '../../../../lib/dbClientErrors';
 import { isDisposableEmail } from '../../../../lib/emailPolicy';
+import { sendVerificationEmail } from '../../../../lib/sendVerificationEmail';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -141,6 +142,7 @@ export async function POST(request) {
           }
         }
       });
+      sendVerificationEmail(normalizedEmail).catch(e => console.error('[verify-email]', e));
       return NextResponse.json({ success: true, role: newUser.role });
     } else if (normalizedRole === 'MUSICIAN') {
       const newUser = await prisma.user.create({
@@ -169,11 +171,13 @@ export async function POST(request) {
           },
         },
       });
+      sendVerificationEmail(normalizedEmail).catch(e => console.error('[verify-email]', e));
       return NextResponse.json({ success: true, role: newUser.role });
     } else {
       const newUser = await prisma.user.create({
         data: userData
       });
+      sendVerificationEmail(normalizedEmail).catch(e => console.error('[verify-email]', e));
       return NextResponse.json({ success: true, role: newUser.role });
     }
 

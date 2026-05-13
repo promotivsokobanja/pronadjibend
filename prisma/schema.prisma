@@ -419,3 +419,27 @@ model ContactMessage {
 
   @@index([bandId, createdAt])
 }
+
+model PasswordReset {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([email])
+  @@index([token])
+}
+
+model EmailVerification {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  expiresAt DateTime
+  verified  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([email])
+  @@index([token])
+}

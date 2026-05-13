@@ -349,6 +349,10 @@ export default function LoginClient() {
             {isLoading ? 'Učitavanje...' : (isLogin ? 'Prijavi se' : 'Registruj se')} <ArrowRight size={18} style={{marginLeft: '8px'}} />
           </button>
 
+          {isLogin && (
+            <a href="/forgot-password" className="forgot-link">Zaboravili ste lozinku?</a>
+          )}
+
           <p className="public-poster-hint">
             <a
               href="/marketing/poster-A4.png"
@@ -564,6 +568,12 @@ export default function LoginClient() {
           letter-spacing: 0.01em;
         }
         
+        .forgot-link {
+          display: block; text-align: center; margin-top: 0.85rem;
+          color: #94a3b8; font-size: 0.82rem; font-weight: 600; text-decoration: none;
+        }
+        .forgot-link:hover { color: #cda667; text-decoration: underline; }
+
         .divider { margin: 1.4rem 0; text-align: center; color: var(--text-muted); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 2px; position: relative; }
         .divider:before, .divider:after { content: ''; position: absolute; height: 1px; width: 40%; background: rgba(255, 255, 255, 0.15); top: 50%; }
         .divider:before { left: 0; }
