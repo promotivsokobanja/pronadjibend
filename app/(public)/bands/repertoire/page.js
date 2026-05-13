@@ -2,6 +2,7 @@
 import { Music, Search, Plus, Trash2, ArrowLeft, Edit2, X, FileText, Lock, FileDown } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useEffect, useCallback, useRef } from 'react';
+import SongLyricsModal from '../../../../components/SongLyricsModal';
 import { useRouter } from 'next/navigation';
 
 const normalizeValue = (value) => String(value || '').trim().toLowerCase();
@@ -108,6 +109,7 @@ export default function RepertoirePage() {
   const [bulkImportCategory, setBulkImportCategory] = useState('Muške Zabavne');
   const [isDeletingAllSongs, setIsDeletingAllSongs] = useState(false);
   const [pageReady, setPageReady] = useState(false);
+  const [openSongId, setOpenSongId] = useState(null);
   const ownerId = bandId || musicianId;
   const searchBoxRef = useRef(null);
   const dashboardHref = musicianId ? '/muzicari/profil' : '/bands';
@@ -665,21 +667,17 @@ export default function RepertoirePage() {
               {songs.map((song) => (
                 <div key={song.id} className="song-row">
                   <div className="col-title">
-                    <Link href={`/bands/song/${song.id}`}>
-                      <p className="song-name clickable-title">{song.title}</p>
-                    </Link>
+                    <p className="song-name clickable-title" onClick={() => setOpenSongId(song.id)} style={{ cursor: 'pointer' }}>{song.title}</p>
                     <p className="song-artist">{song.artist || 'Evergreen / Folk'}</p>
                   </div>
                   <div className="col-tonality">
-                    <Link href={`/bands/song/${song.id}`}>
-                      <span className={`tonality-pill ${song.lyrics ? 'success' : 'warning'}`} style={{ cursor: 'pointer' }}>
-                        {song.lyrics ? 'TEKST PRISUTAN' : 'BEZ TEKSTA'}
-                      </span>
-                    </Link>
+                    <span className={`tonality-pill ${song.lyrics ? 'success' : 'warning'}`} style={{ cursor: 'pointer' }} onClick={() => setOpenSongId(song.id)}>
+                      {song.lyrics ? 'TEKST PRISUTAN' : 'BEZ TEKSTA'}
+                    </span>
                   </div>
                   <div className="col-genre"><span className="genre-label">{song.type || 'Standard'}</span></div>
                   <div className="col-actions">
-                    <Link href={`/bands/song/${song.id}`} className="action-btn" title="Uredi"><Edit2 size={16} /></Link>
+                    <button className="action-btn" title="Uredi" onClick={() => setOpenSongId(song.id)}><Edit2 size={16} /></button>
                     <button className="action-btn delete" onClick={() => removeSong(song.id)}><Trash2 size={16} /></button>
                   </div>
                 </div>
@@ -853,6 +851,13 @@ export default function RepertoirePage() {
             </div>
           </div>
         </div>
+      )}
+
+      {openSongId && (
+        <SongLyricsModal
+          songId={openSongId}
+          onClose={() => setOpenSongId(null)}
+        />
       )}
 
       <style jsx>{`
