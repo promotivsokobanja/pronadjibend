@@ -2,6 +2,7 @@
 import { Mail, Lock, User, ArrowRight, Music, Users, Download, Eye, EyeOff, MapPin } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { signIn } from 'next-auth/react';
 import Image from 'next/image';
 
 export default function LoginClient() {
@@ -28,16 +29,14 @@ export default function LoginClient() {
   const [nextPath, setNextPath] = useState('');
   const isPlanSelected = selectedPlan === 'basic' || selectedPlan === 'premium';
   const googleAuthEnabled = process.env.NEXT_PUBLIC_GOOGLE_AUTH_ENABLED === 'true';
-  const googleSignInHref = (() => {
+  const handleGoogleSignIn = () => {
     const sync =
       '/api/auth/sync-session' +
       (nextPath && nextPath.startsWith('/') && !nextPath.startsWith('//')
         ? `?next=${encodeURIComponent(nextPath)}`
         : '');
-    return (
-      '/api/auth/signin/google?callbackUrl=' + encodeURIComponent(sync)
-    );
-  })();
+    signIn('google', { callbackUrl: sync });
+  };
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -354,9 +353,9 @@ export default function LoginClient() {
 
           <div className="social-login">
             {googleAuthEnabled ? (
-              <a className="btn btn-secondary social-btn google-btn" href={googleSignInHref}>
+              <button type="button" className="btn btn-secondary social-btn google-btn" onClick={handleGoogleSignIn}>
                 Nastavi preko Google
-              </a>
+              </button>
             ) : (
               <button type="button" className="btn btn-secondary social-btn google-btn" disabled>
                 Google prijava uskoro
