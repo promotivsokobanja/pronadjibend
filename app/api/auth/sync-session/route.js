@@ -14,6 +14,24 @@ const NEXTAUTH_SECRET =
   process.env.NEXTAUTH_SECRET || process.env.JWT_SECRET || 'dev-only-change-me';
 
 export async function GET(request) {
+  // If user already has a valid auth-token, preserve it (don't overwrite ADMIN with CLIENT)
+  const existingToken = request.cookies.get('auth-token')?.value;
+  if (existingToken) {
+    try {
+      const decoded = jwt.verify(existingToken, JWT_SECRET);
+      if (decoded?.userId && decoded?.role) {
+        let dest = '/clients';
+        if (decoded.role === 'ADMIN') dest = '/admin';
+        else if (decoded.role === 'BAND') dest = '/bands';
+        else if (decoded.role === 'MUSICIAN') dest = '/muzicari/profil';
+        const { searchParams } = new URL(request.url);
+        const nextParam = searchParams.get('next');
+        if (nextParam && nextParam.startsWith('/') && !nextParam.startsWith('//')) dest = nextParam;
+        return NextResponse.redirect(new URL(dest, request.url));
+      }
+    } catch { /* expired or invalid — continue to create new one */ }
+  }
+
   const nextAuthToken = await getToken({
     req: request,
     secret: NEXTAUTH_SECRET,
