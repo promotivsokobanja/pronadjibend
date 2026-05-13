@@ -56,7 +56,9 @@ export default function VerifyEmailClient() {
         .ve-container {
           min-height: 100vh; min-height: 100dvh;
           display: flex; align-items: center; justify-content: center;
-          padding: 2rem 1rem; background: #030308;
+          padding: calc(var(--navbar-height, 4.75rem) + 1.5rem) 1rem 2rem;
+          padding-bottom: env(safe-area-inset-bottom, 1rem);
+          background: #030308;
         }
         .ve-box {
           width: 100%; max-width: 420px;
@@ -84,8 +86,17 @@ export default function VerifyEmailClient() {
           font-weight: 800; font-size: 0.9rem; text-decoration: none;
         }
         .ve-btn:hover { transform: translateY(-1px); filter: brightness(1.05); }
+        .ve-btn, .ve-back { -webkit-tap-highlight-color: transparent; }
         .ve-back { color: #94a3b8; font-size: 0.85rem; text-decoration: none; }
         .ve-back:hover { color: #cda667; }
+        @media (max-width: 640px) {
+          .ve-container { padding: calc(var(--navbar-height, 4rem) + 1rem) 0.75rem 1.5rem; }
+          .ve-box { padding: 1.8rem 1.25rem; border-radius: 22px; }
+          h2 { font-size: 1.3rem; }
+        }
+        @media (max-width: 480px) {
+          .ve-box { padding: 1.5rem 1rem; }
+        }
       `}</style>
     </div>
   );

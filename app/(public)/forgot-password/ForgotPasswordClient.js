@@ -66,7 +66,9 @@ export default function ForgotPasswordClient() {
         .fp-container {
           min-height: 100vh; min-height: 100dvh;
           display: flex; align-items: center; justify-content: center;
-          padding: 2rem 1rem; background: #030308;
+          padding: calc(var(--navbar-height, 4.75rem) + 1.5rem) 1rem 2rem;
+          padding-bottom: env(safe-area-inset-bottom, 1rem);
+          background: #030308;
         }
         .fp-box {
           width: 100%; max-width: 440px;
@@ -89,7 +91,14 @@ export default function ForgotPasswordClient() {
         .fp-input-group:focus-within { border-color: #cda667; box-shadow: 0 0 0 1px rgba(205,166,103,0.45); }
         .fp-input-group input {
           background: none; border: none; color: #f8fafc; width: 100%;
-          outline: none; font-size: 0.95rem; font-weight: 500;
+          outline: none; font-size: 16px; font-weight: 500;
+          -webkit-appearance: none; appearance: none;
+        }
+        .fp-input-group input:-webkit-autofill,
+        .fp-input-group input:-webkit-autofill:hover,
+        .fp-input-group input:-webkit-autofill:focus {
+          -webkit-box-shadow: 0 0 0 1000px rgba(8,8,18,1) inset !important;
+          -webkit-text-fill-color: #f8fafc !important;
         }
         .fp-btn {
           width: 100%; padding: 0.85rem;
@@ -97,6 +106,7 @@ export default function ForgotPasswordClient() {
           color: #050505; border: none; border-radius: 999px;
           font-weight: 800; font-size: 0.9rem; cursor: pointer;
           letter-spacing: 0.02em;
+          -webkit-tap-highlight-color: transparent;
         }
         .fp-btn:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(1.05); }
         .fp-btn:disabled { opacity: 0.7; cursor: not-allowed; }
@@ -116,11 +126,18 @@ export default function ForgotPasswordClient() {
           display: flex; align-items: center; justify-content: center; gap: 0.4rem;
           margin-top: 1.5rem; color: #94a3b8; font-size: 0.85rem; font-weight: 600;
           text-decoration: none;
+          -webkit-tap-highlight-color: transparent;
         }
         .fp-back:hover { color: #cda667; }
+        @media (max-width: 640px) {
+          .fp-container { padding: calc(var(--navbar-height, 4rem) + 1rem) 0.75rem 1.5rem; }
+          .fp-box { padding: 1.8rem 1.25rem; border-radius: 22px; }
+          h2 { font-size: 1.5rem; }
+          .fp-sub { font-size: 0.85rem; }
+        }
         @media (max-width: 480px) {
-          .fp-box { padding: 1.5rem 1.1rem; }
-          h2 { font-size: 1.4rem; }
+          .fp-box { padding: 1.5rem 1rem; }
+          h2 { font-size: 1.35rem; }
         }
       `}</style>
     </div>
