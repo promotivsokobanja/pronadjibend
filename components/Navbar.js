@@ -103,6 +103,7 @@ export default function Navbar() {
           setSessionUser(null);
           setIsAdmin(false);
           setIsMusician(false);
+          setSessionLoaded(true);
           clearCachedSession();
           return;
         }
