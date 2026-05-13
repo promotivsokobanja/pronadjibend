@@ -32,14 +32,25 @@ export default function PrivatnostPage() {
 
         <section className="mt-8">
           <h2 className="text-xl font-bold text-slate-900">1. Rukovalac podacima</h2>
-          <p className="mt-3 text-slate-700">
-            Rukovalac podacima je pravno/fizičko lice koje upravlja platformom
-            Pronadji Bend. Kontakt za pitanja o privatnosti:
-            {' '}
-            <a className="text-[#007AFF]" href="mailto:office@pronadjibend.rs">
-              office@pronadjibend.rs
-            </a>.
-          </p>
+          <div className="mt-3 text-slate-700 space-y-2">
+            <p>
+              Rukovalac podacima je:
+            </p>
+            <ul className="list-none pl-0 space-y-1">
+              <li><strong>Naziv:</strong> Promotiv Sokobanja</li>
+              <li><strong>Sedište:</strong> Sokobanja, Srbija</li>
+              <li><strong>Email:</strong>{' '}
+                <a className="text-[#007AFF]" href="mailto:office@pronadjibend.rs">
+                  office@pronadjibend.rs
+                </a>
+              </li>
+              <li><strong>Telefon:</strong> +381 64 339 2339</li>
+            </ul>
+            <p>
+              Za sva pitanja u vezi sa obradom podataka o ličnosti, obratite se na
+              navedeni email.
+            </p>
+          </div>
         </section>
 
         <section className="mt-8">

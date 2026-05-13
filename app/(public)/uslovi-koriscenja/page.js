@@ -99,7 +99,52 @@ export default function UsloviKoriscenjaPage() {
         </section>
 
         <section className="mt-8">
-          <h2 className="text-xl font-bold text-slate-900">9. Live nastup, digitalna pesmarica i bakšiš</h2>
+          <h2 className="text-xl font-bold text-slate-900">9. Pretplate i plaćanje</h2>
+          <div className="mt-3 text-slate-700 space-y-3">
+            <p>
+              Platforma nudi besplatni (Basic) i plaćene planove (Premium, Premium Venue).
+              Pretplata se aktivira nakon potvrde uplate i važi 30 dana od dana aktivacije.
+            </p>
+            <p>
+              Plaćanje se vrši putem IPS QR koda (NBS standard) ili platnom karticom putem
+              Stripe servisa. Korisniku se nakon uplate izdaje elektronski račun (PDF) na
+              registrovanu email adresu.
+            </p>
+            <p>
+              <strong>Politika povrata:</strong> Korisnik može zatražiti povrat sredstava u
+              roku od 14 dana od aktivacije pretplate ukoliko nije koristio Premium
+              funkcionalnosti. Zahtev za povrat šalje se na{' '}
+              <a className="text-[#007AFF]" href="mailto:office@pronadjibend.rs">office@pronadjibend.rs</a>.
+              Nakon isteka 14 dana ili korišćenja Premium funkcija, povrat nije moguć.
+            </p>
+            <p>
+              Pretplata se ne obnavlja automatski. Tri dana pre isteka korisnik dobija
+              email podsetnik sa mogućnošću obnove.
+            </p>
+          </div>
+        </section>
+
+        <section className="mt-8">
+          <h2 className="text-xl font-bold text-slate-900">10. Otkazivanje naloga i brisanje podataka</h2>
+          <div className="mt-3 text-slate-700 space-y-3">
+            <p>
+              Korisnik ima pravo da u svakom trenutku zatraži brisanje svog naloga i
+              povezanih podataka slanjem zahteva na{' '}
+              <a className="text-[#007AFF]" href="mailto:office@pronadjibend.rs">office@pronadjibend.rs</a>.
+            </p>
+            <p>
+              Nakon prijema zahteva, nalog i podaci biće obrisani u roku od 30 dana,
+              osim podataka koje smo u obavezi da čuvamo po zakonu (npr. fiskalni dokumenti).
+            </p>
+            <p>
+              Brisanje naloga je nepovratno. Sve aktivne pretplate prestaju da važe danom
+              brisanja bez prava na povrat za preostali period.
+            </p>
+          </div>
+        </section>
+
+        <section className="mt-8">
+          <h2 className="text-xl font-bold text-slate-900">11. Live nastup, digitalna pesmarica i bakšiš</h2>
           <p className="mt-3 text-slate-700">
             Funkcije uživo (zahtevi pesama, obaveštenja bendu, opcioni predlozi bakšiša) služe kao tehnička podrška
             događaju. Bend i ustanova dogovoravaju pravila ponašanja gostiju i osoblja. Isplate bakšiša u gotovom,
