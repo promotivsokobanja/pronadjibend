@@ -1,7 +1,10 @@
 'use client';
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Radio, ListMusic, Eye, EyeOff, MessageSquare, Music, Clock, Settings, ArrowLeft, X, Volume2, VolumeX, Zap, ZapOff, Type, RotateCcw, ChevronDown, Bell, Banknote, PlusCircle, HelpCircle, Play, Pause, Edit2, Check } from 'lucide-react';
+import { Radio, ListMusic, Eye, EyeOff, MessageSquare, Music, Clock, Settings, ArrowLeft, X, Volume2, VolumeX, Zap, ZapOff, Type, RotateCcw, ChevronDown, Bell, Banknote, PlusCircle, HelpCircle, Play, Pause, Edit2, Check, QrCode, Coffee, Smartphone, ChevronLeft, ChevronRight, CheckCircle2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
+
+const QrModal = dynamic(() => import('./QrModal'), { ssr: false });
 
 export default function LiveDashboard({ bandId, musicianId }) {
   const ownerId = bandId || musicianId;
@@ -12,6 +15,19 @@ export default function LiveDashboard({ bandId, musicianId }) {
   const sessionStartRef = useRef(Date.now());
   const [showSettings, setShowSettings] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [showQr, setShowQr] = useState(false);
+  // Break mode
+  const [isOnBreak, setIsOnBreak] = useState(false);
+  const [breakElapsed, setBreakElapsed] = useState(0);
+  const breakStartRef = useRef(null);
+  // Wake Lock
+  const wakeLockRef = useRef(null);
+  const [isWakeLocked, setIsWakeLocked] = useState(false);
+  // Setlist played progress (songId set)
+  const [playedSongIds, setPlayedSongIds] = useState(new Set());
+  // Guard: prevent rapid prev/next clicks from racing
+  const navBusyRef = useRef(false);
+  const navIndexRef = useRef(-1);
   const [requests, setRequests] = useState([]);
   const [requestsLoading, setRequestsLoading] = useState(true);
   const [requestLoadError, setRequestLoadError] = useState('');
@@ -327,6 +343,69 @@ export default function LiveDashboard({ bandId, musicianId }) {
     const s = String(totalSec % 60).padStart(2, '0');
     return `${h}:${m}:${s}`;
   };
+
+  // ── Wake Lock: keep screen on during performance ──
+  const requestWakeLock = useCallback(async () => {
+    if (typeof navigator === 'undefined' || !('wakeLock' in navigator)) return;
+    try {
+      wakeLockRef.current = await navigator.wakeLock.request('screen');
+      setIsWakeLocked(true);
+      wakeLockRef.current.addEventListener('release', () => setIsWakeLocked(false));
+    } catch { /* ignore — user denied or unsupported */ }
+  }, []);
+
+  const releaseWakeLock = useCallback(async () => {
+    try { await wakeLockRef.current?.release(); } catch { /* ignore */ }
+    wakeLockRef.current = null;
+    setIsWakeLocked(false);
+  }, []);
+
+  useEffect(() => {
+    requestWakeLock();
+    const onVisChange = () => { if (document.visibilityState === 'visible') requestWakeLock(); };
+    document.addEventListener('visibilitychange', onVisChange);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisChange);
+      releaseWakeLock();
+    };
+  }, [requestWakeLock, releaseWakeLock]);
+
+  // ── Break mode timer ──
+  const toggleBreak = useCallback(() => {
+    setIsOnBreak((prev) => {
+      if (!prev) {
+        breakStartRef.current = Date.now();
+        setBreakElapsed(0);
+        return true;
+      }
+      breakStartRef.current = null;
+      return false;
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!isOnBreak) return;
+    const tick = setInterval(() => {
+      if (breakStartRef.current) {
+        setBreakElapsed(Math.floor((Date.now() - breakStartRef.current) / 1000));
+      }
+    }, 1000);
+    return () => clearInterval(tick);
+  }, [isOnBreak]);
+
+  // ── Total tips from session ──
+  const totalTipsRsd = requests.reduce((sum, r) => sum + (Number(r.tipAmountRsd) || 0), 0);
+
+  // ── Setlist progress: toggle song as played ──
+  const toggleSongPlayed = useCallback((songId) => {
+    if (!songId) return;
+    setPlayedSongIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(songId)) next.delete(songId);
+      else next.add(songId);
+      return next;
+    });
+  }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -747,12 +826,31 @@ export default function LiveDashboard({ bandId, musicianId }) {
     (item) => item.songId === selectedSong?.id
   ) ?? -1;
 
+  // Keep navIndexRef in sync with computed index
+  useEffect(() => {
+    navIndexRef.current = selectedSetListSongIndex;
+  }, [selectedSetListSongIndex]);
+
   const openAdjacentSetListSong = useCallback(async (direction) => {
-    if (!selectedSetList || selectedSetListSongIndex === -1) return;
-    const targetIndex = direction === 'prev' ? selectedSetListSongIndex - 1 : selectedSetListSongIndex + 1;
+    if (navBusyRef.current) return;
+    if (!selectedSetList) return;
+    const curIdx = navIndexRef.current;
+    if (curIdx === -1) return;
+    const targetIndex = direction === 'prev' ? curIdx - 1 : curIdx + 1;
     if (targetIndex < 0 || targetIndex >= selectedSetList.items.length) return;
-    await openSongFromSetListItem(selectedSetList.items[targetIndex]);
-  }, [openSongFromSetListItem, selectedSetList, selectedSetListSongIndex]);
+    navBusyRef.current = true;
+    // Optimistically update the ref so the next rapid click uses the new index
+    navIndexRef.current = targetIndex;
+    try {
+      await openSongFromSetListItem(selectedSetList.items[targetIndex]);
+    } catch {
+      // Revert on failure
+      navIndexRef.current = curIdx;
+    } finally {
+      // Small delay so React state settles before unlocking
+      setTimeout(() => { navBusyRef.current = false; }, 120);
+    }
+  }, [openSongFromSetListItem, selectedSetList]);
 
   useEffect(() => {
     const onOutsideClick = (e) => {
@@ -998,11 +1096,28 @@ export default function LiveDashboard({ bandId, musicianId }) {
         </div>
         <div className="hud-controls">
           <button
+            className={`hud-btn break-btn ${isOnBreak ? 'break-active' : ''}`}
+            onClick={toggleBreak}
+            aria-label={isOnBreak ? 'Završi pauzu' : 'Pauza'}
+            title={isOnBreak ? 'Završi pauzu' : 'Pauza između setova'}
+          >
+            <Coffee size={20} />
+            {isOnBreak ? <span className="break-timer-inline">{formatElapsed(breakElapsed)}</span> : <span>PAUZA</span>}
+          </button>
+          <button
             className={`hud-btn ${isNightMode ? 'active' : ''}`}
             onClick={() => setIsNightMode(!isNightMode)}
           >
             {isNightMode ? <Eye size={20} /> : <EyeOff size={20} />}
             <span>NIGHT VISION</span>
+          </button>
+          <button
+            className="hud-btn"
+            onClick={() => setShowQr(true)}
+            aria-label="QR kod"
+            title="QR kod za goste"
+          >
+            <QrCode size={20} />
           </button>
           <button
             className={`hud-btn ${showHelp ? 'settings-active' : ''}`}
@@ -1030,6 +1145,26 @@ export default function LiveDashboard({ bandId, musicianId }) {
           </button>
         </div>
       </header>
+
+      {/* Mobile metrics strip — visible only ≤900px where hud-metrics is hidden */}
+      <div className="mobile-metrics-strip">
+        <span className="mms-item">
+          <Clock size={12} />
+          {formatElapsed(sessionElapsed)}
+        </span>
+        {totalTipsRsd > 0 && (
+          <span className="mms-item mms-tips">
+            <Banknote size={12} />
+            {totalTipsRsd.toLocaleString('sr-RS')} RSD
+          </span>
+        )}
+        {isWakeLocked && (
+          <span className="mms-item mms-wl">
+            <Smartphone size={12} />
+            Ekran aktivan
+          </span>
+        )}
+      </div>
 
       <main className="hud-main">
         <nav className="hud-side-nav">
@@ -1251,6 +1386,15 @@ export default function LiveDashboard({ bandId, musicianId }) {
 
                           <div className="setlist-status-row">
                             <span>Dodato u listu: <strong>{selectedSetList?.items.length || 0}</strong></span>
+                            {selectedSetList && selectedSetList.items.length > 0 && (() => {
+                              const playedInList = selectedSetList.items.filter(i => playedSongIds.has(i.songId)).length;
+                              return playedInList > 0 ? (
+                                <span className="setlist-progress-badge">
+                                  <CheckCircle2 size={12} />
+                                  {playedInList}/{selectedSetList.items.length}
+                                </span>
+                              ) : null;
+                            })()}
                             {selectedSetList && (
                               <button
                                 type="button"
@@ -1277,26 +1421,38 @@ export default function LiveDashboard({ bandId, musicianId }) {
                               </button>
                             </div>
                           ) : (
-                            selectedSetList.items.map((item, index) => (
-                              <div key={item.id} className={`setlist-item-row ${item.songId === lastAddedSongId ? 'just-added' : ''}`}>
+                            selectedSetList.items.map((item, index) => {
+                              const isSongPlayed = playedSongIds.has(item.songId);
+                              return (
+                              <div key={item.id} className={`setlist-item-row ${item.songId === lastAddedSongId ? 'just-added' : ''} ${isSongPlayed ? 'song-played' : ''}`}>
                                 <button
                                   type="button"
-                                  className="setlist-item-main"
+                                  className={`setlist-item-main ${isSongPlayed ? 'played' : ''}`}
                                   onClick={() => openSongFromSetListItem(item)}
                                 >
                                   <span className="setlist-item-order">{index + 1}.</span>
                                   <span className="setlist-item-copy">
-                                    <span className="setlist-item-title">{item.title}</span>
+                                    <span className={`setlist-item-title ${isSongPlayed ? 'played-through' : ''}`}>{item.title}</span>
                                     <span className="setlist-item-artist">{item.artist}</span>
                                   </span>
                                 </button>
                                 <div className="setlist-item-actions">
+                                  <button
+                                    type="button"
+                                    className={`setlist-played-btn ${isSongPlayed ? 'is-played' : ''}`}
+                                    onClick={() => toggleSongPlayed(item.songId)}
+                                    title={isSongPlayed ? 'Označi kao neodsvirano' : 'Označi kao odsvirano'}
+                                    aria-label={isSongPlayed ? 'Neodsvirano' : 'Odsvirano'}
+                                  >
+                                    <CheckCircle2 size={14} />
+                                  </button>
                                   <button type="button" onClick={() => moveSetListItem(item.id, 'up')}>↑</button>
                                   <button type="button" onClick={() => moveSetListItem(item.id, 'down')}>↓</button>
                                   <button type="button" onClick={() => removeSetListItem(item.id)}>×</button>
                                 </div>
                               </div>
-                            ))
+                              );
+                            })
                           )}
                         </div>
                       </div>
@@ -1568,6 +1724,33 @@ export default function LiveDashboard({ bandId, musicianId }) {
                         <ArrowLeft size={14} />
                         <span>Set liste</span>
                       </button>
+                      {selectedSetList && selectedSetListSongIndex !== -1 && (
+                        <div className="cheatsheet-nav-arrows">
+                          <button
+                            type="button"
+                            className="cheatsheet-arrow-btn"
+                            disabled={selectedSetListSongIndex <= 0}
+                            onClick={() => openAdjacentSetListSong('prev')}
+                            aria-label="Prethodna pesma"
+                            title="Prethodna pesma u set listi"
+                          >
+                            <ChevronLeft size={18} />
+                          </button>
+                          <span className="cheatsheet-song-counter">
+                            {selectedSetListSongIndex + 1}/{selectedSetList.items.length}
+                          </span>
+                          <button
+                            type="button"
+                            className="cheatsheet-arrow-btn"
+                            disabled={selectedSetListSongIndex >= selectedSetList.items.length - 1}
+                            onClick={() => openAdjacentSetListSong('next')}
+                            aria-label="Sledeća pesma"
+                            title="Sledeća pesma u set listi"
+                          >
+                            <ChevronRight size={18} />
+                          </button>
+                        </div>
+                      )}
                       <div className="cheatsheet-song-info">
                         <h3 className="cheatsheet-now-title">{selectedSong.title}</h3>
                         <span className="cheatsheet-now-artist">{selectedSong.artist}</span>
@@ -1668,10 +1851,31 @@ export default function LiveDashboard({ bandId, musicianId }) {
             <div className="label">BR. ZAHTEVA</div>
             <div className="value">{activeCount}</div>
           </div>
+          {totalTipsRsd > 0 && (
+            <div className="metric-box metric-tips">
+              <Banknote size={16} />
+              <div className="label">BAKŠIŠ</div>
+              <div className="value">{totalTipsRsd.toLocaleString('sr-RS')} RSD</div>
+            </div>
+          )}
+          {isOnBreak && (
+            <div className="metric-box metric-break">
+              <Coffee size={16} />
+              <div className="label">PAUZA</div>
+              <div className="value">{formatElapsed(breakElapsed)}</div>
+            </div>
+          )}
           <div className="metric-box">
             <Volume2 size={16} />
             <div className="label">ZVUK</div>
             <div className="value value-sm">{settings.soundEnabled ? 'UKLJ.' : 'ISKLJ.'}</div>
+          </div>
+          <div className="metric-box metric-wakelock">
+            <Smartphone size={16} />
+            <div className="label">EKRAN</div>
+            <div className={`value value-sm ${isWakeLocked ? 'wl-on' : 'wl-off'}`}>
+              {isWakeLocked ? 'AKTIVAN' : 'AUTO'}
+            </div>
           </div>
         </aside>
       </main>
@@ -1951,6 +2155,19 @@ export default function LiveDashboard({ bandId, musicianId }) {
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* QR Code Modal */}
+      {showQr && <QrModal bandId={bandId} musicianId={musicianId} onClose={() => setShowQr(false)} />}
+
+      {/* Break Mode Banner */}
+      {isOnBreak && (
+        <div className="break-banner">
+          <Coffee size={18} />
+          <span className="break-banner-label">PAUZA</span>
+          <span className="break-banner-timer">{formatElapsed(breakElapsed)}</span>
+          <button className="break-banner-end" onClick={toggleBreak}>Nastavi</button>
         </div>
       )}
 
@@ -4440,6 +4657,237 @@ export default function LiveDashboard({ bandId, musicianId }) {
           border-color: rgba(139, 92, 246, 0.6);
         }
 
+        /* ======= MOBILE METRICS STRIP (visible only ≤900px) ======= */
+        .mobile-metrics-strip {
+          display: none; /* hidden on desktop */
+        }
+
+        /* ======= BREAK MODE BANNER ======= */
+        .break-banner {
+          position: fixed;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          z-index: 60;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.75rem;
+          padding: 0.65rem 1rem;
+          background: linear-gradient(90deg, rgba(245, 158, 11, 0.92), rgba(217, 119, 6, 0.92));
+          backdrop-filter: blur(8px);
+          -webkit-backdrop-filter: blur(8px);
+          color: #000;
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 0.78rem;
+          font-weight: 800;
+          letter-spacing: 0.06em;
+          box-shadow: 0 -4px 24px rgba(245, 158, 11, 0.35);
+        }
+        .break-banner-label {
+          text-transform: uppercase;
+        }
+        .break-banner-timer {
+          font-size: 0.85rem;
+          font-weight: 900;
+        }
+        .break-banner-end {
+          border: 2px solid #000;
+          background: rgba(0, 0, 0, 0.15);
+          color: #000;
+          padding: 0.4rem 1rem;
+          border-radius: 8px;
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 0.72rem;
+          font-weight: 800;
+          cursor: pointer;
+          transition: all 0.15s ease;
+          text-transform: uppercase;
+          min-height: 36px;
+        }
+        .break-banner-end:hover {
+          background: #000;
+          color: #f59e0b;
+        }
+
+        /* ======= BREAK BUTTON IN HEADER ======= */
+        .hud-btn.break-btn {
+          border-color: rgba(245, 158, 11, 0.35);
+          color: #f59e0b;
+        }
+        .hud-btn.break-btn:hover {
+          border-color: #f59e0b;
+          color: #fbbf24;
+        }
+        .hud-btn.break-active {
+          background: rgba(245, 158, 11, 0.15) !important;
+          border-color: #f59e0b !important;
+          color: #fbbf24 !important;
+          animation: break-pulse 2s ease-in-out infinite;
+        }
+        .break-timer-inline {
+          font-size: 0.7rem;
+          font-weight: 900;
+          font-variant-numeric: tabular-nums;
+        }
+        @keyframes break-pulse {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+          50% { box-shadow: 0 0 12px 2px rgba(245, 158, 11, 0.25); }
+        }
+
+        /* ======= METRICS: TIPS, BREAK, WAKE LOCK ======= */
+        .metric-tips .value {
+          color: #22c55e !important;
+        }
+        .night-vision .metric-tips .value {
+          color: #4ade80 !important;
+          text-shadow: 0 0 8px rgba(34, 197, 94, 0.3);
+        }
+        .metric-break .value {
+          color: #f59e0b !important;
+        }
+        .wl-on { color: #22c55e !important; }
+        .wl-off { color: #6b7280 !important; }
+        .night-vision .wl-on {
+          color: #4ade80 !important;
+          text-shadow: 0 0 6px rgba(74, 222, 128, 0.3);
+        }
+
+        /* ======= CHEATSHEET PREV/NEXT ARROWS ======= */
+        .cheatsheet-nav-arrows {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.25rem;
+          flex-shrink: 0;
+        }
+        .cheatsheet-arrow-btn {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 34px;
+          height: 34px;
+          border: 1px solid rgba(139, 92, 246, 0.25);
+          border-radius: 8px;
+          background: rgba(139, 92, 246, 0.06);
+          color: #cbd5e1;
+          cursor: pointer;
+          transition: all 0.15s ease;
+          flex-shrink: 0;
+        }
+        .cheatsheet-arrow-btn:hover:not(:disabled) {
+          border-color: #8b5cf6;
+          color: #8b5cf6;
+          background: rgba(139, 92, 246, 0.12);
+        }
+        .cheatsheet-arrow-btn:active:not(:disabled) {
+          transform: scale(0.92);
+          background: rgba(139, 92, 246, 0.2);
+        }
+        .cheatsheet-arrow-btn:disabled {
+          opacity: 0.3;
+          cursor: not-allowed;
+        }
+        .cheatsheet-song-counter {
+          font-size: 0.68rem;
+          font-weight: 800;
+          color: #8b5cf6;
+          min-width: 2.5rem;
+          text-align: center;
+          font-variant-numeric: tabular-nums;
+        }
+        .light-mode .cheatsheet-arrow-btn {
+          border-color: rgba(148, 163, 184, 0.3);
+          background: rgba(255, 255, 255, 0.8);
+          color: #475569;
+        }
+        .light-mode .cheatsheet-arrow-btn:hover:not(:disabled) {
+          border-color: #8b5cf6;
+          color: #7c3aed;
+          background: rgba(139, 92, 246, 0.08);
+        }
+
+        /* ======= SETLIST PLAYED PROGRESS ======= */
+        .setlist-played-btn {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          color: #4b5563;
+          transition: all 0.15s ease;
+        }
+        .setlist-played-btn:hover {
+          color: #22c55e !important;
+          border-color: rgba(34, 197, 94, 0.5) !important;
+        }
+        .setlist-played-btn.is-played {
+          color: #22c55e !important;
+          border-color: rgba(34, 197, 94, 0.45) !important;
+          background: rgba(34, 197, 94, 0.1) !important;
+        }
+        .night-vision .setlist-played-btn.is-played {
+          color: #4ade80 !important;
+          border-color: rgba(74, 222, 128, 0.35) !important;
+          background: rgba(74, 222, 128, 0.08) !important;
+        }
+        .setlist-item-main.played {
+          opacity: 0.55;
+        }
+        .played-through {
+          text-decoration: line-through;
+          text-decoration-color: rgba(139, 92, 246, 0.45);
+        }
+        .setlist-progress-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.3rem;
+          padding: 0.15rem 0.5rem;
+          border-radius: 999px;
+          border: 1px solid rgba(34, 197, 94, 0.3);
+          background: rgba(34, 197, 94, 0.08);
+          color: #22c55e;
+          font-size: 0.68rem;
+          font-weight: 700;
+          font-variant-numeric: tabular-nums;
+        }
+        .night-vision .setlist-progress-badge {
+          color: #4ade80;
+          border-color: rgba(74, 222, 128, 0.25);
+          background: rgba(74, 222, 128, 0.06);
+        }
+        .light-mode .setlist-progress-badge {
+          color: #16a34a;
+          border-color: rgba(22, 163, 74, 0.3);
+          background: rgba(22, 163, 74, 0.08);
+        }
+        .light-mode .setlist-played-btn.is-played {
+          color: #16a34a !important;
+          border-color: rgba(22, 163, 74, 0.35) !important;
+          background: rgba(22, 163, 74, 0.08) !important;
+        }
+        .light-mode .setlist-item-main.played {
+          opacity: 0.5;
+        }
+        .light-mode .played-through {
+          text-decoration-color: rgba(124, 58, 237, 0.4);
+        }
+        .light-mode .metric-tips .value {
+          color: #16a34a !important;
+        }
+        .light-mode .wl-on {
+          color: #16a34a !important;
+        }
+        .light-mode .break-btn {
+          border-color: rgba(217, 119, 6, 0.35);
+          color: #d97706;
+        }
+        .light-mode .break-btn:hover {
+          border-color: #d97706;
+        }
+        .light-mode .break-active {
+          background: rgba(245, 158, 11, 0.12) !important;
+          border-color: #d97706 !important;
+          color: #d97706 !important;
+        }
+
         @media (max-width: 1024px) {
           .feed-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
         }
@@ -4451,6 +4899,52 @@ export default function LiveDashboard({ bandId, musicianId }) {
           }
           .hud-metrics {
             display: none;
+          }
+          .mobile-metrics-strip {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            padding: 0.3rem 0.75rem;
+            background: rgba(5, 6, 15, 0.65);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: rgba(226, 232, 240, 0.7);
+            letter-spacing: 0.04em;
+            flex-shrink: 0;
+            flex-wrap: wrap;
+          }
+          .mms-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            white-space: nowrap;
+          }
+          .mms-tips {
+            color: #4ade80;
+          }
+          .mms-wl {
+            color: #4ade80;
+            opacity: 0.7;
+          }
+          .night-vision .mobile-metrics-strip {
+            background: rgba(3, 3, 11, 0.6);
+            border-bottom-color: rgba(139, 92, 246, 0.1);
+          }
+          .light-mode .mobile-metrics-strip {
+            background: rgba(255, 255, 255, 0.6);
+            border-bottom-color: #e5e7eb;
+            color: #64748b;
+          }
+          .light-mode .mms-tips {
+            color: #16a34a;
+          }
+          .light-mode .mms-wl {
+            color: #16a34a;
           }
           .hud-side-nav {
             padding-top: 1rem;
@@ -4485,6 +4979,42 @@ export default function LiveDashboard({ bandId, musicianId }) {
           }
           .hud-btn span {
             display: none;
+          }
+          .hud-btn.break-active .break-timer-inline {
+            display: inline;
+            font-size: 0.62rem;
+          }
+          .break-banner {
+            bottom: calc(56px + env(safe-area-inset-bottom, 0px));
+            padding: 0.45rem 0.75rem;
+            font-size: 0.7rem;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            justify-content: center;
+          }
+          .break-banner-end {
+            padding: 0.35rem 0.8rem;
+            font-size: 0.65rem;
+            min-height: 34px;
+          }
+          .cheatsheet-nav-arrows {
+            gap: 0.15rem;
+          }
+          .cheatsheet-arrow-btn {
+            width: 38px;
+            height: 38px;
+          }
+          .cheatsheet-song-counter {
+            font-size: 0.62rem;
+            min-width: 2rem;
+          }
+          .setlist-item-actions {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.4rem;
+          }
+          .setlist-played-btn {
+            min-height: 40px;
           }
           .hud-exit-x {
             min-width: 44px;
@@ -4667,7 +5197,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
           }
           .setlist-item-actions {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 0.4rem;
           }
           .setlist-item-actions button {
@@ -4927,7 +5457,8 @@ export default function LiveDashboard({ bandId, musicianId }) {
 
         @media (prefers-reduced-motion: reduce) {
           .pulse-dot,
-          .hud-pending-orbit.has-pending {
+          .hud-pending-orbit.has-pending,
+          .hud-btn.break-active {
             animation: none !important;
           }
           .settings-overlay {
