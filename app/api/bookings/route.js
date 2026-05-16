@@ -5,6 +5,7 @@ import { parseCalendarDateParam } from '../../../lib/calendarDate';
 import { isDemoBandId } from '../../../lib/demoBands';
 import { sendBookingNotificationToBand } from '../../../lib/sendBookingNotificationEmail';
 import { createNotification } from '../../../lib/notifications';
+import { isEmailVerified } from '../../../lib/checkEmailVerified';
 
 const BOOKING_MESSAGE_MAX = 500;
 const MAX_BOOKING_DATES = 14;
@@ -46,6 +47,18 @@ export async function POST(request) {
         { error: 'Nedostaju obavezni podaci (Bend, Email).' },
         { status: 400 }
       );
+    }
+
+    // Block unverified authenticated users from booking
+    const authUser = await getAuthUserFromRequest(request);
+    if (authUser?.userId) {
+      const verified = await isEmailVerified(authUser.email, authUser.role);
+      if (!verified) {
+        return NextResponse.json(
+          { error: 'Potvrdite email adresu pre slanja rezervacije. Proverite inbox.' },
+          { status: 403 }
+        );
+      }
     }
 
     const rawList =

@@ -33,6 +33,19 @@ export async function GET(request) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
+    // Check email verification status
+    let emailVerified = false;
+    try {
+      const ev = await prisma.$queryRawUnsafe(
+        `SELECT 1 FROM "EmailVerification" WHERE "email" = $1 AND "verified" = true LIMIT 1`,
+        user.email
+      );
+      emailVerified = ev.length > 0;
+    } catch { /* table might not exist yet */ }
+
+    // ADMIN is always considered verified
+    if (user.role === 'ADMIN') emailVerified = true;
+
     return NextResponse.json({
       user: {
         id: user.id,
@@ -41,6 +54,7 @@ export async function GET(request) {
         bandId: user.bandId,
         plan: user.plan,
         musicianProfileId: user.musicianProfile?.id || null,
+        emailVerified,
       },
     });
   } catch (error) {

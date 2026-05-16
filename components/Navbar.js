@@ -8,6 +8,7 @@ import { adminFetch } from '../lib/adminFetch';
 import { useClientSearch } from './clients/ClientSearchContext';
 import ClientsNavSearchPanel from './clients/ClientsNavSearchPanel';
 import NotificationBell from './NotificationBell';
+import EmailVerifyBanner from './EmailVerifyBanner';
 
 const NAV_SESSION_CACHE_KEY = 'pb_nav_session_v1';
 const NAV_SESSION_CACHE_TTL_MS = 60 * 1000;
@@ -249,6 +250,9 @@ export default function Navbar() {
             <Link href="/login" className="btn-prijava-mobile" onClick={() => setIsOpen(false)}>Prijava</Link>
           ))}
         </div>
+      )}
+      {sessionLoaded && sessionUser && !sessionUser.emailVerified && (
+        <EmailVerifyBanner email={sessionUser.email} />
       )}
     </>
   );

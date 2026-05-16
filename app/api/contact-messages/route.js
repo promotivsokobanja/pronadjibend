@@ -3,6 +3,7 @@ import nodemailer from 'nodemailer';
 import prisma from '../../../lib/prisma';
 import { getAuthUserFromRequest } from '../../../lib/auth';
 import { createNotification } from '../../../lib/notifications';
+import { isEmailVerified } from '../../../lib/checkEmailVerified';
 
 function getSmtpTransport() {
   const host = process.env.SMTP_HOST?.trim();
@@ -55,6 +56,18 @@ export async function POST(req) {
 
     if (!bandId || !senderName || !senderEmail || !msgBody) {
       return NextResponse.json({ error: 'Sva obavezna polja moraju biti popunjena.' }, { status: 400 });
+    }
+
+    // Block unverified authenticated users from sending messages
+    const authUser = await getAuthUserFromRequest(req);
+    if (authUser?.userId) {
+      const verified = await isEmailVerified(authUser.email, authUser.role);
+      if (!verified) {
+        return NextResponse.json(
+          { error: 'Potvrdite email adresu pre slanja poruka. Proverite inbox.' },
+          { status: 403 }
+        );
+      }
     }
     if (msgBody.length > BODY_MAX) {
       return NextResponse.json({ error: `Poruka može imati najviše ${BODY_MAX} karaktera.` }, { status: 400 });
