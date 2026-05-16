@@ -42,19 +42,67 @@ export async function GET(request) {
   }
 
   // Always read fresh user data from database to avoid stale role from JWT cache
+  const { searchParams } = new URL(request.url);
+  const requestedRole = searchParams.get('role');
+  const VALID_ROLES = ['BAND', 'MUSICIAN', 'CLIENT'];
+
   let role = nextAuthToken.role;
   let bandId = nextAuthToken.bandId ?? null;
   try {
     const dbUser = await prisma.user.findUnique({
       where: { id: nextAuthToken.userId },
-      select: { role: true, bandId: true },
+      select: { id: true, role: true, bandId: true, createdAt: true },
     });
     if (dbUser) {
       role = dbUser.role;
       bandId = dbUser.bandId;
+
+      // If user was just created (< 60s ago) as CLIENT and a valid role was requested, update it
+      const ageMs = Date.now() - new Date(dbUser.createdAt).getTime();
+      if (
+        requestedRole &&
+        VALID_ROLES.includes(requestedRole) &&
+        dbUser.role === 'CLIENT' &&
+        requestedRole !== 'CLIENT' &&
+        ageMs < 60_000
+      ) {
+        await prisma.user.update({
+          where: { id: dbUser.id },
+          data: { role: requestedRole },
+        });
+        role = requestedRole;
+
+        // Create band profile for BAND role
+        if (requestedRole === 'BAND') {
+          const band = await prisma.band.create({
+            data: {
+              name: nextAuthToken.name || nextAuthToken.email?.split('@')[0] || 'Moj bend',
+              genre: '',
+              location: '',
+            },
+          });
+          await prisma.user.update({
+            where: { id: dbUser.id },
+            data: { bandId: band.id },
+          });
+          bandId = band.id;
+        }
+
+        // Create musician profile for MUSICIAN role
+        if (requestedRole === 'MUSICIAN') {
+          await prisma.musicianProfile.create({
+            data: {
+              userId: dbUser.id,
+              name: nextAuthToken.name || '',
+              primaryInstrument: '',
+              city: '',
+            },
+          });
+        }
+      }
     }
   } catch (e) {
-    console.error('[sync-session] DB lookup failed:', e.message);
+    console.error('[sync-session] DB lookup/update failed:', e.message);
   }
 
   const token = jwt.sign(
@@ -68,7 +116,6 @@ export async function GET(request) {
     { expiresIn: '7d' }
   );
 
-  const { searchParams } = new URL(request.url);
   const nextParam = searchParams.get('next');
   let dest = '/clients';
   if (role === 'ADMIN') dest = '/admin';

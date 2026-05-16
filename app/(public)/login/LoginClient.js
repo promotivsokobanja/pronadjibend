@@ -33,11 +33,16 @@ export default function LoginClient() {
     if (googleLoading) return;
     setGoogleLoading(true);
     try {
-      const callbackUrl =
-        '/api/auth/sync-session' +
-        (nextPath && nextPath.startsWith('/') && !nextPath.startsWith('//')
-          ? `?next=${encodeURIComponent(nextPath)}`
-          : '');
+      const syncParams = new URLSearchParams();
+      if (nextPath && nextPath.startsWith('/') && !nextPath.startsWith('//')) {
+        syncParams.set('next', nextPath);
+      }
+      // Pass selected role for new Google registrations
+      if (!isLogin && formData.role) {
+        syncParams.set('role', formData.role);
+      }
+      const qs = syncParams.toString();
+      const callbackUrl = '/api/auth/sync-session' + (qs ? `?${qs}` : '');
       const csrfRes = await fetch('/api/auth/csrf');
       const { csrfToken } = await csrfRes.json();
       const params = new URLSearchParams({ csrfToken, callbackUrl, json: 'true' });
@@ -394,7 +399,7 @@ export default function LoginClient() {
           <div className="social-login">
             {googleAuthEnabled ? (
               <button type="button" className="btn btn-secondary social-btn google-btn" onClick={handleGoogleSignIn} disabled={googleLoading}>
-                {googleLoading ? 'Povezivanje…' : 'Nastavi preko Google'}
+                {googleLoading ? 'Povezivanje…' : isLogin ? 'Prijavi se preko Google' : 'Registruj se preko Google'}
               </button>
             ) : (
               <button type="button" className="btn btn-secondary social-btn google-btn" disabled>
