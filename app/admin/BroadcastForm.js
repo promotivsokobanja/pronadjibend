@@ -52,72 +52,35 @@ export default function BroadcastForm() {
   };
 
   return (
-    <div className="admin-table-wrap" style={{ marginTop: '2rem' }}>
-      <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#f1f5f9', marginBottom: '1rem' }}>
-        Pošalji obaveštenje svima
-      </h2>
-      <form onSubmit={send} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxWidth: 480 }}>
-        <select
-          value={target}
-          onChange={(e) => setTarget(e.target.value)}
-          style={{
-            padding: '0.6rem 0.9rem', borderRadius: 8,
-            background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)',
-            color: '#e2e8f0', fontSize: '0.85rem',
-          }}
-        >
-          {TARGETS.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-        </select>
-        <input
-          type="text"
-          placeholder="Naslov (max 100)"
-          maxLength={100}
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          style={{
-            padding: '0.6rem 0.9rem', borderRadius: 8,
-            background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)',
-            color: '#f8fafc', fontSize: '0.85rem', outline: 'none',
-          }}
-        />
-        <textarea
-          placeholder="Poruka (max 500)"
-          maxLength={500}
-          rows={3}
-          value={body}
-          onChange={(e) => setBody(e.target.value)}
-          style={{
-            padding: '0.6rem 0.9rem', borderRadius: 8, resize: 'vertical',
-            background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)',
-            color: '#f8fafc', fontSize: '0.85rem', outline: 'none', fontFamily: 'inherit',
-          }}
-        />
-        <input
-          type="text"
-          placeholder="Link (opciono, npr. /upgrade)"
-          value={link}
-          onChange={(e) => setLink(e.target.value)}
-          style={{
-            padding: '0.6rem 0.9rem', borderRadius: 8,
-            background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)',
-            color: '#f8fafc', fontSize: '0.85rem', outline: 'none',
-          }}
-        />
-        <button
-          type="submit"
-          disabled={sending}
-          style={{
-            padding: '0.7rem 1.5rem', borderRadius: 999,
-            background: 'linear-gradient(120deg, #4d5de8, #cda667)',
-            color: '#050505', border: 'none', fontWeight: 800,
-            fontSize: '0.82rem', cursor: sending ? 'not-allowed' : 'pointer',
-            opacity: sending ? 0.6 : 1, alignSelf: 'flex-start',
-          }}
-        >
-          {sending ? 'Slanje…' : 'Pošalji obaveštenje'}
-        </button>
-        {error && <p style={{ color: '#f87171', fontSize: '0.82rem', margin: 0 }}>{error}</p>}
-        {result && <p style={{ color: '#4ade80', fontSize: '0.82rem', margin: 0 }}>{result}</p>}
+    <div className="admin-section" style={{ marginTop: '2rem', maxWidth: 520 }}>
+      <h2>Pošalji obaveštenje svima</h2>
+      <p>Pošaljite in-app notifikaciju izabranoj grupi korisnika.</p>
+      <form onSubmit={send} className="admin-form-grid">
+        <div>
+          <label>Ciljna grupa</label>
+          <select className="admin-field" value={target} onChange={(e) => setTarget(e.target.value)}>
+            {TARGETS.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+          </select>
+        </div>
+        <div>
+          <label>Naslov</label>
+          <input className="admin-field" type="text" placeholder="Max 100 karaktera" maxLength={100} value={title} onChange={(e) => setTitle(e.target.value)} />
+        </div>
+        <div>
+          <label>Poruka</label>
+          <textarea className="admin-field" placeholder="Max 500 karaktera" maxLength={500} rows={3} value={body} onChange={(e) => setBody(e.target.value)} style={{ resize: 'vertical', fontFamily: 'inherit' }} />
+        </div>
+        <div>
+          <label>Link (opciono)</label>
+          <input className="admin-field" type="text" placeholder="npr. /upgrade" value={link} onChange={(e) => setLink(e.target.value)} />
+        </div>
+        <div className="admin-section-footer">
+          <button type="submit" className="admin-btn" disabled={sending}>
+            {sending ? 'Slanje…' : 'Pošalji obaveštenje'}
+          </button>
+          {error && <span className="admin-msg-err">{error}</span>}
+          {result && <span className="admin-msg-ok">{result}</span>}
+        </div>
       </form>
     </div>
   );
