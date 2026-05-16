@@ -234,6 +234,12 @@ export default function AdminClientLayout({ children }) {
         </nav>
         <div className="admin-sidebar-back">
           <Link
+            href="/profil"
+            style={{ color: '#64748b', fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.4rem' }}
+          >
+            Moj profil / Lozinka
+          </Link>
+          <Link
             href="/"
             style={{ color: '#64748b', fontSize: '0.8rem', fontWeight: 600 }}
           >
