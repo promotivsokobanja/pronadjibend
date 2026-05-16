@@ -37,6 +37,7 @@ export async function GET(request) {
           plan: true,
           planUntil: true,
           createdAt: true,
+          deletedAt: true,
           bandId: true,
           band: { select: { id: true, name: true, location: true } },
           musicianProfile: { select: { id: true, name: true, primaryInstrument: true } },
@@ -44,8 +45,24 @@ export async function GET(request) {
       }),
     ]);
 
+    // Batch check email verification status
+    const emails = rows.map(r => r.email);
+    let verifiedEmails = new Set();
+    try {
+      const vRows = await prisma.$queryRawUnsafe(
+        `SELECT DISTINCT "email" FROM "EmailVerification" WHERE "email" = ANY($1) AND "verified" = true`,
+        emails
+      );
+      verifiedEmails = new Set(vRows.map(r => r.email));
+    } catch { /* table might not exist yet */ }
+
+    const users = rows.map(u => ({
+      ...u,
+      emailVerified: u.role === 'ADMIN' || verifiedEmails.has(u.email),
+    }));
+
     return NextResponse.json({
-      users: rows,
+      users,
       total,
       page,
       limit,
@@ -170,20 +187,13 @@ export async function DELETE(request) {
       return NextResponse.json({ error: 'Korisnik nije pronađen.' }, { status: 404 });
     }
 
-    await prisma.$transaction(async (tx) => {
-      // Disconnect musician profile from user (keep profile, remove link)
-      if (user.musicianProfile?.id) {
-        await tx.musicianProfile.update({
-          where: { id: user.musicianProfile.id },
-          data: { userId: null },
-        });
-      }
-
-      // Delete the user
-      await tx.user.delete({ where: { id } });
+    // Soft-delete: set deletedAt timestamp instead of physical removal
+    await prisma.user.update({
+      where: { id },
+      data: { deletedAt: new Date() },
     });
 
-    return NextResponse.json({ success: true, deletedEmail: user.email });
+    return NextResponse.json({ success: true, deletedEmail: user.email, softDeleted: true });
   } catch (error) {
     if (error?.code === 'P2025') {
       return NextResponse.json({ error: 'Korisnik nije pronađen.' }, { status: 404 });

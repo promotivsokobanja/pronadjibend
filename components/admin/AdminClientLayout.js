@@ -85,8 +85,25 @@ export default function AdminClientLayout({ children }) {
 
   if (state === 'loading') {
     return (
-      <div className="admin-app" style={{ justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
-        <p style={{ color: '#94a3b8' }}>Učitavanje admin panela…</p>
+      <div className="admin-app">
+        <aside className="admin-sidebar" style={{ padding: '1.25rem' }}>
+          <div className="admin-skeleton admin-skeleton-text" style={{ width: '60%', marginBottom: 16 }} />
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="admin-skeleton admin-skeleton-text" style={{ width: `${70 + (i % 3) * 10}%`, height: 12, marginBottom: 14 }} />
+          ))}
+        </aside>
+        <div className="admin-main" style={{ padding: '1.75rem 2rem' }}>
+          <div className="admin-skeleton admin-skeleton-text" style={{ width: 180, height: 22, marginBottom: 8 }} />
+          <div className="admin-skeleton admin-skeleton-text" style={{ width: 260, height: 14, marginBottom: 24 }} />
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="admin-skeleton admin-skeleton-card" />
+            ))}
+          </div>
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="admin-skeleton admin-skeleton-row" />
+          ))}
+        </div>
       </div>
     );
   }
