@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { adminFetch } from '../../lib/adminFetch';
+import BroadcastForm from './BroadcastForm';
 
 export default function AdminDashboardPage() {
   const [data, setData] = useState(null);
@@ -70,6 +71,8 @@ export default function AdminDashboardPage() {
           </tbody>
         </table>
       </div>
+
+      <BroadcastForm />
     </>
   );
 }
