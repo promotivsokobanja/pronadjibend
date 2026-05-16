@@ -218,13 +218,21 @@ function Style() {
       }
       .pr-back:hover { color: #cda667; }
       @media (max-width: 640px) {
-        .pr-container { padding: calc(var(--navbar-height, 4rem) + 1rem) 0.75rem 1.5rem; }
+        .pr-container {
+          padding: calc(var(--navbar-height, 4rem) + 1rem) max(0.75rem, env(safe-area-inset-left)) calc(var(--bottom-nav-h, 60px) + 1rem) max(0.75rem, env(safe-area-inset-right));
+        }
         .pr-box { padding: 1.8rem 1.25rem; border-radius: 22px; }
         .pr-box h2 { font-size: 1.5rem; }
       }
       @media (max-width: 480px) {
         .pr-box { padding: 1.5rem 1rem; }
         .pr-box h2 { font-size: 1.35rem; }
+        .pr-input-group { padding: 0.75rem 0.9rem; gap: 0.65rem; }
+      }
+      @media (max-width: 380px) {
+        .pr-box h2 { font-size: 1.2rem; }
+        .pr-section h3 { font-size: 0.95rem; }
+        .pr-info-row { font-size: 0.82rem; }
       }
     `}</style>
   );

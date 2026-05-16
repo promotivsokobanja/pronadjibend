@@ -59,7 +59,7 @@ export default function EmailVerifyBanner({ email }) {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: 0.65rem 1.25rem;
+          padding: 0.65rem max(1.25rem, env(safe-area-inset-left)) 0.65rem max(1.25rem, env(safe-area-inset-right));
           background: linear-gradient(90deg, #92400e, #b45309);
           color: #fef3c7;
           font-size: 0.82rem;
@@ -97,13 +97,22 @@ export default function EmailVerifyBanner({ email }) {
         .evb-error { color: #fecaca; font-size: 0.75rem; }
         .evb-close {
           background: none; border: none; color: #fef3c7;
-          cursor: pointer; padding: 0.25rem; opacity: 0.7;
+          cursor: pointer; padding: 0.5rem; opacity: 0.7;
           -webkit-tap-highlight-color: transparent;
+          flex-shrink: 0;
+          min-width: 36px; min-height: 36px;
+          display: flex; align-items: center; justify-content: center;
         }
         .evb-close:hover { opacity: 1; }
-        @media (max-width: 480px) {
+        @media (max-width: 640px) {
           .evb-bar { padding: 0.5rem 0.75rem; font-size: 0.78rem; }
-          .evb-text { font-size: 0.76rem; }
+          .evb-content { gap: 0.4rem; }
+          .evb-text { font-size: 0.76rem; flex-basis: 100%; }
+          .evb-btn { margin-top: 0.25rem; }
+        }
+        @media (max-width: 380px) {
+          .evb-text { font-size: 0.72rem; }
+          .evb-btn { font-size: 0.7rem; padding: 0.3rem 0.7rem; }
         }
       `}</style>
     </>

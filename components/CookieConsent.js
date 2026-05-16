@@ -60,6 +60,13 @@ export default function CookieConsent() {
           -webkit-tap-highlight-color: transparent;
         }
         .cc-btn:hover { filter: brightness(1.08); }
+        @media (max-width: 768px) {
+          .cc-bar {
+            bottom: var(--bottom-nav-h, 60px);
+            padding-left: max(1rem, env(safe-area-inset-left));
+            padding-right: max(1rem, env(safe-area-inset-right));
+          }
+        }
         @media (max-width: 480px) {
           .cc-bar { flex-direction: column; gap: 0.65rem; padding: 0.75rem 1rem; }
           .cc-btn { width: 100%; }
