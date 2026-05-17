@@ -49,6 +49,11 @@ export default function LiveDashboard({ bandId, musicianId }) {
   const [repertoireCategoryFilter, setRepertoireCategoryFilter] = useState('Sve');
   const REPERTOIRE_CATEGORIES = ['Sve', 'Muške Zabavne', 'Ženske Zabavne', 'Muške Narodne', 'Ženske Narodne', 'Razno', 'Strane Muške', 'Strane Ženske'];
   const [cheatsheetSearch, setCheatsheetSearch] = useState('');
+  // Global pesmarica search in cheatsheet
+  const [globalResults, setGlobalResults] = useState([]);
+  const [globalSearchLoading, setGlobalSearchLoading] = useState(false);
+  const globalSearchTimerRef = useRef(null);
+  const [addingSongId, setAddingSongId] = useState('');
   // Cheatsheet per-song controls (transpose / edit / auto-scroll)
   const [liveKeyOffset, setLiveKeyOffset] = useState(0);
   const [liveIsEditing, setLiveIsEditing] = useState(false);
@@ -821,6 +826,66 @@ export default function LiveDashboard({ bandId, musicianId }) {
       (s.artist || '').toLowerCase().includes(q)
     );
   });
+
+  // ── Debounced global pesmarica search ──
+  useEffect(() => {
+    if (globalSearchTimerRef.current) clearTimeout(globalSearchTimerRef.current);
+    const q = cheatsheetSearch.trim();
+    if (q.length < 2) {
+      setGlobalResults([]);
+      setGlobalSearchLoading(false);
+      return;
+    }
+    setGlobalSearchLoading(true);
+    globalSearchTimerRef.current = setTimeout(async () => {
+      try {
+        const resp = await fetch(`/api/pesmarica?search=${encodeURIComponent(q)}&suggest=1`);
+        const data = await resp.json();
+        // Filter out songs already in personal repertoire
+        const ownIds = new Set(songsList.map((s) => `${(s.title||'').toLowerCase()}|${(s.artist||'').toLowerCase()}`));
+        const filtered = (data.songs || []).filter(
+          (s) => !ownIds.has(`${(s.title||'').toLowerCase()}|${(s.artist||'').toLowerCase()}`)
+        );
+        setGlobalResults(filtered);
+      } catch {
+        setGlobalResults([]);
+      } finally {
+        setGlobalSearchLoading(false);
+      }
+    }, 350);
+    return () => clearTimeout(globalSearchTimerRef.current);
+  }, [cheatsheetSearch, songsList]);
+
+  // ── Add a global pesmarica song to personal repertoire ──
+  const addGlobalSongToRepertoire = useCallback(async (song) => {
+    if (addingSongId) return;
+    setAddingSongId(song.id);
+    try {
+      const resp = await fetch('/api/songs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: song.title,
+          artist: song.artist,
+          lyrics: song.lyrics || null,
+          category: song.category || null,
+          bandId: bandId || undefined,
+          musicianId: musicianId || undefined,
+        }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error || 'Greška');
+      const newSong = data.song || data;
+      // Add to local songs list
+      setAllSongs((prev) => Array.isArray(prev) ? [...prev, newSong] : [newSong]);
+      // Remove from global results
+      setGlobalResults((prev) => prev.filter((s) => s.id !== song.id));
+    } catch (err) {
+      console.error('Error adding song to repertoire:', err);
+    } finally {
+      setAddingSongId('');
+    }
+  }, [addingSongId, bandId, musicianId]);
 
   const selectedSetListSongIndex = selectedSetList?.items.findIndex(
     (item) => item.songId === selectedSong?.id
@@ -1627,21 +1692,59 @@ export default function LiveDashboard({ bandId, musicianId }) {
                       </button>
                     </div>
 
-                    {showSongDropdown && !songLoading && cheatsheetFilteredSongs.length > 0 && (
+                    {showSongDropdown && !songLoading && (cheatsheetFilteredSongs.length > 0 || globalResults.length > 0 || globalSearchLoading) && (
                       <div className="song-dropdown-list">
-                        {cheatsheetFilteredSongs.map((song) => (
-                          <button
-                            key={song.id}
-                            className="song-dropdown-item"
-                            onClick={async () => {
-                              await handleSelectSong(song);
-                              setShowSongDropdown(false);
-                            }}
-                          >
-                            <span className="song-dropdown-title">{song.title}</span>
-                            <span className="song-dropdown-artist">{song.artist}</span>
-                          </button>
-                        ))}
+                        {cheatsheetFilteredSongs.length > 0 && (
+                          <>
+                            {cheatsheetSearch.trim().length >= 2 && <div className="dropdown-section-label">Moj repertoar</div>}
+                            {cheatsheetFilteredSongs.map((song) => (
+                              <button
+                                key={song.id}
+                                className="song-dropdown-item"
+                                onClick={async () => {
+                                  await handleSelectSong(song);
+                                  setShowSongDropdown(false);
+                                }}
+                              >
+                                <span className="song-dropdown-title">{song.title}</span>
+                                <span className="song-dropdown-artist">{song.artist}</span>
+                              </button>
+                            ))}
+                          </>
+                        )}
+                        {cheatsheetSearch.trim().length >= 2 && (globalResults.length > 0 || globalSearchLoading) && (
+                          <>
+                            <div className="dropdown-section-label pesmarica-label">
+                              Pesmarica
+                              {globalSearchLoading && <span className="dropdown-loading-dot">…</span>}
+                            </div>
+                            {globalResults.map((song) => (
+                              <div key={song.id} className="song-dropdown-item global-item">
+                                <button
+                                  type="button"
+                                  className="global-song-info"
+                                  onClick={async () => {
+                                    await handleSelectSong(song);
+                                    setShowSongDropdown(false);
+                                  }}
+                                >
+                                  <span className="song-dropdown-title">{song.title}</span>
+                                  <span className="song-dropdown-artist">{song.artist}</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  className="global-add-btn"
+                                  onClick={() => addGlobalSongToRepertoire(song)}
+                                  disabled={addingSongId === song.id}
+                                  title="Dodaj u moj repertoar"
+                                  aria-label="Dodaj u repertoar"
+                                >
+                                  {addingSongId === song.id ? <RotateCcw size={13} className="spin-icon" /> : <PlusCircle size={13} />}
+                                </button>
+                              </div>
+                            ))}
+                          </>
+                        )}
                       </div>
                     )}
                   </div>
@@ -1653,15 +1756,15 @@ export default function LiveDashboard({ bandId, musicianId }) {
                         <span>Pripremam pesme i tekstove za brzu pretragu tokom nastupa.</span>
                       </div>
                     </div>
-                  ) : cheatsheetFilteredSongs.length === 0 ? (
+                  ) : cheatsheetFilteredSongs.length === 0 && globalResults.length === 0 ? (
                     <div className="live-state-card compact">
                       <Music size={28} />
                       <div className="live-state-copy">
-                        <strong>{cheatsheetSearch ? 'Nema rezultata za pretragu' : 'Repertoar je prazan'}</strong>
+                        <strong>{cheatsheetSearch ? 'Nema rezultata' : 'Repertoar je prazan'}</strong>
                         <span>
                           {cheatsheetSearch
-                            ? 'Pokušajte sa drugim nazivom pesme ili izvođača.'
-                            : 'Dodajte pesme u repertoar ili aktivirajte odgovarajuću set listu.'}
+                            ? 'Nema rezultata ni u repertoaru ni u pesmarici.'
+                            : 'Dodajte pesme u repertoar ili pretražite pesmaricu.'}
                         </span>
                       </div>
                     </div>
@@ -4055,6 +4158,126 @@ export default function LiveDashboard({ bandId, musicianId }) {
           font-size: 0.7rem;
           color: #6b7280;
         }
+
+        /* ── Dropdown section labels + global pesmarica items ── */
+        .dropdown-section-label {
+          padding: 6px 12px 4px;
+          font-size: 0.62rem;
+          font-weight: 800;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+          color: #8b5cf6;
+          border-bottom: 1px solid rgba(139, 92, 246, 0.1);
+          user-select: none;
+        }
+        .pesmarica-label {
+          color: #f59e0b;
+          border-bottom-color: rgba(245, 158, 11, 0.15);
+          margin-top: 4px;
+        }
+        .dropdown-loading-dot {
+          margin-left: 4px;
+          animation: blink-dot 1s steps(3, end) infinite;
+        }
+        @keyframes blink-dot {
+          0%, 100% { opacity: 0.3; }
+          50% { opacity: 1; }
+        }
+        .song-dropdown-item.global-item {
+          flex-direction: row;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 6px 12px;
+          border-left: 2px solid rgba(245, 158, 11, 0.25);
+        }
+        .song-dropdown-item.global-item:hover {
+          border-left-color: #f59e0b;
+        }
+        .global-song-info {
+          flex: 1;
+          min-width: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+          background: none;
+          border: none;
+          color: inherit;
+          text-align: left;
+          cursor: pointer;
+          padding: 4px 0;
+        }
+        .global-add-btn {
+          flex-shrink: 0;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 30px;
+          height: 30px;
+          border-radius: 6px;
+          border: 1px solid rgba(34, 197, 94, 0.3);
+          background: rgba(34, 197, 94, 0.08);
+          color: #22c55e;
+          cursor: pointer;
+          transition: all 0.15s ease;
+        }
+        .global-add-btn:hover:not(:disabled) {
+          background: rgba(34, 197, 94, 0.18);
+          border-color: #22c55e;
+          color: #4ade80;
+        }
+        .global-add-btn:disabled {
+          opacity: 0.5;
+          cursor: wait;
+        }
+        .spin-icon {
+          animation: spin-anim 0.8s linear infinite;
+        }
+        @keyframes spin-anim {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+
+        /* Night vision overrides */
+        .night-vision .dropdown-section-label {
+          color: #a78bfa;
+          border-bottom-color: rgba(139, 92, 246, 0.15);
+        }
+        .night-vision .pesmarica-label {
+          color: #fbbf24;
+          border-bottom-color: rgba(251, 191, 36, 0.15);
+        }
+        .night-vision .global-item {
+          border-left-color: rgba(251, 191, 36, 0.2);
+        }
+        .night-vision .global-item:hover {
+          border-left-color: #fbbf24;
+        }
+
+        /* Light mode overrides */
+        .light-mode .dropdown-section-label {
+          color: #7c3aed;
+          border-bottom-color: rgba(124, 58, 237, 0.12);
+        }
+        .light-mode .pesmarica-label {
+          color: #d97706;
+          border-bottom-color: rgba(217, 119, 6, 0.12);
+        }
+        .light-mode .global-item {
+          border-left-color: rgba(217, 119, 6, 0.2);
+        }
+        .light-mode .global-item:hover {
+          border-left-color: #d97706;
+        }
+        .light-mode .global-add-btn {
+          border-color: rgba(22, 163, 74, 0.3);
+          background: rgba(22, 163, 74, 0.06);
+          color: #16a34a;
+        }
+        .light-mode .global-add-btn:hover:not(:disabled) {
+          background: rgba(22, 163, 74, 0.14);
+          border-color: #16a34a;
+        }
+
         .song-picker-title {
           color: #f1f5f9;
           font-size: 0.78rem;
@@ -5015,6 +5238,10 @@ export default function LiveDashboard({ bandId, musicianId }) {
           }
           .setlist-played-btn {
             min-height: 40px;
+          }
+          .global-add-btn {
+            width: 38px;
+            height: 38px;
           }
           .hud-exit-x {
             min-width: 44px;
