@@ -150,11 +150,28 @@ export async function POST(request) {
 
     const ownerFilter = buildOwnerFilter(owner);
 
-    if (owner.type === 'band' && !owner.hasPremium) {
-      return NextResponse.json(
-        { error: 'Live Request sistem je dostupan samo za Premium korisnike. Nadogradite paket da biste aktivirali ovu funkciju.' },
-        { status: 403 }
-      );
+    // Free tier: allow up to FREE_DAILY_LIMIT requests per day; premium = unlimited
+    const FREE_DAILY_LIMIT = 3;
+    if (!owner.hasPremium) {
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      const todayCount = await prisma.liveRequest.count({
+        where: {
+          ...ownerFilter,
+          createdAt: { gte: todayStart },
+        },
+      });
+      if (todayCount >= FREE_DAILY_LIMIT) {
+        return NextResponse.json(
+          {
+            error: `Iskorišćeno je ${FREE_DAILY_LIMIT} besplatnih zahteva za danas. Nadogradite na Premium za neograničene zahteve.`,
+            limitReached: true,
+            dailyLimit: FREE_DAILY_LIMIT,
+            used: todayCount,
+          },
+          { status: 403 }
+        );
+      }
     }
 
     if (requestType === 'WAITER_TIP') {

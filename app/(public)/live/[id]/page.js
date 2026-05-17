@@ -265,7 +265,12 @@ export default function GuestLivePage({ params }) {
         body: JSON.stringify(body),
       });
       const data = await resp.json();
-      if (!resp.ok) throw new Error(data.error || 'Greška pri slanju zahteva');
+      if (!resp.ok) {
+        if (data.limitReached) {
+          throw new Error(`Dnevni limit od ${data.dailyLimit || 3} besplatnih zahteva je dostignut. Pokušajte ponovo sutra.`);
+        }
+        throw new Error(data.error || 'Greška pri slanju zahteva');
+      }
 
       setGuestRequestStatus({
         id: data.id,
@@ -380,7 +385,12 @@ export default function GuestLivePage({ params }) {
         body: JSON.stringify(tipBody),
       });
       const data = await resp.json();
-      if (!resp.ok) throw new Error(data.error || 'Slanje nije uspelo.');
+      if (!resp.ok) {
+        if (data.limitReached) {
+          throw new Error(`Dnevni limit od ${data.dailyLimit || 3} besplatnih zahteva je dostignut. Pokušajte ponovo sutra.`);
+        }
+        throw new Error(data.error || 'Slanje nije uspelo.');
+      }
       setCastiModal('success');
       setTimeout(() => {
         closeCasti();
