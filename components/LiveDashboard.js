@@ -689,6 +689,8 @@ export default function LiveDashboard({ bandId, musicianId }) {
     syncSetListToApi(id, { name: trimmed });
   }, [updateSetLists, syncSetListToApi]);
 
+  const longPressTimerRef = useRef(null);
+
   const startChipRename = useCallback((entry) => {
     setRenamingChipId(entry.id);
     setChipNameDraft(entry.name);
@@ -1613,10 +1615,25 @@ export default function LiveDashboard({ bandId, musicianId }) {
                             className={`setlist-chip ${entry.id === selectedSetListId ? 'active' : ''}`}
                             onClick={() => setSelectedSetListId(entry.id)}
                             onDoubleClick={(e) => { e.preventDefault(); startChipRename(entry); }}
-                            title="Dvaput klikni za preimenovanje"
+                            onTouchStart={() => {
+                              longPressTimerRef.current = setTimeout(() => { startChipRename(entry); }, 600);
+                            }}
+                            onTouchEnd={() => { clearTimeout(longPressTimerRef.current); }}
+                            onTouchMove={() => { clearTimeout(longPressTimerRef.current); }}
+                            title="Drži dugo ili dvaput klikni za preimenovanje"
                           >
                             {entry.isLive && <span className="live-dot"></span>}
                             {entry.name}
+                            {entry.id === selectedSetListId && (
+                              <span
+                                className="chip-edit-icon"
+                                onClick={(e) => { e.stopPropagation(); startChipRename(entry); }}
+                                role="button"
+                                aria-label="Preimenuj set listu"
+                              >
+                                <Edit2 size={11} />
+                              </span>
+                            )}
                           </button>
                         )}
                       </div>
@@ -3602,6 +3619,29 @@ export default function LiveDashboard({ bandId, musicianId }) {
           align-items: stretch;
           gap: 2px;
         }
+        .chip-edit-icon {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          margin-left: 0.3rem;
+          opacity: 0.5;
+          cursor: pointer;
+          padding: 2px;
+          border-radius: 4px;
+          transition: opacity 0.15s;
+          flex-shrink: 0;
+        }
+        .chip-edit-icon:hover {
+          opacity: 1;
+        }
+        @media (max-width: 720px) {
+          .chip-edit-icon {
+            opacity: 0.7;
+            padding: 4px;
+            min-width: 24px;
+            min-height: 24px;
+          }
+        }
         .setlist-chip-rename-input {
           font-family: inherit;
           font-size: 0.72rem;
@@ -5483,6 +5523,11 @@ export default function LiveDashboard({ bandId, musicianId }) {
             justify-content: flex-start;
             padding: 0 0.1rem 0.25rem;
           }
+          .setlist-chip-rename-input {
+            min-height: 38px;
+            font-size: 0.75rem;
+            max-width: 200px;
+          }
           .repertoire-browser-head {
             justify-content: center;
             text-align: center;
@@ -5728,6 +5773,25 @@ export default function LiveDashboard({ bandId, musicianId }) {
             padding: 6px 8px;
             min-height: 40px;
             min-width: 40px;
+          }
+          .mobile-metrics-strip {
+            font-size: 0.58rem;
+            gap: 0.6rem;
+            padding: 0.25rem 0.5rem;
+          }
+          .setlist-chip-rename-input {
+            font-size: 0.68rem;
+            padding: 0.3rem 0.55rem;
+            min-width: 70px;
+            max-width: 150px;
+          }
+          .global-add-btn {
+            width: 36px;
+            height: 36px;
+          }
+          .dropdown-section-label {
+            font-size: 0.58rem;
+            padding: 5px 10px 3px;
           }
           .status-indicator span {
             max-width: min(34vw, 7.5rem);
