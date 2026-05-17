@@ -1174,19 +1174,27 @@ export default function GuestLivePage({ params }) {
           align-items: center;
           justify-content: center;
           z-index: 2000;
-          padding: 1.5rem;
-          padding-bottom: max(1.5rem, env(safe-area-inset-bottom, 0px));
+          padding: 1rem;
+          padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+          padding-top: max(1rem, env(safe-area-inset-top, 0px));
+          overflow-y: auto;
+          -webkit-overflow-scrolling: touch;
         }
         .modal,
         .success-card {
           width: 100%;
           max-width: 400px;
-          padding: 3rem;
+          padding: 2.5rem 2rem;
           text-align: center;
           background: #ffffff;
           border-radius: 24px;
           border: 1px solid #e2e8f0;
           position: relative;
+          margin: auto;
+          max-height: calc(100vh - 2rem);
+          max-height: calc(100dvh - 2rem);
+          overflow-y: auto;
+          -webkit-overflow-scrolling: touch;
         }
         .modal-step-chip {
           display: inline-flex;
@@ -1285,6 +1293,8 @@ export default function GuestLivePage({ params }) {
         }
         .casti-menu-modal {
           text-align: center;
+          max-width: 380px;
+          padding: 2.25rem 1.75rem;
         }
         .casti-menu-lede {
           color: #64748b;
@@ -1539,6 +1549,7 @@ export default function GuestLivePage({ params }) {
           }
           .casti-bend-btn {
             max-width: 100%;
+            min-height: 52px;
           }
           .guest-request-status-card {
             margin-top: 0.85rem;
@@ -1564,30 +1575,60 @@ export default function GuestLivePage({ params }) {
           .song-artist {
             overflow-wrap: anywhere;
           }
+          .modal-overlay {
+            padding: 0.75rem;
+            align-items: flex-start;
+            padding-top: max(0.75rem, env(safe-area-inset-top, 0px));
+            padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
+          }
           .modal,
           .success-card {
-            padding: 2rem 1.5rem;
+            padding: 1.75rem 1.25rem;
             border-radius: 20px;
+            max-height: calc(100vh - 1.5rem);
+            max-height: calc(100dvh - 1.5rem);
           }
           .voucher-modal {
-            padding: 1.75rem 1.25rem 2rem;
+            padding: 1.5rem 1.1rem 1.75rem;
+          }
+          .casti-menu-modal {
+            padding: 1.75rem 1.25rem;
+          }
+          .voucher-hero {
+            margin: 1.25rem 0 1rem;
+          }
+          .voucher-music-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 16px;
+          }
+          .voucher-band-name {
+            font-size: 1.2rem;
+          }
+          .voucher-back {
+            top: 0.75rem;
+            left: 0.75rem;
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
           }
           .modal-step-chip {
             width: 100%;
             margin-bottom: 0.8rem;
           }
           .modal-step-chip-inline {
-            width: calc(100% - 3.2rem);
+            width: calc(100% - 3rem);
             margin: 0 auto 0.35rem;
           }
           .modal h3 {
-            font-size: 1.3rem;
+            font-size: 1.2rem;
           }
           .selected-song {
             margin: 0.75rem 0 1.2rem;
             font-size: 1rem;
           }
           .modal-support-copy,
+          .casti-menu-lede,
           .tip-choice-table,
           .voucher-note,
           .song-voucher-sub {
@@ -1595,10 +1636,14 @@ export default function GuestLivePage({ params }) {
           }
           .form-group input {
             font-size: 1.2rem;
-            padding: 0.9rem;
+            padding: 0.85rem;
+          }
+          .form-group label {
+            margin-bottom: 0.5rem;
           }
           .preset-chip {
             min-width: calc(50% - 0.25rem);
+            min-height: 44px;
           }
           .btn-gold-tip,
           .btn-waiter-tip-main,
@@ -1607,9 +1652,63 @@ export default function GuestLivePage({ params }) {
           .voucher-confirm {
             min-height: 48px;
           }
+          .btn-waiter-tip-main {
+            font-size: 0.95rem;
+            padding: 1rem;
+          }
+          .btn-gold-tip {
+            font-size: 0.95rem;
+            padding: 1rem;
+          }
+          .voucher-shout {
+            font-size: 0.95rem;
+            margin: 1rem 0 0.4rem;
+          }
+          .voucher-label-amount {
+            margin: 0.75rem 0 0.4rem;
+          }
+          .amount-presets {
+            margin-bottom: 0.35rem;
+          }
           .modal-actions {
             grid-template-columns: 1fr;
             gap: 0.75rem;
+          }
+          .error-msg {
+            font-size: 0.8rem;
+            padding: 0.65rem;
+          }
+        }
+
+        @media (max-width: 380px) {
+          .modal,
+          .success-card {
+            padding: 1.5rem 1rem;
+            border-radius: 18px;
+          }
+          .voucher-modal {
+            padding: 1.25rem 0.9rem 1.5rem;
+          }
+          .casti-menu-modal {
+            padding: 1.5rem 1rem;
+          }
+          .modal h3 {
+            font-size: 1.1rem;
+          }
+          .voucher-band-name {
+            font-size: 1.05rem;
+          }
+          .voucher-music-icon {
+            width: 48px;
+            height: 48px;
+          }
+          .form-group input {
+            font-size: 1.1rem;
+            padding: 0.75rem;
+          }
+          .preset-chip {
+            font-size: 0.82rem;
+            padding: 0.55rem 0.4rem;
           }
         }
 
@@ -1635,6 +1734,10 @@ export default function GuestLivePage({ params }) {
           }
           .voucher-modal {
             max-width: 460px;
+            padding: 2rem 1.75rem 2.25rem;
+          }
+          .casti-menu-modal {
+            max-width: 420px;
           }
         }
       `}</style>
