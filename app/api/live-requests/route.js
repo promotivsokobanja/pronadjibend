@@ -27,20 +27,27 @@ async function resolveLiveOwner({ bandId, musicianId }) {
   if (normalizedBandId) {
     const band = await prisma.band.findUnique({
       where: { id: normalizedBandId },
-      select: { id: true, allowTips: true, maxPendingRequests: true, plan: true, isPaid: true },
+      select: { id: true, allowTips: true, maxPendingRequests: true, plan: true, isPaid: true, user: { select: { plan: true } } },
     });
     if (!band) {
       return {
         error: NextResponse.json({ error: 'Bend nije pronađen.' }, { status: 404 }),
       };
     }
+    const userPlan = (band.user?.plan || '').toUpperCase();
+    const bandPlan = (band.plan || '').toUpperCase();
+    const hasPremium =
+      band.isPaid === true ||
+      (bandPlan && bandPlan !== 'FREE') ||
+      userPlan === 'PREMIUM' ||
+      userPlan === 'PREMIUM_VENUE';
     return {
       owner: {
         type: 'band',
         id: band.id,
         allowTips: band.allowTips,
         maxPendingRequests: band.maxPendingRequests,
-        hasPremium: band.isPaid === true || (band.plan && band.plan !== 'FREE'),
+        hasPremium,
       },
     };
   }
