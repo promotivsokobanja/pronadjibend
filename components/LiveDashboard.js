@@ -72,6 +72,8 @@ export default function LiveDashboard({ bandId, musicianId }) {
   const [setLists, setSetLists] = useState([]);
   const [selectedSetListId, setSelectedSetListId] = useState('');
   const [setListNameDraft, setSetListNameDraft] = useState('');
+  const [renamingChipId, setRenamingChipId] = useState('');
+  const [chipNameDraft, setChipNameDraft] = useState('');
   const [setListsLoading, setSetListsLoading] = useState(false);
   const setListsRef = useRef(setLists);
 
@@ -678,6 +680,33 @@ export default function LiveDashboard({ bandId, musicianId }) {
     syncSetListToApi(selectedSetListId, { name: trimmed });
   }, [selectedSetListId, updateSetLists, syncSetListToApi]);
 
+  const renameSetListById = useCallback((id, nextName) => {
+    const trimmed = String(nextName || '').trim();
+    if (!id || !trimmed) return;
+    updateSetLists((prev) =>
+      prev.map((entry) => (entry.id === id ? { ...entry, name: trimmed } : entry))
+    );
+    syncSetListToApi(id, { name: trimmed });
+  }, [updateSetLists, syncSetListToApi]);
+
+  const startChipRename = useCallback((entry) => {
+    setRenamingChipId(entry.id);
+    setChipNameDraft(entry.name);
+  }, []);
+
+  const commitChipRename = useCallback(() => {
+    if (renamingChipId && chipNameDraft.trim()) {
+      renameSetListById(renamingChipId, chipNameDraft);
+    }
+    setRenamingChipId('');
+    setChipNameDraft('');
+  }, [renamingChipId, chipNameDraft, renameSetListById]);
+
+  const cancelChipRename = useCallback(() => {
+    setRenamingChipId('');
+    setChipNameDraft('');
+  }, []);
+
   const deleteSelectedSetList = useCallback(async () => {
     if (!selectedSetListId) return;
     if (!confirm('Da li ste sigurni da želite da obrišete ovu set listu?')) return;
@@ -826,6 +855,25 @@ export default function LiveDashboard({ bandId, musicianId }) {
       (s.artist || '').toLowerCase().includes(q)
     );
   });
+
+  // ── Repertoire prev/next navigation (fallback when no setlist) ──
+  const repertoireSongIndex = selectedSong
+    ? cheatsheetFilteredSongs.findIndex((s) => s.id === selectedSong.id)
+    : -1;
+
+  const openAdjacentRepertoireSong = useCallback(async (direction) => {
+    if (navBusyRef.current) return;
+    const idx = repertoireSongIndex;
+    if (idx === -1) return;
+    const targetIdx = direction === 'prev' ? idx - 1 : idx + 1;
+    if (targetIdx < 0 || targetIdx >= cheatsheetFilteredSongs.length) return;
+    navBusyRef.current = true;
+    try {
+      await handleSelectSong(cheatsheetFilteredSongs[targetIdx]);
+    } finally {
+      setTimeout(() => { navBusyRef.current = false; }, 120);
+    }
+  }, [repertoireSongIndex, cheatsheetFilteredSongs, handleSelectSong]);
 
   // ── Debounced global pesmarica search ──
   useEffect(() => {
@@ -1546,14 +1594,31 @@ export default function LiveDashboard({ bandId, musicianId }) {
                   <div className="setlists-selector">
                     {setLists.map((entry) => (
                       <div key={entry.id} className={`setlist-chip-wrap ${entry.isLive ? 'is-live' : ''}`}>
-                        <button
-                          type="button"
-                          className={`setlist-chip ${entry.id === selectedSetListId ? 'active' : ''}`}
-                          onClick={() => setSelectedSetListId(entry.id)}
-                        >
-                          {entry.isLive && <span className="live-dot"></span>}
-                          {entry.name}
-                        </button>
+                        {renamingChipId === entry.id ? (
+                          <input
+                            type="text"
+                            className="setlist-chip-rename-input"
+                            value={chipNameDraft}
+                            onChange={(e) => setChipNameDraft(e.target.value)}
+                            onBlur={commitChipRename}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') { e.target.blur(); }
+                              if (e.key === 'Escape') cancelChipRename();
+                            }}
+                            autoFocus
+                          />
+                        ) : (
+                          <button
+                            type="button"
+                            className={`setlist-chip ${entry.id === selectedSetListId ? 'active' : ''}`}
+                            onClick={() => setSelectedSetListId(entry.id)}
+                            onDoubleClick={(e) => { e.preventDefault(); startChipRename(entry); }}
+                            title="Dvaput klikni za preimenovanje"
+                          >
+                            {entry.isLive && <span className="live-dot"></span>}
+                            {entry.name}
+                          </button>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -1827,7 +1892,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
                         <ArrowLeft size={14} />
                         <span>Set liste</span>
                       </button>
-                      {selectedSetList && selectedSetListSongIndex !== -1 && (
+                      {selectedSetList && selectedSetListSongIndex !== -1 ? (
                         <div className="cheatsheet-nav-arrows">
                           <button
                             type="button"
@@ -1849,6 +1914,32 @@ export default function LiveDashboard({ bandId, musicianId }) {
                             onClick={() => openAdjacentSetListSong('next')}
                             aria-label="Sledeća pesma"
                             title="Sledeća pesma u set listi"
+                          >
+                            <ChevronRight size={18} />
+                          </button>
+                        </div>
+                      ) : repertoireSongIndex !== -1 && cheatsheetFilteredSongs.length > 1 && (
+                        <div className="cheatsheet-nav-arrows">
+                          <button
+                            type="button"
+                            className="cheatsheet-arrow-btn"
+                            disabled={repertoireSongIndex <= 0}
+                            onClick={() => openAdjacentRepertoireSong('prev')}
+                            aria-label="Prethodna pesma"
+                            title="Prethodna pesma u repertoaru"
+                          >
+                            <ChevronLeft size={18} />
+                          </button>
+                          <span className="cheatsheet-song-counter">
+                            {repertoireSongIndex + 1}/{cheatsheetFilteredSongs.length}
+                          </span>
+                          <button
+                            type="button"
+                            className="cheatsheet-arrow-btn"
+                            disabled={repertoireSongIndex >= cheatsheetFilteredSongs.length - 1}
+                            onClick={() => openAdjacentRepertoireSong('next')}
+                            aria-label="Sledeća pesma"
+                            title="Sledeća pesma u repertoaru"
                           >
                             <ChevronRight size={18} />
                           </button>
@@ -3510,6 +3601,33 @@ export default function LiveDashboard({ bandId, musicianId }) {
           flex-direction: column;
           align-items: stretch;
           gap: 2px;
+        }
+        .setlist-chip-rename-input {
+          font-family: inherit;
+          font-size: 0.72rem;
+          font-weight: 700;
+          letter-spacing: 0.03em;
+          padding: 0.35rem 0.65rem;
+          border-radius: 999px;
+          border: 1.5px solid #8b5cf6;
+          background: rgba(139, 92, 246, 0.12);
+          color: #f1f5f9;
+          outline: none;
+          min-width: 80px;
+          max-width: 180px;
+          text-align: center;
+          box-shadow: 0 0 8px rgba(139, 92, 246, 0.35);
+        }
+        .light-mode .setlist-chip-rename-input {
+          background: #f5f3ff;
+          border-color: #7c3aed;
+          color: #1e1b4b;
+          box-shadow: 0 0 8px rgba(124, 58, 237, 0.15);
+        }
+        .night-vision .setlist-chip-rename-input {
+          background: rgba(139, 92, 246, 0.15);
+          border-color: #a78bfa;
+          color: #fff;
         }
         .setlist-chip-wrap.is-live .setlist-chip {
           border-color: #ef4444;
