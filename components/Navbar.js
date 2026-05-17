@@ -95,7 +95,7 @@ export default function Navbar() {
       setSessionLoaded(true);
     }
 
-    (async () => {
+    const fetchSession = async () => {
       try {
         const r = await adminFetch('/api/auth/me', { cache: 'no-store' });
         const data = await r.json().catch(() => ({}));
@@ -121,11 +121,21 @@ export default function Navbar() {
         setSessionLoaded(true);
         clearCachedSession();
       }
-    })();
+    };
+
+    fetchSession();
+
+    // Re-check auth when user returns to tab (catches logout in another tab)
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') fetchSession();
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
     return () => {
       cancelled = true;
+      document.removeEventListener('visibilitychange', onVisibilityChange);
     };
-  }, []);
+  }, [pathname]);
 
   return (
     <>

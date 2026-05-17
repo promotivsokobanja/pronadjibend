@@ -22,6 +22,7 @@ export default function LoginClient() {
   const [capsOnPassword, setCapsOnPassword] = useState(false);
   const [capsOnConfirmPassword, setCapsOnConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [authChecking, setAuthChecking] = useState(true);
   const router = useRouter();
   const [selectedPlan, setSelectedPlan] = useState('');
   const [authMode, setAuthMode] = useState('');
@@ -68,9 +69,13 @@ export default function LoginClient() {
     const plan = params.get('plan') || '';
     const mode = params.get('mode') || '';
     const next = params.get('next') || '';
+    const oauthError = params.get('error') || '';
     setSelectedPlan(plan);
     setAuthMode(mode);
     if (next && next.startsWith('/') && !next.startsWith('//')) setNextPath(next);
+    if (oauthError === 'oauth') {
+      setError('Prijava preko Google nije uspela. Pokušajte ponovo ili se prijavite sa email-om.');
+    }
 
     // If user is already logged in, redirect away from login page
     fetch('/api/auth/me', { cache: 'no-store' })
@@ -84,9 +89,13 @@ export default function LoginClient() {
             : data.user.role === 'MUSICIAN' ? '/muzicari/profil'
             : '/clients';
           window.location.href = dest;
+        } else {
+          setAuthChecking(false);
         }
       })
-      .catch(() => {});
+      .catch(() => {
+        setAuthChecking(false);
+      });
   }, []);
 
   useEffect(() => {
@@ -180,6 +189,29 @@ export default function LoginClient() {
       setIsLoading(false);
     }
   };
+
+  if (authChecking) {
+    return (
+      <div className="login-container">
+        <div className="login-backdrop" aria-hidden />
+        <div className="login-overlay" aria-hidden />
+        <div className="login-box" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '280px' }}>
+          <div style={{ textAlign: 'center' }}>
+            <div className="auth-check-spinner" />
+            <p style={{ color: '#94a3b8', fontSize: '0.85rem', marginTop: '1rem', fontWeight: 600 }}>Provera sesije…</p>
+          </div>
+          <style jsx>{`
+            .login-container { min-height: 100vh; min-height: 100dvh; display: flex; align-items: center; justify-content: center; padding: 1.5rem; position: relative; background: #030308; isolation: isolate; }
+            .login-backdrop { position: absolute; inset: 0; background: url('https://images.unsplash.com/photo-1516280440614-37939bbacd81?auto=format&fit=crop&w=1600&q=80') center/cover no-repeat; opacity: 0.5; filter: grayscale(20%); }
+            .login-overlay { position: absolute; inset: 0; background: linear-gradient(120deg, rgba(3,3,8,0.95), rgba(7,7,18,0.6)); }
+            .login-box { width: 100%; max-width: 480px; padding: 2.75rem 2.5rem; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 28px; background: rgba(8, 8, 18, 0.9); box-shadow: 0 40px 80px rgba(0, 0, 0, 0.55); position: relative; z-index: 1; }
+            .auth-check-spinner { width: 36px; height: 36px; border: 3px solid rgba(255,255,255,0.1); border-top-color: #8b5cf6; border-radius: 50%; animation: spin-auth 0.7s linear infinite; margin: 0 auto; }
+            @keyframes spin-auth { to { transform: rotate(360deg); } }
+          `}</style>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="login-container">
