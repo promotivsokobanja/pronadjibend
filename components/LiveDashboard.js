@@ -1147,6 +1147,26 @@ export default function LiveDashboard({ bandId, musicianId }) {
     applyRequestStatusChange(req, 'PLAYED');
   };
 
+  const [clearingHistory, setClearingHistory] = useState(false);
+  const clearHistory = useCallback(async () => {
+    if (clearingHistory) return;
+    if (!window.confirm('Obrisati sve odsvirana i preskočene zahteve iz istorije?')) return;
+    setClearingHistory(true);
+    try {
+      const param = bandId ? `bandId=${bandId}` : `musicianId=${musicianId}`;
+      const resp = await fetch(`/api/live-requests?${param}&statusFilter=history`, { method: 'DELETE' });
+      if (!resp.ok) {
+        const data = await resp.json().catch(() => ({}));
+        throw new Error(data.error || 'Greška pri brisanju istorije.');
+      }
+      setRequests((prev) => prev.filter((r) => r.status !== 'played' && r.status !== 'rejected'));
+    } catch (err) {
+      setRequestActionError(err?.message || 'Brisanje istorije nije uspelo.');
+    } finally {
+      setClearingHistory(false);
+    }
+  }, [clearingHistory, bandId, musicianId]);
+
   const requestDesktopNotifications = useCallback(async () => {
     if (typeof window === 'undefined' || !('Notification' in window)) return;
     try {
@@ -1334,6 +1354,19 @@ export default function LiveDashboard({ bandId, musicianId }) {
                   Istorija
                 </button>
               </div>
+              {requestView === 'history' && filteredRequests.length > 0 && (
+                <div className="clear-history-row">
+                  <button
+                    className="btn-hud clear-history-btn"
+                    onClick={clearHistory}
+                    disabled={clearingHistory}
+                    title="Obriši sve odsvirana i preskočene zahteve"
+                  >
+                    <RotateCcw size={15} />
+                    {clearingHistory ? 'Brisanje…' : 'Obriši istoriju'}
+                  </button>
+                </div>
+              )}
               {requestsLoading ? (
                 <div className="live-state-card">
                   <MessageSquare size={38} />
@@ -2916,6 +2949,43 @@ export default function LiveDashboard({ bandId, musicianId }) {
           margin-bottom: 0;
           width: fit-content;
           max-width: 100%;
+        }
+        .clear-history-row {
+          display: flex;
+          justify-content: flex-end;
+          margin-top: 0.5rem;
+          margin-bottom: 0.25rem;
+        }
+        .clear-history-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.4rem;
+          padding: 0.5rem 1rem;
+          border-radius: 10px;
+          border: 1px solid rgba(239, 68, 68, 0.35);
+          background: rgba(239, 68, 68, 0.1);
+          color: #fca5a5;
+          font-size: 0.78rem;
+          font-weight: 700;
+          cursor: pointer;
+          transition: background 0.15s, border-color 0.15s;
+          min-height: 38px;
+        }
+        .clear-history-btn:hover {
+          background: rgba(239, 68, 68, 0.2);
+          border-color: rgba(239, 68, 68, 0.5);
+        }
+        .clear-history-btn:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+        .light-mode .clear-history-btn {
+          border-color: rgba(220, 38, 38, 0.25);
+          background: rgba(220, 38, 38, 0.06);
+          color: #dc2626;
+        }
+        .light-mode .clear-history-btn:hover {
+          background: rgba(220, 38, 38, 0.12);
         }
         .live-inline-error,
         .max-requests-warning {

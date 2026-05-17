@@ -390,9 +390,12 @@ export async function DELETE(request) {
     }
 
     const ownerFilter = buildOwnerFilter(owner);
-    const deleted = await prisma.liveRequest.deleteMany({
-      where: ownerFilter,
-    });
+    const statusFilter = searchParams.get('statusFilter');
+    const where = { ...ownerFilter };
+    if (statusFilter === 'history') {
+      where.status = { in: ['PLAYED', 'REJECTED'] };
+    }
+    const deleted = await prisma.liveRequest.deleteMany({ where });
 
     return NextResponse.json({ success: true, deleted: deleted.count || 0 });
   } catch (err) {
