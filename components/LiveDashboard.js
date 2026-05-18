@@ -54,6 +54,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
   const [globalSearchLoading, setGlobalSearchLoading] = useState(false);
   const globalSearchTimerRef = useRef(null);
   const [addingSongId, setAddingSongId] = useState('');
+  const [addedToRepToast, setAddedToRepToast] = useState('');
   // Cheatsheet per-song controls (transpose / edit / auto-scroll)
   const [liveKeyOffset, setLiveKeyOffset] = useState(0);
   const [liveIsEditing, setLiveIsEditing] = useState(false);
@@ -944,6 +945,10 @@ export default function LiveDashboard({ bandId, musicianId }) {
       setGlobalResults((prev) => prev.filter((s) => s.id !== song.id));
       // If this song is currently selected, update to the new repertoire copy
       setSelectedSong((prev) => prev?.id === song.id ? newSong : prev);
+      // Show success toast
+      const cat = newSong.category || song.category || 'Razno';
+      setAddedToRepToast(`✓ Dodata u repertoar (${cat})`);
+      setTimeout(() => setAddedToRepToast(''), 3500);
     } catch (err) {
       console.error('Error adding song to repertoire:', err);
     } finally {
@@ -2025,6 +2030,12 @@ export default function LiveDashboard({ bandId, musicianId }) {
                             <PlusCircle size={14} />
                             {addingSongId === selectedSong.id ? 'Dodavanje…' : 'Dodaj u repertoar'}
                           </button>
+                        </div>
+                      )}
+                      {addedToRepToast && (
+                        <div className="added-to-rep-toast">
+                          <CheckCircle2 size={14} />
+                          <span>{addedToRepToast}</span>
                         </div>
                       )}
                       {selectedSong.lyrics !== null && selectedSong.id && (
@@ -4841,6 +4852,29 @@ export default function LiveDashboard({ bandId, musicianId }) {
         }
         .light-mode .add-rep-label {
           color: #15803d;
+        }
+        .added-to-rep-toast {
+          display: flex;
+          align-items: center;
+          gap: 0.4rem;
+          padding: 0.5rem 0.85rem;
+          border-radius: 10px;
+          border: 1px solid rgba(34, 197, 94, 0.4);
+          background: rgba(34, 197, 94, 0.15);
+          color: #86efac;
+          font-size: 0.78rem;
+          font-weight: 700;
+          margin-top: 0.5rem;
+          animation: toastFadeIn 0.3s ease;
+        }
+        .light-mode .added-to-rep-toast {
+          background: rgba(34, 197, 94, 0.08);
+          border-color: rgba(34, 197, 94, 0.3);
+          color: #15803d;
+        }
+        @keyframes toastFadeIn {
+          from { opacity: 0; transform: translateY(-4px); }
+          to { opacity: 1; transform: translateY(0); }
         }
         .night-vision .cheatsheet-back-btn {
           border-color: rgba(139, 92, 246, 0.2);
