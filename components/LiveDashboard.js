@@ -820,6 +820,13 @@ export default function LiveDashboard({ bandId, musicianId }) {
     syncItemsDebounced(selectedSetListId);
   }, [selectedSetListId, updateSetLists, syncItemsDebounced]);
 
+  const songsList = Array.isArray(allSongs) ? allSongs : [];
+
+  // ── Is selected song from personal repertoire? ──
+  const selectedSongInRepertoire = selectedSong
+    ? songsList.some((s) => s.id === selectedSong.id)
+    : true;
+
   const refreshSelectedSong = useCallback(async () => {
     if (!selectedSong?.id) return;
     // Skip refresh for pesmarica songs (not in own repertoire)
@@ -842,8 +849,6 @@ export default function LiveDashboard({ bandId, musicianId }) {
     refreshSelectedSong();
   }, [activeTab, refreshSelectedSong]);
 
-  const songsList = Array.isArray(allSongs) ? allSongs : [];
-
   const filteredSongs = songsList.filter((s) => {
     if (repertoireCategoryFilter !== 'Sve') {
       const cat = String(s.category || '').trim();
@@ -864,11 +869,6 @@ export default function LiveDashboard({ bandId, musicianId }) {
       (s.artist || '').toLowerCase().includes(q)
     );
   });
-
-  // ── Is selected song from personal repertoire? ──
-  const selectedSongInRepertoire = selectedSong
-    ? songsList.some((s) => s.id === selectedSong.id)
-    : true;
 
   // ── Repertoire prev/next navigation (fallback when no setlist) ──
   const repertoireSongIndex = selectedSong
