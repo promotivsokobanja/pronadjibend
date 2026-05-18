@@ -2413,14 +2413,15 @@ export default function LiveDashboard({ bandId, musicianId }) {
             <div className="settings-body help-body">
               <div className="help-section">
                 <h3><MessageSquare size={16} /> Zahtevi gostiju</h3>
-                <p>Gosti skeniraju <strong>QR kod</strong> i iz svojih telefona šalju želje za pesme. Novi zahtevi se pojavljuju ovde automatski, a gost na svojoj strani vidi da li je zahtev na čekanju, prihvaćen ili odbijen.</p>
+                <p>Gosti skeniraju <strong>QR kod</strong> i iz svojih telefona šalju želje za pesme. Novi zahtevi se pojavljuju ovde automatski uz zvučni signal, a gost na svojoj strani vidi da li je zahtev na čekanju, prihvaćen ili odbijen.</p>
                 <ul>
-                  <li><strong>Prihvati</strong> — zahtev prelazi u listu potvrđenih pesama.</li>
-                  <li><strong>Preskoči</strong> — zahtev se arhivira i ne svira.</li>
-                  <li><strong>Tekst</strong> — otvara tekst pesme u Podsetniku (ako postoji).</li>
-                  <li><strong>Svirano</strong> — označite kad odsvirate pesmu; gost dobija notifikaciju.</li>
-                  <li>Tab <strong>Aktivni / Istorija</strong> — Aktivni prikazuje trenutne, Istorija sve odrađene i preskočene.</li>
-                  <li>Kartice sa ikonom <Banknote size={14} style={{ display: 'inline', verticalAlign: 'middle' }} /> su napojnice / narudžbine od konobara.</li>
+                  <li><strong>Prihvati</strong> — zahtev prelazi u listu potvrđenih pesama i automatski otvara tekst pesme.</li>
+                  <li><strong>Preskoči</strong> — zahtev se arhivira i ne svira; gost vidi status "Odbijena".</li>
+                  <li><strong>Tekst</strong> — otvara tekst pesme u Podsetniku (ako postoji u repertoaru).</li>
+                  <li><strong>Svirano</strong> — označite kad odsvirate pesmu; gost dobija notifikaciju "Odsvirana".</li>
+                  <li>Tab <strong>Aktivni / Istorija</strong> — Aktivni prikazuje trenutne zahteve na čekanju i prihvaćene. Istorija prikazuje sve odrađene i preskočene.</li>
+                  <li>Kartice sa ikonom <Banknote size={14} style={{ display: 'inline', verticalAlign: 'middle' }} /> su napojnice / bakšiš od gostiju preko konobara.</li>
+                  <li><strong>Obriši istoriju</strong> — briše samo odrađene zahteve iz istorije, ne utiče na aktivne.</li>
                 </ul>
               </div>
 
@@ -2428,34 +2429,64 @@ export default function LiveDashboard({ bandId, musicianId }) {
                 <h3><ListMusic size={16} /> Set liste (Repertoar)</h3>
                 <p>Pravite liste pesama koje ste spremni da svirate. Gosti vide <strong>samo pesme iz aktivnih (LIVE) set lista</strong> kad otvore QR link.</p>
                 <ul>
-                  <li><strong>LIVE / Off</strong> dugme pored liste — uključuje/isključuje dostupnost. Možete imati više aktivnih lista istovremeno.</li>
-                  <li>Klik na pesmu u listi — otvara tekst pesme.</li>
-                  <li>Strelice <strong>↑ ↓</strong> — menjaju redosled pesama.</li>
-                  <li><strong>×</strong> — briše pesmu iz liste (ne briše iz repertoara).</li>
-                  <li><strong>Obriši</strong> — briše celu set listu.</li>
+                  <li><strong>LIVE / Off</strong> dugme pored liste — uključuje/isključuje dostupnost za goste. Možete imati više aktivnih lista istovremeno.</li>
+                  <li>Klik na pesmu u listi — otvara tekst pesme u Podsetniku.</li>
+                  <li>Strelice <strong>↑ ↓</strong> — menjaju redosled pesama u listi.</li>
+                  <li><strong>×</strong> — briše pesmu iz set liste (ne briše iz vašeg repertoara).</li>
+                  <li><strong>Preimenuj</strong> — dugačak pritisak (hold) na chip ime liste za preimenovanje.</li>
+                  <li><strong>Obriši set listu</strong> — trajno briše celu listu.</li>
                 </ul>
               </div>
 
               <div className="help-section">
                 <h3><PlusCircle size={16} /> Dodaj pesmu</h3>
-                <p>Dodavanje pesama u set listu iz celog vašeg repertoara.</p>
+                <p>Dodavanje pesama u set listu iz vašeg repertoara ili iz globalne pesmarice.</p>
                 <ul>
                   <li><strong>+ Nova set lista</strong> — kreira novu praznu listu.</li>
-                  <li>Izaberite set listu (chips na vrhu), zatim kliknite <strong>Pretraži i dodaj pesmu</strong>.</li>
+                  <li>Izaberite set listu (chips na vrhu), zatim pretražite pesmu.</li>
                   <li>Filteri po kategorijama: Muške/Ženske Zabavne, Narodne, Strane, Razno.</li>
-                  <li>Pesme označene sa <strong>Već dodato</strong> su u trenutnoj listi.</li>
+                  <li>Pesme označene sa <strong>Već dodato</strong> su već u trenutnoj listi.</li>
                   <li><strong>Tekst</strong> — otvara tekst pesme bez dodavanja u listu.</li>
+                  <li><strong>Globalna pesmarica</strong> — pretražite pesme koje nisu u vašem repertoaru i dodajte ih jednim klikom.</li>
                 </ul>
               </div>
 
               <div className="help-section">
                 <h3><Music size={16} /> Podsetnik (tekstovi pesama)</h3>
-                <p>Brz pristup tekstovima i akordima tokom nastupa.</p>
+                <p>Brz pristup tekstovima i akordima tokom nastupa sa naprednim alatima.</p>
                 <ul>
                   <li>Pretražite pesmu ili otvorite set listu — klik na pesmu otvara tekst.</li>
                   <li>Akordi su označeni <span style={{ color: '#8b5cf6', fontWeight: 700 }}>ljubičastom bojom</span> unutar teksta.</li>
-                  <li>Veličinu slova menjate u <strong>Podešavanjima</strong>.</li>
+                  <li><strong>Transpozicija (♯ / ♭)</strong> — pomeranje tonaliteta gore/dole za pola tona. Reset vraća originalni tonalitet.</li>
+                  <li><strong>Auto-scroll</strong> — automatsko skrolovanje teksta tokom sviranja. Podešavajte brzinu sa + / - dugmićima.</li>
+                  <li><strong>Uredi</strong> — direktno menjajte tekst pesme iz Live panela bez izlaska. Sačuvajte kad završite.</li>
+                  <li><strong>← Prethodna / Sledeća →</strong> — prelazite na prethodnu/sledeću pesmu u set listi bez vraćanja na listu.</li>
+                  <li>Veličinu slova menjate u <strong>Podešavanjima</strong> (80%–150%).</li>
                 </ul>
+              </div>
+
+              <div className="help-section">
+                <h3><QrCode size={16} /> QR kod za goste</h3>
+                <p>Generišite QR kod koji gosti skeniraju da otvore vašu Live stranicu. Kliknite ikonu QR koda u zaglavlju.</p>
+                <ul>
+                  <li>Odštampajte ga kao flajer i stavite na stolove u lokalu.</li>
+                  <li>QR link vodi direktno na vašu Live stranicu sa repertoarom i naručivanjem.</li>
+                </ul>
+              </div>
+
+              <div className="help-section">
+                <h3><Coffee size={16} /> Pauza</h3>
+                <p>Aktivirajte pauzu kad pravite break između setova. Tajmer pauze se prikazuje na vrhu ekrana. Kliknite ponovo da završite pauzu.</p>
+              </div>
+
+              <div className="help-section">
+                <h3><Smartphone size={16} /> Ekran ne spava</h3>
+                <p>Live panel automatski drži ekran upaljen (Wake Lock) — telefon neće zaključati ekran dok je panel otvoren. Idealno za postavljanje telefona na stalak tokom nastupa.</p>
+              </div>
+
+              <div className="help-section">
+                <h3><Clock size={16} /> Session timer</h3>
+                <p>Tajmer u zaglavlju beleži koliko traje nastup. Ne resetuje se ako osvežite stranicu — pamti se do kraja sesije ili dok ne resetujete ručno.</p>
               </div>
 
               <div className="help-section">
@@ -2466,20 +2497,28 @@ export default function LiveDashboard({ bandId, musicianId }) {
               <div className="help-section">
                 <h3><Settings size={16} /> Podešavanja</h3>
                 <ul>
-                  <li><strong>Naziv lokala</strong> — prikazuje se u zaglavlju tokom nastupa.</li>
-                  <li><strong>Maks. broj zahteva</strong> — ograničenje čekanja (0 = bez limita) za ceo live nastup.</li>
-                  <li><strong>Veličina teksta</strong> — lokalno skaliranje za bolju vidljivost na bini.</li>
-                  <li><strong>Prikaži napojnice</strong> — lokalno sakrij/prikaži iznose u dashboardu.</li>
-                  <li><strong>Dozvoli bakšiš gostima</strong> — shared pravilo za sve uređaje.</li>
-                  <li><strong>Pun repertoar u live režimu</strong> — shared pravilo za sve uređaje.</li>
-                  <li><strong>Zvučna obaveštenja</strong> — zvuk za nove zahteve na ovom uređaju.</li>
+                  <li><strong>Naziv lokala</strong> — prikazuje se u zaglavlju tokom nastupa (lokalno).</li>
+                  <li><strong>Maks. broj zahteva</strong> — ograničenje zahteva na čekanju (0 = bez limita). Deljeno podešavanje — važi za sve uređaje.</li>
+                  <li><strong>Veličina teksta</strong> — lokalno skaliranje za bolju vidljivost na bini (80%–150%).</li>
+                  <li><strong>Prikaži napojnice</strong> — lokalno sakrij/prikaži iznose bakšiša u dashboardu.</li>
+                  <li><strong>Dozvoli bakšiš gostima</strong> — deljeno pravilo. Kad je isključeno, gosti ne mogu da šalju bakšiš.</li>
+                  <li><strong>Pun repertoar u live režimu</strong> — deljeno pravilo. Kad je uključeno, gosti vide sve pesme iz repertoara, ne samo set liste.</li>
+                  <li><strong>Zvučna obaveštenja</strong> — zvučni signal za nove zahteve (lokalno, ovaj uređaj).</li>
                   <li><strong>Desktop notifikacije</strong> — sistemski pop-up kad stigne zahtev (dozvolite u pregledaču).</li>
+                  <li><strong>Auto prihvatanje</strong> — automatski prihvata sve dolazeće zahteve bez ručne potvrde.</li>
+                  <li><strong>Resetuj sesiju</strong> — briše SVE zahteve i resetuje brojače. Oprez: ne može se poništiti!</li>
                 </ul>
               </div>
 
               <div className="help-section help-tip">
-                <h3><Radio size={16} /> Savet za nastup</h3>
-                <p>Odštampajte <strong>QR flajer</strong> sa Live stranice i stavite ga na stolove — gosti direktno šalju zahteve bez pisanja na papir ili dolaska do vas.</p>
+                <h3><Radio size={16} /> Saveti za nastup</h3>
+                <ul>
+                  <li>Odštampajte <strong>QR flajer</strong> i stavite ga na stolove — gosti direktno šalju zahteve bez dolaska do vas.</li>
+                  <li>Uključite <strong>Auto prihvatanje</strong> ako ne želite da ručno odobravate svaki zahtev.</li>
+                  <li>Koristite <strong>set liste</strong> da organizujete pesme po setovima (npr. "1. set", "2. set", "Bis").</li>
+                  <li>Postavite telefon na stalak i koristite <strong>auto-scroll</strong> za hands-free čitanje teksta.</li>
+                  <li>Napravite pauzu između setova klikom na <strong>Pauza</strong> dugme — pratite koliko traje break.</li>
+                </ul>
               </div>
             </div>
           </div>
