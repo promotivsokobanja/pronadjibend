@@ -858,6 +858,11 @@ export default function LiveDashboard({ bandId, musicianId }) {
     );
   });
 
+  // ── Is selected song from personal repertoire? ──
+  const selectedSongInRepertoire = selectedSong
+    ? songsList.some((s) => s.id === selectedSong.id)
+    : true;
+
   // ── Repertoire prev/next navigation (fallback when no setlist) ──
   const repertoireSongIndex = selectedSong
     ? cheatsheetFilteredSongs.findIndex((s) => s.id === selectedSong.id)
@@ -930,6 +935,8 @@ export default function LiveDashboard({ bandId, musicianId }) {
       setAllSongs((prev) => Array.isArray(prev) ? [...prev, newSong] : [newSong]);
       // Remove from global results
       setGlobalResults((prev) => prev.filter((s) => s.id !== song.id));
+      // If this song is currently selected, update to the new repertoire copy
+      setSelectedSong((prev) => prev?.id === song.id ? newSong : prev);
     } catch (err) {
       console.error('Error adding song to repertoire:', err);
     } finally {
@@ -1999,6 +2006,20 @@ export default function LiveDashboard({ bandId, musicianId }) {
                         <h3 className="cheatsheet-now-title">{selectedSong.title}</h3>
                         <span className="cheatsheet-now-artist">{selectedSong.artist}</span>
                       </div>
+                      {!selectedSongInRepertoire && selectedSong.id && (
+                        <div className="add-to-repertoire-banner">
+                          <span className="add-rep-label">Pesma nije u vašem repertoaru</span>
+                          <button
+                            type="button"
+                            className="add-rep-btn"
+                            onClick={() => addGlobalSongToRepertoire(selectedSong)}
+                            disabled={addingSongId === selectedSong.id}
+                          >
+                            <PlusCircle size={14} />
+                            {addingSongId === selectedSong.id ? 'Dodavanje…' : 'Dodaj u repertoar'}
+                          </button>
+                        </div>
+                      )}
                       {selectedSong.lyrics !== null && selectedSong.id && (
                         <div className="cheatsheet-tools">
                           <button
@@ -4766,6 +4787,53 @@ export default function LiveDashboard({ bandId, musicianId }) {
           font-size: 0.75rem;
           color: #6b7280;
           font-weight: 600;
+        }
+        .add-to-repertoire-banner {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 0.75rem;
+          flex-wrap: wrap;
+          padding: 0.6rem 0.85rem;
+          border-radius: 10px;
+          border: 1px solid rgba(34, 197, 94, 0.3);
+          background: rgba(34, 197, 94, 0.08);
+          margin-top: 0.5rem;
+        }
+        .add-rep-label {
+          font-size: 0.75rem;
+          font-weight: 700;
+          color: #86efac;
+        }
+        .add-rep-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.35rem;
+          padding: 0.45rem 0.85rem;
+          border-radius: 8px;
+          border: none;
+          background: linear-gradient(135deg, #22c55e, #16a34a);
+          color: #fff;
+          font-size: 0.75rem;
+          font-weight: 800;
+          cursor: pointer;
+          transition: filter 0.15s;
+          white-space: nowrap;
+          min-height: 34px;
+        }
+        .add-rep-btn:hover {
+          filter: brightness(1.1);
+        }
+        .add-rep-btn:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+        .light-mode .add-to-repertoire-banner {
+          border-color: rgba(34, 197, 94, 0.25);
+          background: rgba(34, 197, 94, 0.05);
+        }
+        .light-mode .add-rep-label {
+          color: #15803d;
         }
         .night-vision .cheatsheet-back-btn {
           border-color: rgba(139, 92, 246, 0.2);
