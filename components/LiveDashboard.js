@@ -4877,26 +4877,28 @@ export default function LiveDashboard({ bandId, musicianId }) {
           display: inline-flex;
           align-items: center;
           gap: 5px;
-          background: rgba(139, 92, 246, 0.08);
-          border: 1px solid rgba(139, 92, 246, 0.25);
-          border-radius: 6px;
-          color: #f8fafc;
+          background: rgba(239, 68, 68, 0.12);
+          border: 1.5px solid rgba(239, 68, 68, 0.5);
+          border-radius: 8px;
+          color: #fca5a5;
           font-family: 'JetBrains Mono', monospace;
-          font-size: 0.72rem;
-          font-weight: 800;
-          padding: 0.4rem 0.65rem;
+          font-size: 0.75rem;
+          font-weight: 900;
+          padding: 0.45rem 0.75rem;
           cursor: pointer;
           transition: all 0.15s;
           flex-shrink: 0;
-          letter-spacing: 0.02em;
+          letter-spacing: 0.03em;
+          text-transform: uppercase;
         }
         .cheatsheet-back-btn:hover {
-          color: #8b5cf6;
-          background: rgba(139, 92, 246, 0.15);
-          border-color: rgba(139, 92, 246, 0.45);
+          color: #ffffff;
+          background: rgba(239, 68, 68, 0.25);
+          border-color: rgba(239, 68, 68, 0.7);
+          box-shadow: 0 0 12px rgba(239, 68, 68, 0.2);
         }
         .cheatsheet-back-btn:active {
-          background: rgba(139, 92, 246, 0.22);
+          background: rgba(239, 68, 68, 0.35);
           transform: scale(0.95);
         }
         .cheatsheet-song-info {
@@ -4991,12 +4993,15 @@ export default function LiveDashboard({ bandId, musicianId }) {
           to { opacity: 1; transform: translateY(0); }
         }
         .night-vision .cheatsheet-back-btn {
-          border-color: rgba(139, 92, 246, 0.2);
-          color: #cbd5e1;
+          border-color: rgba(239, 68, 68, 0.45);
+          color: #fca5a5;
+          background: rgba(239, 68, 68, 0.1);
         }
         .night-vision .cheatsheet-back-btn:hover {
-          color: #8b5cf6;
-          border-color: rgba(139, 92, 246, 0.4);
+          color: #ffffff;
+          border-color: rgba(239, 68, 68, 0.7);
+          background: rgba(239, 68, 68, 0.2);
+          box-shadow: 0 0 12px rgba(239, 68, 68, 0.15);
         }
         .night-vision .cheatsheet-song-header {
           border-bottom-color: rgba(139, 92, 246, 0.1);
@@ -5438,27 +5443,28 @@ export default function LiveDashboard({ bandId, musicianId }) {
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          width: 34px;
-          height: 34px;
-          border: 1px solid rgba(139, 92, 246, 0.25);
-          border-radius: 8px;
-          background: rgba(139, 92, 246, 0.06);
-          color: #cbd5e1;
+          width: 38px;
+          height: 38px;
+          border: 1.5px solid rgba(59, 130, 246, 0.5);
+          border-radius: 10px;
+          background: rgba(59, 130, 246, 0.1);
+          color: #93c5fd;
           cursor: pointer;
           transition: all 0.15s ease;
           flex-shrink: 0;
         }
         .cheatsheet-arrow-btn:hover:not(:disabled) {
-          border-color: #8b5cf6;
-          color: #8b5cf6;
-          background: rgba(139, 92, 246, 0.12);
+          border-color: #3b82f6;
+          color: #ffffff;
+          background: rgba(59, 130, 246, 0.2);
+          box-shadow: 0 0 12px rgba(59, 130, 246, 0.2);
         }
         .cheatsheet-arrow-btn:active:not(:disabled) {
           transform: scale(0.92);
-          background: rgba(139, 92, 246, 0.2);
+          background: rgba(59, 130, 246, 0.3);
         }
         .cheatsheet-arrow-btn:disabled {
-          opacity: 0.3;
+          opacity: 0.25;
           cursor: not-allowed;
         }
         .cheatsheet-song-counter {
@@ -5470,14 +5476,50 @@ export default function LiveDashboard({ bandId, musicianId }) {
           font-variant-numeric: tabular-nums;
         }
         .light-mode .cheatsheet-arrow-btn {
-          border-color: rgba(148, 163, 184, 0.3);
-          background: rgba(255, 255, 255, 0.8);
-          color: #475569;
+          border-color: rgba(59, 130, 246, 0.35);
+          background: rgba(59, 130, 246, 0.06);
+          color: #2563eb;
         }
         .light-mode .cheatsheet-arrow-btn:hover:not(:disabled) {
-          border-color: #8b5cf6;
-          color: #7c3aed;
-          background: rgba(139, 92, 246, 0.08);
+          border-color: #2563eb;
+          color: #ffffff;
+          background: rgba(37, 99, 235, 0.85);
+        }
+
+        /* Mobile/tablet: larger touch targets */
+        @media (max-width: 768px) {
+          .cheatsheet-back-btn {
+            padding: 0.5rem 0.85rem;
+            font-size: 0.73rem;
+            min-height: 38px;
+          }
+          .cheatsheet-arrow-btn {
+            width: 42px;
+            height: 42px;
+          }
+          .cheatsheet-song-header {
+            gap: 0.5rem;
+            flex-wrap: wrap;
+          }
+        }
+        @media (max-width: 480px) {
+          .cheatsheet-back-btn {
+            padding: 0.55rem 0.7rem;
+            font-size: 0.7rem;
+            min-height: 40px;
+          }
+          .cheatsheet-arrow-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+          }
+          .cheatsheet-nav-arrows {
+            gap: 0.35rem;
+          }
+          .cheatsheet-song-counter {
+            font-size: 0.72rem;
+            min-width: 2.8rem;
+          }
         }
 
         /* ======= SETLIST PLAYED PROGRESS ======= */
@@ -6576,13 +6618,14 @@ export default function LiveDashboard({ bandId, musicianId }) {
           color: #0f172a;
         }
         .light-mode .cheatsheet-back-btn {
-          background: #f1f5f9;
-          border-color: #cbd5e1;
-          color: #475569;
+          background: rgba(239, 68, 68, 0.08);
+          border-color: rgba(220, 38, 38, 0.4);
+          color: #dc2626;
         }
         .light-mode .cheatsheet-back-btn:hover {
-          border-color: #7c3aed;
-          color: #7c3aed;
+          border-color: #dc2626;
+          color: #ffffff;
+          background: rgba(220, 38, 38, 0.85);
         }
         .light-mode .key-badge {
           background: rgba(124, 58, 237, 0.1);
