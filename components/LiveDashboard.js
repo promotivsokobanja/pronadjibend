@@ -5527,6 +5527,29 @@ export default function LiveDashboard({ bandId, musicianId }) {
             font-size: 0.62rem;
             min-width: 2rem;
           }
+          .add-to-repertoire-banner {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 0.5rem;
+            padding: 0.55rem 0.75rem;
+          }
+          .add-rep-label {
+            font-size: 0.72rem;
+            text-align: center;
+          }
+          .add-rep-btn {
+            justify-content: center;
+            min-height: 40px;
+            font-size: 0.78rem;
+          }
+          .clear-history-row {
+            justify-content: center;
+          }
+          .clear-history-btn {
+            width: 100%;
+            justify-content: center;
+            min-height: 42px;
+          }
           .setlist-item-actions {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -5969,6 +5992,24 @@ export default function LiveDashboard({ bandId, musicianId }) {
           .max-requests-warning {
             padding: 0.7rem 0.8rem;
             font-size: 0.74rem;
+          }
+          .add-to-repertoire-banner {
+            padding: 0.5rem 0.6rem;
+            gap: 0.4rem;
+            border-radius: 8px;
+          }
+          .add-rep-label {
+            font-size: 0.68rem;
+          }
+          .add-rep-btn {
+            font-size: 0.72rem;
+            padding: 0.4rem 0.7rem;
+            min-height: 38px;
+          }
+          .clear-history-btn {
+            font-size: 0.72rem;
+            padding: 0.4rem 0.75rem;
+            min-height: 40px;
           }
         }
 
