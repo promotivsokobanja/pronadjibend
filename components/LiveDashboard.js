@@ -5583,6 +5583,10 @@ export default function LiveDashboard({ bandId, musicianId }) {
             min-height: 40px;
             font-size: 0.78rem;
           }
+          .added-to-rep-toast {
+            font-size: 0.75rem;
+            padding: 0.45rem 0.7rem;
+          }
           .clear-history-row {
             justify-content: center;
           }
@@ -6051,6 +6055,11 @@ export default function LiveDashboard({ bandId, musicianId }) {
             font-size: 0.72rem;
             padding: 0.4rem 0.75rem;
             min-height: 40px;
+          }
+          .added-to-rep-toast {
+            font-size: 0.7rem;
+            padding: 0.4rem 0.6rem;
+            gap: 0.3rem;
           }
         }
 
