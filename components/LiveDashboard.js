@@ -40,6 +40,8 @@ export default function LiveDashboard({ bandId, musicianId }) {
   const navBusyRef = useRef(false);
   const navIndexRef = useRef(-1);
   const [requests, setRequests] = useState([]);
+  const [historyRequests, setHistoryRequests] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
   const [requestsLoading, setRequestsLoading] = useState(true);
   const [requestLoadError, setRequestLoadError] = useState('');
   const [requestActionError, setRequestActionError] = useState('');
@@ -510,6 +512,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
         const params = new URLSearchParams();
         if (bandId) params.set('bandId', bandId);
         else if (musicianId) params.set('musicianId', musicianId);
+        params.set('statusFilter', 'active');
 
         const resp = await fetch(`/api/live-requests?${params.toString()}`, {
           cache: 'no-store',
@@ -1131,6 +1134,11 @@ export default function LiveDashboard({ bandId, musicianId }) {
 
     try {
       await updateRequestStatus(req.id, nextStatus);
+      // Move to history locally if status is terminal
+      const lowerStatus = nextStatus.toLowerCase();
+      if (lowerStatus === 'rejected' || lowerStatus === 'played') {
+        setHistoryRequests((prev) => [{ ...req, status: lowerStatus, time: 'upravo' }, ...prev]);
+      }
       if (onSuccess) {
         await onSuccess();
       }
@@ -1235,11 +1243,27 @@ export default function LiveDashboard({ bandId, musicianId }) {
     );
     return Boolean(looseMatched?.lyrics);
   }, [songsList]);
-  const filteredRequests = requests.filter((r) =>
-    requestView === 'active'
-      ? r.status === 'pending' || r.status === 'accepted'
-      : r.status === 'rejected' || r.status === 'played'
-  );
+  const loadHistory = useCallback(async () => {
+    if (!ownerId) return;
+    setHistoryLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (bandId) params.set('bandId', bandId);
+      else if (musicianId) params.set('musicianId', musicianId);
+      params.set('statusFilter', 'history');
+      const resp = await fetch(`/api/live-requests?${params.toString()}`, { cache: 'no-store' });
+      const data = await resp.json();
+      setHistoryRequests(Array.isArray(data) ? data : []);
+    } catch {
+      setHistoryRequests([]);
+    } finally {
+      setHistoryLoading(false);
+    }
+  }, [ownerId, bandId, musicianId]);
+
+  const filteredRequests = requestView === 'active'
+    ? requests.filter((r) => r.status === 'pending' || r.status === 'accepted')
+    : historyRequests;
 
   const handleExit = () => {
     if (bandId) {
@@ -1389,7 +1413,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
                 </button>
                 <button
                   className={`mini-tab ${requestView === 'history' ? 'active' : ''}`}
-                  onClick={() => setRequestView('history')}
+                  onClick={() => { setRequestView('history'); loadHistory(); }}
                 >
                   Istorija
                 </button>
@@ -1407,7 +1431,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
                   </button>
                 </div>
               )}
-              {requestsLoading ? (
+              {(requestsLoading || (requestView === 'history' && historyLoading)) ? (
                 <div className="live-state-card">
                   <MessageSquare size={38} />
                   <div className="live-state-copy">

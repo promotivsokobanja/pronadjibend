@@ -166,6 +166,11 @@ model LiveRequest {
   bandId            String?
   musician          MusicianProfile? @relation(fields: [musicianProfileId], references: [id])
   musicianProfileId String?
+
+  @@index([bandId, status, createdAt])
+  @@index([musicianProfileId, status, createdAt])
+  @@index([bandId, createdAt])
+  @@index([musicianProfileId, createdAt])
 }
 
 model MidiFile {

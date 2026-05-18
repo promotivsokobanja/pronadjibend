@@ -115,13 +115,22 @@ export async function GET(request) {
     });
     if (error) return error;
 
+    const ownerFilter = buildOwnerFilter(owner);
+    const statusFilter = searchParams.get('statusFilter');
+    const where = { ...ownerFilter };
+    if (statusFilter === 'active') {
+      where.status = { in: ['PENDING', 'ACCEPTED'] };
+    } else if (statusFilter === 'history') {
+      where.status = { in: ['PLAYED', 'REJECTED'] };
+    }
+
     const requests = await prisma.liveRequest.findMany({
-      where: buildOwnerFilter(owner),
+      where,
       include: {
         song: { select: { id: true, title: true, artist: true } },
       },
       orderBy: { createdAt: 'desc' },
-      take: 50,
+      take: statusFilter === 'history' ? 50 : 30,
     });
 
     const mapped = requests.map((r) => {
