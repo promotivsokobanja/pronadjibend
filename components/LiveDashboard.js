@@ -628,6 +628,10 @@ export default function LiveDashboard({ bandId, musicianId }) {
     }
     try {
       const resp = await fetch(`/api/songs/${song.id}`);
+      if (!resp.ok) {
+        setSelectedSong(song);
+        return;
+      }
       const data = await resp.json();
       setSelectedSong(data);
       // Update cache
@@ -818,8 +822,11 @@ export default function LiveDashboard({ bandId, musicianId }) {
 
   const refreshSelectedSong = useCallback(async () => {
     if (!selectedSong?.id) return;
+    // Skip refresh for pesmarica songs (not in own repertoire)
+    if (!selectedSongInRepertoire) return;
     try {
       const resp = await fetch(`/api/songs/${selectedSong.id}`);
+      if (!resp.ok) return;
       const data = await resp.json();
       setSelectedSong(data);
       setAllSongs((prev) =>
@@ -828,7 +835,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
     } catch {
       // Ignore refresh errors and keep current state.
     }
-  }, [selectedSong?.id]);
+  }, [selectedSong?.id, selectedSongInRepertoire]);
 
   useEffect(() => {
     if (activeTab !== 'cheatsheet') return;
