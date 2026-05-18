@@ -1,6 +1,6 @@
 'use client';
-import { Search, Music, CheckCircle2, AlertCircle, Wallet, ArrowLeft } from 'lucide-react';
-import { useState, useEffect, useCallback } from 'react';
+import { Search, Music, CheckCircle2, AlertCircle, Wallet, ArrowLeft, WifiOff } from 'lucide-react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 const TIP_PRESETS = [1000, 2000, 5000];
 
@@ -39,6 +39,21 @@ export default function GuestLivePage({ params }) {
   const [tipError, setTipError] = useState('');
   const [tipSending, setTipSending] = useState(false);
   const [guestRequestStatus, setGuestRequestStatus] = useState(null);
+  const [isOffline, setIsOffline] = useState(false);
+  const statusPollIntervalRef = useRef(4000);
+  const statusPollBoostTimeoutRef = useRef(null);
+
+  useEffect(() => {
+    const goOffline = () => setIsOffline(true);
+    const goOnline = () => setIsOffline(false);
+    window.addEventListener('offline', goOffline);
+    window.addEventListener('online', goOnline);
+    setIsOffline(!navigator.onLine);
+    return () => {
+      window.removeEventListener('offline', goOffline);
+      window.removeEventListener('online', goOnline);
+    };
+  }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -222,7 +237,7 @@ export default function GuestLivePage({ params }) {
     };
 
     syncGuestRequestStatus();
-    const intervalId = window.setInterval(syncGuestRequestStatus, 4000);
+    const intervalId = window.setInterval(syncGuestRequestStatus, statusPollIntervalRef.current);
 
     return () => {
       cancelled = true;
@@ -269,7 +284,10 @@ export default function GuestLivePage({ params }) {
         if (data.limitReached) {
           throw new Error(`Dnevni limit od ${data.dailyLimit || 3} besplatnih zahteva je dostignut. Pokušajte ponovo sutra.`);
         }
-        throw new Error(data.error || 'Greška pri slanju zahteva');
+        const errMsg = data.error === 'Pesma nije pronađena.'
+          ? 'Pesma više nije dostupna. Osvežite stranicu za ažuriranu listu.'
+          : (data.error || 'Greška pri slanju zahteva');
+        throw new Error(errMsg);
       }
 
       setGuestRequestStatus({
@@ -281,6 +299,11 @@ export default function GuestLivePage({ params }) {
         status: data.status || 'pending',
         time: 'upravo',
       });
+
+      // Boost polling speed for 30s after submission
+      statusPollIntervalRef.current = 2000;
+      if (statusPollBoostTimeoutRef.current) clearTimeout(statusPollBoostTimeoutRef.current);
+      statusPollBoostTimeoutRef.current = setTimeout(() => { statusPollIntervalRef.current = 4000; }, 30000);
 
       if (waiterTipRsd > 0) {
         setSongVoucherAmount(waiterTipRsd);
@@ -424,6 +447,12 @@ export default function GuestLivePage({ params }) {
   return (
     <div className="guest-container container">
       <div className="blob" style={{ top: '10%', right: '10%' }}></div>
+      {isOffline && (
+        <div className="offline-banner">
+          <WifiOff size={18} />
+          <span>Nema internet veze. Proverite WiFi i pokušajte ponovo.</span>
+        </div>
+      )}
       <header className="guest-header">
         <div className="live-indicator">
           <span className="dot"></span> UŽIVO NASTUP
@@ -864,6 +893,26 @@ export default function GuestLivePage({ params }) {
           line-height: 1.45;
         }
         .preparing-banner p { margin: 0; }
+        .offline-banner {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          max-width: 600px;
+          margin: 0 auto 1.25rem;
+          padding: 0.85rem 1.1rem;
+          border-radius: 14px;
+          border: 1px solid #ef4444;
+          background: linear-gradient(135deg, rgba(239,68,68,0.08), rgba(220,38,38,0.04));
+          color: #dc2626;
+          font-size: 0.88rem;
+          font-weight: 700;
+          line-height: 1.4;
+          animation: offlinePulse 2s ease-in-out infinite;
+        }
+        @keyframes offlinePulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.7; }
+        }
         .guest-header {
           text-align: center;
           margin-bottom: 2rem;
@@ -1738,6 +1787,229 @@ export default function GuestLivePage({ params }) {
           }
           .casti-menu-modal {
             max-width: 420px;
+          }
+        }
+
+        @media (prefers-color-scheme: dark) {
+          .guest-container {
+            background: #0f172a;
+          }
+          .guest-header h1 {
+            color: #f1f5f9;
+          }
+          .subtitle-text,
+          .live-status-copy,
+          .guest-request-status-artist,
+          .guest-request-status-kicker,
+          .live-status-kicker {
+            color: #94a3b8;
+          }
+          .live-status-card {
+            border-color: #334155;
+            background: rgba(30, 41, 59, 0.85);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+          }
+          .live-status-value {
+            color: #f1f5f9;
+          }
+          .live-status-value.is-on {
+            color: #4ade80;
+          }
+          .live-status-value.is-off {
+            color: #fbbf24;
+          }
+          .live-status-value.is-neutral {
+            color: #f1f5f9;
+          }
+          .search-bar {
+            background: #1e293b;
+            border-color: #334155;
+          }
+          .search-bar input {
+            color: #f1f5f9;
+          }
+          .search-bar input::placeholder {
+            color: #64748b;
+          }
+          .tab-btn {
+            background: #1e293b;
+            border-color: #334155;
+            color: #94a3b8;
+          }
+          .tab-btn:hover {
+            background: #334155;
+            color: #f1f5f9;
+          }
+          .tab-btn.active {
+            background: #007aff;
+            color: white;
+            border-color: #007aff;
+          }
+          .song-row {
+            background: #1e293b;
+            border-color: #334155;
+          }
+          .song-row:hover {
+            background: #334155;
+            border-color: #007aff;
+            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.15);
+          }
+          .song-title {
+            color: #f1f5f9;
+          }
+          .song-artist {
+            color: #94a3b8;
+          }
+          .modal,
+          .success-card {
+            background: #1e293b;
+            border-color: #334155;
+          }
+          .modal h3 {
+            color: #f1f5f9;
+          }
+          .selected-song {
+            color: #60a5fa;
+          }
+          .modal-support-copy,
+          .casti-menu-lede,
+          .tip-choice-table,
+          .voucher-note,
+          .song-voucher-sub {
+            color: #94a3b8;
+          }
+          .form-group label {
+            color: #94a3b8;
+          }
+          .form-group input {
+            background: #0f172a;
+            border-color: #334155;
+            color: #f1f5f9;
+          }
+          .form-group input::placeholder {
+            color: #64748b;
+          }
+          .form-group input:focus {
+            border-color: #007aff;
+          }
+          .preset-chip {
+            background: #0f172a;
+            border-color: #334155;
+            color: #f1f5f9;
+          }
+          .preset-chip.active {
+            border-color: #22c55e;
+            background: rgba(34, 197, 94, 0.15);
+            color: #4ade80;
+          }
+          .voucher-band-name {
+            color: #f1f5f9;
+          }
+          .voucher-shout {
+            color: #f1f5f9;
+          }
+          .voucher-label-amount {
+            color: #94a3b8;
+          }
+          .success-card h2 {
+            color: #f1f5f9;
+          }
+          .success-card p {
+            color: #94a3b8;
+          }
+          .voucher-success h2 {
+            color: #4ade80;
+          }
+          .song-voucher-shout {
+            color: #f1f5f9;
+          }
+          .error-msg {
+            background: rgba(220, 38, 38, 0.12);
+            border-color: rgba(248, 113, 113, 0.3);
+            color: #f87171;
+          }
+          .empty-state {
+            color: #64748b;
+          }
+          .voucher-back {
+            background: #334155;
+            color: #f1f5f9;
+          }
+          .voucher-music-icon {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.25), rgba(0, 122, 255, 0.25));
+          }
+          .modal-step-chip {
+            background: rgba(59, 130, 246, 0.15);
+            color: #60a5fa;
+          }
+          .btn-text-muted {
+            color: #94a3b8;
+          }
+          .btn-skip-tip {
+            color: #94a3b8;
+          }
+          .casti-bend-btn {
+            border-color: rgba(34, 197, 94, 0.35);
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(16, 185, 129, 0.1));
+            color: #4ade80;
+          }
+          .casti-bend-btn:hover {
+            box-shadow: 0 8px 24px rgba(34, 197, 94, 0.15);
+          }
+          .guest-request-status-card {
+            border-color: #334155;
+            background: rgba(30, 41, 59, 0.92);
+          }
+          .guest-request-status-card.status-pending {
+            border-color: rgba(59, 130, 246, 0.3);
+            background: rgba(30, 58, 138, 0.2);
+          }
+          .guest-request-status-card.status-accepted {
+            border-color: rgba(34, 197, 94, 0.3);
+            background: rgba(20, 83, 45, 0.2);
+          }
+          .guest-request-status-card.status-rejected {
+            border-color: rgba(248, 113, 113, 0.3);
+            background: rgba(127, 29, 29, 0.2);
+          }
+          .guest-request-status-card.status-played {
+            border-color: rgba(168, 85, 247, 0.3);
+            background: rgba(88, 28, 135, 0.2);
+          }
+          .guest-request-status-title {
+            color: #f1f5f9;
+          }
+          .guest-request-status-copy {
+            color: #94a3b8;
+          }
+          .guest-request-status-pill.status-pending {
+            background: rgba(59, 130, 246, 0.2);
+            color: #60a5fa;
+          }
+          .guest-request-status-pill.status-accepted {
+            background: rgba(34, 197, 94, 0.2);
+            color: #4ade80;
+          }
+          .guest-request-status-pill.status-rejected {
+            background: rgba(248, 113, 113, 0.2);
+            color: #f87171;
+          }
+          .guest-request-status-pill.status-played {
+            background: rgba(168, 85, 247, 0.2);
+            color: #c084fc;
+          }
+          .preparing-banner {
+            border-color: rgba(251, 191, 36, 0.3);
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.1), rgba(245, 158, 11, 0.05));
+            color: #fbbf24;
+          }
+          .offline-banner {
+            border-color: rgba(239, 68, 68, 0.4);
+            background: linear-gradient(135deg, rgba(239,68,68,0.12), rgba(220,38,38,0.06));
+            color: #f87171;
+          }
+          .tip-choice-lede {
+            color: #60a5fa;
           }
         }
       `}</style>

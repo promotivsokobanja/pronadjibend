@@ -12,7 +12,18 @@ export default function LiveDashboard({ bandId, musicianId }) {
   const router = useRouter();
   const [isNightMode, setIsNightMode] = useState(true);
   const [sessionElapsed, setSessionElapsed] = useState(0);
-  const sessionStartRef = useRef(Date.now());
+  const sessionStartRef = useRef((() => {
+    if (typeof window === 'undefined') return Date.now();
+    const key = `pb-live-session-start:${bandId || musicianId}`;
+    const saved = sessionStorage.getItem(key);
+    if (saved) {
+      const ts = Number(saved);
+      if (Number.isFinite(ts) && ts > 0) return ts;
+    }
+    const now = Date.now();
+    sessionStorage.setItem(key, String(now));
+    return now;
+  })());
   const [showSettings, setShowSettings] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [showQr, setShowQr] = useState(false);
@@ -159,9 +170,12 @@ export default function LiveDashboard({ bandId, musicianId }) {
   }, []);
 
   const saveSharedLiveSettings = useCallback(async (patch) => {
-    if (!bandId || !patch || typeof patch !== 'object') return null;
+    if (!ownerId || !patch || typeof patch !== 'object') return null;
+    const url = bandId
+      ? `/api/bands/${encodeURIComponent(bandId)}/live-settings`
+      : `/api/musicians/${encodeURIComponent(musicianId)}/live-settings`;
     try {
-      const response = await fetch(`/api/bands/${encodeURIComponent(bandId)}/live-settings`, {
+      const response = await fetch(url, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(patch),
@@ -175,7 +189,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
       console.error('Error saving shared live settings:', err);
       return null;
     }
-  }, [bandId]);
+  }, [ownerId, bandId, musicianId]);
 
   const updateSetting = (key, value) => {
     setSettings(prev => {
@@ -211,7 +225,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
         ? { allowFullRepertoireLive: value }
         : null;
 
-    if (!patch || !bandId) return;
+    if (!patch || !ownerId) return;
 
     const saved = await saveSharedLiveSettings(patch);
     if (!saved) {
@@ -240,6 +254,12 @@ export default function LiveDashboard({ bandId, musicianId }) {
       setRequests([]);
       knownRequestIdsRef.current = new Set();
       autoAcceptedRequestIdsRef.current = new Set();
+      // Reset session timer
+      const key = `pb-live-session-start:${ownerId}`;
+      const now = Date.now();
+      sessionStorage.setItem(key, String(now));
+      sessionStartRef.current = now;
+      setSessionElapsed(0);
     } catch (err) {
       alert('Greška pri resetovanju sesije. Pokušajte ponovo.');
     }
@@ -301,22 +321,23 @@ export default function LiveDashboard({ bandId, musicianId }) {
   }, [playNewRequestTone]);
 
   useEffect(() => {
-    if (!bandId) return; // live-settings only exist for bands
+    if (!ownerId) return;
     let cancelled = false;
 
     const loadLiveSettings = async () => {
       try {
-        const response = await fetch(`/api/bands/${encodeURIComponent(bandId)}/live-settings`, {
-          cache: 'no-store',
-        });
+        const url = bandId
+          ? `/api/bands/${encodeURIComponent(bandId)}/live-settings`
+          : `/api/musicians/${encodeURIComponent(musicianId)}/live-settings`;
+        const response = await fetch(url, { cache: 'no-store' });
         if (!response.ok) return;
-        const band = await response.json();
+        const data = await response.json();
         if (cancelled) return;
         setSettings((prev) => ({
           ...prev,
-          maxRequests: normalizeMaxRequests(band?.maxPendingRequests),
-          allowGuestTips: typeof band?.allowTips === 'boolean' ? band.allowTips : prev.allowGuestTips,
-          allowFullRepertoireLive: typeof band?.allowFullRepertoireLive === 'boolean' ? band.allowFullRepertoireLive : prev.allowFullRepertoireLive,
+          maxRequests: normalizeMaxRequests(data?.maxPendingRequests ?? prev.maxRequests),
+          allowGuestTips: typeof data?.allowTips === 'boolean' ? data.allowTips : prev.allowGuestTips,
+          allowFullRepertoireLive: typeof data?.allowFullRepertoireLive === 'boolean' ? data.allowFullRepertoireLive : prev.allowFullRepertoireLive,
         }));
       } catch (err) {
         console.error('Error loading live settings:', err);
@@ -328,7 +349,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
     return () => {
       cancelled = true;
     };
-  }, [bandId, normalizeMaxRequests]);
+  }, [ownerId, bandId, musicianId, normalizeMaxRequests]);
 
   useEffect(() => {
     return () => {

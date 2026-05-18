@@ -55,12 +55,12 @@ async function resolveLiveOwner({ bandId, musicianId }) {
   if (normalizedMusicianId) {
     let musician = await prisma.musicianProfile.findUnique({
       where: { id: normalizedMusicianId },
-      select: { id: true },
+      select: { id: true, userId: true, allowTips: true, allowFullRepertoireLive: true },
     });
     if (!musician) {
       musician = await prisma.musicianProfile.findUnique({
         where: { userId: normalizedMusicianId },
-        select: { id: true },
+        select: { id: true, userId: true, allowTips: true, allowFullRepertoireLive: true },
       });
     }
     if (!musician) {
@@ -68,12 +68,23 @@ async function resolveLiveOwner({ bandId, musicianId }) {
         error: NextResponse.json({ error: 'Muzičar nije pronađen.' }, { status: 404 }),
       };
     }
+    // Check premium via user plan
+    let hasPremium = false;
+    if (musician.userId) {
+      const musicianUser = await prisma.user.findUnique({
+        where: { id: musician.userId },
+        select: { plan: true },
+      });
+      const userPlan = (musicianUser?.plan || '').toUpperCase();
+      hasPremium = userPlan === 'PREMIUM' || userPlan === 'PREMIUM_VENUE';
+    }
     return {
       owner: {
         type: 'musician',
         id: musician.id,
-        allowTips: true,
+        allowTips: musician.allowTips !== false,
         maxPendingRequests: 10,
+        hasPremium,
       },
     };
   }
