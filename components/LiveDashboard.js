@@ -1088,7 +1088,37 @@ export default function LiveDashboard({ bandId, musicianId }) {
     if (!selectedSong?.id || liveSaving) return;
     setLiveSaving(true);
     try {
-      const resp = await fetch(`/api/songs/${selectedSong.id}`, {
+      let songId = selectedSong.id;
+
+      // If song is not in our repertoire, add it first then save edits on the copy
+      if (!selectedSongInRepertoire) {
+        const addResp = await fetch('/api/songs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: selectedSong.title,
+            artist: selectedSong.artist,
+            lyrics: liveEditContent,
+            category: selectedSong.category || null,
+            bandId: bandId || undefined,
+            musicianId: musicianId || undefined,
+          }),
+        });
+        const addData = await addResp.json();
+        if (!addResp.ok) throw new Error(addData.error || 'Greška pri dodavanju u repertoar.');
+        const newSong = addData.song || addData;
+        songId = newSong.id;
+        setAllSongs((prev) => Array.isArray(prev) ? [...prev, newSong] : [newSong]);
+        setGlobalResults((prev) => prev.filter((s) => s.id !== selectedSong.id));
+        const updated = { ...newSong, lyrics: liveEditContent };
+        setSelectedSong(updated);
+        setLiveIsEditing(false);
+        setAddedToRepToast(`✓ Dodata u repertoar i sačuvana`);
+        setTimeout(() => setAddedToRepToast(''), 3500);
+        return;
+      }
+
+      const resp = await fetch(`/api/songs/${songId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ lyrics: liveEditContent }),
