@@ -908,9 +908,15 @@ export default function LiveDashboard({ bandId, musicianId }) {
     if (targetIdx < 0 || targetIdx >= cheatsheetFilteredSongs.length) return;
     navBusyRef.current = true;
     try {
-      await handleSelectSong(cheatsheetFilteredSongs[targetIdx]);
+      const targetSong = cheatsheetFilteredSongs[targetIdx];
+      // Use directly if lyrics already loaded to prevent flash
+      if (targetSong.lyrics) {
+        setSelectedSong(targetSong);
+      } else {
+        await handleSelectSong(targetSong);
+      }
     } finally {
-      setTimeout(() => { navBusyRef.current = false; }, 120);
+      setTimeout(() => { navBusyRef.current = false; }, 250);
     }
   }, [repertoireSongIndex, cheatsheetFilteredSongs, handleSelectSong]);
 
@@ -997,18 +1003,23 @@ export default function LiveDashboard({ bandId, musicianId }) {
     const targetIndex = direction === 'prev' ? curIdx - 1 : curIdx + 1;
     if (targetIndex < 0 || targetIndex >= selectedSetList.items.length) return;
     navBusyRef.current = true;
-    // Optimistically update the ref so the next rapid click uses the new index
     navIndexRef.current = targetIndex;
     try {
-      await openSongFromSetListItem(selectedSetList.items[targetIndex]);
+      const item = selectedSetList.items[targetIndex];
+      // Use cached song if lyrics already loaded to avoid flash
+      const cachedSong = allSongs.find((s) => s.id === item.songId && s.lyrics);
+      if (cachedSong) {
+        setSelectedSong(cachedSong);
+        setActiveTab('cheatsheet');
+      } else {
+        await openSongFromSetListItem(item);
+      }
     } catch {
-      // Revert on failure
       navIndexRef.current = curIdx;
     } finally {
-      // Small delay so React state settles before unlocking
-      setTimeout(() => { navBusyRef.current = false; }, 120);
+      setTimeout(() => { navBusyRef.current = false; }, 250);
     }
-  }, [openSongFromSetListItem, selectedSetList]);
+  }, [openSongFromSetListItem, selectedSetList, allSongs]);
 
   useEffect(() => {
     const onOutsideClick = (e) => {
