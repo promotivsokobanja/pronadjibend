@@ -939,17 +939,30 @@ export default function LiveDashboard({ bandId, musicianId }) {
     navBusyRef.current = true;
     try {
       const targetSong = cheatsheetFilteredSongs[targetIdx];
-      // Use directly if lyrics already loaded to prevent flash
       if (targetSong.lyrics) {
         setSelectedSong(targetSong);
       } else {
-        await handleSelectSong(targetSong);
+        // Fetch lyrics first, then update UI all at once (no flash)
+        try {
+          const resp = await fetch(`/api/songs/${targetSong.id}`);
+          if (resp.ok) {
+            const data = await resp.json();
+            setSelectedSong(data);
+            setAllSongs((prev) =>
+              Array.isArray(prev) ? prev.map((s) => (s.id === data.id ? data : s)) : prev
+            );
+          } else {
+            setSelectedSong(targetSong);
+          }
+        } catch {
+          setSelectedSong(targetSong);
+        }
       }
       if (navigator.vibrate) navigator.vibrate(30);
     } finally {
       setTimeout(() => { navBusyRef.current = false; }, 300);
     }
-  }, [repertoireSongIndex, cheatsheetFilteredSongs, handleSelectSong]);
+  }, [repertoireSongIndex, cheatsheetFilteredSongs]);
 
   // ── Debounced global pesmarica search ──
   useEffect(() => {
@@ -1054,12 +1067,12 @@ export default function LiveDashboard({ bandId, musicianId }) {
     const targetIndex = direction === 'prev' ? curIdx - 1 : curIdx + 1;
     if (targetIndex < 0 || targetIndex >= navSetList.items.length) return;
     navBusyRef.current = true;
-    setNavPosition(targetIndex);
     try {
       const item = navSetList.items[targetIndex];
-      // Use cached song directly to avoid flash (no extra renders)
       const cachedSong = allSongs.find((s) => s.id === item.songId && s.lyrics);
       if (cachedSong) {
+        // Batch position + song update together (no flash)
+        setNavPosition(targetIndex);
         setSelectedSong(cachedSong);
       } else {
         const matchedSong = allSongs.find((s) => s.id === item.songId);
@@ -1069,11 +1082,28 @@ export default function LiveDashboard({ bandId, musicianId }) {
           artist: item.artist,
           lyrics: null,
         };
-        await handleSelectSong(fallbackSong);
+        // Fetch lyrics first, then update UI all at once
+        try {
+          const resp = await fetch(`/api/songs/${fallbackSong.id}`);
+          if (resp.ok) {
+            const data = await resp.json();
+            setNavPosition(targetIndex);
+            setSelectedSong(data);
+            setAllSongs((prev) =>
+              Array.isArray(prev) ? prev.map((s) => (s.id === data.id ? data : s)) : prev
+            );
+          } else {
+            setNavPosition(targetIndex);
+            setSelectedSong(fallbackSong);
+          }
+        } catch {
+          setNavPosition(targetIndex);
+          setSelectedSong(fallbackSong);
+        }
       }
       if (navigator.vibrate) navigator.vibrate(30);
     } catch {
-      setNavPosition(curIdx);
+      // revert on failure
     } finally {
       setTimeout(() => { navBusyRef.current = false; }, 300);
     }
@@ -1139,6 +1169,10 @@ export default function LiveDashboard({ bandId, musicianId }) {
 
   // Swipe left/right on lyrics to navigate songs
   const swipeRef = useRef({ startX: 0, startY: 0 });
+  const swipeNavRef = useRef({ openAdjacentSetListSong, openAdjacentRepertoireSong, navSetList, selectedSetListSongIndex, repertoireSongIndex });
+  useEffect(() => {
+    swipeNavRef.current = { openAdjacentSetListSong, openAdjacentRepertoireSong, navSetList, selectedSetListSongIndex, repertoireSongIndex };
+  });
   useEffect(() => {
     const el = lyricsRef.current;
     if (!el) return;
@@ -1150,16 +1184,15 @@ export default function LiveDashboard({ bandId, musicianId }) {
       const t = e.changedTouches[0];
       const dx = t.clientX - swipeRef.current.startX;
       const dy = t.clientY - swipeRef.current.startY;
-      // Require horizontal swipe > 60px and more horizontal than vertical
-      if (Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx) * 0.6) return;
+      // Require horizontal swipe > 80px and more horizontal than vertical
+      if (Math.abs(dx) < 80 || Math.abs(dy) > Math.abs(dx) * 0.5) return;
+      const { openAdjacentSetListSong: navSL, openAdjacentRepertoireSong: navRep, navSetList: nsl, selectedSetListSongIndex: slIdx, repertoireSongIndex: rIdx } = swipeNavRef.current;
       if (dx < 0) {
-        // Swipe left → next song
-        if (navSetList && selectedSetListSongIndex !== -1) openAdjacentSetListSong('next');
-        else if (repertoireSongIndex !== -1) openAdjacentRepertoireSong('next');
+        if (nsl && slIdx !== -1) navSL('next');
+        else if (rIdx !== -1) navRep('next');
       } else {
-        // Swipe right → prev song
-        if (navSetList && selectedSetListSongIndex !== -1) openAdjacentSetListSong('prev');
-        else if (repertoireSongIndex !== -1) openAdjacentRepertoireSong('prev');
+        if (nsl && slIdx !== -1) navSL('prev');
+        else if (rIdx !== -1) navRep('prev');
       }
     };
     el.addEventListener('touchstart', onTouchStart, { passive: true });
@@ -1168,7 +1201,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
       el.removeEventListener('touchstart', onTouchStart);
       el.removeEventListener('touchend', onTouchEnd);
     };
-  });
+  }, [selectedSong?.id]); // Only re-attach when song changes (new lyrics element)
 
   // Auto-scroll effect for cheatsheet lyrics
   useEffect(() => {
