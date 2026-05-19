@@ -38,7 +38,6 @@ export default function LiveDashboard({ bandId, musicianId }) {
   const [playedSongIds, setPlayedSongIds] = useState(new Set());
   // Guard: prevent rapid prev/next clicks from racing
   const navBusyRef = useRef(false);
-  const navIndexRef = useRef(-1);
   const [requests, setRequests] = useState([]);
   const [historyRequests, setHistoryRequests] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(false);
@@ -301,7 +300,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
   const notifyNewRequests = useCallback((freshRequests) => {
     if (typeof window === 'undefined' || !Array.isArray(freshRequests) || freshRequests.length === 0) return;
 
-    if (settings.soundEnabled) {
+    if (settingsRef.current.soundEnabled) {
       playNewRequestTone();
     }
 
@@ -599,13 +598,13 @@ export default function LiveDashboard({ bandId, musicianId }) {
 
   /** Toggle isLive for a setlist */
   const toggleSetListLive = useCallback(async (setListId) => {
-    setSetLists((prev) =>
-      prev.map((entry) =>
-        entry.id === setListId ? { ...entry, isLive: !entry.isLive } : entry
-      )
-    );
     const entry = setListsRef.current.find((e) => e.id === setListId);
     const nextIsLive = entry ? !entry.isLive : true;
+    setSetLists((prev) =>
+      prev.map((e) =>
+        e.id === setListId ? { ...e, isLive: nextIsLive } : e
+      )
+    );
     await syncSetListToApi(setListId, { isLive: nextIsLive });
   }, [syncSetListToApi]);
 
@@ -648,7 +647,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
     settingsRef.current = settings;
   }, [settings]);
 
-  const handleSelectSong = async (song) => {
+  const handleSelectSong = useCallback(async (song) => {
     if (song.lyrics) {
       setSelectedSong(song);
       return;
@@ -668,7 +667,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
     } catch (err) {
       setSelectedSong(song);
     }
-  };
+  }, []);
 
   const openSongFromSetListItem = useCallback(async (item) => {
     const matchedSong = allSongs.find((song) => song.id === item.songId);
@@ -919,7 +918,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
         await handleSelectSong(targetSong);
       }
     } finally {
-      setTimeout(() => { navBusyRef.current = false; }, 250);
+      setTimeout(() => { navBusyRef.current = false; }, 300);
     }
   }, [repertoireSongIndex, cheatsheetFilteredSongs, handleSelectSong]);
 
@@ -993,36 +992,38 @@ export default function LiveDashboard({ bandId, musicianId }) {
     (item) => item.songId === selectedSong?.id
   ) ?? -1;
 
-  // Keep navIndexRef in sync with computed index
-  useEffect(() => {
-    navIndexRef.current = selectedSetListSongIndex;
-  }, [selectedSetListSongIndex]);
-
   const openAdjacentSetListSong = useCallback(async (direction) => {
     if (navBusyRef.current) return;
     if (!navSetList) return;
-    const curIdx = navIndexRef.current;
+    // Use computed index as source of truth
+    const curIdx = selectedSetListSongIndex;
     if (curIdx === -1) return;
     const targetIndex = direction === 'prev' ? curIdx - 1 : curIdx + 1;
     if (targetIndex < 0 || targetIndex >= navSetList.items.length) return;
     navBusyRef.current = true;
-    navIndexRef.current = targetIndex;
     try {
       const item = navSetList.items[targetIndex];
-      // Use cached song if lyrics already loaded to avoid flash
+      // Use cached song directly to avoid flash (no extra renders)
       const cachedSong = allSongs.find((s) => s.id === item.songId && s.lyrics);
       if (cachedSong) {
         setSelectedSong(cachedSong);
-        setActiveTab('cheatsheet');
       } else {
-        await openSongFromSetListItem(item);
+        // Load song inline without going through openSongFromSetListItem
+        const matchedSong = allSongs.find((s) => s.id === item.songId);
+        const fallbackSong = matchedSong || {
+          id: item.songId,
+          title: item.title,
+          artist: item.artist,
+          lyrics: null,
+        };
+        await handleSelectSong(fallbackSong);
       }
     } catch {
-      navIndexRef.current = curIdx;
+      // no-op
     } finally {
-      setTimeout(() => { navBusyRef.current = false; }, 250);
+      setTimeout(() => { navBusyRef.current = false; }, 300);
     }
-  }, [openSongFromSetListItem, navSetList, allSongs]);
+  }, [navSetList, allSongs, selectedSetListSongIndex]);
 
   useEffect(() => {
     const onOutsideClick = (e) => {
@@ -1252,6 +1253,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
         throw new Error(data.error || 'Greška pri brisanju istorije.');
       }
       setRequests((prev) => prev.filter((r) => r.status !== 'played' && r.status !== 'rejected'));
+      setHistoryRequests([]);
     } catch (err) {
       setRequestActionError(err?.message || 'Brisanje istorije nije uspelo.');
     } finally {
