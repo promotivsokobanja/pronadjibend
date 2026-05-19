@@ -559,9 +559,12 @@ export default function LiveDashboard({ bandId, musicianId }) {
         }
       } catch (err) {
         if (!cancelled) {
-          setRequests([]);
+          // Only show error and clear on first load; keep existing data on transient failures
+          if (!hasLoadedRequestsRef.current) {
+            setRequests([]);
+            setRequestLoadError('Zahtevi trenutno nisu dostupni. Proverite vezu i pokušajte ponovo.');
+          }
           setRequestsLoading(false);
-          setRequestLoadError('Zahtevi trenutno nisu dostupni. Proverite vezu i pokušajte ponovo.');
         }
         console.error('Error loading live requests:', err);
       }
@@ -576,16 +579,24 @@ export default function LiveDashboard({ bandId, musicianId }) {
     };
   }, [ownerId, bandId, musicianId, notifyNewRequests]);
 
-  /** Sync a single setlist to the API (debounced for items) */
+  /** Sync a single setlist to the API (with 1 retry for offline resilience) */
   const syncSetListToApi = useCallback(async (setListId, patchBody) => {
+    const doFetch = () => fetch(`/api/setlists/${encodeURIComponent(setListId)}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(patchBody),
+    });
     try {
-      await fetch(`/api/setlists/${encodeURIComponent(setListId)}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(patchBody),
-      });
+      const resp = await doFetch();
+      if (!resp.ok) throw new Error('sync failed');
     } catch (err) {
-      console.error('Error syncing setlist:', err);
+      // Retry once after 2s
+      try {
+        await new Promise((r) => setTimeout(r, 2000));
+        await doFetch();
+      } catch {
+        console.error('Error syncing setlist (after retry):', err);
+      }
     }
   }, []);
 
@@ -917,6 +928,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
       } else {
         await handleSelectSong(targetSong);
       }
+      if (navigator.vibrate) navigator.vibrate(30);
     } finally {
       setTimeout(() => { navBusyRef.current = false; }, 300);
     }
@@ -992,6 +1004,30 @@ export default function LiveDashboard({ bandId, musicianId }) {
     (item) => item.songId === selectedSong?.id
   ) ?? -1;
 
+  // Prefetch lyrics for all songs in the active nav set list
+  useEffect(() => {
+    if (!navSetList?.items?.length) return;
+    let cancelled = false;
+    const prefetch = async () => {
+      for (const item of navSetList.items) {
+        if (cancelled) break;
+        const cached = allSongs.find((s) => s.id === item.songId && s.lyrics);
+        if (cached) continue;
+        try {
+          const resp = await fetch(`/api/songs/${item.songId}`);
+          if (!resp.ok || cancelled) continue;
+          const data = await resp.json();
+          if (cancelled) break;
+          setAllSongs((prev) =>
+            Array.isArray(prev) ? prev.map((s) => (s.id === data.id ? data : s)) : prev
+          );
+        } catch { /* silent prefetch */ }
+      }
+    };
+    prefetch();
+    return () => { cancelled = true; };
+  }, [navSetList?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const openAdjacentSetListSong = useCallback(async (direction) => {
     if (navBusyRef.current) return;
     if (!navSetList) return;
@@ -1018,6 +1054,8 @@ export default function LiveDashboard({ bandId, musicianId }) {
         };
         await handleSelectSong(fallbackSong);
       }
+      // Haptic feedback on mobile
+      if (navigator.vibrate) navigator.vibrate(30);
     } catch {
       // no-op
     } finally {
@@ -1082,6 +1120,39 @@ export default function LiveDashboard({ bandId, musicianId }) {
     setLiveEditContent(selectedSong?.lyrics || '');
     setLiveIsScrolling(false);
   }, [selectedSong?.id]);
+
+  // Swipe left/right on lyrics to navigate songs
+  const swipeRef = useRef({ startX: 0, startY: 0 });
+  useEffect(() => {
+    const el = lyricsRef.current;
+    if (!el) return;
+    const onTouchStart = (e) => {
+      const t = e.touches[0];
+      swipeRef.current = { startX: t.clientX, startY: t.clientY };
+    };
+    const onTouchEnd = (e) => {
+      const t = e.changedTouches[0];
+      const dx = t.clientX - swipeRef.current.startX;
+      const dy = t.clientY - swipeRef.current.startY;
+      // Require horizontal swipe > 60px and more horizontal than vertical
+      if (Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx) * 0.6) return;
+      if (dx < 0) {
+        // Swipe left → next song
+        if (navSetList && selectedSetListSongIndex !== -1) openAdjacentSetListSong('next');
+        else if (repertoireSongIndex !== -1) openAdjacentRepertoireSong('next');
+      } else {
+        // Swipe right → prev song
+        if (navSetList && selectedSetListSongIndex !== -1) openAdjacentSetListSong('prev');
+        else if (repertoireSongIndex !== -1) openAdjacentRepertoireSong('prev');
+      }
+    };
+    el.addEventListener('touchstart', onTouchStart, { passive: true });
+    el.addEventListener('touchend', onTouchEnd, { passive: true });
+    return () => {
+      el.removeEventListener('touchstart', onTouchStart);
+      el.removeEventListener('touchend', onTouchEnd);
+    };
+  });
 
   // Auto-scroll effect for cheatsheet lyrics
   useEffect(() => {
