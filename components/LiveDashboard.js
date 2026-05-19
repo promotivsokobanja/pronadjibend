@@ -89,6 +89,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
   const [renamingChipId, setRenamingChipId] = useState('');
   const [chipNameDraft, setChipNameDraft] = useState('');
   const [setListsLoading, setSetListsLoading] = useState(false);
+  const [songNavSetListId, setSongNavSetListId] = useState('');
   const setListsRef = useRef(setLists);
 
   useEffect(() => {
@@ -611,6 +612,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
   const hasAnyLiveSetList = setLists.some((entry) => entry.isLive);
 
   const selectedSetList = setLists.find((entry) => entry.id === selectedSetListId) || null;
+  const navSetList = setLists.find((entry) => entry.id === songNavSetListId) || null;
   const selectedSetListSongCountById = (selectedSetList?.items || []).reduce((acc, item) => {
     const key = String(item.songId || '');
     if (!key) return acc;
@@ -676,9 +678,10 @@ export default function LiveDashboard({ bandId, musicianId }) {
       artist: item.artist,
       lyrics: null,
     };
+    setSongNavSetListId(selectedSetListId);
     await handleSelectSong(fallbackSong);
     setActiveTab('cheatsheet');
-  }, [allSongs]);
+  }, [allSongs, selectedSetListId]);
 
   const createSetList = useCallback(async () => {
     const tempName = `Set lista ${setLists.length + 1}`;
@@ -986,7 +989,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
     }
   }, [addingSongId, bandId, musicianId]);
 
-  const selectedSetListSongIndex = selectedSetList?.items.findIndex(
+  const selectedSetListSongIndex = navSetList?.items.findIndex(
     (item) => item.songId === selectedSong?.id
   ) ?? -1;
 
@@ -997,15 +1000,15 @@ export default function LiveDashboard({ bandId, musicianId }) {
 
   const openAdjacentSetListSong = useCallback(async (direction) => {
     if (navBusyRef.current) return;
-    if (!selectedSetList) return;
+    if (!navSetList) return;
     const curIdx = navIndexRef.current;
     if (curIdx === -1) return;
     const targetIndex = direction === 'prev' ? curIdx - 1 : curIdx + 1;
-    if (targetIndex < 0 || targetIndex >= selectedSetList.items.length) return;
+    if (targetIndex < 0 || targetIndex >= navSetList.items.length) return;
     navBusyRef.current = true;
     navIndexRef.current = targetIndex;
     try {
-      const item = selectedSetList.items[targetIndex];
+      const item = navSetList.items[targetIndex];
       // Use cached song if lyrics already loaded to avoid flash
       const cachedSong = allSongs.find((s) => s.id === item.songId && s.lyrics);
       if (cachedSong) {
@@ -1019,7 +1022,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
     } finally {
       setTimeout(() => { navBusyRef.current = false; }, 250);
     }
-  }, [openSongFromSetListItem, selectedSetList, allSongs]);
+  }, [openSongFromSetListItem, navSetList, allSongs]);
 
   useEffect(() => {
     const onOutsideClick = (e) => {
@@ -1922,6 +1925,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
                                 key={song.id}
                                 className="song-dropdown-item"
                                 onClick={async () => {
+                                  setSongNavSetListId('');
                                   await handleSelectSong(song);
                                   setShowSongDropdown(false);
                                 }}
@@ -1944,6 +1948,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
                                   type="button"
                                   className="global-song-info"
                                   onClick={async () => {
+                                    setSongNavSetListId('');
                                     await handleSelectSong(song);
                                     setShowSongDropdown(false);
                                   }}
@@ -2042,12 +2047,12 @@ export default function LiveDashboard({ bandId, musicianId }) {
                       <button
                         type="button"
                         className="cheatsheet-back-btn"
-                        onClick={() => setSelectedSong(null)}
+                        onClick={() => { setSelectedSong(null); setSongNavSetListId(''); }}
                       >
                         <ArrowLeft size={14} />
                         <span>Set liste</span>
                       </button>
-                      {selectedSetList && selectedSetListSongIndex !== -1 ? (
+                      {navSetList && selectedSetListSongIndex !== -1 ? (
                         <div className="cheatsheet-nav-arrows">
                           <button
                             type="button"
@@ -2060,12 +2065,12 @@ export default function LiveDashboard({ bandId, musicianId }) {
                             <ChevronLeft size={18} />
                           </button>
                           <span className="cheatsheet-song-counter">
-                            {selectedSetListSongIndex + 1}/{selectedSetList.items.length}
+                            {selectedSetListSongIndex + 1}/{navSetList.items.length}
                           </span>
                           <button
                             type="button"
                             className="cheatsheet-arrow-btn"
-                            disabled={selectedSetListSongIndex >= selectedSetList.items.length - 1}
+                            disabled={selectedSetListSongIndex >= navSetList.items.length - 1}
                             onClick={() => openAdjacentSetListSong('next')}
                             aria-label="Sledeća pesma"
                             title="Sledeća pesma u set listi"
@@ -2457,9 +2462,9 @@ export default function LiveDashboard({ bandId, musicianId }) {
                 <p>Gosti skeniraju <strong>QR kod</strong> i iz svojih telefona šalju želje za pesme. Novi zahtevi se pojavljuju ovde automatski uz zvučni signal, a gost na svojoj strani vidi da li je zahtev na čekanju, prihvaćen ili odbijen.</p>
                 <ul>
                   <li><strong>Prihvati</strong> — zahtev prelazi u listu potvrđenih pesama i automatski otvara tekst pesme.</li>
-                  <li><strong>Preskoči</strong> — zahtev se arhivira i ne svira; gost vidi status "Odbijena".</li>
+                  <li><strong>Preskoči</strong> — zahtev se arhivira i ne svira; gost vidi status &ldquo;Odbijena&rdquo;.</li>
                   <li><strong>Tekst</strong> — otvara tekst pesme u Podsetniku (ako postoji u repertoaru).</li>
-                  <li><strong>Svirano</strong> — označite kad odsvirate pesmu; gost dobija notifikaciju "Odsvirana".</li>
+                  <li><strong>Svirano</strong> — označite kad odsvirate pesmu; gost dobija notifikaciju &ldquo;Odsvirana&rdquo;.</li>
                   <li>Tab <strong>Aktivni / Istorija</strong> — Aktivni prikazuje trenutne zahteve na čekanju i prihvaćene. Istorija prikazuje sve odrađene i preskočene.</li>
                   <li>Kartice sa ikonom <Banknote size={14} style={{ display: 'inline', verticalAlign: 'middle' }} /> su napojnice / bakšiš od gostiju preko konobara.</li>
                   <li><strong>Obriši istoriju</strong> — briše samo odrađene zahteve iz istorije, ne utiče na aktivne.</li>
@@ -2556,7 +2561,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
                 <ul>
                   <li>Odštampajte <strong>QR flajer</strong> i stavite ga na stolove — gosti direktno šalju zahteve bez dolaska do vas.</li>
                   <li>Uključite <strong>Auto prihvatanje</strong> ako ne želite da ručno odobravate svaki zahtev.</li>
-                  <li>Koristite <strong>set liste</strong> da organizujete pesme po setovima (npr. "1. set", "2. set", "Bis").</li>
+                  <li>Koristite <strong>set liste</strong> da organizujete pesme po setovima (npr. &ldquo;1. set&rdquo;, &ldquo;2. set&rdquo;, &ldquo;Bis&rdquo;).</li>
                   <li>Postavite telefon na stalak i koristite <strong>auto-scroll</strong> za hands-free čitanje teksta.</li>
                   <li>Napravite pauzu između setova klikom na <strong>Pauza</strong> dugme — pratite koliko traje break.</li>
                 </ul>
