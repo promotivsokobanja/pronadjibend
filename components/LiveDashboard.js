@@ -161,6 +161,10 @@ export default function LiveDashboard({ bandId, musicianId }) {
     } catch { return defaults; }
   });
   const [notifPermission, setNotifPermission] = useState('default');
+  const settingsRef = useRef(settings);
+  useEffect(() => {
+    settingsRef.current = settings;
+  }, [settings]);
 
   const normalizeMaxRequests = useCallback((value) => {
     const parsed = Number(value);
@@ -653,10 +657,6 @@ export default function LiveDashboard({ bandId, musicianId }) {
   }, [activeTab, selectedSetListId]);
 
   const fontScale = settings.fontSize / 100;
-  const settingsRef = useRef(settings);
-  useEffect(() => {
-    settingsRef.current = settings;
-  }, [settings]);
 
   const handleSelectSong = useCallback(async (song) => {
     if (song.lyrics) {
@@ -680,7 +680,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
     }
   }, []);
 
-  const openSongFromSetListItem = useCallback(async (item) => {
+  const openSongFromSetListItem = useCallback(async (item, setListId) => {
     const matchedSong = allSongs.find((song) => song.id === item.songId);
     const fallbackSong = matchedSong || {
       id: item.songId,
@@ -688,7 +688,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
       artist: item.artist,
       lyrics: null,
     };
-    setSongNavSetListId(selectedSetListId);
+    setSongNavSetListId(setListId || selectedSetListId);
     await handleSelectSong(fallbackSong);
     setActiveTab('cheatsheet');
   }, [allSongs, selectedSetListId]);
@@ -1290,16 +1290,17 @@ export default function LiveDashboard({ bandId, musicianId }) {
       (s) => (s.title || '').trim().toLowerCase() === requestedTitle
     );
 
-    if (matched) {
-      await handleSelectSong(matched);
-      return;
-    }
-
-    const looseMatched = songsList.find((s) =>
+    const songToOpen = matched || songsList.find((s) =>
       (s.title || '').toLowerCase().includes(requestedTitle)
     );
-    if (looseMatched) {
-      await handleSelectSong(looseMatched);
+
+    if (songToOpen) {
+      // Find which set list contains this song and set navigation context
+      const containingList = setLists.find((sl) =>
+        sl.items.some((item) => item.songId === songToOpen.id)
+      );
+      setSongNavSetListId(containingList?.id || '');
+      await handleSelectSong(songToOpen);
     }
   };
 
@@ -2097,7 +2098,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
                                     key={item.id}
                                     type="button"
                                     className={`cheatsheet-song-item ${item.songId === selectedSong?.id ? 'active' : ''}`}
-                                    onClick={() => openSongFromSetListItem(item)}
+                                    onClick={() => openSongFromSetListItem(item, entry.id)}
                                   >
                                     <span className="cheatsheet-song-num">{idx + 1}.</span>
                                     <span className="cheatsheet-song-title">{item.title}</span>
