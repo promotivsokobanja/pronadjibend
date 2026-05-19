@@ -38,6 +38,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
   const [playedSongIds, setPlayedSongIds] = useState(new Set());
   // Guard: prevent rapid prev/next clicks from racing
   const navBusyRef = useRef(false);
+  const [navPosition, setNavPosition] = useState(-1);
   const [requests, setRequests] = useState([]);
   const [historyRequests, setHistoryRequests] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(false);
@@ -97,16 +98,24 @@ export default function LiveDashboard({ bandId, musicianId }) {
 
   /** Normalize API setlist into local shape */
   function normalizeSetList(entry) {
+    const seen = new Set();
+    const dedupedItems = (entry.items || []).reduce((acc, item) => {
+      const sid = item.song?.id || item.songId;
+      if (seen.has(sid)) return acc;
+      seen.add(sid);
+      acc.push({
+        id: item.id,
+        songId: sid,
+        title: item.song?.title || item.title || '',
+        artist: item.song?.artist || item.artist || '',
+      });
+      return acc;
+    }, []);
     return {
       id: entry.id,
       name: entry.name || 'Set lista',
       isLive: Boolean(entry.isLive),
-      items: (entry.items || []).map((item) => ({
-        id: item.id,
-        songId: item.song?.id || item.songId,
-        title: item.song?.title || item.title || '',
-        artist: item.song?.artist || item.artist || '',
-      })),
+      items: dedupedItems,
     };
   }
 
@@ -680,7 +689,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
     }
   }, []);
 
-  const openSongFromSetListItem = useCallback(async (item, setListId) => {
+  const openSongFromSetListItem = useCallback(async (item, setListId, itemIndex) => {
     const matchedSong = allSongs.find((song) => song.id === item.songId);
     const fallbackSong = matchedSong || {
       id: item.songId,
@@ -688,7 +697,15 @@ export default function LiveDashboard({ bandId, musicianId }) {
       artist: item.artist,
       lyrics: null,
     };
-    setSongNavSetListId(setListId || selectedSetListId);
+    const listId = setListId || selectedSetListId;
+    setSongNavSetListId(listId);
+    // Set position for correct navigation (handles duplicates)
+    if (typeof itemIndex === 'number') {
+      setNavPosition(itemIndex);
+    } else {
+      const list = setListsRef.current.find((e) => e.id === listId);
+      setNavPosition(list?.items.findIndex((i) => i.songId === item.songId) ?? -1);
+    }
     await handleSelectSong(fallbackSong);
     setActiveTab('cheatsheet');
   }, [allSongs, selectedSetListId]);
@@ -1000,9 +1017,10 @@ export default function LiveDashboard({ bandId, musicianId }) {
     }
   }, [addingSongId, bandId, musicianId]);
 
-  const selectedSetListSongIndex = navSetList?.items.findIndex(
-    (item) => item.songId === selectedSong?.id
-  ) ?? -1;
+  // Use navPosition as source of truth for set list position (handles duplicates)
+  const selectedSetListSongIndex = navPosition !== -1 && navSetList
+    ? navPosition
+    : (navSetList?.items.findIndex((item) => item.songId === selectedSong?.id) ?? -1);
 
   // Prefetch lyrics for all songs in the active nav set list
   useEffect(() => {
@@ -1031,12 +1049,12 @@ export default function LiveDashboard({ bandId, musicianId }) {
   const openAdjacentSetListSong = useCallback(async (direction) => {
     if (navBusyRef.current) return;
     if (!navSetList) return;
-    // Use computed index as source of truth
-    const curIdx = selectedSetListSongIndex;
+    const curIdx = navPosition;
     if (curIdx === -1) return;
     const targetIndex = direction === 'prev' ? curIdx - 1 : curIdx + 1;
     if (targetIndex < 0 || targetIndex >= navSetList.items.length) return;
     navBusyRef.current = true;
+    setNavPosition(targetIndex);
     try {
       const item = navSetList.items[targetIndex];
       // Use cached song directly to avoid flash (no extra renders)
@@ -1044,7 +1062,6 @@ export default function LiveDashboard({ bandId, musicianId }) {
       if (cachedSong) {
         setSelectedSong(cachedSong);
       } else {
-        // Load song inline without going through openSongFromSetListItem
         const matchedSong = allSongs.find((s) => s.id === item.songId);
         const fallbackSong = matchedSong || {
           id: item.songId,
@@ -1054,14 +1071,13 @@ export default function LiveDashboard({ bandId, musicianId }) {
         };
         await handleSelectSong(fallbackSong);
       }
-      // Haptic feedback on mobile
       if (navigator.vibrate) navigator.vibrate(30);
     } catch {
-      // no-op
+      setNavPosition(curIdx);
     } finally {
       setTimeout(() => { navBusyRef.current = false; }, 300);
     }
-  }, [navSetList, allSongs, selectedSetListSongIndex]);
+  }, [navSetList, allSongs, navPosition]);
 
   useEffect(() => {
     const onOutsideClick = (e) => {
@@ -1300,6 +1316,11 @@ export default function LiveDashboard({ bandId, musicianId }) {
         sl.items.some((item) => item.songId === songToOpen.id)
       );
       setSongNavSetListId(containingList?.id || '');
+      if (containingList) {
+        setNavPosition(containingList.items.findIndex((i) => i.songId === songToOpen.id));
+      } else {
+        setNavPosition(-1);
+      }
       await handleSelectSong(songToOpen);
     }
   };
@@ -1758,7 +1779,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
                                 <button
                                   type="button"
                                   className={`setlist-item-main ${isSongPlayed ? 'played' : ''}`}
-                                  onClick={() => openSongFromSetListItem(item)}
+                                  onClick={() => openSongFromSetListItem(item, selectedSetListId, index)}
                                 >
                                   <span className="setlist-item-order">{index + 1}.</span>
                                   <span className="setlist-item-copy">
@@ -1999,7 +2020,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
                                 key={song.id}
                                 className="song-dropdown-item"
                                 onClick={async () => {
-                                  setSongNavSetListId('');
+                                  setSongNavSetListId(''); setNavPosition(-1);
                                   await handleSelectSong(song);
                                   setShowSongDropdown(false);
                                 }}
@@ -2022,7 +2043,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
                                   type="button"
                                   className="global-song-info"
                                   onClick={async () => {
-                                    setSongNavSetListId('');
+                                    setSongNavSetListId(''); setNavPosition(-1);
                                     await handleSelectSong(song);
                                     setShowSongDropdown(false);
                                   }}
@@ -2098,7 +2119,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
                                     key={item.id}
                                     type="button"
                                     className={`cheatsheet-song-item ${item.songId === selectedSong?.id ? 'active' : ''}`}
-                                    onClick={() => openSongFromSetListItem(item, entry.id)}
+                                    onClick={() => openSongFromSetListItem(item, entry.id, idx)}
                                   >
                                     <span className="cheatsheet-song-num">{idx + 1}.</span>
                                     <span className="cheatsheet-song-title">{item.title}</span>
@@ -2121,7 +2142,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
                       <button
                         type="button"
                         className="cheatsheet-back-btn"
-                        onClick={() => { setSelectedSong(null); setSongNavSetListId(''); }}
+                        onClick={() => { setSelectedSong(null); setSongNavSetListId(''); setNavPosition(-1); }}
                       >
                         <ArrowLeft size={14} />
                         <span>Set liste</span>
