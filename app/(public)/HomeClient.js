@@ -66,6 +66,7 @@ export default function HomeClient() {
   const [selectedBand, setSelectedBand] = useState(null);
 
   const [featuredBands, setFeaturedBands] = useState([]);
+  const [onlineCount, setOnlineCount] = useState(0);
 
   useEffect(() => {
     const fetchFeatured = async () => {
@@ -79,6 +80,12 @@ export default function HomeClient() {
       }
     };
     fetchFeatured();
+    // Fetch online count
+    fetch('/api/site-visits').then(r => r.json()).then(d => setOnlineCount(d.online || 0)).catch(() => {});
+    const iv = setInterval(() => {
+      fetch('/api/site-visits').then(r => r.json()).then(d => setOnlineCount(d.online || 0)).catch(() => {});
+    }, 30_000);
+    return () => clearInterval(iv);
   }, []);
 
   const handleBook = (band) => {
@@ -125,6 +132,13 @@ export default function HomeClient() {
           <p className="hero-tagline reveal delay-2">
             <span className="gradient-text">Muzika za svaku priliku</span>
           </p>
+
+          {onlineCount > 0 && (
+            <div className="hero-online-badge reveal delay-2">
+              <span className="online-dot" />
+              <span>{onlineCount} {onlineCount === 1 ? 'korisnik' : onlineCount < 5 ? 'korisnika' : 'korisnika'} online</span>
+            </div>
+          )}
 
           <div className="hotel-search reveal delay-2">
             <div className="search-field">

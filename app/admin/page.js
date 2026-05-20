@@ -30,6 +30,8 @@ export default function AdminDashboardPage() {
   }
 
   const cards = [
+    { label: 'Online korisnici', value: data.onlineVisitors || 0, highlight: true },
+    { label: 'Ukupno poseta', value: data.totalVisits || 0 },
     { label: 'Korisnici', value: data.users },
     { label: 'Bendovi', value: data.bands },
     { label: 'Rezervacije', value: data.bookings },
@@ -46,8 +48,8 @@ export default function AdminDashboardPage() {
 
       <div className="admin-stats">
         {cards.map((c) => (
-          <div key={c.label} className="admin-stat-card">
-            <small>{c.label}</small>
+          <div key={c.label} className="admin-stat-card" style={c.highlight ? { borderColor: 'rgba(16,185,129,0.4)', background: 'rgba(16,185,129,0.06)' } : undefined}>
+            <small>{c.highlight && <span style={{ display:'inline-block', width:8, height:8, borderRadius:'50%', background:'#10b981', marginRight:6, boxShadow:'0 0 6px rgba(16,185,129,0.6)', animation:'pulse-dot 2s ease-in-out infinite' }} />}{c.label}</small>
             <span>{c.value}</span>
           </div>
         ))}

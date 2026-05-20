@@ -448,3 +448,13 @@ model EmailVerification {
   @@index([email])
   @@index([token])
 }
+
+model SiteVisit {
+  id        String   @id @default(cuid())
+  visitorId String
+  path      String   @default("/")
+  createdAt DateTime @default(now())
+
+  @@index([visitorId])
+  @@index([createdAt])
+}

@@ -3,6 +3,7 @@ import { Inter, Montserrat, Playfair_Display } from 'next/font/google';
 import StrictModeProvider from '@/components/providers/StrictModeProvider';
 import { getSiteUrl, getSiteMetadataBaseUrl } from '@/lib/siteUrl';
 import ServiceWorkerRegister from '@/components/ServiceWorkerRegister';
+import SiteVisitTracker from '@/components/SiteVisitTracker';
 
 const siteUrl = getSiteUrl();
 const siteOrigin = getSiteMetadataBaseUrl();
@@ -161,6 +162,7 @@ export default function RootLayout({ children }) {
         />
         <StrictModeProvider>{children}</StrictModeProvider>
         <ServiceWorkerRegister />
+        <SiteVisitTracker />
         <div id="notifications" />
       </body>
     </html>

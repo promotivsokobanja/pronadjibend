@@ -10,13 +10,20 @@ export async function GET(request) {
   if (!gate.ok) return gate.response;
 
   try {
-    const [users, bands, bookings, songs, reviews, billingEvents] = await Promise.all([
+    const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000);
+
+    const [users, bands, bookings, songs, reviews, billingEvents, totalVisits, onlineVisitors] = await Promise.all([
       prisma.user.count(),
       prisma.band.count(),
       prisma.booking.count(),
       prisma.song.count(),
       prisma.review.count(),
       prisma.billingEvent.count(),
+      prisma.siteVisit.count(),
+      prisma.siteVisit.groupBy({
+        by: ['visitorId'],
+        where: { createdAt: { gte: fiveMinAgo } },
+      }),
     ]);
 
     const byRole = await prisma.user.groupBy({
@@ -36,6 +43,8 @@ export async function GET(request) {
       reviews,
       billingEvents,
       pendingBookings,
+      totalVisits,
+      onlineVisitors: onlineVisitors.length,
       byRole: Object.fromEntries(byRole.map((r) => [r.role, r._count.id])),
     });
   } catch (error) {
