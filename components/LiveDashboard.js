@@ -1141,22 +1141,45 @@ export default function LiveDashboard({ bandId, musicianId }) {
     const newRoot = keys[(idx + offset + 12) % 12];
     return newRoot + suffix;
   };
+  const parseLyricsLine = (line) => {
+    const chords = [];
+    let text = '';
+    let lastIdx = 0;
+    const re = /\[([A-G][#b]?[^\[\]]*)\]/g;
+    let m;
+    while ((m = re.exec(line)) !== null) {
+      text += line.substring(lastIdx, m.index);
+      chords.push({ name: m[1], pos: text.length });
+      lastIdx = m.index + m[0].length;
+    }
+    text += line.substring(lastIdx);
+    return { chords, text };
+  };
+  const buildChordRow = (chords, offset) => {
+    let result = '';
+    let col = 0;
+    for (const c of chords) {
+      if (c.pos > col) result += '\u00A0'.repeat(c.pos - col);
+      const transposed = transposeChord(c.name, offset);
+      result += transposed;
+      col = c.pos + transposed.length;
+    }
+    return result;
+  };
   const renderLyrics = (text, offset = 0) => {
     if (!text) return null;
     const normalized = text.replace(/\r/g, '');
-    return normalized.split('\n').map((line, i) => (
-      <div key={i} className="lyrics-line">
-        {line
-          ? line.split(/(\[[A-G][#b]?(?:m|maj|min|sus|dim|aug)?[0-9]?\])/g).map((part, j) =>
-              part.match(/^\[/) ? (
-                <span key={j} className="chord-inline">{transposeChord(part.slice(1, -1), offset)}</span>
-              ) : (
-                <span key={j}>{part}</span>
-              )
-            )
-          : <span className="empty-line">&nbsp;</span>}
-      </div>
-    ));
+    return normalized.split('\n').map((line, i) => {
+      const { chords, text: plainText } = parseLyricsLine(line);
+      return (
+        <div key={i} className="lyrics-line">
+          {chords.length > 0 && (
+            <div className="chord-above">{buildChordRow(chords, offset)}</div>
+          )}
+          <div className="text-below">{plainText || '\u00A0'}</div>
+        </div>
+      );
+    });
   };
 
   // Reset per-song controls when switching songs
@@ -2281,12 +2304,19 @@ export default function LiveDashboard({ bandId, musicianId }) {
                     </div>
 
                     {liveIsEditing ? (
-                      <textarea
-                        className="cheat-edit-area"
-                        value={liveEditContent}
-                        onChange={(e) => setLiveEditContent(e.target.value)}
-                        placeholder="Nalepi tekst i akorde (koristi [G] format za akorde)..."
-                      />
+                      <div style={{ display: 'flex', flexDirection: 'column', flex: 1, gap: '0.5rem', minHeight: 0 }}>
+                        <div className="chord-help-box">
+                          <strong>Kako upisati akorde:</strong> Akord stavite u uglaste zagrade <code>[</code> <code>]</code> ispred reči nad kojom treba da stoji.
+                          <br />Primer: <code>[Am]Život ide [C]dalje [G7]zauvek</code>
+                          <br />Akord će se prikazati <em>iznad teksta</em> i menjati se sa transpozicijom (-b / +#).
+                        </div>
+                        <textarea
+                          className="cheat-edit-area"
+                          value={liveEditContent}
+                          onChange={(e) => setLiveEditContent(e.target.value)}
+                          placeholder={"Primer unosa:\n\n[Am]Od kada me [D#]vise ne [Fm]volis\n[D#]zivim da [G#]prezivim\n\nMoja vilo, sunce premilo\ngdje si sinoc spavala"}
+                        />
+                      </div>
                     ) : (
                       <div className="lyrics-display" ref={lyricsRef} style={{ fontSize: `${fontScale}em` }}>
                         <div className="lyrics-inner">
@@ -5208,9 +5238,9 @@ export default function LiveDashboard({ bandId, musicianId }) {
           max-height: calc(100vh - 260px);
           -webkit-overflow-scrolling: touch;
           overscroll-behavior: contain;
-          line-height: 2;
-          font-family: 'Outfit', 'JetBrains Mono', monospace;
-          font-size: 1.1rem;
+          line-height: 1.5;
+          font-family: 'JetBrains Mono', 'Fira Mono', 'Consolas', ui-monospace, monospace;
+          font-size: 1.05rem;
           color: #ccc;
           white-space: pre-wrap;
           scrollbar-width: thin;
@@ -5245,10 +5275,21 @@ export default function LiveDashboard({ bandId, musicianId }) {
           background: #5a5a5a;
         }
         .lyrics-line {
-          margin-bottom: 2px;
-          min-height: 1.55em;
+          margin-bottom: 0.2rem;
+          min-height: 1.3em;
           white-space: pre-wrap;
           word-break: break-word;
+        }
+        .chord-above {
+          color: #8b5cf6;
+          font-weight: 800;
+          font-size: 0.9em;
+          line-height: 1.3;
+          white-space: pre;
+          text-shadow: 0 0 8px rgba(139, 92, 246, 0.3);
+        }
+        .text-below {
+          line-height: 1.5;
         }
         .cheatsheet-tools {
           margin-left: auto;
@@ -5321,6 +5362,26 @@ export default function LiveDashboard({ bandId, musicianId }) {
           text-align: center;
           padding: 0 0.25rem;
         }
+        .chord-help-box {
+          background: rgba(139, 92, 246, 0.08);
+          border: 1px solid rgba(139, 92, 246, 0.25);
+          border-radius: 8px;
+          padding: 0.6rem 0.85rem;
+          font-size: 0.75rem;
+          line-height: 1.6;
+          color: #a5b4fc;
+          flex-shrink: 0;
+        }
+        .chord-help-box code {
+          background: rgba(139, 92, 246, 0.15);
+          padding: 1px 5px;
+          border-radius: 3px;
+          font-family: monospace;
+          font-weight: 700;
+          color: #c4b5fd;
+        }
+        .chord-help-box strong { color: #e0e7ff; }
+        .chord-help-box em { color: #8b5cf6; font-style: normal; font-weight: 700; }
         .cheat-edit-area {
           flex: 1;
           width: 100%;
@@ -5434,13 +5495,6 @@ export default function LiveDashboard({ bandId, musicianId }) {
           }
         }
 
-        .chord-inline {
-          color: #8b5cf6;
-          font-weight: 900;
-          margin: 0 2px;
-          font-size: 0.85em;
-          text-shadow: 0 0 8px rgba(139, 92, 246, 0.3);
-        }
         .empty-line {
           display: inline-block;
           width: 100%;
@@ -6216,7 +6270,7 @@ export default function LiveDashboard({ bandId, musicianId }) {
           .night-vision {
             text-shadow: 0 0 3px rgba(139, 92, 246, 0.35);
           }
-          .chord-inline {
+          .chord-above {
             text-shadow: none;
           }
           .song-picker-combo,
@@ -6748,12 +6802,9 @@ export default function LiveDashboard({ bandId, musicianId }) {
         .light-mode .lyrics-display::-webkit-scrollbar-thumb {
           background: #cbd5e1;
         }
-        .light-mode .chord-inline {
+        .light-mode .chord-above {
           color: #7c3aed;
           text-shadow: none;
-          background: rgba(124, 58, 237, 0.08);
-          padding: 0 4px;
-          border-radius: 4px;
         }
         .light-mode .cheatsheet-song-header {
           border-bottom-color: #e5e7eb;

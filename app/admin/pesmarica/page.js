@@ -690,12 +690,27 @@ export default function AdminPesmaricaPage() {
                 />
 
                 <label style={labelStyle}>Tekst pesme</label>
+                <div style={{
+                  background: 'rgba(139,92,246,0.08)',
+                  border: '1px solid rgba(139,92,246,0.25)',
+                  borderRadius: 8,
+                  padding: '0.65rem 0.85rem',
+                  fontSize: '0.75rem',
+                  lineHeight: 1.6,
+                  color: '#a5b4fc',
+                  marginBottom: '0.5rem',
+                }}>
+                  <strong style={{ color: '#e0e7ff' }}>Kako upisati akorde:</strong> Akord stavite u uglaste zagrade <code style={{ background: 'rgba(139,92,246,0.15)', padding: '1px 5px', borderRadius: 3, fontFamily: 'monospace', fontWeight: 700, color: '#c4b5fd' }}>[</code> <code style={{ background: 'rgba(139,92,246,0.15)', padding: '1px 5px', borderRadius: 3, fontFamily: 'monospace', fontWeight: 700, color: '#c4b5fd' }}>]</code> ispred reči nad kojom treba da stoji.
+                  <br />Primer: <code style={{ background: 'rgba(139,92,246,0.15)', padding: '1px 5px', borderRadius: 3, fontFamily: 'monospace', fontWeight: 700, color: '#c4b5fd' }}>[Am]Život ide [C]dalje [G7]zauvek</code>
+                  <br />Podržano: <code style={{ background: 'rgba(139,92,246,0.15)', padding: '1px 5px', borderRadius: 3, fontFamily: 'monospace', fontWeight: 700, color: '#c4b5fd' }}>[C] [Am] [G7] [F#m] [Bb] [Cmaj7] [Dsus4]</code> itd.
+                  <br />Akord će se prikazati <em style={{ color: '#8b5cf6', fontStyle: 'normal', fontWeight: 700 }}>iznad teksta</em> i menjati se sa transpozicijom (-b / +#).
+                </div>
                 <textarea
                   required={!editingId}
                   style={textareaStyle}
                   value={form.lyrics}
                   onChange={(e) => setForm((f) => ({ ...f, lyrics: e.target.value }))}
-                  placeholder="Unesite stihove ili učitajte .txt fajl ispod."
+                  placeholder={"Primer unosa:\n\n[Am]Od kada me [D#]vise ne [Fm]volis\n[D#]zivim da [G#]prezivim\n\nMoja vilo, sunce premilo\ngdje si sinoc spavala"}
                 />
 
                 <div style={{ marginBottom: '1rem' }}>

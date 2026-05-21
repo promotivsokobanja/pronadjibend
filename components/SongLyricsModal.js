@@ -6,11 +6,43 @@ const keys = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
 function transposeText(text, offset) {
   if (!text || offset === 0) return text || '';
-  return text.replace(/\[([A-G][#b]?)\]/g, (match, chord) => {
-    const index = keys.indexOf(chord);
+  return text.replace(/\[([A-G][#b]?)([^\[\]]*)\]/g, (match, root, suffix) => {
+    const normRoot = root === 'Db' ? 'C#'
+      : root === 'Eb' ? 'D#'
+      : root === 'Gb' ? 'F#'
+      : root === 'Ab' ? 'G#'
+      : root === 'Bb' ? 'A#'
+      : root;
+    const index = keys.indexOf(normRoot);
     if (index === -1) return match;
-    return `[${keys[(index + offset + 12) % 12]}]`;
+    return `[${keys[(index + offset + 12) % 12]}${suffix}]`;
   });
+}
+
+function parseLine(line) {
+  const chords = [];
+  let text = '';
+  let lastIdx = 0;
+  const re = /\[([A-G][#b]?[^\[\]]*)\]/g;
+  let m;
+  while ((m = re.exec(line)) !== null) {
+    text += line.substring(lastIdx, m.index);
+    chords.push({ name: m[1], pos: text.length });
+    lastIdx = m.index + m[0].length;
+  }
+  text += line.substring(lastIdx);
+  return { chords, text };
+}
+
+function buildChordLine(chords) {
+  let result = '';
+  let col = 0;
+  for (const c of chords) {
+    if (c.pos > col) result += '\u00A0'.repeat(c.pos - col);
+    result += c.name;
+    col = c.pos + c.name.length;
+  }
+  return result;
 }
 
 export default function SongLyricsModal({ songId, onClose }) {
@@ -185,27 +217,33 @@ export default function SongLyricsModal({ songId, onClose }) {
                 </button>
               </div>
             )}
+            <div className="slm-chord-help">
+              <strong>Kako upisati akorde:</strong> Akord stavite u uglaste zagrade <code>[</code> <code>]</code> ispred reči nad kojom treba da stoji.
+              <br />Primer: <code>[Am]Život ide [C]dalje [G7]zauvek</code>
+              <br />Podržano: <code>[C]</code> <code>[Am]</code> <code>[G7]</code> <code>[F#m]</code> <code>[Bb]</code> <code>[Cmaj7]</code> <code>[Dsus4]</code> itd.
+              <br />Akord će se prikazati <em>iznad teksta</em> i menjati se sa transpozicijom (-b / +#).
+            </div>
             <textarea
               className="slm-edit-area"
               value={editContent}
               onChange={(e) => setEditContent(e.target.value)}
-              placeholder="Nalepi tekst i akorde (koristi [G] format za akorde)..."
+              placeholder={"Primer unosa:\n\n[Am]Od kada me [D#]vise ne [Fm]volis\n[D#]zivim da [G#]prezivim\n\nMoja vilo, sunce premilo\ngdje si sinoc spavala"}
             />
           </div>
         ) : (
           <pre className="slm-lyrics-content">
             {song.lyrics ? (
-              transposeText(song.lyrics, keyOffset).replace(/\r/g, '').split('\n').map((line, i) => (
-                <div key={i} className="slm-line">
-                  {line
-                    ? line.split(/(\[[A-G][#b]?(?:m|maj|min|sus|dim|aug)?[0-9]?\])/g).map((part, j) =>
-                        part.startsWith('[') ?
-                          <span key={j} className="slm-chord">{part.slice(1, -1)}</span> :
-                          <span key={j}>{part}</span>
-                      )
-                    : <span className="slm-spacer">&nbsp;</span>}
-                </div>
-              ))
+              transposeText(song.lyrics, keyOffset).replace(/\r/g, '').split('\n').map((line, i) => {
+                const { chords, text } = parseLine(line);
+                return (
+                  <div key={i} className="slm-line">
+                    {chords.length > 0 && (
+                      <div className="slm-chord-line">{buildChordLine(chords)}</div>
+                    )}
+                    <div className="slm-text-line">{text || '\u00A0'}</div>
+                  </div>
+                );
+              })
             ) : (
               <div className="slm-no-lyrics">
                 <Music size={48} />
@@ -304,10 +342,10 @@ const modalStyles = `
   .slm-lyrics::-webkit-scrollbar-track { background: transparent; }
   .slm-lyrics::-webkit-scrollbar-thumb { background: rgba(167,139,250,0.35); border-radius: 999px; border: 2px solid transparent; background-clip: padding-box; }
   .slm-lyrics::-webkit-scrollbar-thumb:hover { background: rgba(167,139,250,0.6); background-clip: padding-box; border: 2px solid transparent; }
-  .slm-lyrics-content { font-family: 'Outfit', sans-serif; font-size: 1.3rem; line-height: 1.7; white-space: pre-wrap; font-weight: 500; }
-  .slm-line { margin-bottom: 0.9rem; white-space: pre-wrap; word-break: break-word; min-height: 1.45em; }
-  .slm-chord { color: var(--accent-primary); font-weight: 900; font-size: 0.8rem; background: rgba(16,185,129,0.05); padding: 0 4px; border-radius: 4px; margin-right: 2px; display: inline-block; }
-  .slm-spacer { display: inline-block; width: 100%; min-height: 1.2em; }
+  .slm-lyrics-content { font-family: 'JetBrains Mono', 'Fira Mono', 'Consolas', ui-monospace, monospace; font-size: 1.1rem; line-height: 1.5; white-space: pre-wrap; font-weight: 500; }
+  .slm-line { margin-bottom: 0.35rem; white-space: pre-wrap; word-break: break-word; min-height: 1.3em; }
+  .slm-chord-line { color: #8b5cf6; font-weight: 800; font-size: 0.95em; line-height: 1.3; white-space: pre; user-select: all; }
+  .slm-text-line { line-height: 1.5; }
   .slm-no-lyrics { text-align: center; padding: 5rem; display: flex; flex-direction: column; align-items: center; gap: 2rem; color: #444; }
   .slm-edit-layout { height: 100%; display: flex; flex-direction: column; gap: 0.75rem; }
   .slm-edit-actions { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; }
@@ -320,6 +358,10 @@ const modalStyles = `
   .slm-import-btn { background: #111; border: 1px solid #2a2a2a; color: #cbd5e1; border-radius: 8px; padding: 0.6rem 0.9rem; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; cursor: pointer; }
   .slm-import-btn:hover:not(:disabled) { border-color: #00ff00; color: #00ff00; }
   .slm-import-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .slm-chord-help { background: rgba(139,92,246,0.08); border: 1px solid rgba(139,92,246,0.25); border-radius: 8px; padding: 0.75rem 1rem; font-size: 0.78rem; line-height: 1.6; color: #a5b4fc; flex-shrink: 0; }
+  .slm-chord-help code { background: rgba(139,92,246,0.15); padding: 1px 5px; border-radius: 3px; font-family: monospace; font-weight: 700; color: #c4b5fd; }
+  .slm-chord-help strong { color: #e0e7ff; }
+  .slm-chord-help em { color: #8b5cf6; font-style: normal; font-weight: 700; }
   .slm-edit-area { width: 100%; height: 100%; background: #050505; border: 1px dashed #333; color: #fff; font-family: monospace; font-size: 1.25rem; padding: 2rem; outline: none; resize: none; overflow-y: auto; -webkit-overflow-scrolling: touch; scrollbar-width: thin; scrollbar-color: rgba(167,139,250,0.5) transparent; }
   .slm-edit-area::-webkit-scrollbar { width: 8px; }
   .slm-edit-area::-webkit-scrollbar-track { background: transparent; }
@@ -340,9 +382,8 @@ const modalStyles = `
   .slm-status { text-align: right; display: flex; flex-direction: column; gap: 4px; font-size: 0.65rem; font-weight: 800; color: #333; letter-spacing: 1px; }
 
   @media (max-width: 968px) {
-    .slm-lyrics-content { font-size: 1.25rem; line-height: 1.6; }
-    .slm-line { margin-bottom: 1rem; }
-    .slm-chord { font-size: 0.8rem; }
+    .slm-lyrics-content { font-size: 1.05rem; line-height: 1.5; }
+    .slm-line { margin-bottom: 0.35rem; }
     .slm-lyrics { padding: 2rem 5% 8rem; }
     .slm-desktop-only { display: none; }
     .slm-nav { padding: 1rem 1.5rem; }
@@ -366,7 +407,7 @@ const modalStyles = `
       padding: 1.2rem 0.85rem 6.2rem;
       padding-bottom: max(6.2rem, calc(6.2rem + env(safe-area-inset-bottom)));
     }
-    .slm-lyrics-content { font-size: 1.05rem; line-height: 1.55; }
+    .slm-lyrics-content { font-size: 0.9rem; line-height: 1.4; }
     .slm-edit-area { font-size: 16px; padding: 1rem 0.9rem; }
     .slm-import-row { grid-template-columns: 1fr; }
     .slm-import-btn { width: 100%; min-height: 44px; }
