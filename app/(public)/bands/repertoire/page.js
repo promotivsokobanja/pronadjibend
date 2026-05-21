@@ -930,8 +930,8 @@ export default function RepertoirePage() {
         .action-btn { color: rgba(226, 232, 240, 0.5); transition: 0.2s; padding: 8px; border-radius: 6px; }
         .action-btn:hover { color: white; background: rgba(255,255,255,0.05); }
         .action-btn.delete:hover { color: #ef4444; background: rgba(239, 68, 68, 0.1); }
-        .bulk-import-overlay { position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 80; background: rgba(15, 23, 42, 0.32); padding: 5.5rem 2rem 2rem; display: flex; align-items: flex-start; justify-content: center; overflow-y: auto; }
-        .bulk-import-modal { width: min(1040px, 100%); max-height: calc(100vh - 7.5rem); overflow: hidden; display: flex; flex-direction: column; padding: 1.4rem; border: 1px solid rgba(226, 232, 240, 0.8); background: rgba(255, 255, 255, 0.97); margin-top: 0; border-radius: 22px; }
+        .bulk-import-overlay { position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 9999; background: rgba(15, 23, 42, 0.55); padding: 2rem; display: flex; align-items: center; justify-content: center; overflow-y: auto; }
+        .bulk-import-modal { width: min(1040px, 100%); max-height: calc(100dvh - 4rem); overflow: hidden; display: flex; flex-direction: column; padding: 1.4rem; border: 1px solid rgba(226, 232, 240, 0.8); background: rgba(255, 255, 255, 0.97); margin-top: 0; border-radius: 22px; }
         .bulk-import-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: 1.2rem; flex-shrink: 0; }
         .bulk-import-head h2 { margin: 0 0 0.35rem; font-size: 1.45rem; color: #0f172a; }
         .bulk-import-head p { margin: 0; color: #64748b; max-width: 640px; }
@@ -1037,8 +1037,8 @@ export default function RepertoirePage() {
           .global-dropdown-item { padding: 0.85rem 0.9rem; align-items: flex-start; }
           .global-dropdown-title { font-size: 0.88rem; }
           .global-dropdown-artist { font-size: 0.74rem; }
-          .bulk-import-overlay { padding: 1.5rem 0.5rem 0.5rem; }
-          .bulk-import-modal { padding: 0.85rem; max-height: calc(100vh - 3rem); border-radius: 18px; }
+          .bulk-import-overlay { padding: 0.5rem; }
+          .bulk-import-modal { padding: 0.75rem; max-height: calc(100dvh - 1rem); border-radius: 16px; }
           .bulk-import-textarea { min-height: 200px; }
           .bulk-category-select { min-height: 42px; font-size: 0.88rem; }
           .bulk-import-head h2 { font-size: 1.15rem; }
