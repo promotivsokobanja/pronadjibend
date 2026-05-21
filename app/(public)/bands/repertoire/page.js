@@ -931,12 +931,12 @@ export default function RepertoirePage() {
         .action-btn:hover { color: white; background: rgba(255,255,255,0.05); }
         .action-btn.delete:hover { color: #ef4444; background: rgba(239, 68, 68, 0.1); }
         .bulk-import-overlay { position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 80; background: rgba(15, 23, 42, 0.32); padding: 5.5rem 2rem 2rem; display: flex; align-items: flex-start; justify-content: center; overflow-y: auto; }
-        .bulk-import-modal { width: min(1040px, 100%); max-height: calc(100vh - 7.5rem); overflow: auto; padding: 1.4rem; border: 1px solid rgba(226, 232, 240, 0.8); background: rgba(255, 255, 255, 0.97); margin-top: 0; }
-        .bulk-import-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: 1.2rem; }
+        .bulk-import-modal { width: min(1040px, 100%); max-height: calc(100vh - 7.5rem); overflow: hidden; display: flex; flex-direction: column; padding: 1.4rem; border: 1px solid rgba(226, 232, 240, 0.8); background: rgba(255, 255, 255, 0.97); margin-top: 0; border-radius: 22px; }
+        .bulk-import-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: 1.2rem; flex-shrink: 0; }
         .bulk-import-head h2 { margin: 0 0 0.35rem; font-size: 1.45rem; color: #0f172a; }
         .bulk-import-head p { margin: 0; color: #64748b; max-width: 640px; }
         .bulk-import-close { border: 1px solid rgba(148, 163, 184, 0.35); background: #fff; color: #475569; border-radius: 12px; width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; }
-        .bulk-import-grid { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 1rem; }
+        .bulk-import-grid { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 1rem; flex: 1; overflow-y: auto; min-height: 0; }
         .bulk-import-pane { border: 1px solid rgba(226, 232, 240, 0.95); border-radius: 22px; padding: 1rem; background: rgba(248, 250, 252, 0.7); }
         .bulk-import-pane.results { background: rgba(255, 255, 255, 0.88); }
         .bulk-import-label { display: block; margin-bottom: 0.75rem; font-size: 0.8rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: #475569; }
@@ -963,7 +963,7 @@ export default function RepertoirePage() {
         .bulk-missing-hint { margin: 0; padding: 0.5rem 1rem 0; font-size: 0.78rem; color: #92400e; font-style: italic; }
         .bulk-missing-list { display: flex; flex-wrap: wrap; gap: 0.6rem; padding: 1rem; }
         .bulk-missing-chip { display: inline-flex; align-items: center; padding: 0.45rem 0.7rem; border-radius: 999px; background: rgba(239, 68, 68, 0.08); color: #b91c1c; font-size: 0.8rem; font-weight: 700; }
-        .bulk-import-footer { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(226, 232, 240, 0.9); flex-wrap: wrap; }
+        .bulk-import-footer { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(226, 232, 240, 0.9); flex-wrap: wrap; flex-shrink: 0; }
         .bulk-import-summary { display: flex; gap: 1rem; flex-wrap: wrap; color: #475569; font-size: 0.88rem; font-weight: 700; }
         .bulk-import-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; }
         .btn-ghost { background: rgba(255, 255, 255, 0.92); color: #334155; border: 1px solid rgba(148, 163, 184, 0.35); }
@@ -1037,8 +1037,8 @@ export default function RepertoirePage() {
           .global-dropdown-item { padding: 0.85rem 0.9rem; align-items: flex-start; }
           .global-dropdown-title { font-size: 0.88rem; }
           .global-dropdown-artist { font-size: 0.74rem; }
-          .bulk-import-overlay { padding: 4.5rem 0.5rem 0.5rem; }
-          .bulk-import-modal { padding: 0.85rem; max-height: calc(100vh - 5rem); border-radius: 18px; }
+          .bulk-import-overlay { padding: 1.5rem 0.5rem 0.5rem; }
+          .bulk-import-modal { padding: 0.85rem; max-height: calc(100vh - 3rem); border-radius: 18px; }
           .bulk-import-textarea { min-height: 200px; }
           .bulk-category-select { min-height: 42px; font-size: 0.88rem; }
           .bulk-import-head h2 { font-size: 1.15rem; }
