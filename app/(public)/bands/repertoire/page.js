@@ -934,41 +934,42 @@ export default function RepertoirePage() {
         /* ─── Dropdown ─── */
         .global-dropdown {
           position: absolute; top: calc(100% + 0.5rem); left: 0; right: 0; z-index: 20;
-          background: #fff; border: 1px solid #e2e8f0; border-radius: 16px;
-          box-shadow: 0 16px 40px rgba(15, 23, 42, 0.14), 0 2px 8px rgba(15, 23, 42, 0.06);
+          background: rgba(15, 23, 42, 0.97); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px;
+          box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3);
           overflow: hidden; max-height: min(65vh, 520px); overflow-y: auto;
+          backdrop-filter: blur(12px);
         }
         .global-dropdown-head {
           display: flex; justify-content: space-between; align-items: center;
-          padding: 0.7rem 1rem; border-bottom: 1px solid #f1f5f9;
+          padding: 0.7rem 1rem; border-bottom: 1px solid rgba(255, 255, 255, 0.06);
           font-size: 0.68rem; font-weight: 800; letter-spacing: 0.08em;
-          text-transform: uppercase; color: #94a3b8;
-          position: sticky; top: 0; background: #fafbfc; z-index: 1;
+          text-transform: uppercase; color: #64748b;
+          position: sticky; top: 0; background: rgba(15, 23, 42, 0.95); z-index: 1;
         }
-        .global-dropdown-head.repertoire-section { color: #6366f1; background: rgba(99, 102, 241, 0.03); }
-        .global-dropdown-count { background: rgba(99, 102, 241, 0.1); color: #6366f1; padding: 2px 8px; border-radius: 999px; font-size: 0.65rem; }
+        .global-dropdown-head.repertoire-section { color: #a78bfa; background: rgba(139, 92, 246, 0.06); }
+        .global-dropdown-count { background: rgba(139, 92, 246, 0.15); color: #a78bfa; padding: 2px 8px; border-radius: 999px; font-size: 0.65rem; }
         .global-dropdown-list { overflow-y: auto; }
         .global-dropdown-item {
           width: 100%; display: flex; align-items: center; justify-content: space-between;
           gap: 0.75rem; padding: 0.7rem 1rem; border: none;
-          border-bottom: 1px solid #f1f5f9; background: transparent;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.04); background: transparent;
           text-align: left; cursor: pointer; transition: background 0.15s;
         }
         .global-dropdown-item:last-child { border-bottom: none; }
-        .global-dropdown-item:hover { background: #f8fafc; }
+        .global-dropdown-item:hover { background: rgba(255, 255, 255, 0.05); }
         .global-dropdown-copy { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; flex: 1; }
-        .global-dropdown-title { font-size: 0.9rem; font-weight: 700; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .global-dropdown-artist { font-size: 0.75rem; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .global-dropdown-title { font-size: 0.9rem; font-weight: 700; color: #f1f5f9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .global-dropdown-artist { font-size: 0.75rem; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .global-dropdown-cta {
           flex-shrink: 0; display: inline-flex; align-items: center; gap: 0.3rem;
           padding: 0.35rem 0.7rem; border-radius: 8px; font-size: 0.7rem; font-weight: 800;
           cursor: pointer; transition: 0.15s; border: none; white-space: nowrap;
         }
-        .global-dropdown-cta.add-cta { background: rgba(99, 102, 241, 0.1); color: #4f46e5; }
-        .global-dropdown-cta.add-cta:hover { background: rgba(99, 102, 241, 0.2); }
-        .global-dropdown-cta.remove-cta { background: rgba(239, 68, 68, 0.08); color: #dc2626; }
-        .global-dropdown-cta.remove-cta:hover { background: rgba(239, 68, 68, 0.16); }
-        .global-dropdown-empty { padding: 1.5rem 1rem; color: #94a3b8; font-size: 0.85rem; text-align: center; }
+        .global-dropdown-cta.add-cta { background: rgba(139, 92, 246, 0.15); color: #a78bfa; }
+        .global-dropdown-cta.add-cta:hover { background: rgba(139, 92, 246, 0.25); }
+        .global-dropdown-cta.remove-cta { background: rgba(239, 68, 68, 0.12); color: #f87171; }
+        .global-dropdown-cta.remove-cta:hover { background: rgba(239, 68, 68, 0.22); }
+        .global-dropdown-empty { padding: 1.5rem 1rem; color: #64748b; font-size: 0.85rem; text-align: center; }
 
         /* ─── Toolbar ─── */
         .toolbar {
