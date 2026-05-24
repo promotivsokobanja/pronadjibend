@@ -56,7 +56,9 @@ export default function SongLyricsModal({ songId, onClose }) {
   const [keyOffset, setKeyOffset] = useState(0);
   const [isScrolling, setIsScrolling] = useState(false);
   const [scrollSpeed, setScrollSpeed] = useState(1);
+  const [isSaving, setIsSaving] = useState(false);
   const scrollRef = useRef(null);
+  const libraryLoadedRef = useRef(false);
 
   const fetchSong = useCallback(async () => {
     setIsLoading(true);
@@ -108,7 +110,10 @@ export default function SongLyricsModal({ songId, onClose }) {
     return () => window.removeEventListener('keydown', onKey);
   }, [isEditing, onClose]);
 
+  // Lazy-load library songs only when entering edit mode
   useEffect(() => {
+    if (!isEditing || libraryLoadedRef.current) return;
+    libraryLoadedRef.current = true;
     const fetchLibrary = async () => {
       try {
         const resp = await fetch('/api/songs');
@@ -118,7 +123,7 @@ export default function SongLyricsModal({ songId, onClose }) {
       } catch {}
     };
     fetchLibrary();
-  }, [songId]);
+  }, [isEditing, songId]);
 
   useEffect(() => {
     let interval;
@@ -131,6 +136,8 @@ export default function SongLyricsModal({ songId, onClose }) {
   }, [isScrolling, scrollSpeed]);
 
   const handleSave = async () => {
+    if (isSaving) return;
+    setIsSaving(true);
     try {
       await fetch(`/api/songs/${songId}`, {
         method: 'PATCH',
@@ -142,6 +149,8 @@ export default function SongLyricsModal({ songId, onClose }) {
       setIsEditing(false);
     } catch {
       alert('Greška pri čuvanju');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -185,9 +194,9 @@ export default function SongLyricsModal({ songId, onClose }) {
           <p>{song.artist}</p>
         </div>
         <div className="slm-controls">
-          <button className={`slm-btn-edit ${isEditing ? 'active' : ''}`} onClick={() => isEditing ? handleSave() : setIsEditing(true)}>
+          <button className={`slm-btn-edit ${isEditing ? 'active' : ''}`} onClick={() => isEditing ? handleSave() : setIsEditing(true)} disabled={isSaving}>
             {isEditing ? <Check size={18} /> : <Edit2 size={18} />}
-            <span className="slm-desktop-only">{isEditing ? 'SAČUVAJ' : 'IZMENI'}</span>
+            <span className="slm-desktop-only">{isSaving ? 'ČUVAM...' : isEditing ? 'SAČUVAJ' : 'IZMENI'}</span>
           </button>
           {!isEditing && (
             <div className="slm-transpose">
