@@ -292,7 +292,7 @@ const modalStyles = `
     z-index: 1500;
     animation: slm-fade 0.18s ease;
     -webkit-overflow-scrolling: touch;
-    touch-action: none;
+    touch-action: manipulation;
   }
   @keyframes slm-fade { from { opacity: 0; } to { opacity: 1; } }
   .slm-loading { height: 100%; display: flex; align-items: center; justify-content: center; }
@@ -362,7 +362,7 @@ const modalStyles = `
   .slm-chord-help code { background: rgba(139,92,246,0.15); padding: 1px 5px; border-radius: 3px; font-family: monospace; font-weight: 700; color: #c4b5fd; }
   .slm-chord-help strong { color: #e0e7ff; }
   .slm-chord-help em { color: #8b5cf6; font-style: normal; font-weight: 700; }
-  .slm-edit-area { width: 100%; flex: 1; min-height: 0; background: #050505; border: 1px dashed #333; color: #fff; font-family: monospace; font-size: 1.25rem; padding: 2rem; outline: none; resize: none; overflow-y: auto; -webkit-overflow-scrolling: touch; scrollbar-width: thin; scrollbar-color: rgba(167,139,250,0.5) transparent; }
+  .slm-edit-area { width: 100%; flex: 1; min-height: 0; background: #050505; border: 1px dashed #333; color: #fff; font-family: monospace; font-size: 1.25rem; padding: 2rem; outline: none; resize: none; overflow-y: auto; -webkit-overflow-scrolling: touch; scrollbar-width: thin; scrollbar-color: rgba(167,139,250,0.5) transparent; touch-action: auto; user-select: text; -webkit-user-select: text; }
   .slm-edit-area::-webkit-scrollbar { width: 8px; }
   .slm-edit-area::-webkit-scrollbar-track { background: transparent; }
   .slm-edit-area::-webkit-scrollbar-thumb { background: rgba(167,139,250,0.35); border-radius: 999px; border: 2px solid transparent; background-clip: padding-box; }
