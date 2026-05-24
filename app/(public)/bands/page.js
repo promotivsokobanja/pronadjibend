@@ -1706,13 +1706,20 @@ export default function BandDashboard() {
           background: rgba(255, 255, 255, 0.07);
         }
         .panel-card-primary {
-          border-color: rgba(139, 92, 246, 0.35);
-          background: rgba(139, 92, 246, 0.08);
+          border-color: rgba(16, 185, 129, 0.35);
+          background: rgba(16, 185, 129, 0.06);
         }
         .panel-card-primary:hover {
-          border-color: rgba(139, 92, 246, 0.55);
-          background: rgba(139, 92, 246, 0.14);
-          box-shadow: 0 12px 32px rgba(139, 92, 246, 0.2);
+          border-color: rgba(16, 185, 129, 0.55);
+          background: rgba(16, 185, 129, 0.12);
+          box-shadow: 0 12px 32px rgba(16, 185, 129, 0.15);
+        }
+        .panel-card-primary .panel-icon {
+          background: rgba(16, 185, 129, 0.12);
+          color: #10b981;
+        }
+        .panel-card-primary .panel-cta {
+          color: #10b981;
         }
         .panel-icon {
           width: 36px;

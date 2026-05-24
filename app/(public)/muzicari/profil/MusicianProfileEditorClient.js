@@ -470,6 +470,7 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
       description: 'Prati porudžbine gostiju uživo na svirci.',
       href: '/bands/live',
       icon: Radio,
+      primary: true,
     },
     {
       title: 'QR za Live',
@@ -1377,7 +1378,7 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
                   {dashboardCards.map((card) => {
                     const Icon = card.icon;
                     const inner = (
-                      <div className="panel-card">
+                      <div className={`panel-card${card.primary ? ' panel-card-primary' : ''}`}>
                         <div className="panel-icon">
                           <Icon size={20} />
                         </div>
@@ -1742,15 +1743,15 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
         }
         .panel-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-          gap: 1.05rem;
+          grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+          gap: 0.75rem;
           position: relative;
           z-index: 1;
         }
         @media (max-width: 640px) {
           .panel-grid {
-            grid-template-columns: 1fr;
-            gap: 0.85rem;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.6rem;
           }
         }
         @media (min-width: 641px) and (max-width: 900px) {
@@ -1849,19 +1850,19 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
         }
         .panel-card {
           background: rgba(255, 255, 255, 0.04);
-          border-radius: 22px;
+          border-radius: 18px;
           border: 1px solid rgba(255, 255, 255, 0.08);
-          padding: 1.25rem;
-          min-height: 168px;
+          padding: 1rem;
+          min-height: 120px;
           display: flex;
           flex-direction: column;
-          gap: 0.72rem;
+          gap: 0.5rem;
           transition: transform 0.2s, border-color 0.2s, background 0.2s;
         }
         @media (max-width: 640px) {
           .panel-card {
-            min-height: 140px;
-            padding: 1rem;
+            min-height: 100px;
+            padding: 0.85rem;
           }
         }
         .panel-card:hover {
@@ -1869,10 +1870,26 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
           border-color: rgba(139, 92, 246, 0.3);
           background: rgba(255, 255, 255, 0.07);
         }
+        .panel-card-primary {
+          border-color: rgba(16, 185, 129, 0.35);
+          background: rgba(16, 185, 129, 0.06);
+        }
+        .panel-card-primary:hover {
+          border-color: rgba(16, 185, 129, 0.55);
+          background: rgba(16, 185, 129, 0.12);
+          box-shadow: 0 12px 32px rgba(16, 185, 129, 0.15);
+        }
+        .panel-card-primary .panel-icon {
+          background: rgba(16, 185, 129, 0.12);
+          color: #10b981;
+        }
+        .panel-card-primary .panel-cta {
+          color: #10b981;
+        }
         .panel-icon {
-          width: 46px;
-          height: 46px;
-          border-radius: 16px;
+          width: 36px;
+          height: 36px;
+          border-radius: 12px;
           display: inline-flex;
           align-items: center;
           justify-content: center;
@@ -1881,36 +1898,36 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
         }
         @media (max-width: 640px) {
           .panel-icon {
-            width: 40px;
-            height: 40px;
+            width: 32px;
+            height: 32px;
           }
         }
         .panel-card h3 {
           margin: 0;
-          font-size: 1.05rem;
+          font-size: 0.92rem;
           font-weight: 800;
           color: #fff;
           line-height: 1.2;
         }
         @media (max-width: 640px) {
           .panel-card h3 {
-            font-size: 0.95rem;
+            font-size: 0.82rem;
           }
         }
         .panel-card p {
           margin: 0;
-          font-size: 0.85rem;
-          color: rgba(226, 232, 240, 0.85);
-          line-height: 1.4;
+          font-size: 0.78rem;
+          color: rgba(226, 232, 240, 0.7);
+          line-height: 1.35;
         }
         @media (max-width: 640px) {
           .panel-card p {
-            font-size: 0.8rem;
+            font-size: 0.72rem;
           }
         }
         .panel-cta {
           margin-top: auto;
-          font-size: 0.75rem;
+          font-size: 0.7rem;
           font-weight: 700;
           text-transform: uppercase;
           letter-spacing: 0.08em;
