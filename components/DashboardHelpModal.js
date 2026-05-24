@@ -1,5 +1,5 @@
 'use client';
-import { X, Play, BookOpen, FileMusic, QrCode, Download, Pencil, Radio, Music, Calendar, Bell, Star, MessageSquare } from 'lucide-react';
+import { X, Play, BookOpen, FileMusic, QrCode, Download, Pencil, Radio, Music, Calendar, Bell, Star, MessageSquare, WifiOff } from 'lucide-react';
 
 /**
  * Shared help modal for band & musician control panel (Kontrolna Tabla).
@@ -96,12 +96,36 @@ export default function DashboardHelpModal({ onClose, role = 'band' }) {
           </section>
 
           <section className="help-item">
+            <div className="help-icon"><Calendar size={20} /></div>
+            <div className="help-text">
+              <h3>Izvezi kalendar (.ics)</h3>
+              <p>
+                Preuzima <strong>.ics fajl</strong> sa vašim zauzetim datumima i nastupima.
+                Uvezite ga u Google Calendar, Outlook ili Apple Calendar da imate sve na jednom mestu.
+              </p>
+            </div>
+          </section>
+
+          <section className="help-item">
             <div className="help-icon"><Pencil size={20} /></div>
             <div className="help-text">
               <h3>Moj Profil</h3>
               <p>
                 Uredite <strong>javni profil</strong> — slike, video, biografiju, cenovnik, grad,
                 žanrove. To vide potencijalni klijenti kad vas pretraže.
+              </p>
+            </div>
+          </section>
+
+          <section className="help-item">
+            <div className="help-icon"><WifiOff size={20} /></div>
+            <div className="help-text">
+              <h3>Pripremi za nastup (Offline)</h3>
+              <p>
+                Kliknite <strong>pre svirke</strong> dok imate internet — preuzima ceo vaš repertoar
+                (tekstove i akorde) u memoriju telefona/računara. Ako tokom nastupa nestane mreža,
+                pesmarica i dalje radi iz keša. Bezbedno je — ne menja ništa na sajtu,
+                samo lokalno čuva kopiju vaših pesama.
               </p>
             </div>
           </section>
@@ -147,7 +171,8 @@ export default function DashboardHelpModal({ onClose, role = 'band' }) {
           <div className="help-tip">
             <Bell size={16} />
             <span>
-              <strong>Savet:</strong> Pre nastupa, odštampajte QR poster i proverite set liste u Live panelu.
+              <strong>Savet:</strong> Pre nastupa: (1) kliknite &bdquo;Pripremi za nastup&ldquo; da imate pesme i offline,
+              (2) odštampajte QR poster, (3) proverite set liste u Live panelu.
               Za stalne klijente — uredite profil i javite dostupne datume u kalendaru.
               Kada klijent pošalje upit, prihvatite ga i potvrdite — klijent automatski dobija email potvrdu.
               Za saradnje sa muzičarima, redovno odgovorite na pozive jer stari PENDING pozivi automatski ističu.
