@@ -701,16 +701,6 @@ export default function BandDashboard() {
               <span className="panel-cta">Preuzmi</span>
             </div>
           </a>
-          <Link href="/bands/profile" className="panel-link">
-            <div className="panel-card">
-              <div className="panel-icon"><Pencil size={20} /></div>
-              <div>
-                <h3>Moj Profil</h3>
-                <p>Javni profil, slike, video i opis.</p>
-              </div>
-              <span className="panel-cta">Otvori</span>
-            </div>
-          </Link>
           {bandId && (
             <a href={`/api/bands/${encodeURIComponent(bandId)}/calendar-export`} className="panel-link">
               <div className="panel-card">
@@ -723,6 +713,16 @@ export default function BandDashboard() {
               </div>
             </a>
           )}
+          <Link href="/bands/profile" className="panel-link">
+            <div className="panel-card">
+              <div className="panel-icon"><Pencil size={20} /></div>
+              <div>
+                <h3>Moj Profil</h3>
+                <p>Javni profil, slike, video i opis.</p>
+              </div>
+              <span className="panel-cta">Otvori</span>
+            </div>
+          </Link>
         </div>
       </header>
 
