@@ -35,7 +35,6 @@ import ChatThread from '../../../components/ChatThread';
 import { dateToCalendarKeyUTC } from '../../../lib/calendarDate';
 
 /** Postavite na `false` da sakrijete kratke opise ispod dugmadi (brz „undo“ izgleda). */
-const SHOW_HEADER_ACTION_HINTS = true;
 const ACTIVE_INVITE_STATUSES = new Set(['PENDING', 'ACCEPTED']);
 
 /** `1` ili prazno = jedan klik kao ranije; `0` = prozor za napomenu. */
@@ -641,72 +640,78 @@ export default function BandDashboard() {
             <span>Pomoć / Uputstvo</span>
           </button>
         </div>
-        <div className="header-actions">
-          <div className="header-action-item">
-            <Link href="/bands/live" className="btn btn-primary">
-              <Play size={18} style={{ marginRight: '8px' }} /> Pokreni Nastup
-            </Link>
-            {SHOW_HEADER_ACTION_HINTS && (
-              <span className="action-caption action-caption-primary">Live zahtevi pesama</span>
-            )}
-          </div>
-          <div className="header-action-item">
-            <Link href="/bands/pesmarica" className="btn btn-secondary">
-              <BookOpen size={18} style={{ marginRight: '8px' }} /> Pesmarica
-            </Link>
-            {SHOW_HEADER_ACTION_HINTS && (
-              <span className="action-caption">Tekstovi i akordi za setlistu</span>
-            )}
-          </div>
-          <div className="header-action-item">
-            <Link href="/bands/midi" className="btn btn-secondary">
-              <FileMusic size={18} style={{ marginRight: '8px' }} /> MIDI Fajlovi
-            </Link>
-            {SHOW_HEADER_ACTION_HINTS && (
-              <span className="action-caption">Biblioteka i upload MIDI fajlova</span>
-            )}
-          </div>
-          <div className="header-action-item">
-            <button type="button" className="btn btn-secondary" onClick={() => setShowQr(true)}>
-              <QrCode size={18} style={{ marginRight: '8px' }} /> Vaš QR Kod
-            </button>
-            {SHOW_HEADER_ACTION_HINTS && (
-              <span className="action-caption">QR za goste — brz pristup linku</span>
-            )}
-          </div>
-          <div className="header-action-item">
-            <a
-              href={`/api/bands/${encodeURIComponent(bandId)}/marketing-poster`}
-              className="btn btn-secondary"
-              style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}
-            >
-              <Download size={18} style={{ marginRight: '8px' }} /> Poster za štampu (A4, 300 DPI)
-            </a>
-            {SHOW_HEADER_ACTION_HINTS && (
-              <span className="action-caption">Tvoj QR za goste — live pesmarica i narudžbine</span>
-            )}
-          </div>
-          <div className="header-action-item">
-            <Link href="/bands/profile" className="btn btn-secondary">
-              <Pencil size={18} style={{ marginRight: '8px' }} /> Moj Profil
-            </Link>
-            {SHOW_HEADER_ACTION_HINTS && (
-              <span className="action-caption">Javni profil, slike, video i opis</span>
-            )}
-          </div>
-          {bandId && (
-            <div className="header-action-item">
-              <a
-                href={`/api/bands/${encodeURIComponent(bandId)}/calendar-export`}
-                className="btn btn-secondary"
-                style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}
-              >
-                <Calendar size={18} style={{ marginRight: '8px' }} /> Izvezi kalendar (.ics)
-              </a>
-              {SHOW_HEADER_ACTION_HINTS && (
-                <span className="action-caption">Google Calendar / Outlook import</span>
-              )}
+        <div className="panel-grid">
+          <Link href="/bands/live" className="panel-link">
+            <div className="panel-card panel-card-primary">
+              <div className="panel-icon"><Play size={20} /></div>
+              <div>
+                <h3>Pokreni Nastup</h3>
+                <p>Live zahtevi pesama od gostiju tokom svirke.</p>
+              </div>
+              <span className="panel-cta">Otvori</span>
             </div>
+          </Link>
+          <Link href="/bands/pesmarica" className="panel-link">
+            <div className="panel-card">
+              <div className="panel-icon"><BookOpen size={20} /></div>
+              <div>
+                <h3>Pesmarica</h3>
+                <p>Tekstovi i akordi za setlistu.</p>
+              </div>
+              <span className="panel-cta">Otvori</span>
+            </div>
+          </Link>
+          <Link href="/bands/midi" className="panel-link">
+            <div className="panel-card">
+              <div className="panel-icon"><FileMusic size={20} /></div>
+              <div>
+                <h3>MIDI Fajlovi</h3>
+                <p>Biblioteka i upload MIDI fajlova.</p>
+              </div>
+              <span className="panel-cta">Otvori</span>
+            </div>
+          </Link>
+          <button type="button" className="panel-link" onClick={() => setShowQr(true)}>
+            <div className="panel-card">
+              <div className="panel-icon"><QrCode size={20} /></div>
+              <div>
+                <h3>Vaš QR Kod</h3>
+                <p>QR za goste — brz pristup linku.</p>
+              </div>
+              <span className="panel-cta">Prikaži</span>
+            </div>
+          </button>
+          <a href={`/api/bands/${encodeURIComponent(bandId)}/marketing-poster`} className="panel-link">
+            <div className="panel-card">
+              <div className="panel-icon"><Download size={20} /></div>
+              <div>
+                <h3>Poster za štampu</h3>
+                <p>A4, 300 DPI — QR za goste na stolovima.</p>
+              </div>
+              <span className="panel-cta">Preuzmi</span>
+            </div>
+          </a>
+          <Link href="/bands/profile" className="panel-link">
+            <div className="panel-card">
+              <div className="panel-icon"><Pencil size={20} /></div>
+              <div>
+                <h3>Moj Profil</h3>
+                <p>Javni profil, slike, video i opis.</p>
+              </div>
+              <span className="panel-cta">Otvori</span>
+            </div>
+          </Link>
+          {bandId && (
+            <a href={`/api/bands/${encodeURIComponent(bandId)}/calendar-export`} className="panel-link">
+              <div className="panel-card">
+                <div className="panel-icon"><Calendar size={20} /></div>
+                <div>
+                  <h3>Izvezi kalendar</h3>
+                  <p>Google Calendar / Outlook import (.ics).</p>
+                </div>
+                <span className="panel-cta">Preuzmi</span>
+              </div>
+            </a>
           )}
         </div>
       </header>
@@ -1659,73 +1664,99 @@ export default function BandDashboard() {
           .booking-contact-row { flex-direction: column; gap: 0.4rem; }
         }
 
-        .header-actions {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 0.65rem;
-          align-items: flex-start;
-          width: 100%;
+        .panel-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+          gap: 1.05rem;
+          position: relative;
+          z-index: 1;
+          margin-top: 0.5rem;
         }
-        .header-action-item {
+        .panel-link {
+          all: unset;
+          cursor: pointer;
+          text-decoration: none;
+        }
+        .panel-card {
+          background: rgba(255, 255, 255, 0.04);
+          border-radius: 22px;
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          padding: 1.25rem;
+          min-height: 168px;
           display: flex;
           flex-direction: column;
-          align-items: center;
-          gap: 0.4rem;
-          min-width: 0;
-          flex: 1 1 auto;
+          gap: 0.72rem;
+          transition: transform 0.2s, border-color 0.2s, background 0.2s;
         }
-        .header-action-item :global(a) {
+        .panel-card:hover {
+          transform: translateY(-4px);
+          border-color: rgba(139, 92, 246, 0.3);
+          background: rgba(255, 255, 255, 0.07);
+        }
+        .panel-card-primary {
+          border-color: rgba(139, 92, 246, 0.35);
+          background: rgba(139, 92, 246, 0.08);
+        }
+        .panel-card-primary:hover {
+          border-color: rgba(139, 92, 246, 0.55);
+          background: rgba(139, 92, 246, 0.14);
+          box-shadow: 0 12px 32px rgba(139, 92, 246, 0.2);
+        }
+        .panel-icon {
+          width: 46px;
+          height: 46px;
+          border-radius: 16px;
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          width: 100%;
-          text-decoration: none;
+          background: rgba(139, 92, 246, 0.12);
+          color: #a78bfa;
         }
-        .header-action-item :global(.btn) {
-          width: 100%;
-          justify-content: center;
-          white-space: nowrap;
-          min-height: 46px;
+        .panel-card h3 {
+          margin: 0;
+          font-size: 1.05rem;
+          font-weight: 800;
+          color: #fff;
+          line-height: 1.2;
         }
-        .action-caption {
-          font-size: 0.68rem;
-          line-height: 1.3;
-          color: var(--text-muted, #64748b);
-          text-align: center;
-          max-width: 10.5rem;
-          font-weight: 500;
-          letter-spacing: 0.02em;
+        .panel-card p {
+          margin: 0;
+          font-size: 0.85rem;
+          color: rgba(226, 232, 240, 0.7);
+          line-height: 1.4;
         }
-        .action-caption-primary {
-          color: var(--text-muted, #64748b);
-          opacity: 0.95;
+        .panel-cta {
+          margin-top: auto;
+          font-size: 0.75rem;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+          color: #a78bfa;
         }
         @media (max-width: 968px) {
-          .header-actions {
-            width: 100%;
-          }
-          .header-action-item {
-            flex: 1 1 calc(50% - 0.5rem);
-            min-width: 0;
-          }
-          .header-action-item :global(.btn) {
-            min-height: 48px;
+          .panel-grid {
+            grid-template-columns: repeat(2, 1fr);
           }
         }
         @media (max-width: 520px) {
           .dashboard-container { padding-top: 7.5rem; }
-          .header-action-item {
-            flex: 1 1 100%;
+          .panel-grid {
+            grid-template-columns: 1fr;
+            gap: 0.85rem;
           }
-          .header-action-item :global(.btn) {
-            white-space: normal;
-            text-align: center;
-            font-size: 0.82rem;
-            min-height: 48px;
-            line-height: 1.3;
+          .panel-card {
+            min-height: 140px;
+            padding: 1rem;
           }
-          .action-caption {
-            font-size: 0.64rem;
+          .panel-icon {
+            width: 40px;
+            height: 40px;
+          }
+          .panel-card h3 {
+            font-size: 0.95rem;
+          }
+          .panel-card p {
+            font-size: 0.8rem;
           }
         }
         .live-notification { 
