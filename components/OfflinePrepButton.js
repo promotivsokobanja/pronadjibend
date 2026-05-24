@@ -99,28 +99,28 @@ export default function OfflinePrepButton({ bandId, musicianId, variant = 'card'
   };
   const innerStyle = {
     background: isDone ? 'rgba(16, 185, 129, 0.08)' : 'rgba(255, 255, 255, 0.04)',
-    borderRadius: '22px',
+    borderRadius: '18px',
     border: `1px solid ${isDone ? 'rgba(16, 185, 129, 0.4)' : 'rgba(255, 255, 255, 0.08)'}`,
-    padding: '1.25rem',
-    minHeight: '168px',
+    padding: '1rem',
+    minHeight: '120px',
     display: 'flex',
     flexDirection: 'column',
-    gap: '0.72rem',
+    gap: '0.5rem',
     transition: 'transform 0.2s, border-color 0.2s, background 0.2s',
   };
   const iconStyle = {
-    width: '46px',
-    height: '46px',
-    borderRadius: '16px',
+    width: '36px',
+    height: '36px',
+    borderRadius: '12px',
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
     background: isDone ? 'rgba(16, 185, 129, 0.12)' : 'rgba(139, 92, 246, 0.12)',
     color: isDone ? '#10b981' : '#a78bfa',
   };
-  const h3Style = { margin: 0, fontSize: '1.05rem', fontWeight: 800, color: '#fff', lineHeight: 1.2 };
-  const pStyle = { margin: 0, fontSize: '0.85rem', color: 'rgba(226, 232, 240, 0.7)', lineHeight: 1.4 };
-  const ctaStyle = { marginTop: 'auto', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: isDone ? '#10b981' : '#a78bfa' };
+  const h3Style = { margin: 0, fontSize: '0.92rem', fontWeight: 800, color: '#fff', lineHeight: 1.2 };
+  const pStyle = { margin: 0, fontSize: '0.78rem', color: 'rgba(226, 232, 240, 0.7)', lineHeight: 1.35 };
+  const ctaStyle = { marginTop: 'auto', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: isDone ? '#10b981' : '#a78bfa' };
 
   return (
     <button type="button" style={cardStyle} onClick={handlePrep} disabled={status === 'loading'} className="offline-card-btn">
