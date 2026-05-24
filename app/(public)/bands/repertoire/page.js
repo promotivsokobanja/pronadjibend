@@ -630,7 +630,7 @@ export default function RepertoirePage() {
               className="toolbar-btn"
               onClick={handleDownloadRepertoire}
               disabled={!ownerId}
-              title="Preuzmi repertoar za štampu"
+              title="Preuzmi ceo repertoar kao .txt fajl — za štampu ili deljenje"
             >
               <FileDown size={16} /> <span className="toolbar-label">Preuzmi</span>
             </button>
@@ -639,6 +639,7 @@ export default function RepertoirePage() {
               className="toolbar-btn danger"
               onClick={removeAllSongs}
               disabled={isDeletingAllSongs || songs.length === 0}
+              title="Obriši sve pesme iz repertoara — ne briše ih iz pesmarice"
             >
               <Trash2 size={16} /> <span className="toolbar-label">{isDeletingAllSongs ? 'Brišem...' : 'Obriši sve'}</span>
             </button>
@@ -650,11 +651,12 @@ export default function RepertoirePage() {
                   type="button"
                   className="toolbar-btn accent"
                   onClick={() => setShowBulkImportModal(true)}
+                  title="Dodaj više pesama odjednom — nalepite listu ili učitajte .txt fajl"
                 >
                   <FileText size={16} /> <span className="toolbar-label">Dodaj listu</span>
                 </button>
                 <Link href="/bands/song/new">
-                  <button className="toolbar-btn primary"><Plus size={16} /> <span className="toolbar-label">Dodaj novu</span></button>
+                  <button className="toolbar-btn primary" title="Dodaj novu pesmu ručno — unesite naslov, izvođača i tekst"><Plus size={16} /> <span className="toolbar-label">Dodaj novu</span></button>
                 </Link>
               </>
             ) : (
