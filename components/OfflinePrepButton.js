@@ -91,18 +91,49 @@ export default function OfflinePrepButton({ bandId, musicianId, variant = 'card'
   }
 
   // Card variant (for panel-grid)
+  const isDone = status === 'done';
+  const cardStyle = {
+    all: 'unset',
+    cursor: status === 'loading' ? 'wait' : 'pointer',
+    display: 'block',
+  };
+  const innerStyle = {
+    background: isDone ? 'rgba(16, 185, 129, 0.08)' : 'rgba(255, 255, 255, 0.04)',
+    borderRadius: '22px',
+    border: `1px solid ${isDone ? 'rgba(16, 185, 129, 0.4)' : 'rgba(255, 255, 255, 0.08)'}`,
+    padding: '1.25rem',
+    minHeight: '168px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.72rem',
+    transition: 'transform 0.2s, border-color 0.2s, background 0.2s',
+  };
+  const iconStyle = {
+    width: '46px',
+    height: '46px',
+    borderRadius: '16px',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    background: isDone ? 'rgba(16, 185, 129, 0.12)' : 'rgba(139, 92, 246, 0.12)',
+    color: isDone ? '#10b981' : '#a78bfa',
+  };
+  const h3Style = { margin: 0, fontSize: '1.05rem', fontWeight: 800, color: '#fff', lineHeight: 1.2 };
+  const pStyle = { margin: 0, fontSize: '0.85rem', color: 'rgba(226, 232, 240, 0.7)', lineHeight: 1.4 };
+  const ctaStyle = { marginTop: 'auto', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: isDone ? '#10b981' : '#a78bfa' };
+
   return (
-    <button type="button" className="panel-link" onClick={handlePrep} disabled={status === 'loading'}>
-      <div className={`panel-card ${status === 'done' ? 'panel-card-success' : ''}`}>
-        <div className="panel-icon">
-          {status === 'loading' ? <Loader2 size={20} className="offline-spin" /> : status === 'done' ? <Check size={20} /> : <WifiOff size={20} />}
+    <button type="button" style={cardStyle} onClick={handlePrep} disabled={status === 'loading'} className="offline-card-btn">
+      <div className="offline-card-inner" style={innerStyle}>
+        <div style={iconStyle}>
+          {status === 'loading' ? <Loader2 size={20} className="offline-spin" /> : isDone ? <Check size={20} /> : <WifiOff size={20} />}
         </div>
         <div>
-          <h3>
-            {status === 'loading' ? 'Preuzimanje...' : status === 'done' ? `Spremno (${count})` : status === 'error' ? 'Greška' : 'Pripremi za nastup'}
+          <h3 style={h3Style}>
+            {status === 'loading' ? 'Preuzimanje...' : isDone ? `Spremno (${count})` : status === 'error' ? 'Greška' : 'Pripremi za nastup'}
           </h3>
-          <p>
-            {status === 'done'
+          <p style={pStyle}>
+            {isDone
               ? 'Pesmarica dostupna i bez interneta.'
               : status === 'error'
                 ? 'Pokušajte ponovo kada imate signal.'
@@ -111,16 +142,16 @@ export default function OfflinePrepButton({ bandId, musicianId, variant = 'card'
                   : 'Preuzmi repertoar za rad bez mreže.'}
           </p>
         </div>
-        <span className="panel-cta">
-          {status === 'loading' ? '...' : status === 'done' ? '✓' : 'Preuzmi'}
+        <span style={ctaStyle}>
+          {status === 'loading' ? '...' : isDone ? '✓' : 'Preuzmi'}
         </span>
       </div>
       <style jsx>{`
-        .panel-card-success {
-          border-color: rgba(16, 185, 129, 0.4) !important;
-          background: rgba(16, 185, 129, 0.08) !important;
+        .offline-card-btn:hover .offline-card-inner {
+          transform: translateY(-4px);
+          border-color: rgba(139, 92, 246, 0.3) !important;
+          background: rgba(255, 255, 255, 0.07) !important;
         }
-        .panel-card-success .panel-cta { color: #10b981 !important; }
         :global(.offline-spin) { animation: offline-spin 1s linear infinite; }
         @keyframes offline-spin { to { transform: rotate(360deg); } }
       `}</style>
