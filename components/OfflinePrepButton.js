@@ -21,11 +21,17 @@ export default function OfflinePrepButton({ bandId, musicianId, variant = 'card'
 
   useEffect(() => {
     if (!ownerId) return;
-    getCacheMeta(ownerId).then(setMeta).catch(() => {});
+    getCacheMeta(ownerId).then((m) => {
+      setMeta(m);
+      if (m && m.count > 0) {
+        setCount(m.count);
+        setStatus('done');
+      }
+    }).catch(() => {});
   }, [ownerId]);
 
   const handlePrep = useCallback(async () => {
-    if (!ownerId || status === 'loading') return;
+    if (!ownerId || status === 'loading' || status === 'done') return;
     setStatus('loading');
     try {
       const params = new URLSearchParams();
@@ -41,8 +47,6 @@ export default function OfflinePrepButton({ bandId, musicianId, variant = 'card'
       setCount(cached);
       setStatus('done');
       setMeta({ timestamp: Date.now(), count: cached });
-
-      setTimeout(() => setStatus('idle'), 4000);
     } catch (err) {
       console.error('Offline prep error:', err);
       setStatus('error');
@@ -92,10 +96,12 @@ export default function OfflinePrepButton({ bandId, musicianId, variant = 'card'
 
   // Card variant (for panel-grid)
   const isDone = status === 'done';
+  const isBlocked = isDone || status === 'loading';
   const cardStyle = {
     all: 'unset',
-    cursor: status === 'loading' ? 'wait' : 'pointer',
+    cursor: isBlocked ? (status === 'loading' ? 'wait' : 'default') : 'pointer',
     display: 'block',
+    opacity: isDone ? 0.85 : 1,
   };
   const innerStyle = {
     background: isDone ? 'rgba(16, 185, 129, 0.08)' : 'rgba(255, 255, 255, 0.04)',
@@ -123,7 +129,7 @@ export default function OfflinePrepButton({ bandId, musicianId, variant = 'card'
   const ctaStyle = { marginTop: 'auto', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: isDone ? '#10b981' : '#a78bfa' };
 
   return (
-    <button type="button" style={cardStyle} onClick={handlePrep} disabled={status === 'loading'} className="offline-card-btn">
+    <button type="button" style={cardStyle} onClick={handlePrep} disabled={isBlocked} className="offline-card-btn">
       <div className="offline-card-inner" style={innerStyle}>
         <div style={iconStyle}>
           {status === 'loading' ? <Loader2 size={20} className="offline-spin" /> : isDone ? <Check size={20} /> : <WifiOff size={20} />}
@@ -134,20 +140,18 @@ export default function OfflinePrepButton({ bandId, musicianId, variant = 'card'
           </h3>
           <p style={pStyle}>
             {isDone
-              ? 'Pesmarica dostupna i bez interneta.'
+              ? `Spremno za offline rad. (${count} pesama)`
               : status === 'error'
                 ? 'Pokušajte ponovo kada imate signal.'
-                : timeAgo
-                  ? `Poslednje: ${timeAgo} (${meta.count} pesama)`
-                  : 'Preuzmi repertoar za rad bez mreže.'}
+                : 'Preuzmi repertoar za rad bez mreže.'}
           </p>
         </div>
         <span style={ctaStyle}>
-          {status === 'loading' ? '...' : isDone ? '✓' : 'Preuzmi'}
+          {status === 'loading' ? '...' : isDone ? '✓ PREUZETO' : 'Preuzmi'}
         </span>
       </div>
       <style jsx>{`
-        .offline-card-btn:hover .offline-card-inner {
+        .offline-card-btn:hover:not(:disabled) .offline-card-inner {
           transform: translateY(-4px);
           border-color: rgba(139, 92, 246, 0.3) !important;
           background: rgba(255, 255, 255, 0.07) !important;
