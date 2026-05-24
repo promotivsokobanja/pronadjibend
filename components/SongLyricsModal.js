@@ -46,7 +46,7 @@ function buildChordLine(chords) {
   return result;
 }
 
-export default function SongLyricsModal({ songId, onClose }) {
+export default function SongLyricsModal({ songId, onClose, bandId, musicianId }) {
   const [song, setSong] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
@@ -116,14 +116,17 @@ export default function SongLyricsModal({ songId, onClose }) {
     libraryLoadedRef.current = true;
     const fetchLibrary = async () => {
       try {
-        const resp = await fetch('/api/songs');
+        const params = new URLSearchParams();
+        if (bandId) params.set('bandId', bandId);
+        else if (musicianId) params.set('musicianId', musicianId);
+        const resp = await fetch(`/api/songs?${params.toString()}`);
         if (!resp.ok) return;
         const data = await resp.json();
         setLibrarySongs((Array.isArray(data) ? data : []).filter((s) => String(s.id) !== String(songId) && s.lyrics));
       } catch {}
     };
     fetchLibrary();
-  }, [isEditing, songId]);
+  }, [isEditing, songId, bandId, musicianId]);
 
   useEffect(() => {
     let interval;

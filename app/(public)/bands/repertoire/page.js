@@ -894,6 +894,8 @@ export default function RepertoirePage() {
         <SongLyricsModal
           songId={openSongId}
           onClose={() => setOpenSongId(null)}
+          bandId={bandId}
+          musicianId={musicianId}
         />
       )}
 
