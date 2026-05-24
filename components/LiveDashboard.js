@@ -2345,9 +2345,9 @@ export default function LiveDashboard({ bandId, musicianId }) {
                     {!liveIsEditing && selectedSong.lyrics && (
                       <div className="cheat-footer">
                         <div className="cheat-speed">
-                          <button type="button" className={liveScrollSpeed === 1 ? 'active' : ''} onClick={() => setLiveScrollSpeed(1)}>x1</button>
-                          <button type="button" className={liveScrollSpeed === 1.5 ? 'active' : ''} onClick={() => setLiveScrollSpeed(1.5)}>x1.5</button>
-                          <button type="button" className={liveScrollSpeed === 2 ? 'active' : ''} onClick={() => setLiveScrollSpeed(2)}>x2</button>
+                          <button type="button" onClick={() => setLiveScrollSpeed((s) => Math.max(0.25, +(s - 0.25).toFixed(2)))}>−</button>
+                          <span className="cheat-speed-val">x{liveScrollSpeed}</span>
+                          <button type="button" onClick={() => setLiveScrollSpeed((s) => Math.min(4, +(s + 0.25).toFixed(2)))}>+</button>
                         </div>
                         <button
                           type="button"
@@ -5417,28 +5417,34 @@ export default function LiveDashboard({ bandId, musicianId }) {
         }
         .cheat-speed {
           display: flex;
+          align-items: center;
           gap: 0.3rem;
         }
         .cheat-speed button {
           background: #0a0a0a;
           border: 1px solid #2a2a2a;
-          color: #64748b;
-          padding: 0.35rem 0.65rem;
+          color: #aaa;
+          width: 32px;
+          height: 32px;
           border-radius: 6px;
           font-weight: 800;
-          font-size: 0.7rem;
+          font-size: 1rem;
           cursor: pointer;
           transition: 0.15s ease;
-          min-height: 32px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
         .cheat-speed button:hover {
           border-color: #8b5cf6;
           color: #8b5cf6;
         }
-        .cheat-speed button.active {
-          background: #8b5cf6;
-          color: #000;
-          border-color: #8b5cf6;
+        .cheat-speed-val {
+          font-size: 0.75rem;
+          font-weight: 800;
+          color: #8b5cf6;
+          min-width: 32px;
+          text-align: center;
         }
         .cheat-play-btn {
           background: #8b5cf6;
@@ -5487,8 +5493,9 @@ export default function LiveDashboard({ bandId, musicianId }) {
             height: 40px;
           }
           .cheat-speed button {
-            padding: 0.3rem 0.5rem;
-            font-size: 0.68rem;
+            width: 28px;
+            height: 28px;
+            font-size: 0.9rem;
           }
           .cheat-status {
             font-size: 0.55rem;
@@ -6876,10 +6883,8 @@ export default function LiveDashboard({ bandId, musicianId }) {
           border-color: #7c3aed;
           color: #7c3aed;
         }
-        .light-mode .cheat-speed button.active {
-          background: #7c3aed;
-          color: #ffffff;
-          border-color: #7c3aed;
+        .light-mode .cheat-speed-val {
+          color: #7c3aed;
         }
         .light-mode .cheat-play-btn {
           background: #7c3aed;

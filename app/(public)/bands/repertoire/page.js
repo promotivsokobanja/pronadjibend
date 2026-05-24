@@ -545,91 +545,128 @@ export default function RepertoirePage() {
           <h1>Upravljanje <span className="gradient-text">Repertoarom</span></h1>
           <p className="text-muted">Personalizovana baza pesama. Kliknite na ime za brzi pregled.</p>
         </div>
-        <div className="header-actions">
-          <div className="search-box-wrap" ref={searchBoxRef}>
-            <div className="search-box">
-              <Search size={18} aria-hidden />
-              <input 
-                type="text" 
-                placeholder="Pretraži globalnu bazu..." 
-                value={searchTerm} 
-                onChange={(e) => setSearchTerm(e.target.value)} 
-                onFocus={() => {
-                  if (searchTerm.trim().length > 1) setShowGlobalDropdown(true);
-                }}
-              />
-            </div>
-            {showGlobalDropdown && searchTerm.trim().length > 1 && (
-              <div className="global-dropdown">
-                <div className="global-dropdown-head">
-                  <span>Glavna pesmarica</span>
-                  <span>{globalMatches.length}</span>
-                </div>
-                <div className="global-dropdown-list">
-                  {globalMatches.length > 0 ? (
-                    globalMatches.map((m) => (
-                      <button
-                        key={`global-${m.id}`}
-                        type="button"
-                        className="global-dropdown-item"
-                        onClick={() => userPlan.startsWith('PREMIUM') ? handleQuickAdd(m) : router.push('/upgrade')}
-                      >
-                        <span className="global-dropdown-copy">
-                          <span className="global-dropdown-title">{m.title}</span>
-                          <span className="global-dropdown-artist">{m.artist}</span>
-                        </span>
-                        <span className="global-dropdown-cta">
-                          {userPlan.startsWith('PREMIUM') ? 'Dodaj' : <Lock size={12} />}
-                        </span>
-                      </button>
-                    ))
-                  ) : (
-                    <div className="global-dropdown-empty">Nema rezultata u glavnoj pesmarici.</div>
-                  )}
-                </div>
-              </div>
+        <div className="search-row" ref={searchBoxRef}>
+          <div className="search-box">
+            <Search size={18} aria-hidden />
+            <input 
+              type="text" 
+              placeholder="Pretraži pesme..." 
+              value={searchTerm} 
+              onChange={(e) => setSearchTerm(e.target.value)} 
+              onFocus={() => {
+                if (searchTerm.trim().length > 1) setShowGlobalDropdown(true);
+              }}
+            />
+            {searchTerm && (
+              <button type="button" className="search-clear" onClick={() => { setSearchTerm(''); setShowGlobalDropdown(false); }}>
+                <X size={14} />
+              </button>
             )}
           </div>
-          <div className="header-cta-group">
+          {showGlobalDropdown && searchTerm.trim().length > 1 && (
+            <div className="global-dropdown">
+              {songs.length > 0 && (
+                <>
+                  <div className="global-dropdown-head repertoire-section">
+                    <span>Moj repertoar</span>
+                    <span className="global-dropdown-count">{songs.length}</span>
+                  </div>
+                  <div className="global-dropdown-list">
+                    {songs.map((s) => (
+                      <div key={`rep-${s.id}`} className="global-dropdown-item">
+                        <span className="global-dropdown-copy" style={{ cursor: 'pointer' }} onClick={() => { setOpenSongId(s.id); setShowGlobalDropdown(false); }}>
+                          <span className="global-dropdown-title">{s.title}</span>
+                          <span className="global-dropdown-artist">{s.artist || 'Evergreen / Folk'}</span>
+                        </span>
+                        <button
+                          type="button"
+                          className="global-dropdown-cta remove-cta"
+                          onClick={() => removeSong(s.id)}
+                        >
+                          <Trash2 size={12} /> Izbaci
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+              <div className="global-dropdown-head">
+                <span>Glavna pesmarica</span>
+                <span className="global-dropdown-count">{globalMatches.length}</span>
+              </div>
+              <div className="global-dropdown-list">
+                {globalMatches.length > 0 ? (
+                  globalMatches.map((m) => (
+                    <button
+                      key={`global-${m.id}`}
+                      type="button"
+                      className="global-dropdown-item"
+                      onClick={() => userPlan.startsWith('PREMIUM') ? handleQuickAdd(m) : router.push('/upgrade')}
+                    >
+                      <span className="global-dropdown-copy">
+                        <span className="global-dropdown-title">{m.title}</span>
+                        <span className="global-dropdown-artist">{m.artist}</span>
+                      </span>
+                      <span className="global-dropdown-cta add-cta">
+                        {userPlan.startsWith('PREMIUM') ? <><Plus size={12} /> Dodaj</> : <Lock size={12} />}
+                      </span>
+                    </button>
+                  ))
+                ) : (
+                  <div className="global-dropdown-empty">Nema rezultata u glavnoj pesmarici.</div>
+                )}
+              </div>
+              {songs.length === 0 && globalMatches.length === 0 && (
+                <div className="global-dropdown-empty">Nema rezultata ni u repertoaru ni u pesmarici.</div>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div className="toolbar">
+          <div className="toolbar-left">
             <button
               type="button"
-              className="btn btn-secondary"
+              className="toolbar-btn"
               onClick={handleDownloadRepertoire}
               disabled={!ownerId}
               title="Preuzmi repertoar za štampu"
             >
-              <FileDown size={18} /> Preuzmi repertoar
+              <FileDown size={16} /> <span className="toolbar-label">Preuzmi</span>
             </button>
             <button
               type="button"
-              className="btn btn-danger-outline"
+              className="toolbar-btn danger"
               onClick={removeAllSongs}
               disabled={isDeletingAllSongs || songs.length === 0}
             >
-              {isDeletingAllSongs ? 'Brišem listu...' : 'Obriši ceo repertoar'}
+              <Trash2 size={16} /> <span className="toolbar-label">{isDeletingAllSongs ? 'Brišem...' : 'Obriši sve'}</span>
             </button>
+          </div>
+          <div className="toolbar-right">
             {userPlan.startsWith('PREMIUM') ? (
               <>
                 <button
                   type="button"
-                  className="btn btn-secondary bulk-add-btn"
+                  className="toolbar-btn accent"
                   onClick={() => setShowBulkImportModal(true)}
                 >
-                  <FileText size={18} /> Dodaj listu pesama
+                  <FileText size={16} /> <span className="toolbar-label">Dodaj listu</span>
                 </button>
                 <Link href="/bands/song/new">
-                  <button className="btn btn-primary"><Plus size={18} /> Dodaj Novu</button>
+                  <button className="toolbar-btn primary"><Plus size={16} /> <span className="toolbar-label">Dodaj novu</span></button>
                 </Link>
               </>
             ) : (
               <Link href="/upgrade">
-                <button className="btn btn-primary" title="Dodavanje pesama zahteva Premium plan">
-                  <Lock size={16} /> Dodaj (Premium)
+                <button className="toolbar-btn primary" title="Dodavanje pesama zahteva Premium plan">
+                  <Lock size={14} /> <span className="toolbar-label">Dodaj (Premium)</span>
                 </button>
               </Link>
             )}
           </div>
         </div>
+
         <div className="gender-tabs-container">
           <div className="gender-tabs">
             {categories.map(cat => (
@@ -861,75 +898,133 @@ export default function RepertoirePage() {
       )}
 
       <style jsx>{`
-        .repertoire-container { padding-top: 8rem; padding-bottom: 6rem; min-height: 100vh; overflow-x: clip; overflow-y: visible; box-sizing: border-box; width: 100%; position: relative; touch-action: pan-y pinch-zoom; }
-        .page-header { margin-bottom: 4rem; position: relative; z-index: 2; }
+        /* ─── Layout ─── */
+        .repertoire-container { padding-top: 7.5rem; padding-bottom: 6rem; min-height: 100vh; overflow-x: clip; overflow-y: visible; box-sizing: border-box; width: 100%; position: relative; touch-action: pan-y pinch-zoom; }
+        .page-header { margin-bottom: 2rem; position: relative; z-index: 2; }
         .back-link {
-          display: inline-flex;
-          align-items: center;
-          gap: 0.5rem;
-          color: rgba(226, 232, 240, 0.8);
-          font-weight: 800;
-          font-size: 0.8rem;
-          text-transform: uppercase;
-          letter-spacing: 1px;
-          margin-bottom: 2rem;
-          padding: 0.45rem 0.7rem;
-          border-radius: 999px;
-          border: 1px solid rgba(255, 255, 255, 0.12);
-          background: rgba(255, 255, 255, 0.06);
-          position: relative;
-          z-index: 3;
-          transition: 0.2s ease;
+          display: inline-flex; align-items: center; gap: 0.4rem;
+          color: rgba(226, 232, 240, 0.7); font-weight: 800; font-size: 0.72rem;
+          text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1.5rem;
+          padding: 0.4rem 0.65rem; border-radius: 999px;
+          border: 1px solid rgba(255, 255, 255, 0.1); background: rgba(255, 255, 255, 0.04);
+          transition: 0.2s ease; cursor: pointer;
         }
-        .back-link:hover { color: #f8fafc; border-color: rgba(139, 92, 246, 0.4); }
-        .title-section h1 { font-size: 3.5rem; font-weight: 800; margin-bottom: 1.5rem; letter-spacing: -2px; }
-        .header-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 3rem; gap: 2rem; flex-wrap: wrap; }
-        .header-cta-group { display: flex; align-items: center; gap: 0.85rem; flex-wrap: wrap; }
-        .btn-danger-outline { background: rgba(239, 68, 68, 0.1); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3); box-shadow: 0 10px 25px rgba(239, 68, 68, 0.08); }
-        .btn-danger-outline:disabled { opacity: 0.55; cursor: not-allowed; box-shadow: none; }
-        .search-box-wrap { position: relative; flex: 1; min-width: 300px; max-width: 500px; }
-        .search-box { flex: 1; min-width: 300px; max-width: 500px; display: flex; align-items: center; gap: 1rem; padding: 0.75rem 1.5rem; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 100px; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2); }
+        .back-link:hover { color: #f8fafc; border-color: rgba(139, 92, 246, 0.4); background: rgba(139, 92, 246, 0.06); }
+        .title-section { margin-bottom: 1.8rem; }
+        .title-section h1 { font-size: 2.8rem; font-weight: 800; margin-bottom: 0.6rem; letter-spacing: -1.5px; line-height: 1.1; }
+        .title-section .text-muted { font-size: 0.88rem; color: #64748b; }
+
+        /* ─── Search ─── */
+        .search-row { position: relative; margin-bottom: 1rem; }
+        .search-box {
+          display: flex; align-items: center; gap: 0.85rem;
+          padding: 0.7rem 1.25rem; background: rgba(255, 255, 255, 0.04);
+          border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 14px;
+          transition: border-color 0.2s;
+        }
+        .search-box:focus-within { border-color: rgba(139, 92, 246, 0.45); }
         .search-box input { background: none; border: none; color: #f8fafc; width: 100%; outline: none; font-size: 0.95rem; font-weight: 600; }
-                .search-box svg { color: #64748b; flex-shrink: 0; }
-        .bulk-add-btn { background: rgba(255, 255, 255, 0.92); color: #4338ca !important; border: 1px solid rgba(99, 102, 241, 0.16); box-shadow: 0 10px 25px rgba(99, 102, 241, 0.12); }
-        .global-dropdown { position: absolute; top: calc(100% + 0.7rem); left: 0; right: 0; z-index: 20; background: rgba(255, 255, 255, 0.98); border: 1px solid #e2e8f0; border-radius: 22px; box-shadow: 0 20px 45px rgba(15, 23, 42, 0.12); overflow: hidden; }
-        .global-dropdown-head { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; padding: 0.9rem 1.15rem 0.75rem; border-bottom: 1px solid rgba(226, 232, 240, 0.9); font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: #64748b; }
-        .global-dropdown-list { max-height: min(52vh, 420px); overflow-y: auto; }
-        .global-dropdown-item { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 0.8rem; padding: 0.95rem 1.15rem; border: none; border-bottom: 1px solid rgba(226, 232, 240, 0.8); background: transparent; text-align: left; cursor: pointer; transition: background 0.18s ease; }
+        .search-box input::placeholder { color: #475569; }
+        .search-box svg { color: #64748b; flex-shrink: 0; }
+        .search-clear { background: none; border: none; color: #64748b; cursor: pointer; padding: 4px; border-radius: 6px; display: flex; align-items: center; justify-content: center; transition: 0.15s; }
+        .search-clear:hover { color: #f8fafc; background: rgba(255, 255, 255, 0.08); }
+
+        /* ─── Dropdown ─── */
+        .global-dropdown {
+          position: absolute; top: calc(100% + 0.5rem); left: 0; right: 0; z-index: 20;
+          background: #fff; border: 1px solid #e2e8f0; border-radius: 16px;
+          box-shadow: 0 16px 40px rgba(15, 23, 42, 0.14), 0 2px 8px rgba(15, 23, 42, 0.06);
+          overflow: hidden; max-height: min(65vh, 520px); overflow-y: auto;
+        }
+        .global-dropdown-head {
+          display: flex; justify-content: space-between; align-items: center;
+          padding: 0.7rem 1rem; border-bottom: 1px solid #f1f5f9;
+          font-size: 0.68rem; font-weight: 800; letter-spacing: 0.08em;
+          text-transform: uppercase; color: #94a3b8;
+          position: sticky; top: 0; background: #fafbfc; z-index: 1;
+        }
+        .global-dropdown-head.repertoire-section { color: #6366f1; background: rgba(99, 102, 241, 0.03); }
+        .global-dropdown-count { background: rgba(99, 102, 241, 0.1); color: #6366f1; padding: 2px 8px; border-radius: 999px; font-size: 0.65rem; }
+        .global-dropdown-list { overflow-y: auto; }
+        .global-dropdown-item {
+          width: 100%; display: flex; align-items: center; justify-content: space-between;
+          gap: 0.75rem; padding: 0.7rem 1rem; border: none;
+          border-bottom: 1px solid #f1f5f9; background: transparent;
+          text-align: left; cursor: pointer; transition: background 0.15s;
+        }
         .global-dropdown-item:last-child { border-bottom: none; }
-        .global-dropdown-item:hover { background: rgba(99, 102, 241, 0.06); }
-        .global-dropdown-copy { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
-        .global-dropdown-title { font-size: 0.95rem; font-weight: 800; color: #0f172a; }
-        .global-dropdown-artist { font-size: 0.78rem; color: #64748b; }
-        .global-dropdown-cta { flex-shrink: 0; padding: 0.38rem 0.7rem; border-radius: 999px; border: 1px solid rgba(99, 102, 241, 0.22); background: rgba(99, 102, 241, 0.08); color: #6366f1; font-size: 0.72rem; font-weight: 800; }
-        .global-dropdown-empty { padding: 1rem 1.15rem; color: #64748b; font-size: 0.86rem; }
+        .global-dropdown-item:hover { background: #f8fafc; }
+        .global-dropdown-copy { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; flex: 1; }
+        .global-dropdown-title { font-size: 0.9rem; font-weight: 700; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .global-dropdown-artist { font-size: 0.75rem; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .global-dropdown-cta {
+          flex-shrink: 0; display: inline-flex; align-items: center; gap: 0.3rem;
+          padding: 0.35rem 0.7rem; border-radius: 8px; font-size: 0.7rem; font-weight: 800;
+          cursor: pointer; transition: 0.15s; border: none; white-space: nowrap;
+        }
+        .global-dropdown-cta.add-cta { background: rgba(99, 102, 241, 0.1); color: #4f46e5; }
+        .global-dropdown-cta.add-cta:hover { background: rgba(99, 102, 241, 0.2); }
+        .global-dropdown-cta.remove-cta { background: rgba(239, 68, 68, 0.08); color: #dc2626; }
+        .global-dropdown-cta.remove-cta:hover { background: rgba(239, 68, 68, 0.16); }
+        .global-dropdown-empty { padding: 1.5rem 1rem; color: #94a3b8; font-size: 0.85rem; text-align: center; }
+
+        /* ─── Toolbar ─── */
+        .toolbar {
+          display: flex; justify-content: space-between; align-items: center;
+          gap: 0.6rem; flex-wrap: wrap;
+          padding: 0.65rem 0.85rem; border-radius: 12px;
+          background: rgba(255, 255, 255, 0.025); border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .toolbar-left, .toolbar-right { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+        .toolbar-btn {
+          display: inline-flex; align-items: center; gap: 0.4rem;
+          padding: 0.5rem 0.85rem; border-radius: 8px; font-size: 0.75rem; font-weight: 700;
+          border: 1px solid rgba(255, 255, 255, 0.1); background: rgba(255, 255, 255, 0.04);
+          color: #94a3b8; cursor: pointer; transition: 0.2s; white-space: nowrap;
+        }
+        .toolbar-btn:hover { border-color: rgba(139, 92, 246, 0.3); color: #e2e8f0; background: rgba(139, 92, 246, 0.06); }
+        .toolbar-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .toolbar-btn.danger { color: #fca5a5; border-color: rgba(239, 68, 68, 0.15); }
+        .toolbar-btn.danger:hover { border-color: rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.06); color: #fca5a5; }
+        .toolbar-btn.accent { color: #a5b4fc; border-color: rgba(99, 102, 241, 0.2); }
+        .toolbar-btn.accent:hover { border-color: rgba(99, 102, 241, 0.4); background: rgba(99, 102, 241, 0.08); }
+        .toolbar-btn.primary { background: #8b5cf6; color: #fff; border-color: #8b5cf6; }
+        .toolbar-btn.primary:hover { background: #7c3aed; border-color: #7c3aed; }
+
+        /* ─── Tabs ─── */
+        .gender-tabs-container { overflow-x: auto; margin-top: 1rem; padding-bottom: 0.5rem; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+        .gender-tabs-container::-webkit-scrollbar { display: none; }
+        .gender-tabs { display: flex; gap: 0.5rem; min-width: max-content; }
+        .tab-btn {
+          background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08);
+          color: #64748b; padding: 0.5rem 1rem; border-radius: 10px;
+          cursor: pointer; transition: 0.2s; font-weight: 700; font-size: 0.73rem; white-space: nowrap;
+        }
+        .tab-btn:hover { color: #e2e8f0; border-color: rgba(139, 92, 246, 0.25); }
+        .tab-btn.active { background: #8b5cf6; color: #fff; border-color: #8b5cf6; }
         
-        .gender-tabs-container { overflow-x: auto; margin-top: 2.5rem; padding-bottom: 1rem; -webkit-overflow-scrolling: touch; }
-        .gender-tabs { display: flex; gap: 0.6rem; min-width: max-content; }
-        .tab-btn { background: rgba(255,255,255,0.03); border: 1px solid var(--border); color: #888; padding: 0.6rem 1.25rem; border-radius: 100px; cursor: pointer; transition: 0.3s; font-weight: 700; font-size: 0.75rem; white-space: nowrap; }
-        .tab-btn.active { background: var(--accent-primary); color: black; border-color: var(--accent-primary); }
+        /* ─── Song Table ─── */
+        .repertoire-list { padding: 0; border: 1px solid rgba(255, 255, 255, 0.06); overflow: hidden; margin-top: 1rem; background: rgba(10, 10, 22, 0.7); border-radius: 16px; }
+        .list-header { display: grid; grid-template-columns: 2fr 1fr 1fr 120px; padding: 1rem 1.5rem; background: rgba(255, 255, 255, 0.02); border-bottom: 1px solid rgba(255, 255, 255, 0.06); font-size: 0.65rem; font-weight: 800; color: rgba(226, 232, 240, 0.35); letter-spacing: 1.5px; }
+        .song-row { display: grid; grid-template-columns: 2fr 1fr 1fr 120px; padding: 0.9rem 1.5rem; border-bottom: 1px solid rgba(255, 255, 255, 0.04); align-items: center; transition: background 0.15s; }
+        .song-row:hover { background: rgba(255, 255, 255, 0.02); }
+        .song-row:last-child { border-bottom: none; }
+        .song-name { font-size: 1rem; font-weight: 700; transition: 0.2s; color: #e2e8f0; line-height: 1.3; }
+        .song-artist { color: rgba(226, 232, 240, 0.45); font-size: 0.8rem; margin-top: 0.15rem; }
+        .clickable-title:hover { color: #8b5cf6; }
         
-        .repertoire-list { padding: 0; border: 1px solid rgba(255, 255, 255, 0.08); overflow: hidden; margin-top: 2rem; background: rgba(10, 10, 22, 0.85); border-radius: 20px; }
-        .list-header { display: grid; grid-template-columns: 2fr 1fr 1fr 120px; padding: 1.5rem 2.5rem; background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--border); font-size: 0.7rem; font-weight: 800; color: rgba(226, 232, 240, 0.5); letter-spacing: 1.5px; }
-        .song-row { display: grid; grid-template-columns: 2fr 1fr 1fr 120px; padding: 1.25rem 2.5rem; border-bottom: 1px solid var(--border); align-items: center; transition: 0.3s ease; }
-        .song-name { font-size: 1.15rem; font-weight: 700; transition: 0.2s; color: #f8fafc; }
-        .song-artist { color: rgba(226, 232, 240, 0.55); font-size: 0.85rem; }
-        .clickable-title:hover { color: var(--accent-primary); }
+        .suggestions-divider { padding: 0.7rem 1.5rem; background: rgba(16, 185, 129, 0.04); border-bottom: 1px solid rgba(16, 185, 129, 0.08); font-size: 0.62rem; font-weight: 800; color: var(--accent-primary); letter-spacing: 1px; text-transform: uppercase; }
+        .repertoire-divider { background: rgba(99, 102, 241, 0.04); border-bottom-color: rgba(99, 102, 241, 0.08); color: #818cf8; }
         
-        .suggestions-divider { padding: 1rem 2.5rem; background: rgba(16, 185, 129, 0.05); border-bottom: 1px solid rgba(16, 185, 129, 0.1); font-size: 0.65rem; font-weight: 800; color: var(--accent-primary); letter-spacing: 1px; text-transform: uppercase; }
-        .repertoire-divider { background: rgba(99, 102, 241, 0.05); border-bottom-color: rgba(99, 102, 241, 0.12); color: #6366f1; }
+        .tonality-pill { padding: 3px 10px; border-radius: 8px; font-size: 0.68rem; font-weight: 800; transition: 0.2s; }
+        .tonality-pill.success { background: rgba(16, 185, 129, 0.08); color: var(--accent-primary); }
+        .tonality-pill.warning { background: rgba(245, 158, 11, 0.08); color: #f59e0b; }
         
-        .tonality-pill { background: rgba(16, 185, 129, 0.1); color: var(--accent-primary); padding: 4px 12px; border-radius: 100px; font-size: 0.75rem; font-weight: 800; transition: 0.3s; }
-        .tonality-pill.success { background: rgba(16, 185, 129, 0.1); color: var(--accent-primary); }
-        .tonality-pill.warning { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
-        .tonality-pill.global { background: transparent; border: 1px solid var(--accent-primary); }
+        .genre-label { font-size: 0.75rem; color: #64748b; }
         
-        .genre-label { font-size: 0.8rem; color: var(--text-muted); }
-        .genre-label.glass { background: rgba(255,255,255,0.05); padding: 2px 8px; border-radius: 4px; }
-        
-        .action-btn { color: rgba(226, 232, 240, 0.5); transition: 0.2s; padding: 8px; border-radius: 6px; }
-        .action-btn:hover { color: white; background: rgba(255,255,255,0.05); }
-        .action-btn.delete:hover { color: #ef4444; background: rgba(239, 68, 68, 0.1); }
+        .action-btn { color: rgba(226, 232, 240, 0.35); transition: 0.2s; padding: 6px; border-radius: 8px; }
+        .action-btn:hover { color: #e2e8f0; background: rgba(255, 255, 255, 0.05); }
+        .action-btn.delete:hover { color: #f87171; background: rgba(239, 68, 68, 0.08); }
         .bulk-import-overlay { position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 9999; background: rgba(15, 23, 42, 0.55); padding: 2rem; display: flex; align-items: center; justify-content: center; overflow-y: auto; }
         .bulk-import-modal { width: min(1040px, 100%); max-height: calc(100dvh - 4rem); overflow: hidden; display: flex; flex-direction: column; padding: 1.4rem; border: 1px solid rgba(226, 232, 240, 0.8); background: rgba(255, 255, 255, 0.97); margin-top: 0; border-radius: 22px; }
         .bulk-import-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: 1.2rem; flex-shrink: 0; }
@@ -974,99 +1069,62 @@ export default function RepertoirePage() {
           to { transform: rotate(360deg); }
         }
 
+        /* ─── Tablet ─── */
         @media (max-width: 968px) {
           .list-header { display: none; }
+          .title-section h1 { font-size: 2.2rem; letter-spacing: -1px; }
           .song-row {
             grid-template-columns: 1fr;
-            gap: 0.75rem;
-            padding: 1.15rem 1.1rem;
-            align-items: stretch;
+            gap: 0.6rem;
+            padding: 1rem 1.1rem;
           }
-          .title-section h1 { font-size: 2.5rem; }
-          .header-actions { gap: 0.9rem; margin-top: 1.8rem; }
-          .header-actions {
-            flex-direction: column;
-            align-items: stretch;
+          .col-tonality, .col-genre, .col-actions {
+            display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
           }
-          .header-cta-group { width: 100%; }
-          .header-cta-group :global(a),
-          .header-cta-group > button { flex: 1 1 calc(50% - 0.5rem); min-width: 0; }
-          .header-cta-group :global(a > button),
-          .header-cta-group > button {
-            width: 100%;
-            justify-content: center;
-            min-height: 48px;
-            font-size: 0.85rem;
-          }
+          .col-actions { justify-content: flex-end; }
+          .song-name { font-size: 0.95rem; }
           .bulk-import-grid { grid-template-columns: 1fr; }
-          .search-box-wrap,
-          .search-box { min-width: 0; max-width: 100%; width: 100%; }
-          .global-dropdown {
-            position: static;
-            margin-top: 0.65rem;
-          }
-          .col-tonality,
-          .col-genre,
-          .col-actions {
-            display: flex;
-            align-items: center;
-            gap: 0.65rem;
-            flex-wrap: wrap;
-          }
-          .col-actions {
-            justify-content: flex-end;
-          }
-          .song-name { font-size: 1.02rem; }
-          .song-artist { margin: 0.2rem 0 0; }
+          .global-dropdown { position: static; margin-top: 0.5rem; max-height: min(50vh, 420px); border-radius: 14px; }
+          .global-dropdown-item { padding: 0.75rem 0.9rem; }
+          .global-dropdown-cta { min-height: 36px; padding: 0.4rem 0.75rem; }
+          .toolbar-label { display: none; }
+          .toolbar-btn { padding: 0.5rem; min-width: 38px; min-height: 38px; justify-content: center; }
         }
 
+        /* ─── Phone ─── */
         @media (max-width: 560px) {
-          .repertoire-container { padding-top: 7.2rem; }
-          .title-section h1 { font-size: 2rem; letter-spacing: -1px; margin-bottom: 0.9rem; }
-          .header-actions :global(a),
-          .header-actions :global(.btn) {
-            width: 100%;
-          }
-          .header-cta-group { width: 100%; }
-          .search-box {
-            padding: 0.65rem 1rem;
-            border-radius: 14px;
-            gap: 0.7rem;
-          }
-          .global-dropdown { top: calc(100% + 0.45rem); border-radius: 16px; }
-          .global-dropdown-item { padding: 0.85rem 0.9rem; align-items: flex-start; }
-          .global-dropdown-title { font-size: 0.88rem; }
-          .global-dropdown-artist { font-size: 0.74rem; }
+          .repertoire-container { padding-top: 6.5rem; padding-bottom: 4rem; }
+          .title-section { margin-bottom: 1.2rem; }
+          .title-section h1 { font-size: 1.75rem; margin-bottom: 0.4rem; }
+          .title-section .text-muted { font-size: 0.8rem; }
+          .back-link { margin-bottom: 1rem; font-size: 0.68rem; padding: 0.35rem 0.55rem; }
+          .search-box { padding: 0.6rem 0.9rem; border-radius: 12px; gap: 0.65rem; }
+          .search-box input { font-size: 16px; }
+          .global-dropdown { max-height: min(45vh, 340px); border-radius: 12px; }
+          .global-dropdown-head { padding: 0.6rem 0.8rem; font-size: 0.64rem; }
+          .global-dropdown-item { padding: 0.7rem 0.8rem; gap: 0.5rem; }
+          .global-dropdown-title { font-size: 0.84rem; }
+          .global-dropdown-artist { font-size: 0.7rem; }
+          .global-dropdown-cta { min-height: 32px; padding: 0.3rem 0.6rem; font-size: 0.66rem; border-radius: 6px; }
+          .toolbar { padding: 0.5rem 0.6rem; gap: 0.4rem; border-radius: 10px; }
+          .toolbar-btn { padding: 0.45rem; min-width: 36px; min-height: 36px; }
+          .tab-btn { padding: 0.45rem 0.8rem; font-size: 0.68rem; }
+          .song-row { padding: 0.85rem 0.9rem; gap: 0.6rem; }
+          .song-name { font-size: 0.92rem; }
+          .song-artist { font-size: 0.75rem; }
+          .tonality-pill, .genre-label { font-size: 0.65rem; }
+          .action-btn { padding: 8px; min-width: 36px; min-height: 36px; display: inline-flex; align-items: center; justify-content: center; }
+          .suggestions-divider { padding: 0.6rem 0.9rem; }
+          .repertoire-list { border-radius: 12px; }
           .bulk-import-overlay { padding: 0.5rem; }
-          .bulk-import-modal { padding: 0.75rem; max-height: calc(100dvh - 1rem); border-radius: 16px; }
-          .bulk-import-textarea { min-height: 200px; }
-          .bulk-category-select { min-height: 42px; font-size: 0.88rem; }
-          .bulk-import-head h2 { font-size: 1.15rem; }
+          .bulk-import-modal { padding: 0.75rem; max-height: calc(100dvh - 1rem); border-radius: 14px; }
+          .bulk-import-textarea { min-height: 180px; }
+          .bulk-category-select { min-height: 42px; font-size: 16px; }
+          .bulk-import-head h2 { font-size: 1.1rem; }
           .bulk-import-tools,
           .bulk-import-footer,
           .bulk-import-actions { flex-direction: column; align-items: stretch; }
           .bulk-result-item { align-items: flex-start; flex-direction: column; }
-          .song-row {
-            padding: 1.1rem 0.95rem;
-            gap: 0.8rem;
-          }
-          .song-name { font-size: 1rem; }
-          .song-row .col-actions {
-            justify-content: space-between;
-          }
-          .tonality-pill,
-          .genre-label {
-            font-size: 0.72rem;
-          }
-          .action-btn {
-            padding: 10px;
-          }
-          .tab-btn {
-            padding: 0.55rem 0.9rem;
-            font-size: 0.7rem;
-          }
-          .header-cta-group :global(a),
-          .header-cta-group > button { flex: 1 1 100%; }
         }
       `}</style>
     </div>

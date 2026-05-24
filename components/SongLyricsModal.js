@@ -192,7 +192,7 @@ export default function SongLyricsModal({ songId, onClose }) {
         </div>
       </header>
 
-      <main className="slm-lyrics" ref={scrollRef}>
+      <main className="slm-lyrics" ref={scrollRef} style={isEditing ? { display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: '1.5rem 5%' } : undefined}>
         {isEditing ? (
           <div className="slm-edit-layout">
             <div className="slm-edit-actions">
@@ -258,9 +258,9 @@ export default function SongLyricsModal({ songId, onClose }) {
       {!isEditing && (
         <footer className="slm-footer">
           <div className="slm-speed">
-            <button className={scrollSpeed === 1 ? 'active' : ''} onClick={() => setScrollSpeed(1)}>x1</button>
-            <button className={scrollSpeed === 1.5 ? 'active' : ''} onClick={() => setScrollSpeed(1.5)}>x1.5</button>
-            <button className={scrollSpeed === 2 ? 'active' : ''} onClick={() => setScrollSpeed(2)}>x2</button>
+            <button onClick={() => setScrollSpeed((s) => Math.max(0.25, +(s - 0.25).toFixed(2)))}>−</button>
+            <span className="slm-speed-val">x{scrollSpeed}</span>
+            <button onClick={() => setScrollSpeed((s) => Math.min(4, +(s + 0.25).toFixed(2)))}>+</button>
           </div>
           <button className="slm-play" onClick={() => setIsScrolling(!isScrolling)}>
             {isScrolling ? <Pause size={32} fill="currentColor" /> : <Play size={32} fill="currentColor" />}
@@ -330,7 +330,7 @@ const modalStyles = `
   .slm-transpose button { background: #111; border: 1px solid #222; color: #fff; width: 40px; height: 40px; border-radius: 8px; cursor: pointer; font-weight: 800; }
   .slm-key { font-size: 1.5rem; font-weight: 950; color: var(--accent-primary); width: 40px; text-align: center; }
   .slm-lyrics {
-    flex: 1; overflow-y: auto; overflow-x: hidden;
+    flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain; padding: 4rem 10% 8rem;
     padding-bottom: max(8rem, calc(8rem + env(safe-area-inset-bottom)));
@@ -347,12 +347,12 @@ const modalStyles = `
   .slm-chord-line { color: #8b5cf6; font-weight: 800; font-size: 0.95em; line-height: 1.3; white-space: pre; user-select: all; }
   .slm-text-line { line-height: 1.5; }
   .slm-no-lyrics { text-align: center; padding: 5rem; display: flex; flex-direction: column; align-items: center; gap: 2rem; color: #444; }
-  .slm-edit-layout { height: 100%; display: flex; flex-direction: column; gap: 0.75rem; }
-  .slm-edit-actions { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; }
+  .slm-edit-layout { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 0.75rem; }
+  .slm-edit-actions { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; flex-shrink: 0; }
   .slm-edit-btn { display: inline-flex; align-items: center; gap: 0.4rem; background: #111; border: 1px solid #2a2a2a; color: #d1d5db; border-radius: 8px; padding: 0.55rem 0.8rem; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; cursor: pointer; }
   .slm-edit-btn:hover { border-color: #00ff00; color: #00ff00; }
   .slm-edit-btn.ghost:hover { border-color: #f59e0b; color: #f59e0b; }
-  .slm-import-row { display: grid; grid-template-columns: 1fr auto; gap: 0.6rem; padding: 0.35rem 0; }
+  .slm-import-row { display: grid; grid-template-columns: 1fr auto; gap: 0.6rem; padding: 0.35rem 0; flex-shrink: 0; }
   .slm-import-select { background: #0b0b0b; border: 1px solid #222; color: #d1d5db; border-radius: 8px; padding: 0.6rem 0.75rem; outline: none; font-size: 0.85rem; }
   .slm-import-select:focus { border-color: #00ff00; }
   .slm-import-btn { background: #111; border: 1px solid #2a2a2a; color: #cbd5e1; border-radius: 8px; padding: 0.6rem 0.9rem; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; cursor: pointer; }
@@ -362,7 +362,7 @@ const modalStyles = `
   .slm-chord-help code { background: rgba(139,92,246,0.15); padding: 1px 5px; border-radius: 3px; font-family: monospace; font-weight: 700; color: #c4b5fd; }
   .slm-chord-help strong { color: #e0e7ff; }
   .slm-chord-help em { color: #8b5cf6; font-style: normal; font-weight: 700; }
-  .slm-edit-area { width: 100%; height: 100%; background: #050505; border: 1px dashed #333; color: #fff; font-family: monospace; font-size: 1.25rem; padding: 2rem; outline: none; resize: none; overflow-y: auto; -webkit-overflow-scrolling: touch; scrollbar-width: thin; scrollbar-color: rgba(167,139,250,0.5) transparent; }
+  .slm-edit-area { width: 100%; flex: 1; min-height: 0; background: #050505; border: 1px dashed #333; color: #fff; font-family: monospace; font-size: 1.25rem; padding: 2rem; outline: none; resize: none; overflow-y: auto; -webkit-overflow-scrolling: touch; scrollbar-width: thin; scrollbar-color: rgba(167,139,250,0.5) transparent; }
   .slm-edit-area::-webkit-scrollbar { width: 8px; }
   .slm-edit-area::-webkit-scrollbar-track { background: transparent; }
   .slm-edit-area::-webkit-scrollbar-thumb { background: rgba(167,139,250,0.35); border-radius: 999px; border: 2px solid transparent; background-clip: padding-box; }
@@ -374,9 +374,10 @@ const modalStyles = `
     display: flex; justify-content: space-between; align-items: center;
     flex-shrink: 0;
   }
-  .slm-speed { display: flex; gap: 0.5rem; }
-  .slm-speed button { background: #111; border: 1px solid #222; color: #555; padding: 0.5rem 1rem; border-radius: 6px; font-weight: 800; cursor: pointer; }
-  .slm-speed button.active { background: var(--accent-primary); color: #000; border-color: var(--accent-primary); }
+  .slm-speed { display: flex; align-items: center; gap: 0.4rem; }
+  .slm-speed button { background: #111; border: 1px solid #222; color: #aaa; width: 38px; height: 38px; border-radius: 8px; font-weight: 800; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.15s; }
+  .slm-speed button:hover { border-color: var(--accent-primary); color: var(--accent-primary); }
+  .slm-speed-val { font-size: 0.85rem; font-weight: 800; color: #8b5cf6; min-width: 38px; text-align: center; }
   .slm-play { background: var(--accent-primary); color: #000; border: none; width: 60px; height: 60px; border-radius: 30px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
   .slm-play:hover { transform: scale(1.05); }
   .slm-status { text-align: right; display: flex; flex-direction: column; gap: 4px; font-size: 0.65rem; font-weight: 800; color: #333; letter-spacing: 1px; }
@@ -417,8 +418,8 @@ const modalStyles = `
       padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
     }
     .slm-play { width: 52px; height: 52px; border-radius: 26px; }
-    .slm-speed { gap: 0.35rem; }
-    .slm-speed button { padding: 0.45rem 0.55rem; font-size: 0.72rem; min-height: 36px; }
+    .slm-speed { gap: 0.3rem; }
+    .slm-speed button { width: 34px; height: 34px; font-size: 1rem; }
     .slm-status { font-size: 0.58rem; letter-spacing: 0.5px; }
   }
 
