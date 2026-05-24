@@ -661,6 +661,16 @@ export default function BandDashboard() {
               <span className="panel-cta">Otvori</span>
             </div>
           </Link>
+          <Link href="/bands/repertoire" className="panel-link">
+            <div className="panel-card">
+              <div className="panel-icon"><Music size={20} /></div>
+              <div>
+                <h3>Moj Repertoar</h3>
+                <p>Pesme koje izvodite — dodajte, uredite i organizujte.</p>
+              </div>
+              <span className="panel-cta">Otvori</span>
+            </div>
+          </Link>
           <Link href="/bands/midi" className="panel-link">
             <div className="panel-card">
               <div className="panel-icon"><FileMusic size={20} /></div>
