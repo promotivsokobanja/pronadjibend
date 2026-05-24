@@ -32,6 +32,7 @@ import DashboardHelpModal from '../../../components/DashboardHelpModal';
 import BookingCalendar from '../../../components/BookingCalendar';
 import BusyDateNoteModal from '../../../components/bands/BusyDateNoteModal';
 import ChatThread from '../../../components/ChatThread';
+import OfflinePrepButton from '../../../components/OfflinePrepButton';
 import { dateToCalendarKeyUTC } from '../../../lib/calendarDate';
 
 /** Postavite na `false` da sakrijete kratke opise ispod dugmadi (brz „undo“ izgleda). */
@@ -723,6 +724,7 @@ export default function BandDashboard() {
               <span className="panel-cta">Otvori</span>
             </div>
           </Link>
+          <OfflinePrepButton bandId={bandId} />
         </div>
       </header>
 

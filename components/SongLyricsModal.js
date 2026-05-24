@@ -1,6 +1,7 @@
 'use client';
 import { ChevronUp, ChevronDown, Play, Pause, Check, X, Edit2, Music, ArrowLeft } from 'lucide-react';
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { getCachedSong } from '../lib/offlineRepertoire';
 
 const keys = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
@@ -61,11 +62,20 @@ export default function SongLyricsModal({ songId, onClose }) {
     setIsLoading(true);
     try {
       const resp = await fetch(`/api/songs/${songId}`);
+      if (!resp.ok) throw new Error('fetch failed');
       const data = await resp.json();
       setSong(data);
       setEditContent(data.lyrics || '');
     } catch (err) {
       console.error(err);
+      // Offline fallback: try IndexedDB cache
+      try {
+        const cached = await getCachedSong(songId);
+        if (cached) {
+          setSong(cached);
+          setEditContent(cached.lyrics || '');
+        }
+      } catch { /* silent */ }
     } finally {
       setIsLoading(false);
     }

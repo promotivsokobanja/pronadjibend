@@ -9,6 +9,7 @@ import SocialShareActions from '../../../../components/SocialShareActions';
 import ChatThread from '../../../../components/ChatThread';
 import BookingCalendar from '../../../../components/BookingCalendar';
 import BusyDateNoteModal from '../../../../components/bands/BusyDateNoteModal';
+import OfflinePrepButton from '../../../../components/OfflinePrepButton';
 import { dateToCalendarKeyUTC } from '../../../../lib/calendarDate';
 
 const LS_MUSICIAN_CAL_QUICK = 'pronadjibend_musician_calendar_quick_busy';
@@ -1412,6 +1413,7 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
                       </button>
                     );
                   })}
+                  <OfflinePrepButton musicianId={viewer?.musicianProfileId} />
                 </div>
 
                 {isPremiumVenue && korgPaItems.length ? (

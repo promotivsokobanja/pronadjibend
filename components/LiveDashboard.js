@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Radio, ListMusic, Eye, EyeOff, MessageSquare, Music, Clock, Settings, ArrowLeft, X, Volume2, VolumeX, Zap, ZapOff, Type, RotateCcw, ChevronDown, Bell, Banknote, PlusCircle, HelpCircle, Play, Pause, Edit2, Check, QrCode, Coffee, Smartphone, ChevronLeft, ChevronRight, CheckCircle2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
+import { getCachedSongs, getCachedSong } from '../lib/offlineRepertoire';
 
 const QrModal = dynamic(() => import('./QrModal'), { ssr: false });
 
@@ -485,10 +486,21 @@ export default function LiveDashboard({ bandId, musicianId }) {
           setAllSongs(Array.isArray(data) ? data : []);
         }
       } catch (err) {
-        if (!cancelled) {
-          setAllSongs([]);
-        }
         console.error('Error loading repertoire songs:', err);
+        // Offline fallback: try IndexedDB cache
+        if (!cancelled) {
+          try {
+            const cached = await getCachedSongs(ownerId);
+            if (cached.length > 0) {
+              setAllSongs(cached);
+              console.info(`[Offline] Loaded ${cached.length} songs from cache`);
+            } else {
+              setAllSongs([]);
+            }
+          } catch {
+            setAllSongs([]);
+          }
+        }
       } finally {
         if (!cancelled) {
           setSongLoading(false);
@@ -952,10 +964,14 @@ export default function LiveDashboard({ bandId, musicianId }) {
               Array.isArray(prev) ? prev.map((s) => (s.id === data.id ? data : s)) : prev
             );
           } else {
-            setSelectedSong(targetSong);
+            // Try offline cache
+            const cached = await getCachedSong(targetSong.id);
+            setSelectedSong(cached || targetSong);
           }
         } catch {
-          setSelectedSong(targetSong);
+          // Offline fallback
+          const cached = await getCachedSong(targetSong.id).catch(() => null);
+          setSelectedSong(cached || targetSong);
         }
       }
       if (navigator.vibrate) navigator.vibrate(30);
