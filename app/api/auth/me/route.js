@@ -36,12 +36,19 @@ export async function GET(request) {
     // Check email verification status
     let emailVerified = false;
     try {
-      const ev = await prisma.$queryRawUnsafe(
-        `SELECT 1 FROM "EmailVerification" WHERE "email" = $1 AND "verified" = true LIMIT 1`,
+      const allRows = await prisma.$queryRawUnsafe(
+        `SELECT "verified" FROM "EmailVerification" WHERE "email" = $1 LIMIT 1`,
         user.email
       );
-      emailVerified = ev.length > 0;
-    } catch { /* table might not exist yet */ }
+      if (allRows.length === 0) {
+        // No verification record exists — account created before verification system
+        emailVerified = true;
+      } else {
+        emailVerified = allRows.some(r => r.verified === true);
+      }
+    } catch { /* table might not exist yet — don't block */
+      emailVerified = true;
+    }
 
     // ADMIN is always considered verified
     if (user.role === 'ADMIN') emailVerified = true;
