@@ -457,8 +457,8 @@ export default function GuestLivePage({ params }) {
         <div className="live-indicator">
           <span className="dot"></span> UŽIVO NASTUP
         </div>
-        <h1>Pronađi Bend</h1>
-        <p className="subtitle-text">Izaberite pesmu i pošaljite live zahtev direktno sa vašeg stola.</p>
+        <h1>{displayBand}</h1>
+        <p className="subtitle-text">Izaberite pesmu i pošaljite zahtev direktno sa vašeg stola</p>
         <div className="live-status-grid">
           <div className="live-status-card">
             <div className="live-status-kicker">BAKŠIŠ</div>
@@ -876,6 +876,7 @@ export default function GuestLivePage({ params }) {
           padding-bottom: max(4rem, env(safe-area-inset-bottom, 0px));
           min-height: 100vh;
           min-height: 100dvh;
+          background: #0a0e1a;
         }
         .preparing-banner {
           display: flex;
@@ -885,9 +886,9 @@ export default function GuestLivePage({ params }) {
           margin: 0 auto 1.5rem;
           padding: 1rem 1.25rem;
           border-radius: 16px;
-          border: 1px solid #fbbf24;
-          background: linear-gradient(135deg, rgba(251, 191, 36, 0.08), rgba(245, 158, 11, 0.04));
-          color: #92400e;
+          border: 1px solid rgba(251, 191, 36, 0.3);
+          background: linear-gradient(135deg, rgba(251, 191, 36, 0.1), rgba(245, 158, 11, 0.05));
+          color: #fbbf24;
           font-size: 0.9rem;
           font-weight: 600;
           line-height: 1.45;
@@ -901,9 +902,9 @@ export default function GuestLivePage({ params }) {
           margin: 0 auto 1.25rem;
           padding: 0.85rem 1.1rem;
           border-radius: 14px;
-          border: 1px solid #ef4444;
-          background: linear-gradient(135deg, rgba(239,68,68,0.08), rgba(220,38,38,0.04));
-          color: #dc2626;
+          border: 1px solid rgba(239, 68, 68, 0.4);
+          background: linear-gradient(135deg, rgba(239,68,68,0.12), rgba(220,38,38,0.06));
+          color: #f87171;
           font-size: 0.88rem;
           font-weight: 700;
           line-height: 1.4;
@@ -921,108 +922,122 @@ export default function GuestLivePage({ params }) {
           display: inline-flex;
           align-items: center;
           gap: 8px;
-          background: rgba(16, 185, 129, 0.1);
-          color: var(--accent-primary);
-          padding: 4px 12px;
+          background: rgba(99, 102, 241, 0.12);
+          color: #818cf8;
+          padding: 6px 14px;
           border-radius: 100px;
-          font-size: 0.7rem;
+          font-size: 0.72rem;
           font-weight: 800;
-          margin-bottom: 1.5rem;
+          margin-bottom: 1.25rem;
+          letter-spacing: 0.06em;
         }
         .dot {
-          width: 6px;
-          height: 6px;
-          background: var(--accent-primary);
+          width: 7px;
+          height: 7px;
+          background: #6366f1;
           border-radius: 50%;
           animation: pulse 1s infinite alternate;
+          box-shadow: 0 0 8px rgba(99, 102, 241, 0.6);
         }
         @keyframes pulse {
-          from {
-            opacity: 0.4;
-          }
-          to {
-            opacity: 1;
-          }
+          from { opacity: 0.4; }
+          to { opacity: 1; }
         }
         .guest-header h1 {
-          font-size: clamp(1.75rem, 6vw, 3rem);
+          font-size: clamp(1.8rem, 7vw, 3.2rem);
           font-weight: 800;
-          margin-bottom: 1rem;
-          color: #0f172a;
+          margin-bottom: 0.75rem;
+          color: #ffffff;
+          letter-spacing: -0.02em;
         }
         .subtitle-text {
-          color: #64748b;
+          color: #94a3b8;
           font-size: 1rem;
-          max-width: 28rem;
+          max-width: 26rem;
           margin-left: auto;
           margin-right: auto;
+          line-height: 1.5;
         }
         .live-status-grid {
           display: grid;
           grid-template-columns: repeat(2, minmax(0, 1fr));
-          gap: 0.9rem;
-          max-width: 760px;
-          margin: 1.35rem auto 0;
+          gap: 0.75rem;
+          max-width: 600px;
+          margin: 1.25rem auto 0;
           text-align: left;
         }
         .live-status-card {
-          border: 1px solid #e2e8f0;
-          border-radius: 18px;
-          background: rgba(255, 255, 255, 0.88);
-          padding: 1rem 1.05rem;
-          box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+          border: 1px solid rgba(99, 102, 241, 0.12);
+          border-radius: 16px;
+          background: rgba(15, 23, 42, 0.7);
+          padding: 0.85rem 1rem;
           min-width: 0;
         }
         .live-status-kicker {
-          font-size: 0.72rem;
+          font-size: 0.68rem;
           font-weight: 800;
           letter-spacing: 0.08em;
           color: #64748b;
-          margin-bottom: 0.45rem;
+          margin-bottom: 0.35rem;
         }
         .live-status-value {
-          font-size: 1rem;
+          font-size: 0.92rem;
           font-weight: 800;
           line-height: 1.3;
-          color: #0f172a;
+          color: #e2e8f0;
           overflow-wrap: anywhere;
         }
-        .live-status-value.is-on {
-          color: #15803d;
-        }
-        .live-status-value.is-off {
-          color: #b45309;
-        }
-        .live-status-value.is-neutral {
-          color: #0f172a;
-        }
+        .live-status-value.is-on { color: #4ade80; }
+        .live-status-value.is-off { color: #fbbf24; }
+        .live-status-value.is-neutral { color: #e2e8f0; }
         .live-status-copy {
-          margin: 0.45rem 0 0;
+          margin: 0.35rem 0 0;
           color: #64748b;
-          font-size: 0.84rem;
-          line-height: 1.5;
+          font-size: 0.78rem;
+          line-height: 1.45;
         }
         .search-bar {
           max-width: 500px;
-          margin: 2.5rem auto 1.5rem;
+          margin: 2rem auto 1.25rem;
           display: flex;
           align-items: center;
-          gap: 1rem;
-          padding: 0.75rem 1.25rem;
-          background: #ffffff;
-          border: 1px solid #e2e8f0;
+          gap: 0.85rem;
+          padding: 0.8rem 1.25rem;
+          background: rgba(15, 23, 42, 0.8);
+          border: 1px solid rgba(99, 102, 241, 0.15);
           border-radius: 100px;
+          transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .search-bar:focus-within {
+          border-color: rgba(99, 102, 241, 0.5);
+          box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
         }
         .search-bar input {
           background: none;
           border: none;
-          color: #0f172a;
+          color: #f1f5f9;
           width: 100%;
           outline: none;
           font-size: 0.95rem;
         }
-        .search-bar input::placeholder {
-          color: #94a3b8;
+        .search-bar input::placeholder { color: #64748b; }
+        .search-bar :global(svg) { color: #64748b; }
+
+        .song-row :global(.btn-secondary) {
+          background: rgba(99, 102, 241, 0.12);
+          border: 1px solid rgba(99, 102, 241, 0.25);
+          color: #818cf8;
+          font-weight: 700;
+          border-radius: 10px;
+          padding: 0.5rem 1rem;
+          font-size: 0.82rem;
+          cursor: pointer;
+          transition: 0.15s;
+          white-space: nowrap;
+        }
+        .song-row :global(.btn-secondary:hover) {
+          background: rgba(99, 102, 241, 0.2);
+          border-color: #6366f1;
         }
 
         .casti-bend-btn {
@@ -1035,9 +1050,9 @@ export default function GuestLivePage({ params }) {
           max-width: 340px;
           padding: 0.9rem 1.25rem;
           border-radius: 16px;
-          border: 2px solid rgba(34, 197, 94, 0.45);
-          background: linear-gradient(135deg, rgba(34, 197, 94, 0.12), rgba(16, 185, 129, 0.08));
-          color: #15803d;
+          border: 2px solid rgba(34, 197, 94, 0.35);
+          background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(16, 185, 129, 0.08));
+          color: #4ade80;
           font-weight: 800;
           font-size: 1rem;
           cursor: pointer;
@@ -1045,33 +1060,32 @@ export default function GuestLivePage({ params }) {
         }
         .casti-bend-btn:hover {
           transform: translateY(-1px);
-          box-shadow: 0 8px 24px rgba(34, 197, 94, 0.2);
+          box-shadow: 0 8px 24px rgba(34, 197, 94, 0.15);
         }
         .guest-request-status-card {
-          max-width: 760px;
+          max-width: 600px;
           margin: 1rem auto 0;
           padding: 1rem 1.05rem;
-          border-radius: 18px;
-          border: 1px solid #e2e8f0;
-          background: rgba(255, 255, 255, 0.92);
+          border-radius: 16px;
+          border: 1px solid #334155;
+          background: rgba(30, 41, 59, 0.9);
           text-align: left;
-          box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
         }
         .guest-request-status-card.status-pending {
-          border-color: rgba(59, 130, 246, 0.24);
-          background: rgba(239, 246, 255, 0.9);
+          border-color: rgba(99, 102, 241, 0.3);
+          background: rgba(30, 58, 138, 0.2);
         }
         .guest-request-status-card.status-accepted {
-          border-color: rgba(34, 197, 94, 0.28);
-          background: rgba(240, 253, 244, 0.94);
+          border-color: rgba(34, 197, 94, 0.3);
+          background: rgba(20, 83, 45, 0.2);
         }
         .guest-request-status-card.status-rejected {
-          border-color: rgba(248, 113, 113, 0.26);
-          background: rgba(254, 242, 242, 0.95);
+          border-color: rgba(248, 113, 113, 0.3);
+          background: rgba(127, 29, 29, 0.2);
         }
         .guest-request-status-card.status-played {
-          border-color: rgba(168, 85, 247, 0.26);
-          background: rgba(250, 245, 255, 0.95);
+          border-color: rgba(168, 85, 247, 0.3);
+          background: rgba(88, 28, 135, 0.2);
         }
         .guest-request-status-head {
           display: flex;
@@ -1080,21 +1094,21 @@ export default function GuestLivePage({ params }) {
           gap: 0.85rem;
         }
         .guest-request-status-kicker {
-          font-size: 0.72rem;
+          font-size: 0.7rem;
           font-weight: 800;
           letter-spacing: 0.08em;
           color: #64748b;
-          margin-bottom: 0.35rem;
+          margin-bottom: 0.3rem;
         }
         .guest-request-status-title {
           font-size: 1rem;
           font-weight: 800;
-          color: #0f172a;
+          color: #f1f5f9;
           overflow-wrap: anywhere;
         }
         .guest-request-status-artist {
           margin-top: 0.2rem;
-          color: #64748b;
+          color: #94a3b8;
           font-size: 0.84rem;
           overflow-wrap: anywhere;
         }
@@ -1102,77 +1116,74 @@ export default function GuestLivePage({ params }) {
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          padding: 0.45rem 0.75rem;
+          padding: 0.4rem 0.7rem;
           border-radius: 999px;
-          font-size: 0.76rem;
+          font-size: 0.74rem;
           font-weight: 800;
           white-space: nowrap;
           flex-shrink: 0;
         }
         .guest-request-status-pill.status-pending {
-          background: #dbeafe;
-          color: #1d4ed8;
+          background: rgba(99, 102, 241, 0.15);
+          color: #818cf8;
         }
         .guest-request-status-pill.status-accepted {
-          background: #dcfce7;
-          color: #15803d;
+          background: rgba(34, 197, 94, 0.15);
+          color: #4ade80;
         }
         .guest-request-status-pill.status-rejected {
-          background: #fee2e2;
-          color: #b91c1c;
+          background: rgba(248, 113, 113, 0.15);
+          color: #f87171;
         }
         .guest-request-status-pill.status-played {
-          background: #f3e8ff;
-          color: #7e22ce;
+          background: rgba(168, 85, 247, 0.15);
+          color: #c084fc;
         }
         .guest-request-status-copy {
-          margin: 0.7rem 0 0;
-          color: #475569;
-          font-size: 0.9rem;
+          margin: 0.6rem 0 0;
+          color: #94a3b8;
+          font-size: 0.88rem;
           line-height: 1.5;
         }
 
         .gender-tabs-container {
           overflow-x: auto;
-          margin-top: 2rem;
-          padding-bottom: 1rem;
+          margin-top: 1.5rem;
+          padding-bottom: 0.75rem;
           -webkit-overflow-scrolling: touch;
         }
-        .gender-tabs-container::-webkit-scrollbar {
-          height: 4px;
-        }
-        .gender-tabs-container::-webkit-scrollbar-thumb {
-          background: #e2e8f0;
-          border-radius: 10px;
-        }
+        .gender-tabs-container::-webkit-scrollbar { height: 3px; }
+        .gender-tabs-container::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
 
         .gender-tabs {
           display: flex;
           justify-content: center;
-          gap: 0.5rem;
+          gap: 0.4rem;
           min-width: max-content;
           padding: 0 1rem;
         }
         .tab-btn {
-          background: #f8fafc;
-          border: 1px solid #e2e8f0;
-          color: #64748b;
-          padding: 0.6rem 1rem;
+          background: rgba(15, 23, 42, 0.8);
+          border: 1px solid rgba(99, 102, 241, 0.12);
+          color: #94a3b8;
+          padding: 0.55rem 1rem;
           border-radius: 100px;
           cursor: pointer;
-          transition: 0.3s;
+          transition: 0.2s;
           font-weight: 700;
-          font-size: 0.7rem;
+          font-size: 0.72rem;
           white-space: nowrap;
         }
         .tab-btn:hover {
-          background: #f1f5f9;
-          color: #0f172a;
+          background: rgba(99, 102, 241, 0.08);
+          color: #e2e8f0;
+          border-color: rgba(99, 102, 241, 0.25);
         }
         .tab-btn.active {
-          background: #007aff;
-          color: white;
-          border-color: #007aff;
+          background: #6366f1;
+          color: #ffffff;
+          border-color: #6366f1;
+          box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
         }
 
         .song-list {
@@ -1186,39 +1197,36 @@ export default function GuestLivePage({ params }) {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          padding: 1.25rem 1.5rem;
+          padding: 1.15rem 1.35rem;
           cursor: pointer;
-          border: 1px solid #e2e8f0;
+          border: 1px solid rgba(99, 102, 241, 0.08);
           transition: 0.2s;
-          background: #ffffff;
-          border-radius: 16px;
+          background: rgba(15, 23, 42, 0.6);
+          border-radius: 14px;
         }
         .song-row:hover {
-          background: #f8fafc;
-          transform: translateY(-2px);
-          border-color: #007aff;
-          box-shadow: 0 4px 12px rgba(0, 122, 255, 0.08);
+          background: rgba(99, 102, 241, 0.08);
+          transform: translateY(-1px);
+          border-color: rgba(99, 102, 241, 0.3);
+          box-shadow: 0 4px 16px rgba(99, 102, 241, 0.12);
         }
         .song-title {
           font-weight: 700;
-          font-size: 1.05rem;
-          margin-bottom: 0.25rem;
-          color: #0f172a;
+          font-size: 1.02rem;
+          margin-bottom: 0.2rem;
+          color: #f1f5f9;
         }
         .song-artist {
-          font-size: 0.85rem;
+          font-size: 0.84rem;
           color: #64748b;
         }
 
         .modal-overlay {
           position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: rgba(0, 0, 0, 0.6);
-          -webkit-backdrop-filter: blur(8px);
-          backdrop-filter: blur(8px);
+          top: 0; left: 0; right: 0; bottom: 0;
+          background: rgba(0, 0, 0, 0.75);
+          -webkit-backdrop-filter: blur(10px);
+          backdrop-filter: blur(10px);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -1235,15 +1243,16 @@ export default function GuestLivePage({ params }) {
           max-width: 400px;
           padding: 2.5rem 2rem;
           text-align: center;
-          background: #ffffff;
+          background: #1e293b;
           border-radius: 24px;
-          border: 1px solid #e2e8f0;
+          border: 1px solid rgba(99, 102, 241, 0.15);
           position: relative;
           margin: auto;
           max-height: calc(100vh - 2rem);
           max-height: calc(100dvh - 2rem);
           overflow-y: auto;
           -webkit-overflow-scrolling: touch;
+          box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4);
         }
         .modal-step-chip {
           display: inline-flex;
@@ -1252,8 +1261,8 @@ export default function GuestLivePage({ params }) {
           min-height: 28px;
           padding: 0.35rem 0.7rem;
           border-radius: 999px;
-          background: #eff6ff;
-          color: #1d4ed8;
+          background: rgba(99, 102, 241, 0.12);
+          color: #818cf8;
           font-size: 0.73rem;
           font-weight: 800;
           letter-spacing: 0.04em;
@@ -1265,22 +1274,20 @@ export default function GuestLivePage({ params }) {
         }
         .modal-support-copy {
           margin: 0.35rem 0 1.2rem;
-          color: #64748b;
+          color: #94a3b8;
           font-size: 0.92rem;
           line-height: 1.5;
         }
-        .tip-choice-modal {
-          max-width: 420px;
-        }
+        .tip-choice-modal { max-width: 420px; }
         .tip-choice-lede {
           font-weight: 700;
-          color: #007aff;
+          color: #818cf8;
           margin: 0.5rem 0 0.25rem;
           font-size: 1rem;
         }
         .tip-choice-table {
           font-size: 0.85rem;
-          color: #64748b;
+          color: #94a3b8;
           margin: 0 0 1.5rem;
         }
         .btn-gold-tip {
@@ -1294,17 +1301,15 @@ export default function GuestLivePage({ params }) {
           font-size: 1.05rem;
           cursor: pointer;
           margin-bottom: 1rem;
-          box-shadow: 0 10px 28px rgba(234, 179, 8, 0.35);
+          box-shadow: 0 10px 28px rgba(234, 179, 8, 0.25);
           line-height: 1.25;
         }
-        .btn-gold-tip:hover {
-          filter: brightness(1.03);
-        }
+        .btn-gold-tip:hover { filter: brightness(1.03); }
         .btn-skip-tip {
           width: 100%;
           background: transparent;
           border: none;
-          color: #64748b;
+          color: #94a3b8;
           font-size: 0.88rem;
           font-weight: 600;
           text-decoration: underline;
@@ -1313,27 +1318,23 @@ export default function GuestLivePage({ params }) {
           padding: 0.65rem 0.5rem;
           margin-bottom: 0.5rem;
         }
-        .song-voucher-card {
-          max-width: 440px;
-        }
+        .song-voucher-card { max-width: 440px; }
         .song-voucher-shout {
           margin: 1.25rem 0 1rem;
           font-size: clamp(1rem, 4.2vw, 1.2rem);
           font-weight: 900;
           letter-spacing: 0.04em;
           line-height: 1.35;
-          color: #0f172a;
+          color: #f1f5f9;
           text-transform: uppercase;
         }
         .song-voucher-sub {
           font-size: 0.9rem;
-          color: #64748b;
+          color: #94a3b8;
           line-height: 1.5;
           margin: 0 0 1.5rem;
         }
-        .voucher-note-tight {
-          margin-top: 0.5rem;
-        }
+        .voucher-note-tight { margin-top: 0.5rem; }
 
         .voucher-modal {
           max-width: 420px;
@@ -1346,7 +1347,7 @@ export default function GuestLivePage({ params }) {
           padding: 2.25rem 1.75rem;
         }
         .casti-menu-lede {
-          color: #64748b;
+          color: #94a3b8;
           font-size: 0.95rem;
           margin: 0.5rem 0 1.5rem;
           line-height: 1.5;
@@ -1362,16 +1363,14 @@ export default function GuestLivePage({ params }) {
           font-size: 1.05rem;
           cursor: pointer;
           margin-bottom: 1rem;
-          box-shadow: 0 10px 32px rgba(34, 197, 94, 0.35);
+          box-shadow: 0 10px 32px rgba(34, 197, 94, 0.25);
           line-height: 1.25;
         }
-        .btn-waiter-tip-main:hover {
-          filter: brightness(1.05);
-        }
+        .btn-waiter-tip-main:hover { filter: brightness(1.05); }
         .btn-text-muted {
           background: none;
           border: none;
-          color: #64748b;
+          color: #94a3b8;
           font-weight: 600;
           font-size: 0.9rem;
           cursor: pointer;
@@ -1382,7 +1381,7 @@ export default function GuestLivePage({ params }) {
           position: absolute;
           top: 1rem;
           left: 1rem;
-          background: #f1f5f9;
+          background: #334155;
           border: none;
           width: 40px;
           height: 40px;
@@ -1391,7 +1390,7 @@ export default function GuestLivePage({ params }) {
           align-items: center;
           justify-content: center;
           cursor: pointer;
-          color: #0f172a;
+          color: #f1f5f9;
         }
         .voucher-hero {
           text-align: center;
@@ -1402,16 +1401,16 @@ export default function GuestLivePage({ params }) {
           height: 72px;
           margin: 0 auto 1rem;
           border-radius: 20px;
-          background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(0, 122, 255, 0.2));
+          background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2));
           display: flex;
           align-items: center;
           justify-content: center;
-          color: #007aff;
+          color: #818cf8;
         }
         .voucher-band-name {
           font-size: 1.5rem;
           font-weight: 800;
-          color: #0f172a;
+          color: #f1f5f9;
           margin: 0;
           letter-spacing: -0.02em;
         }
@@ -1420,7 +1419,7 @@ export default function GuestLivePage({ params }) {
           font-weight: 800;
           text-transform: uppercase;
           letter-spacing: 0.08em;
-          color: #64748b;
+          color: #94a3b8;
           margin: 1rem 0 0.5rem;
         }
         .amount-presets {
@@ -1434,17 +1433,18 @@ export default function GuestLivePage({ params }) {
           min-width: 86px;
           padding: 0.65rem 0.5rem;
           border-radius: 12px;
-          border: 2px solid #e2e8f0;
-          background: #f8fafc;
+          border: 2px solid #334155;
+          background: rgba(15, 23, 42, 0.8);
           font-weight: 800;
           font-size: 0.9rem;
-          color: #0f172a;
+          color: #f1f5f9;
           cursor: pointer;
+          transition: 0.15s;
         }
         .preset-chip.active {
           border-color: #22c55e;
           background: rgba(34, 197, 94, 0.12);
-          color: #15803d;
+          color: #4ade80;
         }
         .voucher-shout {
           margin: 1.25rem 0 0.5rem;
@@ -1452,29 +1452,21 @@ export default function GuestLivePage({ params }) {
           font-weight: 900;
           letter-spacing: 0.06em;
           text-align: center;
-          color: #0f172a;
+          color: #f1f5f9;
         }
         .voucher-note {
           font-size: 0.88rem;
           line-height: 1.55;
-          color: #64748b;
+          color: #94a3b8;
           text-align: center;
           margin: 0 0 1.25rem;
         }
-        .voucher-form-group label {
-          text-align: left;
-        }
-        .voucher-confirm {
-          width: 100%;
-          margin-top: 0.5rem;
-        }
-        .btn-full {
-          width: 100%;
-          justify-content: center;
-        }
+        .voucher-form-group label { text-align: left; }
+        .voucher-confirm { width: 100%; margin-top: 0.5rem; }
+        .btn-full { width: 100%; justify-content: center; }
 
         .modal h3 {
-          color: #0f172a;
+          color: #f1f5f9;
           font-size: 1.5rem;
           margin-bottom: 0.5rem;
           line-height: 1.25;
@@ -1483,7 +1475,7 @@ export default function GuestLivePage({ params }) {
           font-size: 1.1rem;
           font-weight: 700;
           margin: 1rem 0 2rem;
-          color: #007aff;
+          color: #818cf8;
           overflow-wrap: anywhere;
         }
         .form-group label {
@@ -1491,16 +1483,16 @@ export default function GuestLivePage({ params }) {
           margin-bottom: 0.75rem;
           font-size: 0.85rem;
           font-weight: 600;
-          color: #64748b;
+          color: #94a3b8;
           text-transform: uppercase;
         }
         .form-group input {
           width: 100%;
           padding: 1rem;
-          background: #f8fafc;
-          border: 2px solid #e2e8f0;
+          background: #0f172a;
+          border: 2px solid #334155;
           border-radius: 12px;
-          color: #0f172a;
+          color: #f1f5f9;
           font-size: 1.5rem;
           text-align: center;
           font-weight: 800;
@@ -1508,13 +1500,8 @@ export default function GuestLivePage({ params }) {
           transition: border-color 0.2s;
           box-sizing: border-box;
         }
-        .form-group input::placeholder {
-          color: #94a3b8;
-          font-weight: 400;
-        }
-        .form-group input:focus {
-          border-color: #007aff;
-        }
+        .form-group input::placeholder { color: #64748b; font-weight: 400; }
+        .form-group input:focus { border-color: #6366f1; }
         .modal-actions {
           display: grid;
           grid-template-columns: 1fr 1fr;
@@ -1522,25 +1509,18 @@ export default function GuestLivePage({ params }) {
           margin-top: 1.5rem;
         }
 
-        .success-card h2 {
-          color: #0f172a;
-          margin: 1rem 0 0.5rem;
-        }
-        .success-card p {
-          color: #64748b;
-        }
-        .voucher-success h2 {
-          color: #15803d;
-        }
+        .success-card h2 { color: #f1f5f9; margin: 1rem 0 0.5rem; }
+        .success-card p { color: #94a3b8; }
+        .voucher-success h2 { color: #4ade80; }
 
         .error-msg {
           display: flex;
           align-items: flex-start;
           justify-content: flex-start;
           gap: 8px;
-          background: #fef2f2;
-          border: 1px solid #fecaca;
-          color: #dc2626;
+          background: rgba(220, 38, 38, 0.1);
+          border: 1px solid rgba(248, 113, 113, 0.3);
+          color: #f87171;
           padding: 0.75rem;
           border-radius: 10px;
           font-size: 0.85rem;
@@ -1557,21 +1537,17 @@ export default function GuestLivePage({ params }) {
           justify-content: center;
           gap: 1rem;
           padding: 4rem 2rem;
-          color: #94a3b8;
+          color: #64748b;
         }
         .spinner {
           width: 32px;
           height: 32px;
-          border: 3px solid #e2e8f0;
-          border-top-color: #007aff;
+          border: 3px solid #334155;
+          border-top-color: #6366f1;
           border-radius: 50%;
           animation: spin 0.6s linear infinite;
         }
-        @keyframes spin {
-          to {
-            transform: rotate(360deg);
-          }
-        }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
         @media (max-width: 640px) {
           .guest-container {
@@ -1579,438 +1555,100 @@ export default function GuestLivePage({ params }) {
             padding-bottom: 2.75rem;
           }
           .subtitle-text {
-            font-size: 0.95rem;
+            font-size: 0.92rem;
             max-width: 100%;
           }
           .live-status-grid {
             grid-template-columns: 1fr;
-            gap: 0.75rem;
+            gap: 0.6rem;
             margin-top: 1rem;
           }
           .live-status-card {
-            padding: 0.9rem;
-            border-radius: 16px;
+            padding: 0.75rem 0.9rem;
+            border-radius: 14px;
           }
+          .live-status-copy { display: none; }
           .search-bar {
-            margin-top: 1.5rem;
+            margin-top: 1.25rem;
             padding: 0.7rem 1rem;
             gap: 0.75rem;
           }
           .casti-bend-btn {
             max-width: 100%;
-            min-height: 52px;
+            min-height: 50px;
           }
           .guest-request-status-card {
             margin-top: 0.85rem;
-            padding: 0.9rem;
-            border-radius: 16px;
+            padding: 0.85rem;
+            border-radius: 14px;
           }
           .guest-request-status-head {
             flex-direction: column;
             align-items: stretch;
           }
-          .guest-request-status-pill {
-            width: 100%;
-          }
-          .guest-request-status-copy {
-            font-size: 0.84rem;
-          }
+          .guest-request-status-pill { width: 100%; }
+          .guest-request-status-copy { font-size: 0.82rem; }
           .song-row {
-            padding: 1rem;
+            padding: 0.95rem 1rem;
             align-items: flex-start;
             gap: 0.75rem;
           }
-          .song-title,
-          .song-artist {
-            overflow-wrap: anywhere;
-          }
+          .song-title, .song-artist { overflow-wrap: anywhere; }
           .modal-overlay {
             padding: 0.75rem;
             align-items: flex-start;
             padding-top: max(0.75rem, env(safe-area-inset-top, 0px));
             padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
           }
-          .modal,
-          .success-card {
+          .modal, .success-card {
             padding: 1.75rem 1.25rem;
             border-radius: 20px;
             max-height: calc(100vh - 1.5rem);
             max-height: calc(100dvh - 1.5rem);
           }
-          .voucher-modal {
-            padding: 1.5rem 1.1rem 1.75rem;
-          }
-          .casti-menu-modal {
-            padding: 1.75rem 1.25rem;
-          }
-          .voucher-hero {
-            margin: 1.25rem 0 1rem;
-          }
-          .voucher-music-icon {
-            width: 56px;
-            height: 56px;
-            border-radius: 16px;
-          }
-          .voucher-band-name {
-            font-size: 1.2rem;
-          }
-          .voucher-back {
-            top: 0.75rem;
-            left: 0.75rem;
-            width: 36px;
-            height: 36px;
-            border-radius: 10px;
-          }
-          .modal-step-chip {
-            width: 100%;
-            margin-bottom: 0.8rem;
-          }
-          .modal-step-chip-inline {
-            width: calc(100% - 3rem);
-            margin: 0 auto 0.35rem;
-          }
-          .modal h3 {
-            font-size: 1.2rem;
-          }
-          .selected-song {
-            margin: 0.75rem 0 1.2rem;
-            font-size: 1rem;
-          }
-          .modal-support-copy,
-          .casti-menu-lede,
-          .tip-choice-table,
-          .voucher-note,
-          .song-voucher-sub {
-            font-size: 0.84rem;
-          }
-          .form-group input {
-            font-size: 1.2rem;
-            padding: 0.85rem;
-          }
-          .form-group label {
-            margin-bottom: 0.5rem;
-          }
-          .preset-chip {
-            min-width: calc(50% - 0.25rem);
-            min-height: 44px;
-          }
-          .btn-gold-tip,
-          .btn-waiter-tip-main,
-          .btn-skip-tip,
-          .btn-text-muted,
-          .voucher-confirm {
-            min-height: 48px;
-          }
-          .btn-waiter-tip-main {
-            font-size: 0.95rem;
-            padding: 1rem;
-          }
-          .btn-gold-tip {
-            font-size: 0.95rem;
-            padding: 1rem;
-          }
-          .voucher-shout {
-            font-size: 0.95rem;
-            margin: 1rem 0 0.4rem;
-          }
-          .voucher-label-amount {
-            margin: 0.75rem 0 0.4rem;
-          }
-          .amount-presets {
-            margin-bottom: 0.35rem;
-          }
-          .modal-actions {
-            grid-template-columns: 1fr;
-            gap: 0.75rem;
-          }
-          .error-msg {
-            font-size: 0.8rem;
-            padding: 0.65rem;
-          }
+          .voucher-modal { padding: 1.5rem 1.1rem 1.75rem; }
+          .casti-menu-modal { padding: 1.75rem 1.25rem; }
+          .voucher-hero { margin: 1.25rem 0 1rem; }
+          .voucher-music-icon { width: 56px; height: 56px; border-radius: 16px; }
+          .voucher-band-name { font-size: 1.2rem; }
+          .voucher-back { top: 0.75rem; left: 0.75rem; width: 36px; height: 36px; border-radius: 10px; }
+          .modal-step-chip { width: 100%; margin-bottom: 0.8rem; }
+          .modal-step-chip-inline { width: calc(100% - 3rem); margin: 0 auto 0.35rem; }
+          .modal h3 { font-size: 1.2rem; }
+          .selected-song { margin: 0.75rem 0 1.2rem; font-size: 1rem; }
+          .modal-support-copy, .casti-menu-lede, .tip-choice-table, .voucher-note, .song-voucher-sub { font-size: 0.84rem; }
+          .form-group input { font-size: 1.2rem; padding: 0.85rem; }
+          .form-group label { margin-bottom: 0.5rem; }
+          .preset-chip { min-width: calc(50% - 0.25rem); min-height: 44px; }
+          .btn-gold-tip, .btn-waiter-tip-main, .btn-skip-tip, .btn-text-muted, .voucher-confirm { min-height: 48px; }
+          .btn-waiter-tip-main { font-size: 0.95rem; padding: 1rem; }
+          .btn-gold-tip { font-size: 0.95rem; padding: 1rem; }
+          .voucher-shout { font-size: 0.95rem; margin: 1rem 0 0.4rem; }
+          .voucher-label-amount { margin: 0.75rem 0 0.4rem; }
+          .amount-presets { margin-bottom: 0.35rem; }
+          .modal-actions { grid-template-columns: 1fr; gap: 0.75rem; }
+          .error-msg { font-size: 0.8rem; padding: 0.65rem; }
         }
 
         @media (max-width: 380px) {
-          .modal,
-          .success-card {
-            padding: 1.5rem 1rem;
-            border-radius: 18px;
-          }
-          .voucher-modal {
-            padding: 1.25rem 0.9rem 1.5rem;
-          }
-          .casti-menu-modal {
-            padding: 1.5rem 1rem;
-          }
-          .modal h3 {
-            font-size: 1.1rem;
-          }
-          .voucher-band-name {
-            font-size: 1.05rem;
-          }
-          .voucher-music-icon {
-            width: 48px;
-            height: 48px;
-          }
-          .form-group input {
-            font-size: 1.1rem;
-            padding: 0.75rem;
-          }
-          .preset-chip {
-            font-size: 0.82rem;
-            padding: 0.55rem 0.4rem;
-          }
+          .modal, .success-card { padding: 1.5rem 1rem; border-radius: 18px; }
+          .voucher-modal { padding: 1.25rem 0.9rem 1.5rem; }
+          .casti-menu-modal { padding: 1.5rem 1rem; }
+          .modal h3 { font-size: 1.1rem; }
+          .voucher-band-name { font-size: 1.05rem; }
+          .voucher-music-icon { width: 48px; height: 48px; }
+          .form-group input { font-size: 1.1rem; padding: 0.75rem; }
+          .preset-chip { font-size: 0.82rem; padding: 0.55rem 0.4rem; }
         }
 
         @media (min-width: 641px) and (max-width: 900px) {
-          .guest-container {
-            padding-top: 3.25rem;
-          }
-          .live-status-grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 0.85rem;
-            max-width: 680px;
-          }
-          .song-list {
-            max-width: 680px;
-          }
-          .song-row {
-            padding: 1.1rem 1.2rem;
-          }
-          .modal,
-          .success-card {
-            max-width: 460px;
-            padding: 2.35rem 2rem;
-          }
-          .voucher-modal {
-            max-width: 460px;
-            padding: 2rem 1.75rem 2.25rem;
-          }
-          .casti-menu-modal {
-            max-width: 420px;
-          }
-        }
-
-        @media (prefers-color-scheme: dark) {
-          .guest-container {
-            background: #0f172a;
-          }
-          .guest-header h1 {
-            color: #f1f5f9;
-          }
-          .subtitle-text,
-          .live-status-copy,
-          .guest-request-status-artist,
-          .guest-request-status-kicker,
-          .live-status-kicker {
-            color: #94a3b8;
-          }
-          .live-status-card {
-            border-color: #334155;
-            background: rgba(30, 41, 59, 0.85);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-          }
-          .live-status-value {
-            color: #f1f5f9;
-          }
-          .live-status-value.is-on {
-            color: #4ade80;
-          }
-          .live-status-value.is-off {
-            color: #fbbf24;
-          }
-          .live-status-value.is-neutral {
-            color: #f1f5f9;
-          }
-          .search-bar {
-            background: #1e293b;
-            border-color: #334155;
-          }
-          .search-bar input {
-            color: #f1f5f9;
-          }
-          .search-bar input::placeholder {
-            color: #64748b;
-          }
-          .tab-btn {
-            background: #1e293b;
-            border-color: #334155;
-            color: #94a3b8;
-          }
-          .tab-btn:hover {
-            background: #334155;
-            color: #f1f5f9;
-          }
-          .tab-btn.active {
-            background: #007aff;
-            color: white;
-            border-color: #007aff;
-          }
-          .song-row {
-            background: #1e293b;
-            border-color: #334155;
-          }
-          .song-row:hover {
-            background: #334155;
-            border-color: #007aff;
-            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.15);
-          }
-          .song-title {
-            color: #f1f5f9;
-          }
-          .song-artist {
-            color: #94a3b8;
-          }
-          .modal,
-          .success-card {
-            background: #1e293b;
-            border-color: #334155;
-          }
-          .modal h3 {
-            color: #f1f5f9;
-          }
-          .selected-song {
-            color: #60a5fa;
-          }
-          .modal-support-copy,
-          .casti-menu-lede,
-          .tip-choice-table,
-          .voucher-note,
-          .song-voucher-sub {
-            color: #94a3b8;
-          }
-          .form-group label {
-            color: #94a3b8;
-          }
-          .form-group input {
-            background: #0f172a;
-            border-color: #334155;
-            color: #f1f5f9;
-          }
-          .form-group input::placeholder {
-            color: #64748b;
-          }
-          .form-group input:focus {
-            border-color: #007aff;
-          }
-          .preset-chip {
-            background: #0f172a;
-            border-color: #334155;
-            color: #f1f5f9;
-          }
-          .preset-chip.active {
-            border-color: #22c55e;
-            background: rgba(34, 197, 94, 0.15);
-            color: #4ade80;
-          }
-          .voucher-band-name {
-            color: #f1f5f9;
-          }
-          .voucher-shout {
-            color: #f1f5f9;
-          }
-          .voucher-label-amount {
-            color: #94a3b8;
-          }
-          .success-card h2 {
-            color: #f1f5f9;
-          }
-          .success-card p {
-            color: #94a3b8;
-          }
-          .voucher-success h2 {
-            color: #4ade80;
-          }
-          .song-voucher-shout {
-            color: #f1f5f9;
-          }
-          .error-msg {
-            background: rgba(220, 38, 38, 0.12);
-            border-color: rgba(248, 113, 113, 0.3);
-            color: #f87171;
-          }
-          .empty-state {
-            color: #64748b;
-          }
-          .voucher-back {
-            background: #334155;
-            color: #f1f5f9;
-          }
-          .voucher-music-icon {
-            background: linear-gradient(135deg, rgba(139, 92, 246, 0.25), rgba(0, 122, 255, 0.25));
-          }
-          .modal-step-chip {
-            background: rgba(59, 130, 246, 0.15);
-            color: #60a5fa;
-          }
-          .btn-text-muted {
-            color: #94a3b8;
-          }
-          .btn-skip-tip {
-            color: #94a3b8;
-          }
-          .casti-bend-btn {
-            border-color: rgba(34, 197, 94, 0.35);
-            background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(16, 185, 129, 0.1));
-            color: #4ade80;
-          }
-          .casti-bend-btn:hover {
-            box-shadow: 0 8px 24px rgba(34, 197, 94, 0.15);
-          }
-          .guest-request-status-card {
-            border-color: #334155;
-            background: rgba(30, 41, 59, 0.92);
-          }
-          .guest-request-status-card.status-pending {
-            border-color: rgba(59, 130, 246, 0.3);
-            background: rgba(30, 58, 138, 0.2);
-          }
-          .guest-request-status-card.status-accepted {
-            border-color: rgba(34, 197, 94, 0.3);
-            background: rgba(20, 83, 45, 0.2);
-          }
-          .guest-request-status-card.status-rejected {
-            border-color: rgba(248, 113, 113, 0.3);
-            background: rgba(127, 29, 29, 0.2);
-          }
-          .guest-request-status-card.status-played {
-            border-color: rgba(168, 85, 247, 0.3);
-            background: rgba(88, 28, 135, 0.2);
-          }
-          .guest-request-status-title {
-            color: #f1f5f9;
-          }
-          .guest-request-status-copy {
-            color: #94a3b8;
-          }
-          .guest-request-status-pill.status-pending {
-            background: rgba(59, 130, 246, 0.2);
-            color: #60a5fa;
-          }
-          .guest-request-status-pill.status-accepted {
-            background: rgba(34, 197, 94, 0.2);
-            color: #4ade80;
-          }
-          .guest-request-status-pill.status-rejected {
-            background: rgba(248, 113, 113, 0.2);
-            color: #f87171;
-          }
-          .guest-request-status-pill.status-played {
-            background: rgba(168, 85, 247, 0.2);
-            color: #c084fc;
-          }
-          .preparing-banner {
-            border-color: rgba(251, 191, 36, 0.3);
-            background: linear-gradient(135deg, rgba(251, 191, 36, 0.1), rgba(245, 158, 11, 0.05));
-            color: #fbbf24;
-          }
-          .offline-banner {
-            border-color: rgba(239, 68, 68, 0.4);
-            background: linear-gradient(135deg, rgba(239,68,68,0.12), rgba(220,38,38,0.06));
-            color: #f87171;
-          }
-          .tip-choice-lede {
-            color: #60a5fa;
-          }
+          .guest-container { padding-top: 3.25rem; }
+          .live-status-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; max-width: 680px; }
+          .song-list { max-width: 680px; }
+          .song-row { padding: 1.1rem 1.2rem; }
+          .modal, .success-card { max-width: 460px; padding: 2.35rem 2rem; }
+          .voucher-modal { max-width: 460px; padding: 2rem 1.75rem 2.25rem; }
+          .casti-menu-modal { max-width: 420px; }
         }
       `}</style>
     </div>
