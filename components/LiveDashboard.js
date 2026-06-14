@@ -1041,6 +1041,8 @@ export default function LiveDashboard({ bandId, musicianId }) {
       setTimeout(() => setAddedToRepToast(''), 3500);
     } catch (err) {
       console.error('Error adding song to repertoire:', err);
+      setAddedToRepToast(`⚠ ${err.message || 'Greška pri dodavanju.'}`);
+      setTimeout(() => setAddedToRepToast(''), 3500);
     } finally {
       setAddingSongId('');
     }

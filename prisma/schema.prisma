@@ -458,3 +458,27 @@ model SiteVisit {
   @@index([visitorId])
   @@index([createdAt])
 }
+
+model DemoSong {
+  id            String   @id @default(cuid())
+  title         String
+  artist        String
+  category      String?  // e.g. "Zabavna", "Narodna", "Pop", "Rock"
+  description   String?
+  /// Path to MP3 preview file in Supabase storage (bucket: demo-songs)
+  previewPath   String?
+  /// Duration in seconds of the preview clip
+  previewDuration Int?
+  /// Google Drive link for full matrix/backing track download
+  driveLink     String?
+  /// Admin must explicitly allow download per song (only premium users can then access it)
+  allowDownload Boolean  @default(false)
+  /// Price label (e.g. "2000 RSD", "Po dogovoru")
+  price         String?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([isActive, createdAt])
+  @@index([category])
+}

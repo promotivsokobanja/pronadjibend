@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, Save, UserRound, Mail, CalendarDays, Euro, MapPin, Music, Video, Image as ImageIcon, ListMusic, Radio, Headphones, Trash2, QrCode, HelpCircle, Download, ChevronDown, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Save, UserRound, Mail, CalendarDays, Euro, MapPin, Music, Video, Image as ImageIcon, ListMusic, Radio, Headphones, Trash2, QrCode, HelpCircle, Download, ChevronDown, ExternalLink, Disc3 } from 'lucide-react';
 import QrModal from '../../../../components/QrModal';
 import DashboardHelpModal from '../../../../components/DashboardHelpModal';
 import SocialShareActions from '../../../../components/SocialShareActions';
@@ -495,6 +495,12 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
       description: 'Otpremi matrice i semplove za nastupe.',
       href: '/bands/midi',
       icon: Headphones,
+    },
+    {
+      title: 'Demo Pesme',
+      description: 'Preslušajte demo snimke i preuzmite matrice.',
+      href: '/bands/demo-pesme',
+      icon: Disc3,
     },
   ];
 

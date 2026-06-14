@@ -714,6 +714,16 @@ export default function BandDashboard() {
               </div>
             </a>
           )}
+          <Link href="/bands/demo-pesme" className="panel-link">
+            <div className="panel-card">
+              <div className="panel-icon"><Disc3 size={20} /></div>
+              <div>
+                <h3>Demo Pesme</h3>
+                <p>Preslušajte demo snimke i preuzmite matrice.</p>
+              </div>
+              <span className="panel-cta">Otvori</span>
+            </div>
+          </Link>
           <Link href="/bands/profile" className="panel-link">
             <div className="panel-card">
               <div className="panel-icon"><Pencil size={20} /></div>
