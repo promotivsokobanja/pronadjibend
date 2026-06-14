@@ -105,11 +105,11 @@ export default function DemoPesmePage() {
 
       <header className="demo-header">
         <div className="demo-badge">
-          <ShoppingBag size={14} /> DEMO PONUDA
+          <ShoppingBag size={14} /> AUTORSKE PESME
         </div>
-        <h1>Demo Pesme & Matrice</h1>
+        <h1>Autorske pesme u ponudi</h1>
         <p className="demo-subtitle">
-          Preslušajte demo snimke i preuzmite matrice za vaš nastup.
+          Preslušajte demo snimke autorskih pesama. Zaštićene autorskim pravima — preuzimanje dostupno samo Premium korisnicima uz odobrenje.
         </p>
       </header>
 
@@ -117,7 +117,7 @@ export default function DemoPesmePage() {
         <Search size={18} />
         <input
           type="text"
-          placeholder={`Pretraži ${songs.length} demo pesama...`}
+          placeholder={`Pretraži ${songs.length} autorskih pesama...`}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
@@ -198,7 +198,7 @@ export default function DemoPesmePage() {
                     }}
                   >
                     <ExternalLink size={16} />
-                    <span>Preuzmi matricu</span>
+                    <span>Preuzmi pesmu</span>
                   </button>
                 )}
               </div>
@@ -207,7 +207,7 @@ export default function DemoPesmePage() {
         ) : (
           <div className="demo-empty">
             <Music size={32} />
-            <p>{searchTerm ? 'Nema rezultata za pretragu.' : 'Trenutno nema demo pesama.'}</p>
+            <p>{searchTerm ? 'Nema rezultata za pretragu.' : 'Trenutno nema autorskih pesama u ponudi.'}</p>
           </div>
         )}
       </main>

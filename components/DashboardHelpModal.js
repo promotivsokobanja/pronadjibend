@@ -1,5 +1,5 @@
 'use client';
-import { X, Play, BookOpen, FileMusic, QrCode, Download, Pencil, Radio, Music, Calendar, Bell, Star, MessageSquare, WifiOff } from 'lucide-react';
+import { X, Play, BookOpen, FileMusic, QrCode, Download, Pencil, Radio, Music, Calendar, Bell, Star, MessageSquare, WifiOff, Disc3 } from 'lucide-react';
 
 /**
  * Shared help modal for band & musician control panel (Kontrolna Tabla).
@@ -126,6 +126,21 @@ export default function DashboardHelpModal({ onClose, role = 'band' }) {
                 (tekstove i akorde) u memoriju telefona/računara. Ako tokom nastupa nestane mreža,
                 pesmarica i dalje radi iz keša. Bezbedno je — ne menja ništa na sajtu,
                 samo lokalno čuva kopiju vaših pesama.
+              </p>
+            </div>
+          </section>
+
+          <section className="help-item">
+            <div className="help-icon"><Disc3 size={20} /></div>
+            <div className="help-text">
+              <h3>Autorske Pesme</h3>
+              <p>
+                Ovde možete preslušati <strong>demo snimke originalnih autorskih pesama</strong> koje su u ponudi.
+                Pesme su zaštićene autorskim pravima. Možete čuti <strong>samo deo pesme (~25%)</strong> —
+                dovoljno da steknete utisak o stilu i kvalitetu.
+                {' '}<strong>Preuzimanje cele pesme</strong> dostupno je isključivo <strong>Premium</strong> korisnicima,
+                i to samo za pesme kod kojih je admin eksplicitno odobrio preuzimanje.
+                Za kupovinu ili licenciranje kontaktirajte administraciju.
               </p>
             </div>
           </section>

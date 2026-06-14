@@ -24,7 +24,7 @@ const NAV = [
   { href: '/admin/bands', label: 'Bendovi', icon: Music2 },
   { href: '/admin/pesmarica', label: 'Pesmarica', icon: BookOpen },
   { href: '/admin/pesmarica/predlozi', label: 'Predlozi pesama', icon: BookOpen },
-  { href: '/admin/demo-songs', label: 'Demo Pesme', icon: Music2 },
+  { href: '/admin/demo-songs', label: 'Autorske Pesme', icon: Music2 },
   { href: '/admin/bookings', label: 'Rezervacije', icon: Calendar },
   { href: '/admin/musician-invites', label: 'Chat pozivi', icon: MessageSquare },
   { href: '/admin/reviews', label: 'Recenzije', icon: Star },

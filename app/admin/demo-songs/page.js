@@ -103,13 +103,13 @@ export default function AdminDemoSongsPage() {
   return (
     <>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
-        <h1>Demo Pesme</h1>
+        <h1>Autorske Pesme</h1>
         <button
           className="admin-btn"
           onClick={() => setShowForm(!showForm)}
           style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
         >
-          <Plus size={16} /> Nova demo pesma
+          <Plus size={16} /> Nova autorska pesma
         </button>
       </div>
 
@@ -172,7 +172,7 @@ export default function AdminDemoSongsPage() {
               />
             </div>
             <div style={{ gridColumn: '1 / -1' }}>
-              <label>MP3 demo fajl (preview za preslušavanje — gost čuje ~25%)</label>
+              <label>MP3 demo fajl (korisnik čuje samo ~25% pesme)</label>
               <input
                 ref={fileRef}
                 type="file"
@@ -189,13 +189,13 @@ export default function AdminDemoSongsPage() {
                 style={{ width: 18, height: 18, accentColor: '#6366f1' }}
               />
               <label htmlFor="allowDownload" style={{ margin: 0, textTransform: 'none', fontSize: '0.88rem', color: '#e2e8f0' }}>
-                Dozvoli preuzimanje matrice (samo PREMIUM korisnici)
+                Dozvoli preuzimanje pesme (samo PREMIUM korisnici)
               </label>
             </div>
           </div>
           <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem' }}>
             <button type="submit" className="admin-btn" disabled={uploading}>
-              {uploading ? 'Dodajem…' : 'Dodaj demo pesmu'}
+              {uploading ? 'Dodajem…' : 'Dodaj autorsku pesmu'}
             </button>
             <button type="button" className="admin-btn admin-btn-ghost" onClick={() => setShowForm(false)}>
               Otkaži
@@ -207,7 +207,7 @@ export default function AdminDemoSongsPage() {
       {loading ? (
         <p style={{ color: '#94a3b8' }}>Učitavanje…</p>
       ) : songs.length === 0 ? (
-        <p style={{ color: '#64748b' }}>Nema demo pesama. Kliknite „Nova demo pesma" da dodate prvu.</p>
+        <p style={{ color: '#64748b' }}>Nema autorskih pesama. Kliknite „Nova autorska pesma" da dodate prvu.</p>
       ) : (
         <div className="admin-table-wrap">
           <table className="admin-table">

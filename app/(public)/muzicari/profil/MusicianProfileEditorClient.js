@@ -497,8 +497,8 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
       icon: Headphones,
     },
     {
-      title: 'Demo Pesme',
-      description: 'Preslušajte demo snimke i preuzmite matrice.',
+      title: 'Autorske Pesme',
+      description: 'Preslušajte i nabavite autorske pesme za repertoar.',
       href: '/bands/demo-pesme',
       icon: Disc3,
     },

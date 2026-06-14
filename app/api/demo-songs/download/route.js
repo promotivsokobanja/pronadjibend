@@ -32,7 +32,7 @@ export async function GET(request) {
 
     if (!isAdmin && !isPremium) {
       return NextResponse.json(
-        { error: 'Preuzimanje matrica je dostupno samo za PREMIUM korisnike.' },
+        { error: 'Preuzimanje autorskih pesama je dostupno samo za PREMIUM korisnike.' },
         { status: 403 }
       );
     }

@@ -718,8 +718,8 @@ export default function BandDashboard() {
             <div className="panel-card">
               <div className="panel-icon"><Disc3 size={20} /></div>
               <div>
-                <h3>Demo Pesme</h3>
-                <p>Preslušajte demo snimke i preuzmite matrice.</p>
+                <h3>Autorske Pesme</h3>
+                <p>Preslušajte i nabavite autorske pesme za repertoar.</p>
               </div>
               <span className="panel-cta">Otvori</span>
             </div>
