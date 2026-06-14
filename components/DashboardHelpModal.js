@@ -138,9 +138,9 @@ export default function DashboardHelpModal({ onClose, role = 'band' }) {
                 Ovde možete preslušati <strong>demo snimke originalnih autorskih pesama</strong> koje su u ponudi.
                 Pesme su zaštićene autorskim pravima. Možete čuti <strong>samo deo pesme (~25%)</strong> —
                 dovoljno da steknete utisak o stilu i kvalitetu.
-                {' '}<strong>Preuzimanje cele pesme</strong> dostupno je isključivo <strong>Premium</strong> korisnicima,
-                i to samo za pesme kod kojih je admin eksplicitno odobrio preuzimanje.
-                Za kupovinu ili licenciranje kontaktirajte administraciju.
+                {' '}<strong>Preuzimanje</strong> je dostupno samo za <strong>Premium</strong> korisnike:
+                kliknite &bdquo;Zatraži preuzimanje&ldquo;, a admin će odobriti ili odbiti vaš zahtev
+                <strong> pojedinačno</strong>. Kada dobijete odobrenje, pojavljuje se dugme za preuzimanje.
               </p>
             </div>
           </section>

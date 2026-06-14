@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { adminFetch } from '../../../lib/adminFetch';
-import { Trash2, Plus, ExternalLink, Music } from 'lucide-react';
+import { Trash2, Plus, ExternalLink, Music, CheckCircle, XCircle } from 'lucide-react';
 
 const CATEGORIES = ['Zabavna', 'Narodna', 'Pop', 'Rock', 'Kola', 'Balada', 'Ostalo'];
 
@@ -283,6 +283,8 @@ export default function AdminDemoSongsPage() {
         </div>
       )}
 
+      <AccessRequestsSection />
+
       <style jsx>{`
         .admin-form-card {
           background: rgba(255,255,255,0.03);
@@ -340,12 +342,163 @@ export default function AdminDemoSongsPage() {
           border: 1px solid rgba(255,255,255,0.12);
           color: #94a3b8;
         }
+        .admin-table-wrap {
+          overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
+          border-radius: 12px;
+          border: 1px solid rgba(255,255,255,0.06);
+        }
+        .admin-table {
+          width: 100%;
+          border-collapse: collapse;
+          font-size: 0.85rem;
+        }
+        .admin-table th {
+          text-align: left;
+          padding: 0.75rem 0.85rem;
+          color: #64748b;
+          font-weight: 700;
+          font-size: 0.72rem;
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
+          border-bottom: 1px solid rgba(255,255,255,0.06);
+          white-space: nowrap;
+        }
+        .admin-table td {
+          padding: 0.75rem 0.85rem;
+          border-bottom: 1px solid rgba(255,255,255,0.03);
+          vertical-align: middle;
+        }
+        .admin-table tr:hover td {
+          background: rgba(99,102,241,0.03);
+        }
         @media (max-width: 640px) {
           .admin-form-grid {
             grid-template-columns: 1fr;
           }
+          .admin-table { font-size: 0.78rem; }
+          .admin-table th, .admin-table td { padding: 0.6rem; }
+          h1 { font-size: 1.3rem !important; }
         }
       `}</style>
     </>
+  );
+}
+
+function AccessRequestsSection() {
+  const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState('PENDING');
+
+  const fetchRequests = async () => {
+    try {
+      const r = await adminFetch(`/api/admin/demo-songs/access?status=${filter}`);
+      const data = await r.json();
+      if (r.ok) setRequests(data);
+    } catch { /* ignore */ }
+    finally { setLoading(false); }
+  };
+
+  useEffect(() => { setLoading(true); fetchRequests(); }, [filter]);
+
+  const handleAction = async (id, status) => {
+    try {
+      const r = await adminFetch('/api/admin/demo-songs/access', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, status }),
+      });
+      if (r.ok) {
+        setRequests((prev) => prev.filter((req) => req.id !== id));
+      }
+    } catch { /* ignore */ }
+  };
+
+  return (
+    <div style={{ marginTop: '2.5rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+        <h2 style={{ margin: 0 }}>Zahtevi za preuzimanje</h2>
+        <div style={{ display: 'flex', gap: '0.4rem' }}>
+          {['PENDING', 'APPROVED', 'DENIED'].map((s) => (
+            <button
+              key={s}
+              type="button"
+              onClick={() => setFilter(s)}
+              style={{
+                padding: '0.4rem 0.8rem',
+                borderRadius: '8px',
+                border: 'none',
+                background: filter === s ? '#6366f1' : 'rgba(255,255,255,0.06)',
+                color: filter === s ? '#fff' : '#94a3b8',
+                fontWeight: 700,
+                fontSize: '0.75rem',
+                cursor: 'pointer',
+              }}
+            >
+              {s === 'PENDING' ? 'Na čekanju' : s === 'APPROVED' ? 'Odobreno' : 'Odbijeno'}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {loading ? (
+        <p style={{ color: '#94a3b8' }}>Učitavanje…</p>
+      ) : requests.length === 0 ? (
+        <p style={{ color: '#64748b', fontSize: '0.88rem' }}>Nema zahteva ({filter === 'PENDING' ? 'na čekanju' : filter === 'APPROVED' ? 'odobrenih' : 'odbijenih'}).</p>
+      ) : (
+        <div className="admin-table-wrap">
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>Korisnik</th>
+                <th>Pesma</th>
+                <th>Datum</th>
+                {filter === 'PENDING' && <th>Akcija</th>}
+              </tr>
+            </thead>
+            <tbody>
+              {requests.map((req) => (
+                <tr key={req.id}>
+                  <td>
+                    <strong>{req.user?.band?.name || req.user?.musicianProfile?.name || req.user?.email}</strong>
+                    <br />
+                    <small style={{ color: '#64748b' }}>{req.user?.email} · {req.user?.plan}</small>
+                  </td>
+                  <td>
+                    <strong>{req.song?.title}</strong><br />
+                    <small style={{ color: '#94a3b8' }}>{req.song?.artist}</small>
+                  </td>
+                  <td style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+                    {new Date(req.requestedAt).toLocaleDateString('sr-RS')}
+                  </td>
+                  {filter === 'PENDING' && (
+                    <td>
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <button
+                          type="button"
+                          onClick={() => handleAction(req.id, 'APPROVED')}
+                          title="Odobri"
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#4ade80' }}
+                        >
+                          <CheckCircle size={18} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleAction(req.id, 'DENIED')}
+                          title="Odbij"
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#f87171' }}
+                        >
+                          <XCircle size={18} />
+                        </button>
+                      </div>
+                    </td>
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
   );
 }

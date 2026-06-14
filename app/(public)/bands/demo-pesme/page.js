@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Search, Play, Pause, ExternalLink, Music, ShoppingBag, ArrowLeft } from 'lucide-react';
+import { Search, Play, Pause, ExternalLink, Music, ShoppingBag, ArrowLeft, Lock, Clock, Download } from 'lucide-react';
 import Link from 'next/link';
 
 export default function DemoPesmePage() {
@@ -11,14 +11,23 @@ export default function DemoPesmePage() {
   const [activeCategory, setActiveCategory] = useState('');
   const [playingId, setPlayingId] = useState(null);
   const [audioLoading, setAudioLoading] = useState(null);
+  const [accessMap, setAccessMap] = useState({}); // { songId: 'PENDING'|'APPROVED'|'DENIED' }
+  const [requesting, setRequesting] = useState(null);
   const audioRef = useRef(null);
 
   useEffect(() => {
     (async () => {
       try {
-        const r = await fetch('/api/demo-songs');
-        const data = await r.json();
-        if (Array.isArray(data)) setSongs(data);
+        const [songsRes, accessRes] = await Promise.all([
+          fetch('/api/demo-songs'),
+          fetch('/api/demo-songs/request'),
+        ]);
+        const songsData = await songsRes.json();
+        if (Array.isArray(songsData)) setSongs(songsData);
+        if (accessRes.ok) {
+          const accessData = await accessRes.json();
+          if (typeof accessData === 'object' && !Array.isArray(accessData)) setAccessMap(accessData);
+        }
       } catch { /* ignore */ }
       finally { setLoading(false); }
     })();
@@ -184,23 +193,69 @@ export default function DemoPesmePage() {
                     <span>{playingId === song.id ? 'Zaustavi' : 'Demo'}</span>
                   </button>
                 )}
-                {song.allowDownload && (
-                  <button
-                    type="button"
-                    className="demo-download-btn"
-                    onClick={async () => {
-                      try {
-                        const r = await fetch(`/api/demo-songs/download?id=${song.id}`);
-                        const data = await r.json();
-                        if (!r.ok) { alert(data.error || 'Greška'); return; }
-                        window.open(data.url, '_blank');
-                      } catch { alert('Greška pri preuzimanju.'); }
-                    }}
-                  >
-                    <ExternalLink size={16} />
-                    <span>Preuzmi pesmu</span>
-                  </button>
-                )}
+                {song.allowDownload && (() => {
+                  const status = accessMap[song.id];
+                  if (status === 'APPROVED') {
+                    return (
+                      <button
+                        type="button"
+                        className="demo-download-btn"
+                        onClick={async () => {
+                          try {
+                            const r = await fetch(`/api/demo-songs/download?id=${song.id}`);
+                            const data = await r.json();
+                            if (!r.ok) { alert(data.error || 'Greška'); return; }
+                            window.open(data.url, '_blank');
+                          } catch { alert('Greška pri preuzimanju.'); }
+                        }}
+                      >
+                        <Download size={16} />
+                        <span>Preuzmi pesmu</span>
+                      </button>
+                    );
+                  }
+                  if (status === 'PENDING') {
+                    return (
+                      <span className="demo-pending-btn">
+                        <Clock size={16} />
+                        <span>Čeka odobrenje</span>
+                      </span>
+                    );
+                  }
+                  if (status === 'DENIED') {
+                    return (
+                      <span className="demo-denied-btn">
+                        <Lock size={16} />
+                        <span>Zahtev odbijen</span>
+                      </span>
+                    );
+                  }
+                  // No request yet
+                  return (
+                    <button
+                      type="button"
+                      className="demo-request-btn"
+                      disabled={requesting === song.id}
+                      onClick={async () => {
+                        setRequesting(song.id);
+                        try {
+                          const r = await fetch('/api/demo-songs/request', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ songId: song.id }),
+                          });
+                          const data = await r.json();
+                          if (!r.ok) { alert(data.error || 'Greška'); return; }
+                          setAccessMap((prev) => ({ ...prev, [song.id]: data.status || 'PENDING' }));
+                        } catch { alert('Greška.'); }
+                        finally { setRequesting(null); }
+                      }}
+                    >
+                      <Lock size={16} />
+                      <span>{requesting === song.id ? 'Šaljem…' : 'Zatraži preuzimanje'}</span>
+                    </button>
+                  );
+                })()}
               </div>
             </div>
           ))
@@ -437,10 +492,57 @@ export default function DemoPesmePage() {
           text-decoration: none;
           transition: 0.15s;
           min-height: 40px;
+          cursor: pointer;
         }
         .demo-download-btn:hover {
           background: rgba(34, 197, 94, 0.15);
           border-color: #22c55e;
+        }
+        .demo-request-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 0.55rem 1rem;
+          border-radius: 10px;
+          border: 1px solid rgba(251, 191, 36, 0.25);
+          background: rgba(251, 191, 36, 0.08);
+          color: #fbbf24;
+          font-weight: 700;
+          font-size: 0.82rem;
+          cursor: pointer;
+          transition: 0.15s;
+          min-height: 40px;
+        }
+        .demo-request-btn:hover {
+          background: rgba(251, 191, 36, 0.15);
+          border-color: #f59e0b;
+        }
+        .demo-request-btn:disabled { opacity: 0.6; cursor: wait; }
+        .demo-pending-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 0.55rem 1rem;
+          border-radius: 10px;
+          border: 1px solid rgba(99, 102, 241, 0.2);
+          background: rgba(99, 102, 241, 0.06);
+          color: #a5b4fc;
+          font-weight: 700;
+          font-size: 0.82rem;
+          min-height: 40px;
+        }
+        .demo-denied-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 0.55rem 1rem;
+          border-radius: 10px;
+          border: 1px solid rgba(248, 113, 113, 0.2);
+          background: rgba(248, 113, 113, 0.06);
+          color: #f87171;
+          font-weight: 700;
+          font-size: 0.82rem;
+          min-height: 40px;
         }
         .demo-empty {
           display: flex;
@@ -461,21 +563,43 @@ export default function DemoPesmePage() {
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
+        /* Tablet landscape (768-1024px) */
+        @media (min-width: 641px) and (max-width: 1024px) {
+          .demo-list { max-width: 90%; }
+          .demo-card { padding: 1.5rem; }
+          .demo-card-info h3 { font-size: 1.1rem; }
+          .demo-play-btn, .demo-download-btn, .demo-request-btn { min-height: 44px; padding: 0.6rem 1.2rem; }
+        }
+
+        /* Mobile (max 640px) */
         @media (max-width: 640px) {
-          .demo-container { padding-top: 1.5rem; }
+          .demo-container {
+            padding-top: 1.5rem;
+            padding-left: max(1rem, env(safe-area-inset-left, 0px));
+            padding-right: max(1rem, env(safe-area-inset-right, 0px));
+          }
           .demo-header h1 { font-size: 1.5rem; }
           .demo-subtitle { font-size: 0.9rem; }
           .demo-card { padding: 1rem; }
           .demo-card-main { flex-direction: column; gap: 0.5rem; }
           .demo-card-meta { flex-direction: row; align-items: center; }
           .demo-card-actions { width: 100%; }
-          .demo-play-btn, .demo-download-btn { flex: 1; justify-content: center; }
+          .demo-play-btn, .demo-download-btn, .demo-request-btn, .demo-pending-btn, .demo-denied-btn {
+            flex: 1;
+            justify-content: center;
+            min-height: 44px;
+            font-size: 0.84rem;
+          }
           .demo-tabs { justify-content: flex-start; padding: 0 0.5rem 0.5rem; }
+          .demo-search input { font-size: 16px; } /* prevent iOS zoom on focus */
         }
 
+        /* Small phones (max 380px) */
         @media (max-width: 380px) {
           .demo-card-actions { flex-direction: column; }
-          .demo-play-btn, .demo-download-btn { width: 100%; justify-content: center; }
+          .demo-play-btn, .demo-download-btn, .demo-request-btn, .demo-pending-btn, .demo-denied-btn { width: 100%; justify-content: center; }
+          .demo-header h1 { font-size: 1.3rem; }
+          .demo-badge { font-size: 0.65rem; }
         }
       `}</style>
     </div>

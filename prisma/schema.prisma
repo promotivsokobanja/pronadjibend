@@ -469,9 +469,9 @@ model DemoSong {
   previewPath   String?
   /// Duration in seconds of the preview clip
   previewDuration Int?
-  /// Google Drive link for full matrix/backing track download
+  /// Google Drive link for full song download
   driveLink     String?
-  /// Admin must explicitly allow download per song (only premium users can then access it)
+  /// Song-level toggle: is this song available for download requests at all
   allowDownload Boolean  @default(false)
   /// Price label (e.g. "2000 RSD", "Po dogovoru")
   price         String?
@@ -479,6 +479,23 @@ model DemoSong {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
+  accessRequests DemoSongAccess[]
+
   @@index([isActive, createdAt])
   @@index([category])
+}
+
+/// Per-user per-song download access request. User requests, admin approves/denies.
+model DemoSongAccess {
+  id          String    @id @default(cuid())
+  userId      String
+  songId      String
+  status      String    @default("PENDING") // PENDING, APPROVED, DENIED
+  requestedAt DateTime  @default(now())
+  resolvedAt  DateTime?
+
+  song DemoSong @relation(fields: [songId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, songId])
+  @@index([status])
 }

@@ -49,9 +49,23 @@ export async function GET(request) {
 
     if (!song.allowDownload && !isAdmin) {
       return NextResponse.json(
-        { error: 'Preuzimanje za ovu pesmu još nije omogućeno.' },
+        { error: 'Preuzimanje za ovu pesmu nije omogućeno.' },
         { status: 403 }
       );
+    }
+
+    // Per-user approval check (admin bypasses)
+    if (!isAdmin) {
+      const access = await prisma.demoSongAccess.findUnique({
+        where: { userId_songId: { userId: auth.userId, songId: id } },
+      });
+
+      if (!access || access.status !== 'APPROVED') {
+        return NextResponse.json(
+          { error: 'Nemate odobrenje za preuzimanje ove pesme. Pošaljite zahtev i sačekajte odobrenje admina.' },
+          { status: 403 }
+        );
+      }
     }
 
     if (!song.driveLink) {
