@@ -207,7 +207,7 @@ export default function AdminDemoSongsPage() {
       {loading ? (
         <p style={{ color: '#94a3b8' }}>Učitavanje…</p>
       ) : songs.length === 0 ? (
-        <p style={{ color: '#64748b' }}>Nema autorskih pesama. Kliknite „Nova autorska pesma" da dodate prvu.</p>
+        <p style={{ color: '#64748b' }}>{`Nema autorskih pesama. Kliknite „Nova autorska pesma" da dodate prvu.`}</p>
       ) : (
         <div className="admin-table-wrap">
           <table className="admin-table">
