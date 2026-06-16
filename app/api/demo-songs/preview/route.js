@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '../../../../lib/prisma';
 import { getSupabaseAdmin } from '../../../../lib/supabase';
-import { getAuthUserFromRequest } from '../../../../lib/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,20 +16,13 @@ export async function GET(request) {
     });
 
     if (!song || !song.previewPath) {
+      console.error('[demo-songs/preview] song not found or no previewPath, id:', id);
       return NextResponse.json({ error: 'Preview nije dostupan.' }, { status: 404 });
     }
 
-    // If song is inactive, only admin can preview
-    if (!song.isActive) {
-      const auth = await getAuthUserFromRequest(request);
-      if (!auth?.userId) {
-        return NextResponse.json({ error: 'Preview nije dostupan.' }, { status: 404 });
-      }
-      const user = await prisma.user.findUnique({ where: { id: auth.userId }, select: { role: true } });
-      if (user?.role !== 'ADMIN') {
-        return NextResponse.json({ error: 'Preview nije dostupan.' }, { status: 404 });
-      }
-    }
+    // Preview (25% demo) is allowed for all users regardless of isActive.
+    // Full download is blocked separately for inactive songs.
+    console.log('[demo-songs/preview] generating signed URL for:', song.previewPath, 'isActive:', song.isActive);
 
     const supabase = getSupabaseAdmin();
     const { data, error } = await supabase.storage
@@ -38,10 +30,11 @@ export async function GET(request) {
       .createSignedUrl(song.previewPath, 300); // 5 min signed URL
 
     if (error || !data?.signedUrl) {
-      console.error('[demo-songs/preview] signed URL error:', error);
-      return NextResponse.json({ error: 'Greška pri generisanju linka.' }, { status: 500 });
+      console.error('[demo-songs/preview] signed URL error:', error, 'path:', song.previewPath);
+      return NextResponse.json({ error: 'Greška pri generisanju linka: ' + (error?.message || 'nepoznato') }, { status: 500 });
     }
 
+    console.log('[demo-songs/preview] OK, url length:', data.signedUrl.length);
     return NextResponse.json({ url: data.signedUrl });
   } catch (err) {
     console.error('[demo-songs/preview]', err);

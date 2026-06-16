@@ -96,7 +96,7 @@ export default function DemoPesmePage() {
       setPlayingId(songId);
     } catch (err) {
       console.error('Preview error:', err);
-      alert('Nije moguće pustiti preview.');
+      alert('Nije moguće pustiti preview. ' + (err.message || ''));
     } finally {
       setAudioLoading(null);
     }
