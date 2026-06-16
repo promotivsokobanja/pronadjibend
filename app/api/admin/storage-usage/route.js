@@ -22,7 +22,7 @@ export async function GET(request) {
 
   try {
     const supabase = getSupabaseAdmin();
-    const buckets = ['demo-songs', 'midi', 'audio', 'midi-files', 'avatars', 'band-photos'];
+    const buckets = ['demo-songs', 'midi', 'audio', 'midi-files', 'avatars', 'band-photos', 'band-images', 'band-videos'];
     const results = [];
     let totalBytes = 0;
 
