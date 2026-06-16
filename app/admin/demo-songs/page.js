@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { adminFetch } from '../../../lib/adminFetch';
-import { Trash2, Plus, ExternalLink, Music, CheckCircle, XCircle } from 'lucide-react';
+import { Trash2, Plus, ExternalLink, Music, CheckCircle, XCircle, Play, Pause } from 'lucide-react';
 
 const CATEGORIES = ['Zabavna', 'Narodna', 'Pop', 'Rock', 'Kola', 'Balada', 'Ostalo'];
 
@@ -17,6 +17,27 @@ export default function AdminDemoSongsPage() {
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef(null);
+  const [playingId, setPlayingId] = useState(null);
+  const audioRef = useRef(null);
+
+  const playPreview = async (songId) => {
+    if (playingId === songId) {
+      audioRef.current?.pause();
+      setPlayingId(null);
+      return;
+    }
+    try {
+      const r = await fetch(`/api/demo-songs/preview?id=${songId}`);
+      const data = await r.json();
+      if (!r.ok || !data.url) { alert('Nije moguće pustiti preview.'); return; }
+      if (audioRef.current) audioRef.current.pause();
+      const audio = new Audio(data.url);
+      audio.onended = () => setPlayingId(null);
+      audio.play();
+      audioRef.current = audio;
+      setPlayingId(songId);
+    } catch { alert('Greška.'); }
+  };
 
   const fetchSongs = async () => {
     try {
@@ -243,7 +264,16 @@ export default function AdminDemoSongsPage() {
                   </td>
                   <td>{s.category || '—'}</td>
                   <td>{s.price || '—'}</td>
-                  <td>{s.previewPath ? <Music size={14} style={{ color: '#4ade80' }} /> : '—'}</td>
+                  <td>{s.previewPath ? (
+                    <button
+                      type="button"
+                      onClick={() => playPreview(s.id)}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: playingId === s.id ? '#818cf8' : '#4ade80' }}
+                      title={playingId === s.id ? 'Pauziraj' : 'Pusti preview'}
+                    >
+                      {playingId === s.id ? <Pause size={16} /> : <Play size={16} />}
+                    </button>
+                  ) : '—'}</td>
                   <td>
                     {s.driveLink ? (
                       <a href={s.driveLink} target="_blank" rel="noopener noreferrer">

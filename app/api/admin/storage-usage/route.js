@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '../../../../lib/prisma';
+import { getSupabaseAdmin } from '../../../../lib/supabase';
 import { getAuthUserFromRequest } from '../../../../lib/auth';
 
 export const dynamic = 'force-dynamic';
@@ -20,46 +21,55 @@ export async function GET(request) {
   if (!admin) return NextResponse.json({ error: 'Nemate dozvolu.' }, { status: 403 });
 
   try {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const supabase = getSupabaseAdmin();
+    const bucketNames = ['demo-songs', 'midi', 'audio', 'avatars', 'band-photos', 'band-images', 'band-videos'];
 
-    // Direct REST query to storage.objects table
-    const response = await fetch(
-      `${supabaseUrl}/rest/v1/objects?select=bucket_id,metadata`,
-      {
-        headers: {
-          'apikey': serviceKey,
-          'Authorization': `Bearer ${serviceKey}`,
-          'Accept-Profile': 'storage',
-          'Content-Type': 'application/json',
-        },
+    // Scan a single folder (paginated)
+    async function listFolder(bucket, folder) {
+      let size = 0, count = 0, offset = 0;
+      while (true) {
+        const { data } = await supabase.storage.from(bucket).list(folder, { limit: 1000, offset });
+        if (!data || data.length === 0) break;
+        for (const f of data) {
+          if (f.metadata && f.metadata.size) { size += f.metadata.size; count++; }
+        }
+        if (data.length < 1000) break;
+        offset += 1000;
       }
-    );
-
-    if (!response.ok) {
-      const errText = await response.text();
-      console.error('[storage-usage] REST error:', errText);
-      return NextResponse.json({ error: 'Greška: ' + errText }, { status: 500 });
+      return { size, count };
     }
 
-    const objects = await response.json();
+    // Scan bucket: top level files + 1 level of subfolders
+    async function scanBucket(bucket) {
+      const { data: topLevel, error } = await supabase.storage.from(bucket).list('', { limit: 1000 });
+      if (error || !topLevel) return null;
 
-    // Aggregate by bucket
-    const bucketMap = {};
-    for (const obj of (objects || [])) {
-      const b = obj.bucket_id;
-      if (!bucketMap[b]) bucketMap[b] = { files: 0, bytes: 0 };
-      bucketMap[b].files++;
-      const sz = obj.metadata?.size || 0;
-      bucketMap[b].bytes += sz;
+      let size = 0, count = 0;
+      const folderNames = [];
+
+      for (const item of topLevel) {
+        if (item.metadata && item.metadata.size) {
+          size += item.metadata.size;
+          count++;
+        } else if (!item.metadata || item.id === null) {
+          folderNames.push(item.name);
+        }
+      }
+
+      // Scan subfolders in parallel
+      if (folderNames.length > 0) {
+        const folderResults = await Promise.all(folderNames.map(f => listFolder(bucket, f)));
+        for (const r of folderResults) { size += r.size; count += r.count; }
+      }
+
+      return { bucket, files: count, bytes: size };
     }
 
-    const results = Object.entries(bucketMap)
-      .map(([bucket, stats]) => ({ bucket, ...stats }))
-      .sort((a, b) => b.bytes - a.bytes);
-
+    // Scan all buckets in parallel
+    const scanResults = await Promise.all(bucketNames.map(b => scanBucket(b)));
+    const results = scanResults.filter(r => r && r.files > 0);
     const totalBytes = results.reduce((s, b) => s + b.bytes, 0);
-    const limitBytes = 1024 * 1024 * 1024; // 1 GB free plan
+    const limitBytes = 1024 * 1024 * 1024;
 
     return NextResponse.json({
       buckets: results,
