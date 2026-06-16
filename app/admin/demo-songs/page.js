@@ -32,11 +32,9 @@ export default function AdminDemoSongsPage() {
       const data = await r.json();
       if (!r.ok || !data.url) { alert(data.error || 'Nije moguće pustiti preview.'); return; }
       if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
-      const audio = new Audio();
-      audio.crossOrigin = 'anonymous';
+      const audio = new Audio(data.url);
       audio.onended = () => { setPlayingId(null); audioRef.current = null; };
-      audio.onerror = (e) => { alert('Audio error: ' + (audio.error?.message || audio.error?.code || 'nepoznata greška') + '\nURL: ' + data.url.substring(0, 80)); setPlayingId(null); };
-      audio.src = data.url;
+      audio.onerror = () => { setPlayingId(null); };
       await audio.play();
       audioRef.current = audio;
       setPlayingId(songId);
