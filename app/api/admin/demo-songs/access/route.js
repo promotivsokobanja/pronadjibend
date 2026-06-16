@@ -77,14 +77,6 @@ export async function PATCH(request) {
       data: { status, resolvedAt: new Date() },
     });
 
-    // When payment is confirmed, deactivate the song so it disappears from public listing
-    if (status === 'PAID') {
-      await prisma.demoSong.update({
-        where: { id: existing.songId },
-        data: { isActive: false },
-      });
-    }
-
     return NextResponse.json(updated);
   } catch (err) {
     console.error('[admin/demo-songs/access PATCH]', err);

@@ -521,14 +521,11 @@ function AccessRequestsSection() {
                       <button
                         type="button"
                         onClick={() => handleAction(req.id, 'PAID')}
-                        title="Potvrdi uplatu — pesma se sklanja iz ponude"
+                        title="Potvrdi uplatu — otvara pristup korisniku"
                         style={{ background: '#4ade80', border: 'none', cursor: 'pointer', color: '#0f172a', padding: '0.4rem 0.8rem', borderRadius: '6px', fontWeight: 700, fontSize: '0.75rem' }}
                       >
                         ✓ Potvrdi uplatu
                       </button>
-                      <small style={{ display: 'block', marginTop: '0.3rem', color: '#94a3b8', fontSize: '0.65rem' }}>
-                        Pesma se automatski sklanja iz ponude
-                      </small>
                     </td>
                   )}
                 </tr>
