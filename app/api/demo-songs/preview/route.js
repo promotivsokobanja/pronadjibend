@@ -11,16 +11,6 @@ export async function GET(request) {
     const id = searchParams.get('id');
     if (!id) return NextResponse.json({ error: 'Nedostaje ID.' }, { status: 400 });
 
-    // Check if user is admin (can preview inactive songs too)
-    let isAdmin = false;
-    try {
-      const auth = await getAuthUserFromRequest(request);
-      if (auth?.userId) {
-        const user = await prisma.user.findUnique({ where: { id: auth.userId }, select: { role: true } });
-        if (user?.role === 'ADMIN') isAdmin = true;
-      }
-    } catch { /* not logged in, that's ok */ }
-
     const song = await prisma.demoSong.findUnique({
       where: { id },
       select: { previewPath: true, isActive: true },
@@ -29,8 +19,17 @@ export async function GET(request) {
     if (!song || !song.previewPath) {
       return NextResponse.json({ error: 'Preview nije dostupan.' }, { status: 404 });
     }
-    if (!song.isActive && !isAdmin) {
-      return NextResponse.json({ error: 'Preview nije dostupan.' }, { status: 404 });
+
+    // If song is inactive, only admin can preview
+    if (!song.isActive) {
+      const auth = await getAuthUserFromRequest(request);
+      if (!auth?.userId) {
+        return NextResponse.json({ error: 'Preview nije dostupan.' }, { status: 404 });
+      }
+      const user = await prisma.user.findUnique({ where: { id: auth.userId }, select: { role: true } });
+      if (user?.role !== 'ADMIN') {
+        return NextResponse.json({ error: 'Preview nije dostupan.' }, { status: 404 });
+      }
     }
 
     const supabase = getSupabaseAdmin();
