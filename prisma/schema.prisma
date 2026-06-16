@@ -475,6 +475,8 @@ model DemoSong {
   allowDownload Boolean  @default(false)
   /// Price label (e.g. "2000 RSD", "Po dogovoru")
   price         String?
+  /// Full song lyrics — shown only to users who paid
+  lyrics        String?
   isActive      Boolean  @default(true)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt

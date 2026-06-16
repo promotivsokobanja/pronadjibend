@@ -40,7 +40,7 @@ export async function GET(request) {
     // Check song exists and download is allowed
     const song = await prisma.demoSong.findUnique({
       where: { id },
-      select: { driveLink: true, allowDownload: true, isActive: true },
+      select: { driveLink: true, allowDownload: true, isActive: true, lyrics: true, title: true, artist: true },
     });
 
     if (!song || !song.isActive) {
@@ -75,7 +75,7 @@ export async function GET(request) {
       );
     }
 
-    return NextResponse.json({ url: song.driveLink });
+    return NextResponse.json({ url: song.driveLink, lyrics: song.lyrics || null, title: song.title, artist: song.artist });
   } catch (err) {
     console.error('[demo-songs/download]', err);
     return NextResponse.json({ error: 'Greška.' }, { status: 500 });

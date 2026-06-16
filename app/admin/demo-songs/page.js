@@ -12,7 +12,7 @@ export default function AdminDemoSongsPage() {
   const [error, setError] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
-    title: '', artist: '', category: 'Zabavna', description: '', driveLink: '', price: '', allowDownload: false,
+    title: '', artist: '', category: 'Zabavna', description: '', driveLink: '', price: '', allowDownload: false, lyrics: '',
   });
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
@@ -43,6 +43,7 @@ export default function AdminDemoSongsPage() {
       fd.append('driveLink', formData.driveLink);
       fd.append('price', formData.price);
       fd.append('allowDownload', formData.allowDownload ? 'true' : 'false');
+      fd.append('lyrics', formData.lyrics);
       if (file) fd.append('file', file);
 
       const r = await adminFetch('/api/admin/demo-songs', {
@@ -53,7 +54,7 @@ export default function AdminDemoSongsPage() {
       if (!r.ok) throw new Error(data.error || 'Greška');
       setSongs((prev) => [data, ...prev]);
       setShowForm(false);
-      setFormData({ title: '', artist: '', category: 'Zabavna', description: '', driveLink: '', price: '', allowDownload: false });
+      setFormData({ title: '', artist: '', category: 'Zabavna', description: '', driveLink: '', price: '', allowDownload: false, lyrics: '' });
       setFile(null);
       if (fileRef.current) fileRef.current.value = '';
     } catch (err) {
@@ -169,6 +170,16 @@ export default function AdminDemoSongsPage() {
                 rows={2}
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              />
+            </div>
+            <div style={{ gridColumn: '1 / -1' }}>
+              <label>Tekst pesme (korisnik dobija nakon uplate)</label>
+              <textarea
+                rows={6}
+                value={formData.lyrics}
+                onChange={(e) => setFormData({ ...formData, lyrics: e.target.value })}
+                placeholder="Unesite kompletan tekst pesme..."
+                style={{ fontFamily: 'monospace', fontSize: '0.82rem' }}
               />
             </div>
             <div style={{ gridColumn: '1 / -1' }}>

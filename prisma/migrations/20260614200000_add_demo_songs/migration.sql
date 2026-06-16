@@ -10,6 +10,7 @@ CREATE TABLE "DemoSong" (
     "driveLink" TEXT,
     "allowDownload" BOOLEAN NOT NULL DEFAULT false,
     "price" TEXT,
+    "lyrics" TEXT,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,

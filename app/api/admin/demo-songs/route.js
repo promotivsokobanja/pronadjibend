@@ -87,6 +87,7 @@ export async function POST(request) {
     }
 
     const allowDownload = formData.get('allowDownload') === 'true';
+    const lyrics = formData.get('lyrics') || '';
 
     const song = await prisma.demoSong.create({
       data: {
@@ -99,6 +100,7 @@ export async function POST(request) {
         driveLink: driveLink.trim() || null,
         allowDownload,
         price: price.trim() || null,
+        lyrics: lyrics.trim() || null,
       },
     });
 
@@ -155,6 +157,7 @@ export async function PATCH(request) {
     if (data.price !== undefined) updateData.price = data.price.trim() || null;
     if (data.isActive !== undefined) updateData.isActive = Boolean(data.isActive);
     if (data.allowDownload !== undefined) updateData.allowDownload = Boolean(data.allowDownload);
+    if (data.lyrics !== undefined) updateData.lyrics = data.lyrics.trim() || null;
 
     const updated = await prisma.demoSong.update({ where: { id }, data: updateData });
     return NextResponse.json(updated);
