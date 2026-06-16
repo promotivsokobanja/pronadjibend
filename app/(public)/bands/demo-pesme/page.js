@@ -133,41 +133,70 @@ export default function DemoPesmePage() {
     finally { setRequesting(null); }
   };
 
-  const renderStatus = (song) => {
+  const renderBuyBtn = (song) => {
     const status = accessMap[song.id];
     if (status === 'PAID') {
       return (
-        <div className="ap-actions">
-          <button type="button" className="ap-btn ap-btn-download" onClick={() => handleDownload(song.id)}>
-            <Download size={14} /> Preuzmi
-          </button>
-          <button type="button" className="ap-btn ap-btn-lyrics" onClick={() => handleDownload(song.id)}>
-            <FileText size={14} /> Tekst
-          </button>
-        </div>
+        <button type="button" className="ap-btn ap-btn-download" onClick={() => handleDownload(song.id)}>
+          <Download size={14} /> Preuzmi
+        </button>
       );
     }
     if (status === 'APPROVED') {
       return (
-        <div className="ap-payment-box">
-          <span className="ap-payment-label">Uputstvo za uplatu:</span>
-          <span className="ap-payment-details">
-            Cena: <strong>{song.price || 'Po dogovoru'}</strong> · Svrha: {song.title}
-          </span>
-        </div>
+        <button type="button" className="ap-btn ap-btn-approved" disabled>
+          <Clock size={14} /> Čeka uplatu
+        </button>
       );
     }
     if (status === 'PENDING') {
-      return <span className="ap-status ap-status-pending"><Clock size={13} /> Na čekanju</span>;
+      return (
+        <button type="button" className="ap-btn ap-btn-pending" disabled>
+          <Clock size={14} /> Na čekanju
+        </button>
+      );
     }
     if (status === 'DENIED') {
-      return <span className="ap-status ap-status-denied"><Lock size={13} /> Odbijeno</span>;
+      return (
+        <button type="button" className="ap-btn ap-btn-denied" disabled>
+          <Lock size={14} /> Odbijeno
+        </button>
+      );
     }
     return (
       <button type="button" className="ap-btn ap-btn-request" disabled={requesting === song.id} onClick={() => handleRequest(song.id)}>
         <ShoppingBag size={14} /> {requesting === song.id ? 'Šaljem…' : 'Kupi'}
       </button>
     );
+  };
+
+  const renderPaymentInfo = (song) => {
+    const status = accessMap[song.id];
+    if (status === 'APPROVED') {
+      return (
+        <div className="ap-payment-box">
+          <div className="ap-payment-label">✓ Zahtev odobren — uputstvo za uplatu</div>
+          <div className="ap-payment-details">
+            <p>Uplatite iznos od <strong>{song.price || 'po dogovoru'} RSD</strong> na račun:</p>
+            <p><strong>265-1234567-89</strong></p>
+            <p>Svrha uplate: <strong>Autorska pesma — {song.title}</strong></p>
+            <p>Poziv na broj: <strong>vaš email</strong></p>
+            <p className="ap-payment-note">Nakon uplate, admin će potvrditi i otvoriti vam pristup za preuzimanje.</p>
+          </div>
+        </div>
+      );
+    }
+    if (status === 'PAID') {
+      return (
+        <div className="ap-payment-box ap-payment-success">
+          <div className="ap-payment-label">✓ Uplata potvrđena</div>
+          <div className="ap-payment-details">
+            <p>Pesma je vaša! Kliknite <strong>Preuzmi</strong> za download.</p>
+          </div>
+        </div>
+      );
+    }
+    return null;
   };
 
   return (
@@ -204,33 +233,32 @@ export default function DemoPesmePage() {
         <div className="ap-grid">
           {filtered.map((song) => (
             <div key={song.id} className="ap-card">
-              <div className="ap-card-row">
-                <div className="ap-card-left">
-                  <div className="ap-card-info">
-                    <h3>{song.title}</h3>
-                    <span className="ap-artist">{song.artist}</span>
-                    {song.description && <p className="ap-desc">{song.description}</p>}
-                  </div>
-                  <div className="ap-card-bottom">
-                    {song.hasPreview && (
-                      <button
-                        type="button"
-                        className={`ap-btn ap-btn-play ${playingId === song.id ? 'playing' : ''}`}
-                        onClick={() => playPreview(song.id)}
-                        disabled={audioLoading === song.id}
-                      >
-                        {audioLoading === song.id ? <span className="ap-spin-sm" /> : playingId === song.id ? <Pause size={14} /> : <Play size={14} />}
-                        {playingId === song.id ? 'Stop' : 'Demo'}
-                      </button>
-                    )}
-                    {song.category && <span className="ap-cat">{song.category}</span>}
-                  </div>
+              <div className="ap-card-top">
+                <div className="ap-card-info">
+                  <h3>{song.title}</h3>
+                  <span className="ap-artist">{song.artist}</span>
                 </div>
-                <div className="ap-card-right">
+                <div className="ap-card-meta">
+                  {song.category && <span className="ap-cat">{song.category}</span>}
                   {song.price && <span className="ap-price">{song.price} RSD</span>}
-                  {renderStatus(song)}
                 </div>
               </div>
+              {song.description && <p className="ap-desc">{song.description}</p>}
+              <div className="ap-card-bottom">
+                {song.hasPreview && (
+                  <button
+                    type="button"
+                    className={`ap-btn ap-btn-play ${playingId === song.id ? 'playing' : ''}`}
+                    onClick={() => playPreview(song.id)}
+                    disabled={audioLoading === song.id}
+                  >
+                    {audioLoading === song.id ? <span className="ap-spin-sm" /> : playingId === song.id ? <Pause size={14} /> : <Play size={14} />}
+                    {playingId === song.id ? 'Stop' : 'Demo'}
+                  </button>
+                )}
+                {renderBuyBtn(song)}
+              </div>
+              {renderPaymentInfo(song)}
             </div>
           ))}
         </div>
@@ -274,36 +302,34 @@ export default function DemoPesmePage() {
         .ap-filter:hover { color: #e2e8f0; background: rgba(99,102,241,0.06); }
         .ap-filter.active { background: #6366f1; color: #fff; border-color: #6366f1; }
         .ap-grid { display: flex; flex-direction: column; gap: 0.6rem; max-width: 650px; margin: 0 auto; }
-        .ap-card { background: rgba(15,23,42,0.5); border: 1px solid rgba(99,102,241,0.06); border-radius: 12px; padding: 1rem 1.1rem; transition: 0.15s; }
+        .ap-card { background: rgba(15,23,42,0.5); border: 1px solid rgba(99,102,241,0.06); border-radius: 12px; padding: 1rem 1.1rem; display: flex; flex-direction: column; gap: 0.6rem; transition: 0.15s; }
         .ap-card:hover { border-color: rgba(99,102,241,0.2); background: rgba(99,102,241,0.03); }
-        .ap-card-row { display: flex; align-items: center; gap: 1rem; }
-        .ap-card-left { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.4rem; }
+        .ap-card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; }
         .ap-card-info h3 { margin: 0; font-size: 0.95rem; font-weight: 700; color: #f1f5f9; line-height: 1.2; }
         .ap-artist { font-size: 0.76rem; color: #64748b; }
-        .ap-card-right { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; flex-shrink: 0; }
+        .ap-card-meta { display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0; }
         .ap-cat { font-size: 0.62rem; font-weight: 700; padding: 2px 7px; border-radius: 50px; background: rgba(99,102,241,0.1); color: #818cf8; }
         .ap-price { font-size: 0.85rem; font-weight: 800; color: #4ade80; white-space: nowrap; }
         .ap-desc { margin: 0; font-size: 0.78rem; color: #94a3b8; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-        .ap-card-bottom { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
-        .ap-btn { display: inline-flex; align-items: center; gap: 4px; padding: 0.4rem 0.7rem; border-radius: 8px; border: none; font-weight: 700; font-size: 0.72rem; cursor: pointer; transition: 0.15s; min-height: 32px; }
-        .ap-btn-play { background: rgba(99,102,241,0.1); color: #818cf8; border: 1px solid rgba(99,102,241,0.2); }
-        .ap-btn-play:hover { background: rgba(99,102,241,0.18); }
-        .ap-btn-play.playing { background: rgba(99,102,241,0.2); color: #a5b4fc; }
+        .ap-card-bottom { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+        .ap-btn { display: inline-flex; align-items: center; gap: 5px; padding: 0.5rem 1rem; border-radius: 10px; font-weight: 700; font-size: 0.78rem; cursor: pointer; transition: 0.15s; min-height: 36px; border: 1px solid transparent; }
+        .ap-btn-play { background: rgba(99,102,241,0.1); color: #818cf8; border-color: rgba(99,102,241,0.25); }
+        .ap-btn-play:hover { background: rgba(99,102,241,0.18); border-color: #6366f1; }
+        .ap-btn-play.playing { background: rgba(99,102,241,0.2); color: #a5b4fc; border-color: #6366f1; }
         .ap-btn-play:disabled { opacity: 0.5; cursor: wait; }
-        .ap-btn-request { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; border: none; padding: 0.55rem 1.1rem; font-size: 0.78rem; border-radius: 10px; box-shadow: 0 4px 14px rgba(99,102,241,0.3); min-height: 38px; }
-        .ap-btn-request:hover { background: linear-gradient(135deg, #4f46e5, #7c3aed); box-shadow: 0 6px 20px rgba(99,102,241,0.4); transform: translateY(-1px); }
-        .ap-btn-request:disabled { opacity: 0.5; cursor: wait; transform: none; box-shadow: none; }
-        .ap-btn-download { background: rgba(34,197,94,0.1); color: #4ade80; border: 1px solid rgba(34,197,94,0.2); }
-        .ap-btn-download:hover { background: rgba(34,197,94,0.18); }
-        .ap-btn-lyrics { background: rgba(139,92,246,0.1); color: #a78bfa; border: 1px solid rgba(139,92,246,0.2); }
-        .ap-btn-lyrics:hover { background: rgba(139,92,246,0.18); }
-        .ap-status { display: inline-flex; align-items: center; gap: 4px; font-size: 0.7rem; font-weight: 700; padding: 0.3rem 0.6rem; border-radius: 6px; }
-        .ap-status-pending { background: rgba(99,102,241,0.08); color: #a5b4fc; }
-        .ap-status-denied { background: rgba(248,113,113,0.08); color: #f87171; }
-        .ap-actions { display: flex; gap: 0.3rem; }
-        .ap-payment-box { width: 100%; padding: 0.5rem 0.7rem; border-radius: 8px; background: rgba(34,197,94,0.05); border: 1px solid rgba(34,197,94,0.15); }
-        .ap-payment-label { font-size: 0.68rem; font-weight: 800; color: #4ade80; text-transform: uppercase; letter-spacing: 0.03em; }
-        .ap-payment-details { display: block; font-size: 0.75rem; color: #cbd5e1; margin-top: 2px; line-height: 1.4; }
+        .ap-btn-request { background: rgba(34,197,94,0.1); color: #4ade80; border-color: rgba(34,197,94,0.25); }
+        .ap-btn-request:hover { background: rgba(34,197,94,0.2); border-color: #22c55e; }
+        .ap-btn-request:disabled { opacity: 0.5; cursor: wait; }
+        .ap-btn-pending { background: rgba(99,102,241,0.08); color: #a5b4fc; border-color: rgba(99,102,241,0.2); opacity: 0.8; cursor: default; }
+        .ap-btn-approved { background: rgba(251,191,36,0.1); color: #fbbf24; border-color: rgba(251,191,36,0.25); cursor: default; }
+        .ap-btn-denied { background: rgba(248,113,113,0.08); color: #f87171; border-color: rgba(248,113,113,0.2); opacity: 0.7; cursor: default; }
+        .ap-btn-download { background: rgba(34,197,94,0.1); color: #4ade80; border-color: rgba(34,197,94,0.25); }
+        .ap-btn-download:hover { background: rgba(34,197,94,0.2); border-color: #22c55e; }
+        .ap-payment-box { margin-top: 0.3rem; padding: 0.75rem 1rem; border-radius: 10px; background: rgba(34,197,94,0.04); border: 1px solid rgba(34,197,94,0.15); }
+        .ap-payment-box.ap-payment-success { background: rgba(34,197,94,0.06); border-color: rgba(34,197,94,0.25); }
+        .ap-payment-label { font-size: 0.72rem; font-weight: 800; color: #4ade80; margin-bottom: 0.4rem; }
+        .ap-payment-details p { margin: 0.2rem 0; font-size: 0.8rem; color: #cbd5e1; line-height: 1.5; }
+        .ap-payment-note { margin-top: 0.5rem !important; font-size: 0.72rem !important; color: #94a3b8 !important; font-style: italic; }
         .ap-loading { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; padding: 3rem; color: #64748b; }
         .ap-spinner { width: 28px; height: 28px; border: 3px solid #334155; border-top-color: #6366f1; border-radius: 50%; animation: spin 0.6s linear infinite; }
         .ap-spin-sm { width: 12px; height: 12px; border: 2px solid rgba(99,102,241,0.3); border-top-color: #818cf8; border-radius: 50%; animation: spin 0.5s linear infinite; }
@@ -324,28 +350,20 @@ export default function DemoPesmePage() {
           .ap-hero p { font-size: 0.82rem; }
           .ap-grid { gap: 0.5rem; }
           .ap-card { padding: 0.85rem; }
-          .ap-card-row { flex-direction: column; align-items: stretch; gap: 0.6rem; }
-          .ap-card-right { flex-direction: row; justify-content: space-between; align-items: center; }
-          .ap-card-bottom { gap: 0.35rem; }
-          .ap-btn { justify-content: center; min-height: 44px; font-size: 0.78rem; }
-          .ap-btn-request { min-height: 44px; width: 100%; justify-content: center; }
-          .ap-status { min-height: 44px; justify-content: center; width: 100%; }
+          .ap-card-bottom { width: 100%; }
+          .ap-btn { min-height: 44px; flex: 1; justify-content: center; }
           .ap-filters { justify-content: flex-start; padding-bottom: 0.3rem; }
           .ap-filter { padding: 0.4rem 0.85rem; min-height: 36px; display: flex; align-items: center; }
-          .ap-payment-box { padding: 0.6rem 0.8rem; }
           .ap-modal { max-height: 90dvh; border-radius: 12px; margin: env(safe-area-inset-top, 0px) 0.5rem env(safe-area-inset-bottom, 0px); }
           .ap-modal-overlay { padding: 0.5rem; }
           .ap-modal-lyrics { font-size: 0.84rem; -webkit-overflow-scrolling: touch; }
           .ap-modal-footer { padding: 0.85rem 1rem; }
-          .ap-actions { width: 100%; }
-          .ap-actions .ap-btn { flex: 1; }
         }
         /* Small phones — iPhone SE, etc */
         @media (max-width: 380px) {
           .ap-hero h1 { font-size: 1.2rem; }
           .ap-card-info h3 { font-size: 0.85rem; }
           .ap-price { font-size: 0.72rem; }
-          .ap-search { padding: 0.5rem 0.85rem; }
         }
         /* Tablet */
         @media (min-width: 641px) and (max-width: 1024px) {
