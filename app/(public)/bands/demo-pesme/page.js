@@ -57,9 +57,9 @@ export default function DemoPesmePage() {
       // Stop
       if (audioRef.current) {
         audioRef.current.pause();
-        audioRef.current.src = '';
+        audioRef.current = null;
       }
-      if (previewTimerRef.current) clearTimeout(previewTimerRef.current);
+      if (previewTimerRef.current) { clearTimeout(previewTimerRef.current); previewTimerRef.current = null; }
       setPlayingId(null);
       return;
     }
@@ -70,29 +70,31 @@ export default function DemoPesmePage() {
       const data = await r.json();
       if (!r.ok || !data.url) throw new Error(data.error || 'Greška');
 
-      if (!audioRef.current) {
-        audioRef.current = new Audio();
-        audioRef.current.addEventListener('ended', () => setPlayingId(null));
+      // Always dispose old audio and create fresh one
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.removeAttribute('src');
+        audioRef.current.load();
+        audioRef.current = null;
       }
+      if (previewTimerRef.current) { clearTimeout(previewTimerRef.current); previewTimerRef.current = null; }
 
-      audioRef.current.pause();
-      audioRef.current.src = data.url;
+      const audio = new Audio(data.url);
+      audioRef.current = audio;
+
+      audio.addEventListener('ended', () => { setPlayingId(null); });
+      audio.addEventListener('error', () => { setPlayingId(null); });
 
       // Wait for metadata to get duration, then limit to 25%
-      audioRef.current.onloadedmetadata = () => {
-        const totalDuration = audioRef.current.duration;
-        const maxPlayTime = totalDuration * 0.25; // Only 25%
-        if (previewTimerRef.current) clearTimeout(previewTimerRef.current);
+      audio.addEventListener('loadedmetadata', () => {
+        const maxPlayTime = audio.duration * 0.25;
         previewTimerRef.current = setTimeout(() => {
-          if (audioRef.current) {
-            audioRef.current.pause();
-            audioRef.current.src = '';
-          }
+          audio.pause();
           setPlayingId(null);
         }, maxPlayTime * 1000);
-      };
+      });
 
-      await audioRef.current.play();
+      await audio.play();
       setPlayingId(songId);
     } catch (err) {
       console.error('Preview error:', err);
@@ -106,7 +108,7 @@ export default function DemoPesmePage() {
     return () => {
       if (audioRef.current) {
         audioRef.current.pause();
-        audioRef.current.src = '';
+        audioRef.current = null;
       }
       if (previewTimerRef.current) clearTimeout(previewTimerRef.current);
     };
