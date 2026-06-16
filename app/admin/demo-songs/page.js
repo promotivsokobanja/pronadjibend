@@ -23,20 +23,22 @@ export default function AdminDemoSongsPage() {
   const playPreview = async (songId) => {
     if (playingId === songId) {
       audioRef.current?.pause();
+      audioRef.current = null;
       setPlayingId(null);
       return;
     }
     try {
-      const r = await adminFetch(`/api/demo-songs/preview?id=${songId}&admin=1`);
+      const r = await fetch(`/api/demo-songs/preview?id=${songId}`, { credentials: 'include' });
       const data = await r.json();
-      if (!r.ok || !data.url) { alert('Nije moguće pustiti preview.'); return; }
-      if (audioRef.current) audioRef.current.pause();
+      if (!r.ok || !data.url) { alert(data.error || 'Nije moguće pustiti preview.'); return; }
+      if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
       const audio = new Audio(data.url);
-      audio.onended = () => setPlayingId(null);
-      audio.play();
+      audio.onended = () => { setPlayingId(null); audioRef.current = null; };
+      audio.onerror = () => { alert('Greška pri reprodukciji audio fajla.'); setPlayingId(null); };
+      await audio.play();
       audioRef.current = audio;
       setPlayingId(songId);
-    } catch { alert('Greška.'); }
+    } catch (e) { alert('Greška: ' + e.message); }
   };
 
   const fetchSongs = async () => {
