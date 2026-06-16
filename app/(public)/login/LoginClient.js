@@ -650,11 +650,14 @@ export default function LoginClient() {
         }
         .auth-submit-btn {
           border: none;
-          background: linear-gradient(120deg, var(--accent-primary), var(--accent-secondary));
-          color: #050505;
+          background: linear-gradient(120deg, var(--accent-primary), var(--accent-secondary)) !important;
+          color: #1a1a2e !important;
           border-radius: 999px;
           font-weight: 800;
-          letter-spacing: 0.02em;
+          font-size: 0.9rem;
+          letter-spacing: 0.04em;
+          text-transform: uppercase;
+          padding: 1rem 1.5rem;
           box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
         }
         .auth-submit-btn:hover:not(:disabled) {

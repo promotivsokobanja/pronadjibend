@@ -628,16 +628,16 @@ function StorageUsageBar() {
 
   return (
     <div style={{ marginBottom: '2rem', padding: '1rem 1.25rem', background: 'rgba(15,23,42,0.5)', border: '1px solid rgba(99,102,241,0.1)', borderRadius: '12px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', flexWrap: 'wrap', gap: '0.3rem' }}>
         <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#e2e8f0' }}>Storage zauzece ({totalFiles.toLocaleString()} fajlova)</span>
         <span style={{ fontSize: '0.75rem', fontWeight: 700, color: barColor }}>{formatSize(totalBytes)} / {formatSize(limitBytes)} ({usedPercent}%)</span>
       </div>
       <div style={{ width: '100%', height: '10px', background: 'rgba(255,255,255,0.06)', borderRadius: '50px', overflow: 'hidden' }}>
         <div style={{ width: `${Math.min(usedPercent, 100)}%`, height: '100%', background: barColor, borderRadius: '50px', transition: '0.3s' }} />
       </div>
-      <div style={{ display: 'flex', gap: '1rem', marginTop: '0.7rem', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.7rem', flexWrap: 'wrap' }}>
         {buckets.map((b) => (
-          <span key={b.bucket} style={{ fontSize: '0.7rem', color: '#94a3b8', background: 'rgba(255,255,255,0.03)', padding: '3px 8px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)' }}>
+          <span key={b.bucket} style={{ fontSize: '0.65rem', color: '#94a3b8', background: 'rgba(255,255,255,0.03)', padding: '3px 7px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)' }}>
             <strong style={{ color: '#cbd5e1' }}>{b.bucket}</strong>: {formatSize(b.bytes)} · {b.files.toLocaleString()} fajl.
           </span>
         ))}
