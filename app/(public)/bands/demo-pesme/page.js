@@ -163,7 +163,6 @@ export default function DemoPesmePage() {
     if (status === 'DENIED') {
       return <span className="ap-status ap-status-denied"><Lock size={13} /> Odbijeno</span>;
     }
-    if (!song.allowDownload) return null;
     return (
       <button type="button" className="ap-btn ap-btn-request" disabled={requesting === song.id} onClick={() => handleRequest(song.id)}>
         <ShoppingBag size={14} /> {requesting === song.id ? 'Šaljem…' : 'Kupi'}
@@ -272,7 +271,7 @@ export default function DemoPesmePage() {
         .ap-filter { background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.06); color: #94a3b8; padding: 0.35rem 0.75rem; border-radius: 50px; cursor: pointer; font-weight: 700; font-size: 0.7rem; white-space: nowrap; transition: 0.15s; }
         .ap-filter:hover { color: #e2e8f0; background: rgba(99,102,241,0.06); }
         .ap-filter.active { background: #6366f1; color: #fff; border-color: #6366f1; }
-        .ap-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 0.75rem; max-width: 900px; margin: 0 auto; }
+        .ap-grid { display: flex; flex-direction: column; gap: 0.6rem; max-width: 650px; margin: 0 auto; }
         .ap-card { background: rgba(15,23,42,0.5); border: 1px solid rgba(99,102,241,0.06); border-radius: 12px; padding: 0.9rem 1rem; display: flex; flex-direction: column; gap: 0.5rem; transition: 0.15s; }
         .ap-card:hover { border-color: rgba(99,102,241,0.2); background: rgba(99,102,241,0.03); }
         .ap-card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; }
@@ -320,7 +319,7 @@ export default function DemoPesmePage() {
           .ap-wrap { padding-left: max(0.75rem, env(safe-area-inset-left)); padding-right: max(0.75rem, env(safe-area-inset-right)); }
           .ap-hero h1 { font-size: 1.4rem; }
           .ap-hero p { font-size: 0.82rem; }
-          .ap-grid { grid-template-columns: 1fr; gap: 0.6rem; }
+          .ap-grid { gap: 0.5rem; }
           .ap-card { padding: 0.85rem; }
           .ap-card-bottom { flex-direction: column; align-items: stretch; gap: 0.35rem; }
           .ap-btn { justify-content: center; min-height: 44px; font-size: 0.78rem; }
@@ -342,14 +341,10 @@ export default function DemoPesmePage() {
           .ap-price { font-size: 0.72rem; }
           .ap-search { padding: 0.5rem 0.85rem; }
         }
-        /* Tablet portrait (641-900px) */
-        @media (min-width: 641px) and (max-width: 900px) {
-          .ap-grid { grid-template-columns: repeat(2, 1fr); }
+        /* Tablet */
+        @media (min-width: 641px) and (max-width: 1024px) {
+          .ap-grid { max-width: 600px; }
           .ap-btn { min-height: 38px; }
-        }
-        /* Tablet landscape (901-1024px) */
-        @media (min-width: 901px) and (max-width: 1024px) {
-          .ap-grid { grid-template-columns: repeat(3, 1fr); max-width: 960px; }
         }
       `}</style>
     </div>

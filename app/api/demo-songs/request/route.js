@@ -66,21 +66,14 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Nedostaje songId.' }, { status: 400 });
     }
 
-    // Check song exists and allows download requests
+    // Check song exists
     const song = await prisma.demoSong.findUnique({
       where: { id: songId },
-      select: { isActive: true, allowDownload: true },
+      select: { isActive: true },
     });
 
     if (!song || !song.isActive) {
       return NextResponse.json({ error: 'Pesma nije pronađena.' }, { status: 404 });
-    }
-
-    if (!song.allowDownload) {
-      return NextResponse.json(
-        { error: 'Preuzimanje za ovu pesmu trenutno nije dostupno.' },
-        { status: 403 }
-      );
     }
 
     // Check if already requested
