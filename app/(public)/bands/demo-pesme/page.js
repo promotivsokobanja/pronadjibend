@@ -204,30 +204,32 @@ export default function DemoPesmePage() {
         <div className="ap-grid">
           {filtered.map((song) => (
             <div key={song.id} className="ap-card">
-              <div className="ap-card-top">
-                <div className="ap-card-info">
-                  <h3>{song.title}</h3>
-                  <span className="ap-artist">{song.artist}</span>
+              <div className="ap-card-row">
+                <div className="ap-card-left">
+                  <div className="ap-card-info">
+                    <h3>{song.title}</h3>
+                    <span className="ap-artist">{song.artist}</span>
+                    {song.description && <p className="ap-desc">{song.description}</p>}
+                  </div>
+                  <div className="ap-card-bottom">
+                    {song.hasPreview && (
+                      <button
+                        type="button"
+                        className={`ap-btn ap-btn-play ${playingId === song.id ? 'playing' : ''}`}
+                        onClick={() => playPreview(song.id)}
+                        disabled={audioLoading === song.id}
+                      >
+                        {audioLoading === song.id ? <span className="ap-spin-sm" /> : playingId === song.id ? <Pause size={14} /> : <Play size={14} />}
+                        {playingId === song.id ? 'Stop' : 'Demo'}
+                      </button>
+                    )}
+                    {song.category && <span className="ap-cat">{song.category}</span>}
+                  </div>
                 </div>
                 <div className="ap-card-right">
-                  {song.category && <span className="ap-cat">{song.category}</span>}
                   {song.price && <span className="ap-price">{song.price} RSD</span>}
+                  {renderStatus(song)}
                 </div>
-              </div>
-              {song.description && <p className="ap-desc">{song.description}</p>}
-              <div className="ap-card-bottom">
-                {song.hasPreview && (
-                  <button
-                    type="button"
-                    className={`ap-btn ap-btn-play ${playingId === song.id ? 'playing' : ''}`}
-                    onClick={() => playPreview(song.id)}
-                    disabled={audioLoading === song.id}
-                  >
-                    {audioLoading === song.id ? <span className="ap-spin-sm" /> : playingId === song.id ? <Pause size={14} /> : <Play size={14} />}
-                    {playingId === song.id ? 'Stop' : 'Demo'}
-                  </button>
-                )}
-                {renderStatus(song)}
               </div>
             </div>
           ))}
@@ -272,24 +274,25 @@ export default function DemoPesmePage() {
         .ap-filter:hover { color: #e2e8f0; background: rgba(99,102,241,0.06); }
         .ap-filter.active { background: #6366f1; color: #fff; border-color: #6366f1; }
         .ap-grid { display: flex; flex-direction: column; gap: 0.6rem; max-width: 650px; margin: 0 auto; }
-        .ap-card { background: rgba(15,23,42,0.5); border: 1px solid rgba(99,102,241,0.06); border-radius: 12px; padding: 0.9rem 1rem; display: flex; flex-direction: column; gap: 0.5rem; transition: 0.15s; }
+        .ap-card { background: rgba(15,23,42,0.5); border: 1px solid rgba(99,102,241,0.06); border-radius: 12px; padding: 1rem 1.1rem; transition: 0.15s; }
         .ap-card:hover { border-color: rgba(99,102,241,0.2); background: rgba(99,102,241,0.03); }
-        .ap-card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; }
-        .ap-card-info h3 { margin: 0; font-size: 0.92rem; font-weight: 700; color: #f1f5f9; line-height: 1.2; }
+        .ap-card-row { display: flex; align-items: center; gap: 1rem; }
+        .ap-card-left { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.4rem; }
+        .ap-card-info h3 { margin: 0; font-size: 0.95rem; font-weight: 700; color: #f1f5f9; line-height: 1.2; }
         .ap-artist { font-size: 0.76rem; color: #64748b; }
-        .ap-card-right { display: flex; flex-direction: column; align-items: flex-end; gap: 0.2rem; flex-shrink: 0; }
+        .ap-card-right { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; flex-shrink: 0; }
         .ap-cat { font-size: 0.62rem; font-weight: 700; padding: 2px 7px; border-radius: 50px; background: rgba(99,102,241,0.1); color: #818cf8; }
-        .ap-price { font-size: 0.8rem; font-weight: 800; color: #4ade80; }
+        .ap-price { font-size: 0.85rem; font-weight: 800; color: #4ade80; white-space: nowrap; }
         .ap-desc { margin: 0; font-size: 0.78rem; color: #94a3b8; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-        .ap-card-bottom { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; margin-top: auto; }
+        .ap-card-bottom { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
         .ap-btn { display: inline-flex; align-items: center; gap: 4px; padding: 0.4rem 0.7rem; border-radius: 8px; border: none; font-weight: 700; font-size: 0.72rem; cursor: pointer; transition: 0.15s; min-height: 32px; }
         .ap-btn-play { background: rgba(99,102,241,0.1); color: #818cf8; border: 1px solid rgba(99,102,241,0.2); }
         .ap-btn-play:hover { background: rgba(99,102,241,0.18); }
         .ap-btn-play.playing { background: rgba(99,102,241,0.2); color: #a5b4fc; }
         .ap-btn-play:disabled { opacity: 0.5; cursor: wait; }
-        .ap-btn-request { background: rgba(251,191,36,0.1); color: #fbbf24; border: 1px solid rgba(251,191,36,0.2); }
-        .ap-btn-request:hover { background: rgba(251,191,36,0.18); }
-        .ap-btn-request:disabled { opacity: 0.5; cursor: wait; }
+        .ap-btn-request { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; border: none; padding: 0.55rem 1.1rem; font-size: 0.78rem; border-radius: 10px; box-shadow: 0 4px 14px rgba(99,102,241,0.3); min-height: 38px; }
+        .ap-btn-request:hover { background: linear-gradient(135deg, #4f46e5, #7c3aed); box-shadow: 0 6px 20px rgba(99,102,241,0.4); transform: translateY(-1px); }
+        .ap-btn-request:disabled { opacity: 0.5; cursor: wait; transform: none; box-shadow: none; }
         .ap-btn-download { background: rgba(34,197,94,0.1); color: #4ade80; border: 1px solid rgba(34,197,94,0.2); }
         .ap-btn-download:hover { background: rgba(34,197,94,0.18); }
         .ap-btn-lyrics { background: rgba(139,92,246,0.1); color: #a78bfa; border: 1px solid rgba(139,92,246,0.2); }
@@ -321,8 +324,11 @@ export default function DemoPesmePage() {
           .ap-hero p { font-size: 0.82rem; }
           .ap-grid { gap: 0.5rem; }
           .ap-card { padding: 0.85rem; }
-          .ap-card-bottom { flex-direction: column; align-items: stretch; gap: 0.35rem; }
+          .ap-card-row { flex-direction: column; align-items: stretch; gap: 0.6rem; }
+          .ap-card-right { flex-direction: row; justify-content: space-between; align-items: center; }
+          .ap-card-bottom { gap: 0.35rem; }
           .ap-btn { justify-content: center; min-height: 44px; font-size: 0.78rem; }
+          .ap-btn-request { min-height: 44px; width: 100%; justify-content: center; }
           .ap-status { min-height: 44px; justify-content: center; width: 100%; }
           .ap-filters { justify-content: flex-start; padding-bottom: 0.3rem; }
           .ap-filter { padding: 0.4rem 0.85rem; min-height: 36px; display: flex; align-items: center; }
