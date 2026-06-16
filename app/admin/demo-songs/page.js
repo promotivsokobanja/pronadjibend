@@ -27,7 +27,7 @@ export default function AdminDemoSongsPage() {
       return;
     }
     try {
-      const r = await fetch(`/api/demo-songs/preview?id=${songId}`);
+      const r = await adminFetch(`/api/demo-songs/preview?id=${songId}`);
       const data = await r.json();
       if (!r.ok || !data.url) { alert('Nije moguće pustiti preview.'); return; }
       if (audioRef.current) audioRef.current.pause();
