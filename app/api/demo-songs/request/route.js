@@ -118,3 +118,41 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Greška.' }, { status: 500 });
   }
 }
+
+// DELETE — user cancels their request (only if PENDING or APPROVED, not PAID)
+export async function DELETE(request) {
+  try {
+    const auth = await getAuthUserFromRequest(request);
+    if (!auth?.userId) {
+      return NextResponse.json({ error: 'Morate biti prijavljeni.' }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const { songId } = body;
+
+    if (!songId) {
+      return NextResponse.json({ error: 'Nedostaje songId.' }, { status: 400 });
+    }
+
+    const existing = await prisma.demoSongAccess.findUnique({
+      where: { userId_songId: { userId: auth.userId, songId } },
+    });
+
+    if (!existing) {
+      return NextResponse.json({ error: 'Zahtev nije pronađen.' }, { status: 404 });
+    }
+
+    if (existing.status === 'PAID') {
+      return NextResponse.json({ error: 'Ne možete otkazati već plaćenu pesmu.' }, { status: 400 });
+    }
+
+    await prisma.demoSongAccess.delete({
+      where: { userId_songId: { userId: auth.userId, songId } },
+    });
+
+    return NextResponse.json({ success: true, message: 'Zahtev je otkazan.' });
+  } catch (err) {
+    console.error('[demo-songs/request DELETE]', err);
+    return NextResponse.json({ error: 'Greška.' }, { status: 500 });
+  }
+}
