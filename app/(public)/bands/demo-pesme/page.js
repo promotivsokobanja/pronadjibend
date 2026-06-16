@@ -315,17 +315,41 @@ export default function DemoPesmePage() {
         .ap-modal-close:hover { color: #f1f5f9; }
         .ap-modal-lyrics { flex: 1; overflow-y: auto; padding: 0 1.25rem; margin: 0; font-family: inherit; font-size: 0.88rem; color: #cbd5e1; line-height: 1.7; white-space: pre-wrap; }
         .ap-modal-footer { padding: 1rem 1.25rem; border-top: 1px solid rgba(255,255,255,0.06); display: flex; gap: 0.5rem; }
+        /* Mobile — phones */
         @media (max-width: 640px) {
           .ap-wrap { padding-left: max(0.75rem, env(safe-area-inset-left)); padding-right: max(0.75rem, env(safe-area-inset-right)); }
           .ap-hero h1 { font-size: 1.4rem; }
-          .ap-grid { grid-template-columns: 1fr; }
-          .ap-card-bottom { flex-direction: column; align-items: stretch; }
-          .ap-btn { justify-content: center; min-height: 38px; }
-          .ap-filters { justify-content: flex-start; }
-          .ap-modal { max-height: 90vh; border-radius: 12px; }
+          .ap-hero p { font-size: 0.82rem; }
+          .ap-grid { grid-template-columns: 1fr; gap: 0.6rem; }
+          .ap-card { padding: 0.85rem; }
+          .ap-card-bottom { flex-direction: column; align-items: stretch; gap: 0.35rem; }
+          .ap-btn { justify-content: center; min-height: 44px; font-size: 0.78rem; }
+          .ap-status { min-height: 44px; justify-content: center; width: 100%; }
+          .ap-filters { justify-content: flex-start; padding-bottom: 0.3rem; }
+          .ap-filter { padding: 0.4rem 0.85rem; min-height: 36px; display: flex; align-items: center; }
+          .ap-payment-box { padding: 0.6rem 0.8rem; }
+          .ap-modal { max-height: 90dvh; border-radius: 12px; margin: env(safe-area-inset-top, 0px) 0.5rem env(safe-area-inset-bottom, 0px); }
+          .ap-modal-overlay { padding: 0.5rem; }
+          .ap-modal-lyrics { font-size: 0.84rem; -webkit-overflow-scrolling: touch; }
+          .ap-modal-footer { padding: 0.85rem 1rem; }
+          .ap-actions { width: 100%; }
+          .ap-actions .ap-btn { flex: 1; }
         }
+        /* Small phones — iPhone SE, etc */
+        @media (max-width: 380px) {
+          .ap-hero h1 { font-size: 1.2rem; }
+          .ap-card-info h3 { font-size: 0.85rem; }
+          .ap-price { font-size: 0.72rem; }
+          .ap-search { padding: 0.5rem 0.85rem; }
+        }
+        /* Tablet portrait (641-900px) */
         @media (min-width: 641px) and (max-width: 900px) {
           .ap-grid { grid-template-columns: repeat(2, 1fr); }
+          .ap-btn { min-height: 38px; }
+        }
+        /* Tablet landscape (901-1024px) */
+        @media (min-width: 901px) and (max-width: 1024px) {
+          .ap-grid { grid-template-columns: repeat(3, 1fr); max-width: 960px; }
         }
       `}</style>
     </div>
