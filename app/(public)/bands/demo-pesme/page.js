@@ -294,18 +294,22 @@ export default function DemoPesmePage() {
               </div>
               {song.description && <p className="ap-desc">{song.description}</p>}
               <div className="ap-card-bottom">
-                {song.hasPreview && (
-                  <button
-                    type="button"
-                    className={`ap-btn ap-btn-play ${playingId === song.id ? 'playing' : ''}`}
-                    onClick={() => playPreview(song.id)}
-                    disabled={audioLoading === song.id}
-                  >
-                    {audioLoading === song.id ? <span className="ap-spin-sm" /> : playingId === song.id ? <Pause size={14} /> : <Play size={14} />}
-                    {playingId === song.id ? 'Stop' : 'Demo'}
-                  </button>
-                )}
-                {renderBuyBtn(song)}
+                <div className="ap-btns-left">
+                  {song.hasPreview && (
+                    <button
+                      type="button"
+                      className={`ap-btn ap-btn-play ${playingId === song.id ? 'playing' : ''}`}
+                      onClick={() => playPreview(song.id)}
+                      disabled={audioLoading === song.id}
+                    >
+                      {audioLoading === song.id ? <span className="ap-spin-sm" /> : playingId === song.id ? <Pause size={14} /> : <Play size={14} />}
+                      {playingId === song.id ? 'Stop' : 'Demo'}
+                    </button>
+                  )}
+                </div>
+                <div className="ap-btns-right">
+                  {renderBuyBtn(song)}
+                </div>
               </div>
               {renderPaymentInfo(song)}
             </div>
@@ -395,7 +399,9 @@ export default function DemoPesmePage() {
         .ap-cat { font-size: 0.62rem; font-weight: 700; padding: 2px 7px; border-radius: 50px; background: rgba(99,102,241,0.1); color: #818cf8; }
         .ap-price { font-size: 0.85rem; font-weight: 800; color: #4ade80; white-space: nowrap; }
         .ap-desc { margin: 0; font-size: 0.78rem; color: #94a3b8; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-        .ap-card-bottom { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+        .ap-card-bottom { display: flex; align-items: center; justify-content: space-between; }
+        .ap-btns-left { display: flex; align-items: center; gap: 0.4rem; }
+        .ap-btns-right { display: flex; align-items: center; gap: 0.4rem; }
         .ap-btn { display: inline-flex; align-items: center; gap: 5px; padding: 0.5rem 1rem; border-radius: 10px; font-weight: 700; font-size: 0.78rem; cursor: pointer; transition: 0.15s; min-height: 36px; border: 1px solid transparent; }
         .ap-btn-play { background: rgba(99,102,241,0.1); color: #818cf8; border-color: rgba(99,102,241,0.25); }
         .ap-btn-play:hover { background: rgba(99,102,241,0.18); border-color: #6366f1; }
@@ -443,8 +449,10 @@ export default function DemoPesmePage() {
           .ap-hero p { font-size: 0.82rem; }
           .ap-grid { gap: 0.5rem; }
           .ap-card { padding: 0.85rem; }
-          .ap-card-bottom { width: 100%; }
-          .ap-btn { min-height: 44px; flex: 1; justify-content: center; }
+          .ap-card-bottom { flex-wrap: wrap; gap: 0.5rem; }
+          .ap-btns-left, .ap-btns-right { flex: 1; }
+          .ap-btns-right { justify-content: flex-end; }
+          .ap-btn { min-height: 44px; justify-content: center; }
           .ap-filters { justify-content: flex-start; padding-bottom: 0.3rem; }
           .ap-filter { padding: 0.4rem 0.85rem; min-height: 36px; display: flex; align-items: center; }
           .ap-modal { max-height: 90dvh; border-radius: 12px; margin: env(safe-area-inset-top, 0px) 0.5rem env(safe-area-inset-bottom, 0px); }
