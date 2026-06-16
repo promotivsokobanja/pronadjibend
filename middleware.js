@@ -271,6 +271,7 @@ function applySecurityHeaders(response) {
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
       "img-src 'self' data: blob: https:",
+      "media-src 'self' https://*.supabase.co blob:",
       "frame-src https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com",
       "connect-src 'self' https://*.supabase.co https://gleitz.github.io",
       "frame-ancestors 'none'",
