@@ -114,6 +114,8 @@ export default function AdminDemoSongsPage() {
         </button>
       </div>
 
+      <StorageUsageBar />
+
       {error && <p style={{ color: '#f87171', marginBottom: '1rem' }}>{error}</p>}
 
       {showForm && (
@@ -393,6 +395,44 @@ export default function AdminDemoSongsPage() {
         }
       `}</style>
     </>
+  );
+}
+
+function StorageUsageBar() {
+  const [usage, setUsage] = useState(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const r = await adminFetch('/api/admin/storage-usage');
+        if (r.ok) setUsage(await r.json());
+      } catch { /* ignore */ }
+    })();
+  }, []);
+
+  if (!usage) return null;
+
+  const { buckets, totalBytes, limitBytes, usedPercent } = usage;
+  const formatMB = (bytes) => (bytes / 1024 / 1024).toFixed(1);
+  const barColor = usedPercent > 80 ? '#f87171' : usedPercent > 50 ? '#fbbf24' : '#4ade80';
+
+  return (
+    <div style={{ marginBottom: '2rem', padding: '1rem 1.25rem', background: 'rgba(15,23,42,0.5)', border: '1px solid rgba(99,102,241,0.1)', borderRadius: '12px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+        <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#e2e8f0' }}>Storage zauzece</span>
+        <span style={{ fontSize: '0.75rem', fontWeight: 700, color: barColor }}>{formatMB(totalBytes)} MB / {formatMB(limitBytes)} MB ({usedPercent}%)</span>
+      </div>
+      <div style={{ width: '100%', height: '8px', background: 'rgba(255,255,255,0.06)', borderRadius: '50px', overflow: 'hidden' }}>
+        <div style={{ width: `${Math.min(usedPercent, 100)}%`, height: '100%', background: barColor, borderRadius: '50px', transition: '0.3s' }} />
+      </div>
+      <div style={{ display: 'flex', gap: '1rem', marginTop: '0.6rem', flexWrap: 'wrap' }}>
+        {buckets.map((b) => (
+          <span key={b.bucket} style={{ fontSize: '0.68rem', color: '#94a3b8' }}>
+            <strong style={{ color: '#cbd5e1' }}>{b.bucket}</strong>: {formatMB(b.bytes)} MB ({b.files} fajl.)
+          </span>
+        ))}
+      </div>
+    </div>
   );
 }
 
