@@ -114,8 +114,6 @@ export default function AdminDemoSongsPage() {
         </button>
       </div>
 
-      <StorageUsageBar />
-
       {error && <p style={{ color: '#f87171', marginBottom: '1rem' }}>{error}</p>}
 
       {showForm && (
@@ -395,74 +393,6 @@ export default function AdminDemoSongsPage() {
         }
       `}</style>
     </>
-  );
-}
-
-function StorageUsageBar() {
-  const [usage, setUsage] = useState(null);
-  const [loadingStorage, setLoadingStorage] = useState(true);
-  const [storageError, setStorageError] = useState('');
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const r = await adminFetch('/api/admin/storage-usage');
-        const data = await r.json();
-        if (r.ok) setUsage(data);
-        else setStorageError(data.error || 'Greška pri učitavanju');
-      } catch (e) { setStorageError('Timeout — previše fajlova za skeniranje'); }
-      finally { setLoadingStorage(false); }
-    })();
-  }, []);
-
-  if (loadingStorage) {
-    return (
-      <div style={{ marginBottom: '2rem', padding: '1rem 1.25rem', background: 'rgba(15,23,42,0.5)', border: '1px solid rgba(99,102,241,0.1)', borderRadius: '12px' }}>
-        <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Učitavanje storage podataka...</span>
-      </div>
-    );
-  }
-
-  if (storageError) {
-    return (
-      <div style={{ marginBottom: '2rem', padding: '1rem 1.25rem', background: 'rgba(248,113,113,0.05)', border: '1px solid rgba(248,113,113,0.15)', borderRadius: '12px' }}>
-        <span style={{ fontSize: '0.8rem', color: '#f87171' }}>Storage: {storageError}</span>
-      </div>
-    );
-  }
-
-  if (!usage) return null;
-
-  const { buckets, totalBytes, limitBytes, usedPercent } = usage;
-  const formatSize = (bytes) => {
-    if (bytes >= 1024 * 1024 * 1024) return (bytes / 1024 / 1024 / 1024).toFixed(2) + ' GB';
-    if (bytes >= 1024 * 1024) return (bytes / 1024 / 1024).toFixed(2) + ' MB';
-    if (bytes >= 1024) return (bytes / 1024).toFixed(1) + ' KB';
-    return bytes + ' B';
-  };
-  const barColor = usedPercent > 80 ? '#f87171' : usedPercent > 50 ? '#fbbf24' : '#4ade80';
-  const totalFiles = buckets.reduce((sum, b) => sum + b.files, 0);
-
-  return (
-    <div style={{ marginBottom: '2rem', padding: '1rem 1.25rem', background: 'rgba(15,23,42,0.5)', border: '1px solid rgba(99,102,241,0.1)', borderRadius: '12px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-        <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#e2e8f0' }}>Storage zauzece ({totalFiles.toLocaleString()} fajlova)</span>
-        <span style={{ fontSize: '0.75rem', fontWeight: 700, color: barColor }}>{formatSize(totalBytes)} / {formatSize(limitBytes)} ({usedPercent}%)</span>
-      </div>
-      <div style={{ width: '100%', height: '10px', background: 'rgba(255,255,255,0.06)', borderRadius: '50px', overflow: 'hidden' }}>
-        <div style={{ width: `${Math.min(usedPercent, 100)}%`, height: '100%', background: barColor, borderRadius: '50px', transition: '0.3s' }} />
-      </div>
-      <div style={{ display: 'flex', gap: '1rem', marginTop: '0.7rem', flexWrap: 'wrap' }}>
-        {buckets.map((b) => (
-          <span key={b.bucket} style={{ fontSize: '0.7rem', color: '#94a3b8', background: 'rgba(255,255,255,0.03)', padding: '3px 8px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)' }}>
-            <strong style={{ color: '#cbd5e1' }}>{b.bucket}</strong>: {formatSize(b.bytes)} · {b.files.toLocaleString()} fajl.
-          </span>
-        ))}
-      </div>
-      <div style={{ marginTop: '0.5rem', fontSize: '0.65rem', color: '#64748b' }}>
-        Slobodno: {formatSize(limitBytes - totalBytes)} · Supabase Free Plan (1 GB)
-      </div>
-    </div>
   );
 }
 
