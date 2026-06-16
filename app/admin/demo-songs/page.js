@@ -401,13 +401,16 @@ export default function AdminDemoSongsPage() {
 function StorageUsageBar() {
   const [usage, setUsage] = useState(null);
   const [loadingStorage, setLoadingStorage] = useState(true);
+  const [storageError, setStorageError] = useState('');
 
   useEffect(() => {
     (async () => {
       try {
         const r = await adminFetch('/api/admin/storage-usage');
-        if (r.ok) setUsage(await r.json());
-      } catch { /* ignore */ }
+        const data = await r.json();
+        if (r.ok) setUsage(data);
+        else setStorageError(data.error || 'Greška pri učitavanju');
+      } catch (e) { setStorageError('Timeout — previše fajlova za skeniranje'); }
       finally { setLoadingStorage(false); }
     })();
   }, []);
@@ -416,6 +419,14 @@ function StorageUsageBar() {
     return (
       <div style={{ marginBottom: '2rem', padding: '1rem 1.25rem', background: 'rgba(15,23,42,0.5)', border: '1px solid rgba(99,102,241,0.1)', borderRadius: '12px' }}>
         <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Učitavanje storage podataka...</span>
+      </div>
+    );
+  }
+
+  if (storageError) {
+    return (
+      <div style={{ marginBottom: '2rem', padding: '1rem 1.25rem', background: 'rgba(248,113,113,0.05)', border: '1px solid rgba(248,113,113,0.15)', borderRadius: '12px' }}>
+        <span style={{ fontSize: '0.8rem', color: '#f87171' }}>Storage: {storageError}</span>
       </div>
     );
   }

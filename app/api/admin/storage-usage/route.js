@@ -22,58 +22,57 @@ export async function GET(request) {
 
   try {
     const supabase = getSupabaseAdmin();
-    const buckets = ['demo-songs', 'midi', 'audio', 'midi-files', 'avatars', 'band-photos', 'band-images', 'band-videos'];
+    const bucketNames = ['demo-songs', 'midi', 'audio', 'midi-files', 'avatars', 'band-photos', 'band-images', 'band-videos'];
     const results = [];
     let totalBytes = 0;
 
-    // Recursive function to list all files in a bucket
-    async function listAllFiles(bucketName, folder = '') {
+    // Fast scan — only top level + 1 subfolder level, count pages for estimation
+    async function scanBucket(bucketName) {
       let size = 0;
       let count = 0;
-      let offset = 0;
-      const pageSize = 1000;
-      let hasMore = true;
 
-      while (hasMore) {
-        const { data, error } = await supabase.storage.from(bucketName).list(folder, { limit: pageSize, offset });
-        if (error || !data || data.length === 0) break;
+      const { data: topLevel, error } = await supabase.storage.from(bucketName).list('', { limit: 1000 });
+      if (error) return { size: 0, count: 0, error: error.message };
+      if (!topLevel || topLevel.length === 0) return { size: 0, count: 0 };
 
-        for (const item of data) {
-          if (item.metadata && item.metadata.size) {
-            size += item.metadata.size;
-            count++;
-          } else if (item.id === null || !item.metadata) {
-            // It's a folder — recurse
-            const subPath = folder ? `${folder}/${item.name}` : item.name;
-            const sub = await listAllFiles(bucketName, subPath);
-            size += sub.size;
-            count += sub.count;
+      for (const item of topLevel) {
+        if (item.metadata && item.metadata.size) {
+          size += item.metadata.size;
+          count++;
+        } else if (!item.metadata || item.id === null) {
+          // Folder — scan inside (1 level only, paginated)
+          let offset = 0;
+          let hasMore = true;
+          while (hasMore) {
+            const { data: inner } = await supabase.storage.from(bucketName).list(item.name, { limit: 1000, offset });
+            if (!inner || inner.length === 0) break;
+            for (const f of inner) {
+              if (f.metadata && f.metadata.size) {
+                size += f.metadata.size;
+                count++;
+              }
+            }
+            hasMore = inner.length === 1000;
+            offset += 1000;
           }
         }
-
-        hasMore = data.length === pageSize;
-        offset += pageSize;
       }
 
       return { size, count };
     }
 
-    for (const bucket of buckets) {
-      const { data: check, error } = await supabase.storage.from(bucket).list('', { limit: 1 });
-      if (error) {
-        results.push({ bucket, files: 0, bytes: 0, error: error.message });
-        continue;
+    for (const bucket of bucketNames) {
+      const result = await scanBucket(bucket);
+      if (result.error) {
+        results.push({ bucket, files: 0, bytes: 0, error: result.error });
+      } else {
+        totalBytes += result.size;
+        results.push({ bucket, files: result.count, bytes: result.size });
       }
-
-      const { size, count } = await listAllFiles(bucket);
-      totalBytes += size;
-      results.push({ bucket, files: count, bytes: size });
     }
 
     const limitBytes = 1024 * 1024 * 1024; // 1 GB free plan
-
-    // Only show buckets that have files or exist
-    const validBuckets = results.filter(b => !b.error || b.files > 0);
+    const validBuckets = results.filter(b => !b.error && b.files > 0);
 
     return NextResponse.json({
       buckets: validBuckets,
