@@ -157,11 +157,12 @@ export default function DemoPesmePage() {
     } catch { alert('Greška.'); }
   };
 
+  const btnBase = { display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '0.5rem 1rem', borderRadius: '10px', fontWeight: 700, fontSize: '0.78rem', cursor: 'pointer', transition: '0.15s', minHeight: '36px', border: '1.5px solid transparent', textDecoration: 'none' };
   const renderBuyBtn = (song) => {
     const status = accessMap[song.id];
     if (status === 'PAID') {
       return (
-        <button type="button" className="ap-btn ap-btn-download" onClick={() => handleDownload(song.id)}>
+        <button type="button" style={{ ...btnBase, background: 'rgba(34,197,94,0.12)', color: '#4ade80', borderColor: 'rgba(34,197,94,0.4)' }} onClick={() => handleDownload(song.id)}>
           <Download size={14} /> Preuzmi
         </button>
       );
@@ -169,10 +170,10 @@ export default function DemoPesmePage() {
     if (status === 'APPROVED') {
       return (
         <>
-          <button type="button" className="ap-btn ap-btn-approved" disabled>
+          <button type="button" style={{ ...btnBase, background: 'rgba(251,191,36,0.1)', color: '#fbbf24', borderColor: 'rgba(251,191,36,0.4)', opacity: 0.8, cursor: 'default' }} disabled>
             <Clock size={14} /> Čeka uplatu
           </button>
-          <button type="button" className="ap-btn ap-btn-cancel" onClick={() => handleCancel(song.id)}>
+          <button type="button" style={{ ...btnBase, background: 'rgba(248,113,113,0.08)', color: '#f87171', borderColor: 'rgba(248,113,113,0.3)' }} onClick={() => handleCancel(song.id)}>
             <X size={14} /> Odustani
           </button>
         </>
@@ -181,10 +182,10 @@ export default function DemoPesmePage() {
     if (status === 'PENDING') {
       return (
         <>
-          <button type="button" className="ap-btn ap-btn-pending" disabled>
+          <button type="button" style={{ ...btnBase, background: 'rgba(99,102,241,0.08)', color: '#a5b4fc', borderColor: 'rgba(99,102,241,0.3)', opacity: 0.8, cursor: 'default' }} disabled>
             <Clock size={14} /> Na čekanju
           </button>
-          <button type="button" className="ap-btn ap-btn-cancel" onClick={() => handleCancel(song.id)}>
+          <button type="button" style={{ ...btnBase, background: 'rgba(248,113,113,0.08)', color: '#f87171', borderColor: 'rgba(248,113,113,0.3)' }} onClick={() => handleCancel(song.id)}>
             <X size={14} /> Odustani
           </button>
         </>
@@ -192,13 +193,13 @@ export default function DemoPesmePage() {
     }
     if (status === 'DENIED') {
       return (
-        <button type="button" className="ap-btn ap-btn-denied" disabled>
+        <button type="button" style={{ ...btnBase, background: 'rgba(248,113,113,0.08)', color: '#f87171', borderColor: 'rgba(248,113,113,0.2)', opacity: 0.7, cursor: 'default' }} disabled>
           <Lock size={14} /> Odbijeno
         </button>
       );
     }
     return (
-      <button type="button" className="ap-btn ap-btn-request" disabled={requesting === song.id} onClick={() => handleRequest(song.id)}>
+      <button type="button" style={{ ...btnBase, background: 'rgba(34,197,94,0.12)', color: '#4ade80', borderColor: 'rgba(34,197,94,0.4)' }} disabled={requesting === song.id} onClick={() => handleRequest(song.id)}>
         <ShoppingBag size={14} /> {requesting === song.id ? 'Šaljem…' : 'Kupi'}
       </button>
     );
