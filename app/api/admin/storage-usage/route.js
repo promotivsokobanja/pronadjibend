@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '../../../../lib/prisma';
+import { getSupabaseAdmin } from '../../../../lib/supabase';
 import { getAuthUserFromRequest } from '../../../../lib/auth';
 
 export const dynamic = 'force-dynamic';
@@ -20,20 +21,32 @@ export async function GET(request) {
   if (!admin) return NextResponse.json({ error: 'Nemate dozvolu.' }, { status: 403 });
 
   try {
-    // Direct SQL query on storage.objects — instant and 100% accurate
-    const bucketStats = await prisma.$queryRawUnsafe(`
-      SELECT bucket_id, COUNT(*)::int as file_count, COALESCE(SUM((metadata->>'size')::bigint), 0)::bigint as total_size
-      FROM storage.objects
-      WHERE metadata->>'size' IS NOT NULL
-      GROUP BY bucket_id
-      ORDER BY total_size DESC
-    `);
+    const supabase = getSupabaseAdmin();
 
-    const results = bucketStats.map(r => ({
-      bucket: r.bucket_id,
-      files: Number(r.file_count),
-      bytes: Number(r.total_size),
-    }));
+    // Query storage.objects via Supabase PostgREST (storage schema)
+    const { data: objects, error } = await supabase
+      .schema('storage')
+      .from('objects')
+      .select('bucket_id, metadata');
+
+    if (error) {
+      console.error('[storage-usage] query error:', error);
+      return NextResponse.json({ error: 'Greška: ' + error.message }, { status: 500 });
+    }
+
+    // Aggregate by bucket
+    const bucketMap = {};
+    for (const obj of (objects || [])) {
+      const b = obj.bucket_id;
+      if (!bucketMap[b]) bucketMap[b] = { files: 0, bytes: 0 };
+      bucketMap[b].files++;
+      const sz = obj.metadata?.size || 0;
+      bucketMap[b].bytes += sz;
+    }
+
+    const results = Object.entries(bucketMap)
+      .map(([bucket, stats]) => ({ bucket, ...stats }))
+      .sort((a, b) => b.bytes - a.bytes);
 
     const totalBytes = results.reduce((s, b) => s + b.bytes, 0);
     const limitBytes = 1024 * 1024 * 1024; // 1 GB free plan
