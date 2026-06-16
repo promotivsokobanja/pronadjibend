@@ -253,6 +253,18 @@ function hasAnyAuthCookie(request) {
 }
 
 /**
+ * Permissive security headers for public pages — allow audio/media from Supabase and HTTPS.
+ */
+function applyPublicSecurityHeaders(response) {
+  response.headers.set('X-Content-Type-Options', 'nosniff');
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  response.headers.set('X-DNS-Prefetch-Control', 'off');
+  if (process.env.NODE_ENV === 'production') {
+    response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+  }
+}
+
+/**
  * Headeri za odgovore koje middleware vraća (admin redirect, API greške).
  * Globalni headere za HTML/API stranice (bez `/_next/*`) definiše `next.config.mjs` → `headers()`.
  */
@@ -396,7 +408,11 @@ export async function middleware(request) {
     }
 
     const response = NextResponse.next();
-    applySecurityHeaders(response);
+    if (pathname.startsWith('/admin') || pathname.startsWith('/api/')) {
+      applySecurityHeaders(response);
+    } else {
+      applyPublicSecurityHeaders(response);
+    }
     return response;
   } catch (e) {
     console.error('middleware error:', e);
