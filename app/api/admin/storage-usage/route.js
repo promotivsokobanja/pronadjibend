@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import prisma from '../../../../lib/prisma';
-import { getSupabaseAdmin } from '../../../../lib/supabase';
 import { getAuthUserFromRequest } from '../../../../lib/auth';
 
 export const dynamic = 'force-dynamic';
@@ -21,67 +20,32 @@ export async function GET(request) {
   if (!admin) return NextResponse.json({ error: 'Nemate dozvolu.' }, { status: 403 });
 
   try {
-    const supabase = getSupabaseAdmin();
-    const bucketNames = ['demo-songs', 'midi', 'audio', 'midi-files', 'avatars', 'band-photos', 'band-images', 'band-videos'];
-    const results = [];
-    let totalBytes = 0;
+    // Direct SQL query on storage.objects — instant and 100% accurate
+    const bucketStats = await prisma.$queryRawUnsafe(`
+      SELECT bucket_id, COUNT(*)::int as file_count, COALESCE(SUM((metadata->>'size')::bigint), 0)::bigint as total_size
+      FROM storage.objects
+      WHERE metadata->>'size' IS NOT NULL
+      GROUP BY bucket_id
+      ORDER BY total_size DESC
+    `);
 
-    // Fast scan — only top level + 1 subfolder level, count pages for estimation
-    async function scanBucket(bucketName) {
-      let size = 0;
-      let count = 0;
+    const results = bucketStats.map(r => ({
+      bucket: r.bucket_id,
+      files: Number(r.file_count),
+      bytes: Number(r.total_size),
+    }));
 
-      const { data: topLevel, error } = await supabase.storage.from(bucketName).list('', { limit: 1000 });
-      if (error) return { size: 0, count: 0, error: error.message };
-      if (!topLevel || topLevel.length === 0) return { size: 0, count: 0 };
-
-      for (const item of topLevel) {
-        if (item.metadata && item.metadata.size) {
-          size += item.metadata.size;
-          count++;
-        } else if (!item.metadata || item.id === null) {
-          // Folder — scan inside (1 level only, paginated)
-          let offset = 0;
-          let hasMore = true;
-          while (hasMore) {
-            const { data: inner } = await supabase.storage.from(bucketName).list(item.name, { limit: 1000, offset });
-            if (!inner || inner.length === 0) break;
-            for (const f of inner) {
-              if (f.metadata && f.metadata.size) {
-                size += f.metadata.size;
-                count++;
-              }
-            }
-            hasMore = inner.length === 1000;
-            offset += 1000;
-          }
-        }
-      }
-
-      return { size, count };
-    }
-
-    for (const bucket of bucketNames) {
-      const result = await scanBucket(bucket);
-      if (result.error) {
-        results.push({ bucket, files: 0, bytes: 0, error: result.error });
-      } else {
-        totalBytes += result.size;
-        results.push({ bucket, files: result.count, bytes: result.size });
-      }
-    }
-
+    const totalBytes = results.reduce((s, b) => s + b.bytes, 0);
     const limitBytes = 1024 * 1024 * 1024; // 1 GB free plan
-    const validBuckets = results.filter(b => !b.error && b.files > 0);
 
     return NextResponse.json({
-      buckets: validBuckets,
+      buckets: results,
       totalBytes,
       limitBytes,
       usedPercent: Math.round((totalBytes / limitBytes) * 100 * 10) / 10,
     });
   } catch (err) {
     console.error('[admin/storage-usage]', err);
-    return NextResponse.json({ error: 'Greška.' }, { status: 500 });
+    return NextResponse.json({ error: 'Greška: ' + err.message }, { status: 500 });
   }
 }
