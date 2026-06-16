@@ -26,34 +26,48 @@ export async function GET(request) {
     const results = [];
     let totalBytes = 0;
 
-    for (const bucket of buckets) {
-      let bucketSize = 0;
-      let fileCount = 0;
+    // Recursive function to list all files in a bucket
+    async function listAllFiles(bucketName, folder = '') {
+      let size = 0;
+      let count = 0;
+      let offset = 0;
+      const pageSize = 1000;
+      let hasMore = true;
 
-      const { data: topLevel, error } = await supabase.storage.from(bucket).list('', { limit: 1000 });
+      while (hasMore) {
+        const { data, error } = await supabase.storage.from(bucketName).list(folder, { limit: pageSize, offset });
+        if (error || !data || data.length === 0) break;
+
+        for (const item of data) {
+          if (item.metadata && item.metadata.size) {
+            size += item.metadata.size;
+            count++;
+          } else if (item.id === null || !item.metadata) {
+            // It's a folder — recurse
+            const subPath = folder ? `${folder}/${item.name}` : item.name;
+            const sub = await listAllFiles(bucketName, subPath);
+            size += sub.size;
+            count += sub.count;
+          }
+        }
+
+        hasMore = data.length === pageSize;
+        offset += pageSize;
+      }
+
+      return { size, count };
+    }
+
+    for (const bucket of buckets) {
+      const { data: check, error } = await supabase.storage.from(bucket).list('', { limit: 1 });
       if (error) {
         results.push({ bucket, files: 0, bytes: 0, error: error.message });
         continue;
       }
 
-      for (const item of (topLevel || [])) {
-        if (item.metadata && item.metadata.size) {
-          bucketSize += item.metadata.size;
-          fileCount++;
-        } else if (item.id === null || !item.metadata) {
-          // Likely a folder — list contents
-          const { data: inner } = await supabase.storage.from(bucket).list(item.name, { limit: 1000 });
-          for (const f of (inner || [])) {
-            if (f.metadata && f.metadata.size) {
-              bucketSize += f.metadata.size;
-              fileCount++;
-            }
-          }
-        }
-      }
-
-      totalBytes += bucketSize;
-      results.push({ bucket, files: fileCount, bytes: bucketSize });
+      const { size, count } = await listAllFiles(bucket);
+      totalBytes += size;
+      results.push({ bucket, files: count, bytes: size });
     }
 
     const limitBytes = 1024 * 1024 * 1024; // 1 GB free plan
