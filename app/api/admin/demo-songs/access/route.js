@@ -30,7 +30,7 @@ export async function GET(request) {
       where,
       orderBy: { requestedAt: 'desc' },
       include: {
-        song: { select: { id: true, title: true, artist: true } },
+        song: { select: { id: true, title: true, artist: true, price: true } },
       },
     });
 
@@ -76,6 +76,14 @@ export async function PATCH(request) {
       where: { id },
       data: { status, resolvedAt: new Date() },
     });
+
+    // When payment is confirmed, deactivate the song so it disappears from public listing
+    if (status === 'PAID') {
+      await prisma.demoSong.update({
+        where: { id: existing.songId },
+        data: { isActive: false },
+      });
+    }
 
     return NextResponse.json(updated);
   } catch (err) {

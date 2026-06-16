@@ -461,9 +461,11 @@ function AccessRequestsSection() {
           <table className="admin-table">
             <thead>
               <tr>
-                <th>Korisnik</th>
+                <th>Kupac</th>
                 <th>Pesma</th>
-                <th>Datum</th>
+                <th>Cena</th>
+                <th>Zatraženo</th>
+                {filter === 'PAID' && <th>Plaćeno</th>}
                 {(filter === 'PENDING' || filter === 'APPROVED') && <th>Akcija</th>}
               </tr>
             </thead>
@@ -471,35 +473,45 @@ function AccessRequestsSection() {
               {requests.map((req) => (
                 <tr key={req.id}>
                   <td>
-                    <strong>{req.user?.band?.name || req.user?.musicianProfile?.name || req.user?.email}</strong>
+                    <strong>{req.user?.band?.name || req.user?.musicianProfile?.name || 'Nepoznat'}</strong>
                     <br />
-                    <small style={{ color: '#64748b' }}>{req.user?.email} · {req.user?.plan}</small>
+                    <small style={{ color: '#64748b' }}>{req.user?.email}</small>
+                    <br />
+                    <small style={{ color: '#818cf8' }}>{req.user?.plan}</small>
                   </td>
                   <td>
                     <strong>{req.song?.title}</strong><br />
                     <small style={{ color: '#94a3b8' }}>{req.song?.artist}</small>
                   </td>
+                  <td style={{ fontWeight: 700, color: '#4ade80' }}>
+                    {req.song?.price ? `${req.song.price} RSD` : 'Na upit'}
+                  </td>
                   <td style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
                     {new Date(req.requestedAt).toLocaleDateString('sr-RS')}
                   </td>
+                  {filter === 'PAID' && (
+                    <td style={{ fontSize: '0.8rem', color: '#4ade80' }}>
+                      {req.resolvedAt ? new Date(req.resolvedAt).toLocaleDateString('sr-RS') : '—'}
+                    </td>
+                  )}
                   {filter === 'PENDING' && (
                     <td>
                       <div style={{ display: 'flex', gap: '0.5rem' }}>
                         <button
                           type="button"
                           onClick={() => handleAction(req.id, 'APPROVED')}
-                          title="Odobri (pošalji uputstvo za uplatu)"
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#4ade80' }}
+                          title="Odobri — korisnik dobija uputstvo za uplatu"
+                          style={{ background: '#4ade80', border: 'none', cursor: 'pointer', color: '#0f172a', padding: '0.35rem 0.7rem', borderRadius: '6px', fontWeight: 700, fontSize: '0.72rem' }}
                         >
-                          <CheckCircle size={18} />
+                          Odobri
                         </button>
                         <button
                           type="button"
                           onClick={() => handleAction(req.id, 'DENIED')}
-                          title="Odbij"
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#f87171' }}
+                          title="Odbij zahtev"
+                          style={{ background: 'rgba(248,113,113,0.15)', border: '1px solid rgba(248,113,113,0.3)', cursor: 'pointer', color: '#f87171', padding: '0.35rem 0.7rem', borderRadius: '6px', fontWeight: 700, fontSize: '0.72rem' }}
                         >
-                          <XCircle size={18} />
+                          Odbij
                         </button>
                       </div>
                     </td>
@@ -509,11 +521,14 @@ function AccessRequestsSection() {
                       <button
                         type="button"
                         onClick={() => handleAction(req.id, 'PAID')}
-                        title="Potvrdi uplatu — otvori pristup za download"
+                        title="Potvrdi uplatu — pesma se sklanja iz ponude"
                         style={{ background: '#4ade80', border: 'none', cursor: 'pointer', color: '#0f172a', padding: '0.4rem 0.8rem', borderRadius: '6px', fontWeight: 700, fontSize: '0.75rem' }}
                       >
-                        Potvrdi uplatu
+                        ✓ Potvrdi uplatu
                       </button>
+                      <small style={{ display: 'block', marginTop: '0.3rem', color: '#94a3b8', fontSize: '0.65rem' }}>
+                        Pesma se automatski sklanja iz ponude
+                      </small>
                     </td>
                   )}
                 </tr>

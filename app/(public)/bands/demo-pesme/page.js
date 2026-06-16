@@ -16,6 +16,8 @@ export default function DemoPesmePage() {
   const [lyricsModal, setLyricsModal] = useState(null); // { title, artist, lyrics }
   const audioRef = useRef(null);
 
+  const [purchasedSongs, setPurchasedSongs] = useState([]);
+
   useEffect(() => {
     (async () => {
       try {
@@ -27,7 +29,12 @@ export default function DemoPesmePage() {
         if (Array.isArray(songsData)) setSongs(songsData);
         if (accessRes.ok) {
           const accessData = await accessRes.json();
-          if (typeof accessData === 'object' && !Array.isArray(accessData)) setAccessMap(accessData);
+          if (accessData?.map) {
+            setAccessMap(accessData.map);
+            if (Array.isArray(accessData.purchased)) setPurchasedSongs(accessData.purchased);
+          } else if (typeof accessData === 'object' && !Array.isArray(accessData)) {
+            setAccessMap(accessData);
+          }
         }
       } catch { /* ignore */ }
       finally { setLoading(false); }
@@ -264,6 +271,33 @@ export default function DemoPesmePage() {
         </div>
       )}
 
+      {purchasedSongs.length > 0 && (
+        <div className="ap-purchased">
+          <h2 className="ap-purchased-title">Moje kupljene pesme</h2>
+          <div className="ap-grid">
+            {purchasedSongs.map((song) => (
+              <div key={song.id} className="ap-card ap-card-purchased">
+                <div className="ap-card-top">
+                  <div className="ap-card-info">
+                    <h3>{song.title}</h3>
+                    <span className="ap-artist">{song.artist}</span>
+                  </div>
+                  <span className="ap-purchased-badge">✓ Kupljeno</span>
+                </div>
+                <div className="ap-card-bottom">
+                  <button type="button" className="ap-btn ap-btn-download" onClick={() => handleDownload(song.id)}>
+                    <Download size={14} /> Preuzmi
+                  </button>
+                  <button type="button" className="ap-btn ap-btn-lyrics-btn" onClick={() => handleDownload(song.id)}>
+                    <FileText size={14} /> Tekst
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {lyricsModal && (
         <div className="ap-modal-overlay" onClick={() => setLyricsModal(null)}>
           <div className="ap-modal" onClick={(e) => e.stopPropagation()}>
@@ -330,6 +364,13 @@ export default function DemoPesmePage() {
         .ap-payment-label { font-size: 0.72rem; font-weight: 800; color: #4ade80; margin-bottom: 0.4rem; }
         .ap-payment-details p { margin: 0.2rem 0; font-size: 0.8rem; color: #cbd5e1; line-height: 1.5; }
         .ap-payment-note { margin-top: 0.5rem !important; font-size: 0.72rem !important; color: #94a3b8 !important; font-style: italic; }
+        .ap-btn-lyrics-btn { background: rgba(139,92,246,0.1); color: #a78bfa; border-color: rgba(139,92,246,0.25); }
+        .ap-btn-lyrics-btn:hover { background: rgba(139,92,246,0.2); border-color: #8b5cf6; }
+        .ap-purchased { margin-top: 2.5rem; max-width: 650px; margin-left: auto; margin-right: auto; }
+        .ap-purchased-title { font-size: 1rem; font-weight: 800; color: #4ade80; margin: 0 0 0.75rem; padding-bottom: 0.5rem; border-bottom: 1px solid rgba(34,197,94,0.15); }
+        .ap-card-purchased { border-color: rgba(34,197,94,0.15); }
+        .ap-card-purchased:hover { border-color: rgba(34,197,94,0.3); }
+        .ap-purchased-badge { font-size: 0.68rem; font-weight: 800; color: #4ade80; background: rgba(34,197,94,0.1); padding: 2px 8px; border-radius: 50px; }
         .ap-loading { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; padding: 3rem; color: #64748b; }
         .ap-spinner { width: 28px; height: 28px; border: 3px solid #334155; border-top-color: #6366f1; border-radius: 50%; animation: spin 0.6s linear infinite; }
         .ap-spin-sm { width: 12px; height: 12px; border: 2px solid rgba(99,102,241,0.3); border-top-color: #818cf8; border-radius: 50%; animation: spin 0.5s linear infinite; }

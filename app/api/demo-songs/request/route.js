@@ -4,7 +4,7 @@ import { getAuthUserFromRequest } from '../../../../lib/auth';
 
 export const dynamic = 'force-dynamic';
 
-// GET — fetch user's access statuses for all songs
+// GET — fetch user's access statuses for all songs + purchased songs data
 export async function GET(request) {
   try {
     const auth = await getAuthUserFromRequest(request);
@@ -14,16 +14,31 @@ export async function GET(request) {
 
     const accesses = await prisma.demoSongAccess.findMany({
       where: { userId: auth.userId },
-      select: { songId: true, status: true },
+      include: {
+        song: { select: { id: true, title: true, artist: true, category: true, description: true, price: true, previewPath: true } },
+      },
     });
 
     // Return as map: { songId: status }
     const map = {};
+    const purchased = [];
     for (const a of accesses) {
       map[a.songId] = a.status;
+      // Include song data for PAID songs so user can still see them after deactivation
+      if (a.status === 'PAID' && a.song) {
+        purchased.push({
+          id: a.song.id,
+          title: a.song.title,
+          artist: a.song.artist,
+          category: a.song.category,
+          description: a.song.description,
+          price: a.song.price,
+          hasPreview: Boolean(a.song.previewPath),
+        });
+      }
     }
 
-    return NextResponse.json(map);
+    return NextResponse.json({ map, purchased });
   } catch (err) {
     console.error('[demo-songs/request GET]', err);
     return NextResponse.json({ error: 'Greška.' }, { status: 500 });
