@@ -199,7 +199,14 @@ export default function DemoPesmePage() {
       );
     }
     return (
-      <button type="button" style={{ ...btnBase, background: 'rgba(34,197,94,0.12)', color: '#4ade80', borderColor: 'rgba(34,197,94,0.4)' }} disabled={requesting === song.id} onClick={() => handleRequest(song.id)}>
+      <button
+        type="button"
+        style={{ ...btnBase, background: 'rgba(34,197,94,0.12)', color: '#4ade80', borderColor: 'rgba(34,197,94,0.4)' }}
+        disabled={requesting === song.id}
+        onClick={() => handleRequest(song.id)}
+        onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(34,197,94,0.25)'; e.currentTarget.style.borderColor = '#22c55e'; e.currentTarget.style.transform = 'scale(1.04)'; }}
+        onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(34,197,94,0.12)'; e.currentTarget.style.borderColor = 'rgba(34,197,94,0.4)'; e.currentTarget.style.transform = 'scale(1)'; }}
+      >
         <ShoppingBag size={14} /> {requesting === song.id ? 'Šaljem…' : 'Kupi'}
       </button>
     );
