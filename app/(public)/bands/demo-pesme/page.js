@@ -240,7 +240,7 @@ export default function DemoPesmePage() {
                 </div>
                 <div className="ap-card-meta">
                   {song.category && <span className="ap-cat">{song.category}</span>}
-                  {song.price && <span className="ap-price">{song.price} RSD</span>}
+                  <span className="ap-price">{song.price ? `${song.price} RSD` : 'Na upit'}</span>
                 </div>
               </div>
               {song.description && <p className="ap-desc">{song.description}</p>}
