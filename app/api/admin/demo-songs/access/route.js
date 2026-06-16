@@ -77,6 +77,19 @@ export async function PATCH(request) {
       data: { status, resolvedAt: new Date() },
     });
 
+    // Autorska pesma — prodaje se samo jednom. Kad je plaćena, skloni iz ponude.
+    if (status === 'PAID') {
+      await prisma.demoSong.update({
+        where: { id: existing.songId },
+        data: { isActive: false },
+      });
+      // Odbij sve ostale zahteve za istu pesmu
+      await prisma.demoSongAccess.updateMany({
+        where: { songId: existing.songId, id: { not: id }, status: { in: ['PENDING', 'APPROVED'] } },
+        data: { status: 'DENIED', resolvedAt: new Date() },
+      });
+    }
+
     return NextResponse.json(updated);
   } catch (err) {
     console.error('[admin/demo-songs/access PATCH]', err);
