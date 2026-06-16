@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import prisma from '../../../../lib/prisma';
-import { getSupabaseAdmin } from '../../../../lib/supabase';
 import { getAuthUserFromRequest } from '../../../../lib/auth';
 
 export const dynamic = 'force-dynamic';
@@ -21,18 +20,29 @@ export async function GET(request) {
   if (!admin) return NextResponse.json({ error: 'Nemate dozvolu.' }, { status: 403 });
 
   try {
-    const supabase = getSupabaseAdmin();
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-    // Query storage.objects via Supabase PostgREST (storage schema)
-    const { data: objects, error } = await supabase
-      .schema('storage')
-      .from('objects')
-      .select('bucket_id, metadata');
+    // Direct REST query to storage.objects table
+    const response = await fetch(
+      `${supabaseUrl}/rest/v1/objects?select=bucket_id,metadata`,
+      {
+        headers: {
+          'apikey': serviceKey,
+          'Authorization': `Bearer ${serviceKey}`,
+          'Accept-Profile': 'storage',
+          'Content-Type': 'application/json',
+        },
+      }
+    );
 
-    if (error) {
-      console.error('[storage-usage] query error:', error);
-      return NextResponse.json({ error: 'Greška: ' + error.message }, { status: 500 });
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error('[storage-usage] REST error:', errText);
+      return NextResponse.json({ error: 'Greška: ' + errText }, { status: 500 });
     }
+
+    const objects = await response.json();
 
     // Aggregate by bucket
     const bucketMap = {};
