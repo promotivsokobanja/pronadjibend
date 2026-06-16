@@ -403,12 +403,12 @@ export default function DemoPesmePage() {
         .ap-btns-left { display: flex; align-items: center; gap: 0.4rem; }
         .ap-btns-right { display: flex; align-items: center; gap: 0.4rem; }
         .ap-btn { display: inline-flex; align-items: center; gap: 5px; padding: 0.5rem 1rem; border-radius: 10px; font-weight: 700; font-size: 0.78rem; cursor: pointer; transition: 0.15s; min-height: 36px; border: 1px solid transparent; }
-        .ap-btn-play { background: rgba(99,102,241,0.1); color: #818cf8; border-color: rgba(99,102,241,0.25); }
-        .ap-btn-play:hover { background: rgba(99,102,241,0.18); border-color: #6366f1; }
+        .ap-btn-play { background: rgba(99,102,241,0.12); color: #818cf8; border: 1.5px solid rgba(99,102,241,0.4); }
+        .ap-btn-play:hover { background: rgba(99,102,241,0.2); border-color: #6366f1; }
         .ap-btn-play.playing { background: rgba(99,102,241,0.2); color: #a5b4fc; border-color: #6366f1; }
         .ap-btn-play:disabled { opacity: 0.5; cursor: wait; }
-        .ap-btn-request { background: rgba(34,197,94,0.1); color: #4ade80; border-color: rgba(34,197,94,0.25); }
-        .ap-btn-request:hover { background: rgba(34,197,94,0.2); border-color: #22c55e; }
+        .ap-btn-request { background: rgba(34,197,94,0.12); color: #4ade80; border: 1.5px solid rgba(34,197,94,0.4); }
+        .ap-btn-request:hover { background: rgba(34,197,94,0.22); border-color: #22c55e; }
         .ap-btn-request:disabled { opacity: 0.5; cursor: wait; }
         .ap-btn-pending { background: rgba(99,102,241,0.08); color: #a5b4fc; border-color: rgba(99,102,241,0.2); opacity: 0.8; cursor: default; }
         .ap-btn-approved { background: rgba(251,191,36,0.1); color: #fbbf24; border-color: rgba(251,191,36,0.25); cursor: default; }
