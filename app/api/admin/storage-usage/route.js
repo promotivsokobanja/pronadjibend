@@ -22,7 +22,7 @@ export async function GET(request) {
 
   try {
     const supabase = getSupabaseAdmin();
-    const buckets = ['demo-songs', 'midi-files', 'avatars', 'band-photos'];
+    const buckets = ['demo-songs', 'midi', 'audio', 'midi-files', 'avatars', 'band-photos'];
     const results = [];
     let totalBytes = 0;
 
@@ -58,8 +58,11 @@ export async function GET(request) {
 
     const limitBytes = 1024 * 1024 * 1024; // 1 GB free plan
 
+    // Only show buckets that have files or exist
+    const validBuckets = results.filter(b => !b.error || b.files > 0);
+
     return NextResponse.json({
-      buckets: results,
+      buckets: validBuckets,
       totalBytes,
       limitBytes,
       usedPercent: Math.round((totalBytes / limitBytes) * 100 * 10) / 10,
