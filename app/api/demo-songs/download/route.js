@@ -60,9 +60,9 @@ export async function GET(request) {
         where: { userId_songId: { userId: auth.userId, songId: id } },
       });
 
-      if (!access || access.status !== 'APPROVED') {
+      if (!access || access.status !== 'PAID') {
         return NextResponse.json(
-          { error: 'Nemate odobrenje za preuzimanje ove pesme. Pošaljite zahtev i sačekajte odobrenje admina.' },
+          { error: 'Nemate pristup za preuzimanje. Uplatite pesmu prema uputstvu i sačekajte potvrdu.' },
           { status: 403 }
         );
       }

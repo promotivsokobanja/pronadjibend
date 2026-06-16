@@ -490,7 +490,7 @@ model DemoSongAccess {
   id          String    @id @default(cuid())
   userId      String
   songId      String
-  status      String    @default("PENDING") // PENDING, APPROVED, DENIED
+  status      String    @default("PENDING") // PENDING, APPROVED (uputstvo za uplatu), PAID (pristup otvoren), DENIED
   requestedAt DateTime  @default(now())
   resolvedAt  DateTime?
 

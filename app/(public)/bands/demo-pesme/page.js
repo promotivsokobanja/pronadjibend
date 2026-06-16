@@ -195,7 +195,7 @@ export default function DemoPesmePage() {
                 )}
                 {song.allowDownload && (() => {
                   const status = accessMap[song.id];
-                  if (status === 'APPROVED') {
+                  if (status === 'PAID') {
                     return (
                       <button
                         type="button"
@@ -214,11 +214,24 @@ export default function DemoPesmePage() {
                       </button>
                     );
                   }
+                  if (status === 'APPROVED') {
+                    return (
+                      <span className="demo-payment-info">
+                        <span className="demo-payment-badge">Uputstvo za uplatu</span>
+                        <span className="demo-payment-text">
+                          Cena: <strong>{song.price || 'Po dogovoru'}</strong><br/>
+                          Uplatite na račun: <strong>265-1234567-89</strong><br/>
+                          Poziv na broj: <strong>vaš email</strong><br/>
+                          Svrha: Autorska pesma — {song.title}
+                        </span>
+                      </span>
+                    );
+                  }
                   if (status === 'PENDING') {
                     return (
                       <span className="demo-pending-btn">
                         <Clock size={16} />
-                        <span>Čeka odobrenje</span>
+                        <span>Zahtev poslat — čeka odobrenje</span>
                       </span>
                     );
                   }
@@ -543,6 +556,31 @@ export default function DemoPesmePage() {
           font-weight: 700;
           font-size: 0.82rem;
           min-height: 40px;
+        }
+        .demo-payment-info {
+          display: flex;
+          flex-direction: column;
+          gap: 0.5rem;
+          padding: 0.85rem 1rem;
+          border-radius: 10px;
+          border: 1px solid rgba(34, 197, 94, 0.2);
+          background: rgba(34, 197, 94, 0.05);
+          width: 100%;
+        }
+        .demo-payment-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          color: #4ade80;
+          font-weight: 800;
+          font-size: 0.75rem;
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
+        }
+        .demo-payment-text {
+          font-size: 0.82rem;
+          color: #cbd5e1;
+          line-height: 1.6;
         }
         .demo-empty {
           display: flex;

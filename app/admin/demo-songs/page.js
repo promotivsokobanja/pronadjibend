@@ -419,7 +419,7 @@ function AccessRequestsSection() {
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
         <h2 style={{ margin: 0 }}>Zahtevi za preuzimanje</h2>
         <div style={{ display: 'flex', gap: '0.4rem' }}>
-          {['PENDING', 'APPROVED', 'DENIED'].map((s) => (
+          {['PENDING', 'APPROVED', 'PAID', 'DENIED'].map((s) => (
             <button
               key={s}
               type="button"
@@ -435,7 +435,7 @@ function AccessRequestsSection() {
                 cursor: 'pointer',
               }}
             >
-              {s === 'PENDING' ? 'Na čekanju' : s === 'APPROVED' ? 'Odobreno' : 'Odbijeno'}
+              {s === 'PENDING' ? 'Na čekanju' : s === 'APPROVED' ? 'Čeka uplatu' : s === 'PAID' ? 'Plaćeno' : 'Odbijeno'}
             </button>
           ))}
         </div>
@@ -453,7 +453,7 @@ function AccessRequestsSection() {
                 <th>Korisnik</th>
                 <th>Pesma</th>
                 <th>Datum</th>
-                {filter === 'PENDING' && <th>Akcija</th>}
+                {(filter === 'PENDING' || filter === 'APPROVED') && <th>Akcija</th>}
               </tr>
             </thead>
             <tbody>
@@ -477,7 +477,7 @@ function AccessRequestsSection() {
                         <button
                           type="button"
                           onClick={() => handleAction(req.id, 'APPROVED')}
-                          title="Odobri"
+                          title="Odobri (pošalji uputstvo za uplatu)"
                           style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#4ade80' }}
                         >
                           <CheckCircle size={18} />
@@ -491,6 +491,18 @@ function AccessRequestsSection() {
                           <XCircle size={18} />
                         </button>
                       </div>
+                    </td>
+                  )}
+                  {filter === 'APPROVED' && (
+                    <td>
+                      <button
+                        type="button"
+                        onClick={() => handleAction(req.id, 'PAID')}
+                        title="Potvrdi uplatu — otvori pristup za download"
+                        style={{ background: '#4ade80', border: 'none', cursor: 'pointer', color: '#0f172a', padding: '0.4rem 0.8rem', borderRadius: '6px', fontWeight: 700, fontSize: '0.75rem' }}
+                      >
+                        Potvrdi uplatu
+                      </button>
                     </td>
                   )}
                 </tr>

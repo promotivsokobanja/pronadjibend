@@ -63,7 +63,7 @@ export async function PATCH(request) {
     const body = await request.json();
     const { id, status } = body;
 
-    if (!id || !['APPROVED', 'DENIED'].includes(status)) {
+    if (!id || !['APPROVED', 'DENIED', 'PAID'].includes(status)) {
       return NextResponse.json({ error: 'Nevalidni parametri.' }, { status: 400 });
     }
 
