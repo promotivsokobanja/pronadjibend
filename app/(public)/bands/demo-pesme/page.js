@@ -66,32 +66,29 @@ export default function DemoPesmePage() {
 
     setAudioLoading(songId);
     try {
-      const r = await fetch(`/api/demo-songs/preview?id=${songId}`);
-      const data = await r.json();
-      if (!r.ok || !data.url) throw new Error(data.error || 'Greška');
-
       // Always dispose old audio and create fresh one
       if (audioRef.current) {
         audioRef.current.pause();
-        audioRef.current.removeAttribute('src');
-        audioRef.current.load();
         audioRef.current = null;
       }
       if (previewTimerRef.current) { clearTimeout(previewTimerRef.current); previewTimerRef.current = null; }
 
-      const audio = new Audio(data.url);
+      // Use API route directly as audio src — server proxies the file,
+      // no external Supabase URL in the browser, no CSP/CORS issues.
+      const audio = new Audio(`/api/demo-songs/preview?id=${songId}`);
       audioRef.current = audio;
 
-      audio.addEventListener('ended', () => { setPlayingId(null); });
-      audio.addEventListener('error', () => { setPlayingId(null); });
-
-      // Wait for metadata to get duration, then limit to 25%
-      audio.addEventListener('loadedmetadata', () => {
-        const maxPlayTime = audio.duration * 0.25;
-        previewTimerRef.current = setTimeout(() => {
-          audio.pause();
-          setPlayingId(null);
-        }, maxPlayTime * 1000);
+      await new Promise((resolve, reject) => {
+        audio.addEventListener('loadedmetadata', () => {
+          const maxPlayTime = audio.duration * 0.25;
+          previewTimerRef.current = setTimeout(() => {
+            audio.pause();
+            setPlayingId(null);
+          }, maxPlayTime * 1000);
+          resolve();
+        });
+        audio.addEventListener('error', () => reject(new Error('Audio greška pri učitavanju.')));
+        audio.load();
       });
 
       await audio.play();
@@ -99,6 +96,7 @@ export default function DemoPesmePage() {
     } catch (err) {
       console.error('Preview error:', err);
       alert('Nije moguće pustiti preview. ' + (err.message || ''));
+      setPlayingId(null);
     } finally {
       setAudioLoading(null);
     }
