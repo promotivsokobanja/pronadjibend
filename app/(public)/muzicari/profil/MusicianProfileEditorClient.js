@@ -502,12 +502,6 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
       href: '/bands/demo-pesme',
       icon: Disc3,
     },
-    {
-      title: 'Moj Profil',
-      description: 'Javni profil, slike, video i opis.',
-      href: '/muzicari/profil/podesavanja',
-      icon: Pencil,
-    },
   ];
 
   const handleKorgDownload = useCallback((url) => {
@@ -1427,6 +1421,13 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
                     );
                   })}
                   <OfflinePrepButton musicianId={viewer?.musicianProfileId} />
+                  <Link href="/muzicari/profil/podesavanja" className="panel-link">
+                    <div className="panel-card">
+                      <div className="panel-icon"><Pencil size={20} /></div>
+                      <div><h3>Moj Profil</h3><p>Javni profil, slike, video i opis.</p></div>
+                      <span className="panel-cta">Otvori</span>
+                    </div>
+                  </Link>
                 </div>
 
                 {isPremiumVenue && korgPaItems.length ? (
@@ -1500,7 +1501,6 @@ export default function MusicianProfileEditorClient({ mode = 'panel' }) {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(340px, 100%), 1fr))', gap: '1.6rem', alignItems: 'start' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.35rem' }}>
                 {panelKpiCard}
-                {summaryCard}
               </div>
               <aside style={{ display: 'flex', flexDirection: 'column', gap: '1.35rem' }}>
                 {contactCard}
