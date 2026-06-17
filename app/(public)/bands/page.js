@@ -724,6 +724,7 @@ export default function BandDashboard() {
               <span className="panel-cta">Otvori</span>
             </div>
           </Link>
+          <OfflinePrepButton bandId={bandId} />
           <Link href="/bands/profile" className="panel-link">
             <div className="panel-card">
               <div className="panel-icon"><Pencil size={20} /></div>
@@ -734,7 +735,6 @@ export default function BandDashboard() {
               <span className="panel-cta">Otvori</span>
             </div>
           </Link>
-          <OfflinePrepButton bandId={bandId} />
         </div>
       </header>
 
