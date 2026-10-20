@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 
 /**
  * API za program MIDI Konverter Pa5X (računar / tablet), ključ u zaglavlju X-Program-Key:
- *   GET   – aktivne porudžbine (na čekanju / prihvaćene) sa Korg brojem i tekstom pesme
+ *   GET   – aktivne porudžbine (na čekanju / prihvaćene) sa Korg brojem i tekstom pesme; ?pesme=1 – repertoar
  *   PATCH – { id, status } – prihvati / odsvirano / odbij
  *   POST  – { numbers: [{ broj, pesma, izvodjac, sajt_id }] } – Korg brojevi iz SongBook-a za pesme repertoara
  */
@@ -20,6 +20,12 @@ async function auth(request) {
 export async function GET(request) {
   const { owner, error } = await auth(request);
   if (error) return error;
+  if (new URL(request.url).searchParams.get('pesme')) {  // repertoar – program po njemu povezuje SongBook
+    const songs = await prisma.song.findMany({
+      where: owner.filter, select: { id: true, title: true, artist: true, korgNumber: true }, orderBy: { title: 'asc' },
+    });
+    return NextResponse.json({ owner: { type: owner.type, name: owner.name }, songs });
+  }
   const reqs = await prisma.liveRequest.findMany({
     where: { ...owner.filter, status: { in: ['PENDING', 'ACCEPTED'] } },
     include: { song: { select: { id: true, title: true, artist: true, korgNumber: true, key: true, lyrics: true } } },
