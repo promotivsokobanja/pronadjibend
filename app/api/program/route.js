@@ -65,6 +65,8 @@ export async function PATCH(request) {
 }
 
 export async function POST(request) {
+  // Android (HttpURLConnection) ne zna PATCH – tablet šalje POST sa X-HTTP-Method-Override: PATCH
+  if ((request.headers.get('x-http-method-override') || '').toUpperCase() === 'PATCH') return PATCH(request);
   const { owner, error } = await auth(request);
   if (error) return error;
   const body = await request.json().catch(() => ({}));
