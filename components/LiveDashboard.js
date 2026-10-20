@@ -7,6 +7,71 @@ import { getCachedSongs, getCachedSong } from '../lib/offlineRepertoire';
 
 const QrModal = dynamic(() => import('./QrModal'), { ssr: false });
 
+/** Ključ za program MIDI Konverter Pa5X: program na računaru/tabletu prima porudžbine i prebacuje Korg na pesmu. */
+function ProgramKeySetting({ bandId, musicianId }) {
+  const [hasKey, setHasKey] = useState(null);
+  const [key, setKey] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState('');
+  const qs = bandId ? `?bandId=${encodeURIComponent(bandId)}` : musicianId ? `?musicianId=${encodeURIComponent(musicianId)}` : '';
+
+  useEffect(() => {
+    let off = false;
+    fetch(`/api/program/key${qs}`, { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (!off && d) setHasKey(!!d.hasKey); })
+      .catch(() => {});
+    return () => { off = true; };
+  }, [qs]);
+
+  const make = async () => {
+    if (hasKey && !confirm('Napraviti novi ključ? Stari prestaje da radi (u programu upiši novi).')) return;
+    setBusy(true); setMsg('');
+    try {
+      const r = await fetch(`/api/program/key${qs}`, { method: 'POST' });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d?.error || 'Greška');
+      setKey(d.key); setHasKey(true);
+    } catch (e) { setMsg(e.message || 'Greška'); }
+    setBusy(false);
+  };
+  const off = async () => {
+    if (!confirm('Isključiti program? Ključ prestaje da radi.')) return;
+    setBusy(true);
+    try { await fetch(`/api/program/key${qs}`, { method: 'DELETE' }); setHasKey(false); setKey(''); } catch {}
+    setBusy(false);
+  };
+  const copy = async () => {
+    try { await navigator.clipboard.writeText(key); setMsg('Kopirano.'); } catch { setMsg('Označi ključ i kopiraj ga ručno.'); }
+  };
+
+  return (
+    <div className="setting-group">
+      <label className="setting-label">PROGRAM ZA KORG (MIDI Konverter Pa5X)</label>
+      <p className="setting-hint">
+        Program na računaru ili tabletu prima porudžbine sa ovog nastupa i jednim klikom prebaci Korg Pa5X na pesmu
+        (po Korg broju iz SongBook-a). Ključ upiši u programu: ⚙ › Porudžbine sa sajta.
+      </p>
+      {key ? (
+        <>
+          <input className="setting-input" readOnly value={key} onFocus={(e) => e.target.select()} />
+          <p className="setting-hint">Ključ se prikazuje samo sada – kopiraj ga u program. Ne deli ga ni sa kim.</p>
+          <button className="btn-hud" type="button" onClick={copy}>Kopiraj ključ</button>
+        </>
+      ) : (
+        <p className="setting-hint">{hasKey ? 'Program je povezan (ključ postoji).' : 'Program još nije povezan.'}</p>
+      )}
+      <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
+        <button className="btn-hud" type="button" onClick={make} disabled={busy}>
+          {hasKey ? 'Napravi novi ključ' : 'Napravi ključ za program'}
+        </button>
+        {hasKey && <button className="btn-hud" type="button" onClick={off} disabled={busy}>Isključi</button>}
+      </div>
+      {msg && <p className="setting-hint">{msg}</p>}
+    </div>
+  );
+}
+
 export default function LiveDashboard({ bandId, musicianId }) {
   const ownerId = bandId || musicianId;
   const ownerType = bandId ? 'band' : 'musician';
@@ -1688,7 +1753,12 @@ export default function LiveDashboard({ bandId, musicianId }) {
                           )}
                         </span>
                       </div>
-                      <h3 className="song-title">{req.song}</h3>
+                      <h3 className="song-title">
+                        {req.song}
+                        {req.korgNumber != null && (
+                          <span className="korg-num" title="Broj pesme u Korg SongBook-u"> · Korg #{req.korgNumber}</span>
+                        )}
+                      </h3>
                       <p className="client-name">od: {req.client}</p>
                       <div className="req-actions">
                         {req.status === 'pending' && (
@@ -2454,6 +2524,9 @@ export default function LiveDashboard({ bandId, musicianId }) {
                 />
                 <p className="setting-hint">Prikazuje se u zaglavlju tokom nastupa</p>
               </div>
+
+              {/* Program MIDI Konverter Pa5X */}
+              <ProgramKeySetting bandId={bandId} musicianId={musicianId} />
 
               {/* Max Requests */}
               <div className="setting-group">
@@ -3411,6 +3484,13 @@ export default function LiveDashboard({ bandId, musicianId }) {
         .song-title {
           margin: 0;
           overflow-wrap: anywhere;
+        }
+
+        .korg-num {
+          font-size: 0.7em;
+          font-weight: 600;
+          color: #a5b4fc;
+          white-space: nowrap;
         }
 
         .client-name {

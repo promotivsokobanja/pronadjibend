@@ -127,7 +127,7 @@ export async function GET(request) {
     const requests = await prisma.liveRequest.findMany({
       where,
       include: {
-        song: { select: { id: true, title: true, artist: true } },
+        song: { select: { id: true, title: true, artist: true, korgNumber: true } },
       },
       orderBy: { createdAt: 'desc' },
       take: statusFilter === 'history' ? 50 : 30,
@@ -145,6 +145,7 @@ export async function GET(request) {
           ? displayWaiterNote(r.guestNote) || 'Bakšiš preko konobara'
           : (r.song?.title || 'Nepoznata pesma'),
         songId: r.song?.id || null,
+        korgNumber: isWaiterTip ? null : (r.song?.korgNumber ?? null),
         artist: isWaiterTip ? '' : (r.song?.artist || ''),
         client: `Sto ${r.tableNum}`,
         tableNum: r.tableNum,

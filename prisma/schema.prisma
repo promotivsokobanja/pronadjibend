@@ -60,6 +60,8 @@ model Band {
   showRepertoire     Boolean          @default(false)
   /// Kada je uključeno, gosti mogu da naruče bilo koju pesmu iz repertoara tokom live režima (ne samo one iz aktivnih set listi)
   allowFullRepertoireLive Boolean     @default(false)
+  /// SHA-256 ključa za program MIDI Konverter Pa5X (čita porudžbine i šalje Korg brojeve); sam ključ se ne čuva
+  programKeyHash     String?          @unique
   songs              Song[] // Repertoire
   bookings           Booking[]
   liveRequests       LiveRequest[]
@@ -83,6 +85,8 @@ model Song {
   key               String? // Original key
   category          String? // e.g., "Muške Zabavne"
   type              String? // e.g., "Zabavna", "Narodna"
+  /// Broj pesme u SongBook-u Korg Pa5X (ID 1–9999) – program po njemu prebacuje Korg na pesmu
+  korgNumber        Int?
   band              Band?            @relation(fields: [bandId], references: [id])
   bandId            String?
   musicianProfile   MusicianProfile? @relation(fields: [musicianProfileId], references: [id])
@@ -210,6 +214,8 @@ model MusicianProfile {
   user              User?                  @relation(fields: [userId], references: [id])
   userId            String?                @unique
   name              String
+  /// SHA-256 ključa za program MIDI Konverter Pa5X
+  programKeyHash    String?                @unique
   primaryInstrument String
   genres            String?
   city              String
