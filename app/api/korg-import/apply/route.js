@@ -16,10 +16,11 @@ function titleFromKorg(name) {
 /**
  * POST /api/korg-import/apply – u delovima (stranica šalje po 40):
  *   { items: [{ i, akcija: "repertoar"|"pesmarica"|"novo"|"preskoci", songId }] }  → pesme u repertoar
- *   { lists: ["Begin", …] }  → set liste sa Korga kao „Korg · Begin“ (posle svih pesama; liste sajta se ne diraju)
+ *   { lists: ["Begin", …], ukloni }  → set liste sa Korga kao „Korg · Begin“ (posle svih pesama; liste sajta se ne
+ *     diraju); ukloni: true obriše „Korg ·“ liste kojih više nema na Korgu
  * Pesma koja je već u repertoaru se ne duplira – dobija Korg broj i tonalitet sa Korga.
  * Nova pesma iz neke Korg set liste dobija svoju kategoriju (iz pesmarice); ostale pesme sa Korga idu u posebnu
- * grupu „Korg – ostale“ (neuređene).
+ * grupu „Korg – ostale“ (neuređene). Pesma iz „Korg – ostale“ koja je sada u Korg listi prelazi u svoju kategoriju.
  */
 export async function POST(request) {
   const { owner, error } = await resolveSongOwner(request, {});
@@ -30,16 +31,31 @@ export async function POST(request) {
   const entries = Array.isArray(imp.entries) ? imp.entries : [];
   const where = ownerWhere(owner);
 
-  if (Array.isArray(body?.lists)) return applyLists(owner, where, imp, entries, body.lists);
+  if (Array.isArray(body?.lists)) return applyLists(owner, where, imp, entries, body.lists, body.ukloni === true);
 
   const items = (Array.isArray(body?.items) ? body.items : []).slice(0, 60);
-  const mine = await prisma.song.findMany({ where, select: { id: true, title: true, artist: true, korgNumber: true } });
+  const mine = await prisma.song.findMany({ where, select: { id: true, title: true, artist: true, korgNumber: true, category: true } });
   const byTitle = new Map(mine.map((s) => [`${normTitle(s.title)}|${normTitle(s.artist)}`, s]));
   const inLists = namesInLists(imp.lists);
   const out = { novih: 0, azurirano: 0, preskoceno: 0 };
 
-  const setKorg = async (songId, e) => {
+  /** Kategorija pesme iz pesmarice (isti naslov i izvođač), inače „Razno“. */
+  const categoryFor = async (song) => {
+    const g = await prisma.song.findFirst({
+      where: { bandId: null, musicianProfileId: null, title: { equals: song.title, mode: 'insensitive' },
+        artist: { equals: song.artist, mode: 'insensitive' }, category: { not: null } },
+      select: { category: true },
+    });
+    return g?.category || 'Razno';
+  };
+
+  const setKorg = async (song, e) => {
+    const songId = song.id;
     const data = {};
+    if (song.category === KORG_OTHER_CATEGORY && inLists.has(e.ime)) {
+      data.category = await categoryFor(song);     // ušla u Korg listu – više nije „neuređena“
+      song.category = data.category;
+    }
     if (e.broj) {
       // Korg broj pripada samo jednoj pesmi – ranija pesma sa tim brojem ga gubi (Korg je merodavan)
       await prisma.song.updateMany({ where: { ...where, korgNumber: e.broj, NOT: { id: songId } }, data: { korgNumber: null } });
@@ -56,7 +72,7 @@ export async function POST(request) {
     if (it.akcija === 'repertoar') {
       const s = mine.find((x) => x.id === it.songId);
       if (!s) { out.preskoceno += 1; continue; }
-      await setKorg(s.id, e);
+      await setKorg(s, e);
       out.azurirano += 1;
       continue;
     }
@@ -76,20 +92,22 @@ export async function POST(request) {
     const dupKey = `${normTitle(data.title)}|${normTitle(data.artist)}`;
     const dup = byTitle.get(dupKey);
     if (dup) {                                       // već postoji – ne duplira se, Korg podaci u postojeću
-      await setKorg(dup.id, e);
+      await setKorg(dup, e);
       out.azurirano += 1;
       continue;
     }
-    const created = await prisma.song.create({ data: { ...data, ...ownerData(owner) }, select: { id: true, title: true, artist: true } });
-    byTitle.set(dupKey, { ...created, korgNumber: null });
-    mine.push({ ...created, korgNumber: null });
-    await setKorg(created.id, e);
+    const created = await prisma.song.create({ data: { ...data, ...ownerData(owner) },
+      select: { id: true, title: true, artist: true, category: true } });
+    const row = { ...created, korgNumber: null };
+    byTitle.set(dupKey, row);
+    mine.push(row);
+    await setKorg(row, e);
     out.novih += 1;
   }
   return NextResponse.json(out);
 }
 
-async function applyLists(owner, where, imp, entries, wanted) {
+async function applyLists(owner, where, imp, entries, wanted, ukloni) {
   const want = new Set(wanted.map((n) => String(n)));
   const lists = (Array.isArray(imp.lists) ? imp.lists : []).filter((l) => want.has(l.ime));
   const mine = await prisma.song.findMany({ where, select: { id: true, title: true, artist: true, korgNumber: true } });
@@ -119,6 +137,15 @@ async function applyLists(owner, where, imp, entries, wanted) {
     }
     done.push({ ime: name, pesama: ids.length, od: (l.pesme || []).length });
   }
+  const uklonjeno = [];
+  if (ukloni) {                                   // „Korg ·“ liste čije liste više nema na Korgu (obrisana/preimenovana)
+    const onKorg = new Set((Array.isArray(imp.lists) ? imp.lists : []).map((l) => (KORG_LIST_PREFIX + l.ime).slice(0, 80)));
+    const stale = existing.filter((x) => !onKorg.has(x.name));
+    if (stale.length) {
+      await prisma.setList.deleteMany({ where: { ...where, id: { in: stale.map((x) => x.id) } } });  // stavke idu kaskadno
+      uklonjeno.push(...stale.map((x) => x.name));
+    }
+  }
   await prisma.korgImport.deleteMany({ where });  // uvoz završen – sledeći put se šalje novi SongBook
-  return NextResponse.json({ liste: done });
+  return NextResponse.json({ liste: done, uklonjeno });
 }

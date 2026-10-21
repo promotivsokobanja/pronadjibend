@@ -16,6 +16,7 @@ export default function KorgUvozPage() {
   const [results, setResults] = useState({});     // i -> rezultat pretrage
   const [choice, setChoice] = useState({});       // i -> { akcija, songId }
   const [lists, setLists] = useState({});         // ime -> bool
+  const [removeStale, setRemoveStale] = useState(false); // ukloni „Korg ·“ liste kojih više nema na Korgu
   const [phase, setPhase] = useState('idle');     // idle | trazim | spremno | upisujem | gotovo
   const [progress, setProgress] = useState(0);
   const [err, setErr] = useState('');
@@ -104,13 +105,14 @@ export default function KorgUvozPage() {
     }
     const wanted = Object.entries(lists).filter(([, v]) => v).map(([k]) => k);
     let liste = [];
+    let uklonjeno = [];
     try {
       const r = await fetch('/api/korg-import/apply', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ lists: wanted }),
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ lists: wanted, ukloni: removeStale }),
       });
-      if (r.ok) liste = (await r.json()).liste || [];
+      if (r.ok) { const j = await r.json(); liste = j.liste || []; uklonjeno = j.uklonjeno || []; }
     } catch { /* liste nisu upisane */ }
-    setSummary({ ...sum, liste, items: items.length });
+    setSummary({ ...sum, liste, uklonjeno, items: items.length });
     setPhase('gotovo');
   };
 
@@ -226,6 +228,12 @@ export default function KorgUvozPage() {
                   </label>
                 ))}
               </div>
+              {imp.staleLists?.length > 0 && (
+                <label className="pick stale">
+                  <input type="checkbox" checked={removeStale} onChange={(ev) => setRemoveStale(ev.target.checked)} />
+                  <span>Ukloni Korg liste kojih više nema na Korgu: {imp.staleLists.join(', ')}</span>
+                </label>
+              )}
             </section>
           )}
 
@@ -253,6 +261,7 @@ export default function KorgUvozPage() {
           {summary.liste.length > 0 && (
             <ul>{summary.liste.map((l) => <li key={l.ime}>{l.ime}: {l.pesama} pesama{l.pesama < l.od ? ` (od ${l.od} – ostale nisu uvezene)` : ''}</li>)}</ul>
           )}
+          {summary.uklonjeno?.length > 0 && <p className="text-muted">Uklonjene liste: {summary.uklonjeno.join(', ')}</p>}
           <p className="text-muted">Pesme koje nisu u Korg set listama su u repertoaru pod „Korg – ostale“. Sledeće: u Live panelu
             označi koje set liste gosti vide uživo.</p>
           <div className="gbtn">
@@ -286,6 +295,7 @@ export default function KorgUvozPage() {
         .pick { display: flex; gap: .45rem; align-items: center; cursor: pointer; min-width: 0; }
         .pick span { overflow: hidden; text-overflow: ellipsis; }
         select { width: 100%; background: rgba(15,23,42,.8); color: inherit; border: 1px solid rgba(255,255,255,.15); border-radius: 8px; padding: .3rem .4rem; }
+        .stale { margin-top: .8rem; color: #fbbf24; }
         .lists { display: grid; grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); gap: .4rem; margin-top: .6rem; }
         .kact { display: flex; flex-direction: column; gap: .4rem; position: sticky; bottom: 1rem; backdrop-filter: blur(8px); background: rgba(15,23,42,.85); }
         :global(.spin) { animation: kspin .8s linear infinite; }
