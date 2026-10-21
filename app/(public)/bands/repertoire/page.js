@@ -381,6 +381,9 @@ export default function RepertoirePage() {
   }, [activeTab, showBulkImportModal]);
 
   const categories = ['Muške Zabavne', 'Ženske Zabavne', 'Muške Narodne', 'Ženske Narodne', 'Razno', 'Strane Muške', 'Strane Ženske'];
+  // „Korg – ostale“: pesme iz Korg SongBook-a koje nisu u Korg set listama (neuređene) – kartica samo kad ih ima
+  const KORG_OTHER = 'Korg – ostale';
+  const tabs = counts[KORG_OTHER] ? [...categories, KORG_OTHER] : categories;
 
   const removeSong = async (id) => {
     if (!confirm('Da li ste sigurni da želite da obrišete ovu pesmu?')) return;
@@ -647,6 +650,11 @@ export default function RepertoirePage() {
           <div className="toolbar-right">
             {userPlan.startsWith('PREMIUM') ? (
               <>
+                <Link href="/bands/korg-uvoz">
+                  <button type="button" className="toolbar-btn" title="Pesme i set liste iz Korg Pa5X SongBook-a (poslate iz programa MIDI Konverter Pa5X)">
+                    <Music size={16} /> <span className="toolbar-label">Uvoz sa Korga</span>
+                  </button>
+                </Link>
                 <button
                   type="button"
                   className="toolbar-btn accent"
@@ -671,7 +679,7 @@ export default function RepertoirePage() {
 
         <div className="gender-tabs-container">
           <div className="gender-tabs">
-            {categories.map(cat => (
+            {tabs.map(cat => (
               <button 
                 key={cat} 
                 className={`tab-btn ${activeTab === cat ? 'active' : ''}`} 
@@ -706,7 +714,14 @@ export default function RepertoirePage() {
               {songs.map((song) => (
                 <div key={song.id} className="song-row">
                   <div className="col-title">
-                    <p className="song-name clickable-title" onClick={() => setOpenSongId(song.id)} style={{ cursor: 'pointer' }}>{song.title}</p>
+                    <p className="song-name clickable-title" onClick={() => setOpenSongId(song.id)} style={{ cursor: 'pointer' }}>
+                      {song.title}
+                      {song.korgNumber ? (
+                        <span className="korg-badge" title={`Na Korgu: SongBook broj ${song.korgNumber} – porudžbina sama prebaci Korg na pesmu`}>
+                          🎹 {song.korgNumber}
+                        </span>
+                      ) : null}
+                    </p>
                     <p className="song-artist">{song.artist || 'Evergreen / Folk'}</p>
                   </div>
                   <div className="col-tonality">
@@ -1017,7 +1032,8 @@ export default function RepertoirePage() {
         .song-name { font-size: 1rem; font-weight: 700; transition: 0.2s; color: #e2e8f0; line-height: 1.3; }
         .song-artist { color: rgba(226, 232, 240, 0.45); font-size: 0.8rem; margin-top: 0.15rem; }
         .clickable-title:hover { color: #8b5cf6; }
-        
+        .korg-badge { display: inline-block; margin-left: 0.5rem; padding: 0.05rem 0.45rem; border-radius: 999px; font-size: 0.7rem; font-weight: 700; color: #fbbf24; background: rgba(251, 191, 36, 0.12); border: 1px solid rgba(251, 191, 36, 0.3); vertical-align: middle; }
+
         .suggestions-divider { padding: 0.7rem 1.5rem; background: rgba(16, 185, 129, 0.04); border-bottom: 1px solid rgba(16, 185, 129, 0.08); font-size: 0.62rem; font-weight: 800; color: var(--accent-primary); letter-spacing: 1px; text-transform: uppercase; }
         .repertoire-divider { background: rgba(99, 102, 241, 0.04); border-bottom-color: rgba(99, 102, 241, 0.08); color: #818cf8; }
         

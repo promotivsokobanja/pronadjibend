@@ -507,3 +507,18 @@ model DemoSongAccess {
   @@unique([userId, songId])
   @@index([status])
 }
+
+/// Poslednji SongBook poslat iz programa MIDI Konverter Pa5X (⬆ Pošalji ceo SongBook) – čeka pregled na strani
+/// „Uvoz sa Korga“; posle uvoza pesme idu u repertoar, a set liste kao „Korg · ime“ (liste sajta se ne diraju).
+model KorgImport {
+  id                String   @id @default(cuid())
+  bandId            String?
+  musicianProfileId String?
+  entries           Json
+  lists             Json
+  createdAt         DateTime @default(now())
+
+  @@index([bandId])
+  @@index([musicianProfileId])
+}
+
