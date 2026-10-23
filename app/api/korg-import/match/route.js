@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import prisma from '../../../../lib/prisma';
+import { ownerFromProgramKey } from '@/lib/programKey';
 import { resolveSongOwner } from '../../../../lib/songOwner';
-import { korgWords, pickBest, pesmaricaCandidates, ownerWhere, keyFromKorgName } from '../../../../lib/korgImport';
+import { korgWords, pickBest, pesmaricaCandidates, ownerWhere, keyFromKorgName, importOwner } from '../../../../lib/korgImport';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,7 +12,7 @@ export const dynamic = 'force-dynamic';
  * nju), pa u pesmarici. status: "repertoar" | "sigurno" | "izaberi" | "nema".
  */
 export async function POST(request) {
-  const { owner, error } = await resolveSongOwner(request, {});
+  const { owner, error } = await importOwner(request, resolveSongOwner, ownerFromProgramKey);
   if (error) return error;
   const body = await request.json().catch(() => ({}));
   const imp = await prisma.korgImport.findFirst({ where: ownerWhere(owner), orderBy: { createdAt: 'desc' } });

@@ -1,13 +1,14 @@
 import { NextResponse } from 'next/server';
 import prisma from '../../../lib/prisma';
+import { ownerFromProgramKey } from '@/lib/programKey';
 import { resolveSongOwner } from '../../../lib/songOwner';
-import { ownerWhere, namesInLists, KORG_LIST_PREFIX } from '../../../lib/korgImport';
+import { ownerWhere, namesInLists, KORG_LIST_PREFIX, importOwner } from '../../../lib/korgImport';
 
 export const dynamic = 'force-dynamic';
 
 /** GET /api/korg-import – poslednji SongBook poslat iz programa (za stranu „Uvoz sa Korga“). */
 export async function GET(request) {
-  const { owner, error } = await resolveSongOwner(request, {});
+  const { owner, error } = await importOwner(request, resolveSongOwner, ownerFromProgramKey);
   if (error) return error;
   const imp = await prisma.korgImport.findFirst({ where: ownerWhere(owner), orderBy: { createdAt: 'desc' } });
   if (!imp) return NextResponse.json({ import: null });
@@ -34,7 +35,7 @@ export async function GET(request) {
 
 /** DELETE /api/korg-import – odbaci poslati SongBook (repertoar se ne menja). */
 export async function DELETE(request) {
-  const { owner, error } = await resolveSongOwner(request, {});
+  const { owner, error } = await importOwner(request, resolveSongOwner, ownerFromProgramKey);
   if (error) return error;
   const r = await prisma.korgImport.deleteMany({ where: ownerWhere(owner) });
   return NextResponse.json({ deleted: r.count });

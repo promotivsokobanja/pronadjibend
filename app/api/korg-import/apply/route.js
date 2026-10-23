@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import prisma from '../../../../lib/prisma';
 import { resolveSongOwner } from '../../../../lib/songOwner';
-import { normTitle } from '../../../../lib/programKey';
+import { normTitle, ownerFromProgramKey } from '../../../../lib/programKey';
 import {
-  KORG_LIST_PREFIX, KORG_OTHER_CATEGORY, namesInLists, keyFromKorgName, korgWords, pickBest, ownerWhere, ownerData,
+  KORG_LIST_PREFIX, KORG_OTHER_CATEGORY, namesInLists, keyFromKorgName, korgWords, pickBest, ownerWhere, ownerData, importOwner,
 } from '../../../../lib/korgImport';
 
 export const dynamic = 'force-dynamic';
@@ -23,7 +23,7 @@ function titleFromKorg(name) {
  * grupu „Korg – ostale“ (neuređene). Pesma iz „Korg – ostale“ koja je sada u Korg listi prelazi u svoju kategoriju.
  */
 export async function POST(request) {
-  const { owner, error } = await resolveSongOwner(request, {});
+  const { owner, error } = await importOwner(request, resolveSongOwner, ownerFromProgramKey);
   if (error) return error;
   const body = await request.json().catch(() => ({}));
   const imp = await prisma.korgImport.findFirst({ where: ownerWhere(owner), orderBy: { createdAt: 'desc' } });
