@@ -522,3 +522,18 @@ model KorgImport {
   @@index([musicianProfileId])
 }
 
+/// Uređaj povezan sa nalogom prijavom iz programa / tableta (mejl + lozinka) – svaki ima svoj ključ (čuva se samo
+/// SHA-256). Stari jedan ključ (Band/MusicianProfile.programKeyHash) i dalje važi.
+model ProgramDevice {
+  id                String    @id @default(cuid())
+  keyHash           String    @unique
+  bandId            String?
+  musicianProfileId String?
+  label             String
+  createdAt         DateTime  @default(now())
+  lastUsedAt        DateTime?
+
+  @@index([bandId])
+  @@index([musicianProfileId])
+}
+

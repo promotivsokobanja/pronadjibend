@@ -15,14 +15,30 @@ function ProgramKeySetting({ bandId, musicianId }) {
   const [msg, setMsg] = useState('');
   const qs = bandId ? `?bandId=${encodeURIComponent(bandId)}` : musicianId ? `?musicianId=${encodeURIComponent(musicianId)}` : '';
 
+  const [devices, setDevices] = useState([]);
+  const loadDevices = useCallback(() => {
+    fetch(`/api/program/devices${qs}`, { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => setDevices(Array.isArray(d?.devices) ? d.devices : []))
+      .catch(() => {});
+  }, [qs]);
+
   useEffect(() => {
     let off = false;
     fetch(`/api/program/key${qs}`, { cache: 'no-store' })
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => { if (!off && d) setHasKey(!!d.hasKey); })
       .catch(() => {});
+    loadDevices();
     return () => { off = true; };
-  }, [qs]);
+  }, [qs, loadDevices]);
+
+  const removeDevice = async (d) => {
+    if (!confirm(`Odjaviti uređaj „${d.label}“? Program na njemu prestaje da prima porudžbine.`)) return;
+    try { await fetch(`/api/program/devices${qs}${qs ? '&' : '?'}id=${encodeURIComponent(d.id)}`, { method: 'DELETE' }); } catch {}
+    loadDevices();
+  };
+  const fmt = (t) => (t ? new Date(t).toLocaleString('sr-RS', { dateStyle: 'short', timeStyle: 'short' }) : '—');
 
   const make = async () => {
     if (hasKey && !confirm('Napraviti novi ključ? Stari prestaje da radi (u programu upiši novi).')) return;
@@ -50,7 +66,8 @@ function ProgramKeySetting({ bandId, musicianId }) {
       <label className="setting-label">PROGRAM ZA KORG (MIDI Konverter Pa5X)</label>
       <p className="setting-hint">
         Program na računaru ili tabletu prima porudžbine sa ovog nastupa i jednim klikom prebaci Korg Pa5X na pesmu
-        (po Korg broju iz SongBook-a). Ključ upiši u programu: ⚙ › Porudžbine sa sajta.
+        (po Korg broju iz SongBook-a). Najlakše: u programu ili na tabletu izaberi „Prijavi se“ i upiši isti mejl i
+        lozinku kao ovde – uređaj se sam poveže. Može i ključ: napravi ga ovde i upiši u programu.
       </p>
       {key ? (
         <>
@@ -68,6 +85,18 @@ function ProgramKeySetting({ bandId, musicianId }) {
         {hasKey && <button className="btn-hud" type="button" onClick={off} disabled={busy}>Isključi</button>}
       </div>
       {msg && <p className="setting-hint">{msg}</p>}
+      {devices.length > 0 && (
+        <div style={{ marginTop: 10 }}>
+          <p className="setting-hint" style={{ marginBottom: 4 }}>Uređaji prijavljeni iz programa / tableta:</p>
+          {devices.map((d) => (
+            <div key={d.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 0', flexWrap: 'wrap' }}>
+              <span style={{ flex: 1, minWidth: 160 }}>{d.label}</span>
+              <span className="setting-hint" style={{ margin: 0 }}>prijavljen {fmt(d.createdAt)} · poslednji put {fmt(d.lastUsedAt)}</span>
+              <button className="btn-hud" type="button" onClick={() => removeDevice(d)}>Odjavi</button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
