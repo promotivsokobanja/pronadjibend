@@ -1005,6 +1005,27 @@ export default function LiveDashboard({ bandId, musicianId }) {
     }
   }, [selectedSong?.id, selectedSongInRepertoire]);
 
+  // 🎹 „Pozovi na Korgu“: program / tablet (Pa5X Studio) pripremi pesmu na Korgu po SongBook broju – Start je na Korgu
+  const [korgMsg, setKorgMsg] = useState(null);
+  const [korgBusy, setKorgBusy] = useState(false);
+  useEffect(() => { setKorgMsg(null); }, [selectedSong?.id]);
+  const callOnKorg = async () => {
+    if (!selectedSong?.id || korgBusy) return;
+    setKorgBusy(true); setKorgMsg(null);
+    const qs = bandId ? `?bandId=${encodeURIComponent(bandId)}` : musicianId ? `?musicianId=${encodeURIComponent(musicianId)}` : '';
+    try {
+      const r = await fetch(`/api/program/command${qs}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ songId: selectedSong.id }),
+      });
+      const d = await r.json().catch(() => ({}));
+      setKorgMsg(r.ok ? { ok: true, text: `Poslato Korgu: #${d.korgNumber} – za par sekundi je spremna, pusti je na Korgu.` }
+        : { ok: false, text: d.error || 'Nije poslato.' });
+    } catch {
+      setKorgMsg({ ok: false, text: 'Nema veze sa sajtom.' });
+    }
+    setKorgBusy(false);
+  };
+
   useEffect(() => {
     if (activeTab !== 'cheatsheet') return;
     refreshSelectedSong();
@@ -2377,6 +2398,17 @@ export default function LiveDashboard({ bandId, musicianId }) {
                         <h3 className="cheatsheet-now-title">{selectedSong.title}</h3>
                         <span className="cheatsheet-now-artist">{selectedSong.artist}</span>
                       </div>
+                      {selectedSongInRepertoire && selectedSong.id && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', margin: '4px 0' }}>
+                          <button type="button" className="add-rep-btn" onClick={callOnKorg} disabled={korgBusy}
+                            title="Program / tablet (Pa5X Studio) pripremi ovu pesmu na Korgu – pusti je na Korgu">
+                            🎹 {korgBusy ? 'Šaljem…' : 'Pozovi na Korgu'}
+                          </button>
+                          {korgMsg && (
+                            <span style={{ fontSize: '0.8rem', color: korgMsg.ok ? '#5fd38a' : '#ff8a8a' }}>{korgMsg.text}</span>
+                          )}
+                        </div>
+                      )}
                       {!selectedSongInRepertoire && selectedSong.id && (
                         <div className="add-to-repertoire-banner">
                           <span className="add-rep-label">Pesma nije u vašem repertoaru</span>

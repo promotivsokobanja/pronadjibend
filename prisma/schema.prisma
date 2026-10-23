@@ -537,3 +537,18 @@ model ProgramDevice {
   @@index([musicianProfileId])
 }
 
+/// „Pozovi na Korgu“ iz Live panela: program / tablet ga preuzme (anketa) i pripremi pesmu na Korgu po SongBook
+/// broju (bez Starta). Važi kratko (vidi /api/program); stari redovi se brišu pri sledećem pozivu.
+model ProgramCommand {
+  id                String   @id @default(cuid())
+  bandId            String?
+  musicianProfileId String?
+  songId            String?
+  korgNumber        Int
+  title             String
+  createdAt         DateTime @default(now())
+
+  @@index([bandId, createdAt])
+  @@index([musicianProfileId, createdAt])
+}
+

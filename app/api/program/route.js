@@ -32,8 +32,17 @@ export async function GET(request) {
     orderBy: { createdAt: 'asc' },
     take: 50,
   });
+  // „Pozovi na Korgu“ iz Live panela – poslednjih 90 s (program / tablet pamti koje je već izvršio, po id-u)
+  let commands = [];
+  try {
+    commands = await prisma.programCommand.findMany({
+      where: { ...owner.filter, createdAt: { gte: new Date(Date.now() - 90_000) } },
+      orderBy: { createdAt: 'asc' }, take: 10, select: { id: true, korgNumber: true, title: true, createdAt: true },
+    });
+  } catch { /* tabela još nije napravljena */ }
   return NextResponse.json({
     owner: { type: owner.type, name: owner.name },
+    commands,
     requests: reqs.map((r) => ({
       id: r.id,
       status: r.status.toLowerCase(),
