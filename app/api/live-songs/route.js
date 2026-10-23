@@ -38,6 +38,7 @@ export async function GET(request) {
     // Find all live setlists with their song items
     const liveSetLists = await prisma.setList.findMany({
       where: setlistWhere,
+      orderBy: { name: 'asc' },
       include: {
         items: {
           orderBy: { position: 'asc' },
@@ -57,12 +58,16 @@ export async function GET(request) {
     });
 
     // Collect unique songs (deduplicate by song.id)
+    // liveLists = imena uključenih set listi u kojima je pesma (bez „Korg · “) – gost vidi kartice tačno po listama
+    // koje je bend uključio (pesma iz dve liste je u obe kartice)
     const songMap = new Map();
     for (const setList of liveSetLists) {
+      const name = String(setList.name || '').replace(/^Korg\s*·\s*/, '').trim() || 'Set lista';
       for (const item of setList.items) {
-        if (item.song && !songMap.has(item.song.id)) {
-          songMap.set(item.song.id, item.song);
-        }
+        if (!item.song) continue;
+        const s = songMap.get(item.song.id) || { ...item.song, liveLists: [] };
+        if (!s.liveLists.includes(name)) s.liveLists.push(name);
+        songMap.set(item.song.id, s);
       }
     }
 

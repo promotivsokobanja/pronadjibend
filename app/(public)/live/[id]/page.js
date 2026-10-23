@@ -4,6 +4,9 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 
 const TIP_PRESETS = [1000, 2000, 5000];
 
+/** Kartice pesme kod gosta: uključene live set liste u kojima je (liveLists sa /api/live-songs), inače kategorija. */
+const songGroups = (s) => (Array.isArray(s.liveLists) && s.liveLists.length ? s.liveLists : [s.category || s.type].filter(Boolean));
+
 /**
  * orderFlow: null | table | tip_choice | tip_amount | song_voucher | song_success_brief
  * castiModal: null | menu | voucher | success (samo bakšiš bez pesme, ako allowTips)
@@ -143,7 +146,7 @@ export default function GuestLivePage({ params }) {
     detect();
   }, [rawId]);
 
-  // Fetch songs from live setlists first, fallback to full repertoire — polls every 30s
+  // Fetch songs from live setlists first, fallback to full repertoire — polls every 10s
   useEffect(() => {
     const ownerId = ownerType === 'band' ? bandId : musicianId;
     if (!ownerType || ownerType === 'unknown') {
@@ -167,8 +170,8 @@ export default function GuestLivePage({ params }) {
         if (liveData.hasLiveSetLists && Array.isArray(liveData.songs) && liveData.songs.length > 0) {
           setHasLiveSetLists(true);
           setSongs(liveData.songs);
-          const cats = [...new Set(liveData.songs.map((s) => s.category || s.type).filter(Boolean))];
-          if (cats.length > 0) setActiveTab((t) => t || cats[0]);
+          const cats = [...new Set(liveData.songs.flatMap(songGroups))];
+          if (cats.length > 0) setActiveTab((t) => (t && cats.includes(t) ? t : cats[0]));  // lista isključena → prva uključena
         } else if (liveData.hasLiveSetLists === false) {
           setHasLiveSetLists(false);
           if (!isPolling) {
@@ -177,8 +180,8 @@ export default function GuestLivePage({ params }) {
             if (cancelled) return;
             const list = Array.isArray(fallbackData) ? fallbackData : [];
             setSongs(list);
-            const cats = [...new Set(list.map((s) => s.category || s.type).filter(Boolean))];
-            if (cats.length > 0) setActiveTab((t) => t || cats[0]);
+            const cats = [...new Set(list.flatMap(songGroups))];
+            if (cats.length > 0) setActiveTab((t) => (t && cats.includes(t) ? t : cats[0]));  // lista isključena → prva uključena
           }
         } else {
           setHasLiveSetLists(true);
@@ -202,7 +205,7 @@ export default function GuestLivePage({ params }) {
       }
     };
     fetchSongs(false);
-    const intervalId = setInterval(() => fetchSongs(true), 30000);
+    const intervalId = setInterval(() => fetchSongs(true), 10000);  // promena Live listi stiže gostu za ~10 s
     return () => { cancelled = true; clearInterval(intervalId); };
   }, [ownerType, bandId, musicianId]);
 
@@ -245,11 +248,10 @@ export default function GuestLivePage({ params }) {
     };
   }, [guestRequestStatus?.id, ownerType, bandId, musicianId]);
 
-  const categories = [...new Set(songs.map((s) => s.category || s.type).filter(Boolean))];
+  const categories = [...new Set(songs.flatMap(songGroups))];
 
   const filteredSongs = songs.filter((s) => {
-    const cat = s.category || s.type || '';
-    const matchCat = !activeTab || cat === activeTab;
+    const matchCat = !activeTab || songGroups(s).includes(activeTab);
     const q = searchTerm.toLowerCase();
     const matchSearch =
       (s.title || '').toLowerCase().includes(q) || (s.artist || '').toLowerCase().includes(q);
@@ -498,7 +500,7 @@ export default function GuestLivePage({ params }) {
                   className={`tab-btn ${activeTab === cat ? 'active' : ''}`}
                   onClick={() => setActiveTab(cat)}
                 >
-                  {cat} ({songs.filter((s) => (s.category || s.type) === cat).length})
+                  {cat} ({songs.filter((s) => songGroups(s).includes(cat)).length})
                 </button>
               ))}
             </div>

@@ -214,29 +214,33 @@ export default function LiveDashboard({ bandId, musicianId }) {
     };
   }
 
-  /** Load setlists from API */
-  useEffect(() => {
+  /** Load setlists from API (quiet = bez „učitavam“ – osvežavanje pravog stanja Live listi) */
+  const reloadSetLists = useCallback(async (quiet = false) => {
     if (!ownerId) return;
-    let cancelled = false;
-    const load = async () => {
-      setSetListsLoading(true);
-      try {
-        const param = bandId ? `bandId=${bandId}` : `musicianId=${musicianId}`;
-        const resp = await fetch(`/api/setlists?${param}`, { cache: 'no-store' });
-        const data = await resp.json();
-        if (cancelled) return;
-        const lists = Array.isArray(data) ? data.map(normalizeSetList) : [];
-        setSetLists(lists);
-        setSelectedSetListId((prev) => prev || lists[0]?.id || '');
-      } catch (err) {
-        console.error('Error loading setlists:', err);
-      } finally {
-        if (!cancelled) setSetListsLoading(false);
-      }
-    };
-    load();
-    return () => { cancelled = true; };
+    if (!quiet) setSetListsLoading(true);
+    try {
+      const param = bandId ? `bandId=${bandId}` : `musicianId=${musicianId}`;
+      const resp = await fetch(`/api/setlists?${param}`, { cache: 'no-store' });
+      const data = await resp.json();
+      const lists = Array.isArray(data) ? data.map(normalizeSetList) : [];
+      setSetLists(lists);
+      setSelectedSetListId((prev) => prev || lists[0]?.id || '');
+    } catch (err) {
+      console.error('Error loading setlists:', err);
+    } finally {
+      if (!quiet) setSetListsLoading(false);
+    }
   }, [ownerId, bandId, musicianId]);
+
+  useEffect(() => { reloadSetLists(); }, [reloadSetLists]);
+
+  // Panel uvek pokazuje PRAVO stanje Live listi sa sajta (drugi uređaj / stari tab ne sme da vrati stare liste)
+  useEffect(() => {
+    const onBack = () => { if (document.visibilityState === 'visible') reloadSetLists(true); };
+    window.addEventListener('focus', onBack);
+    document.addEventListener('visibilitychange', onBack);
+    return () => { window.removeEventListener('focus', onBack); document.removeEventListener('visibilitychange', onBack); };
+  }, [reloadSetLists]);
 
   // Settings state
   const LS_SETTINGS_KEY = 'pb-live-settings';
@@ -736,7 +740,8 @@ export default function LiveDashboard({ bandId, musicianId }) {
       )
     );
     await syncSetListToApi(setListId, { isLive: nextIsLive });
-  }, [syncSetListToApi]);
+    reloadSetLists(true);                          // posle klika – stanje kakvo je stvarno na sajtu
+  }, [syncSetListToApi, reloadSetLists]);
 
   const hasAnyLiveSetList = setLists.some((entry) => entry.isLive);
 
