@@ -1,0 +1,12 @@
+{
+  "pc": {
+    "verzija": "3.14.1",
+    "link": "https://pronadjibend.rs/pa5x/Pa5X-Studio-Setup.exe",
+    "opis": "Engleski jezik, desni klik, zvuk na računaru (SF2) i „Šta svira računar“, promena izlaza usred pesme, automatska rezervna kopija, slanje na tablet preko Wi-Fi-ja, ključ preko sajta."
+  },
+  "tablet": {
+    "verzija": "3.13.1",
+    "link": "https://pronadjibend.rs/pa5x/Pa5X-Plejer.apk",
+    "opis": "Engleski jezik, prijem sa računara preko Wi-Fi-ja, provera nove verzije, ključ preko sajta."
+  }
+}

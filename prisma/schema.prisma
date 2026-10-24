@@ -552,3 +552,18 @@ model ProgramCommand {
   @@index([musicianProfileId, createdAt])
 }
 
+/// Zahtev za ključ programa Pa5X Studio (PC-…) / Pa5X Plejer (TB-…): program pošalje kod uređaja, vlasnik izda ključ
+/// u alatu „Pa5X Ključevi“ (potpis je samo kod vlasnika), program ga sam preuzme. status: ceka | izdat | odbijen.
+model Pa5xKeyRequest {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  name      String
+  email     String
+  note      String?
+  status    String   @default("ceka")
+  key       String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@index([status, createdAt])
+}
